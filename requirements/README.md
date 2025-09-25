@@ -58,14 +58,14 @@ A writer assistant that creates chapters based on user guidance, utilizing multi
 
 This requirements documentation is organized into the following sections:
 
-- `architecture.md` - System architecture and technical design
-- `agents.md` - Detailed specifications for each agent type
-- `memory-system.md` - Memory management and persistence
-- `workflow.md` - LangGraph workflow coordination and state management
-- `configuration.md` - JSON configuration schemas and examples
-- `user-interface.md` - Frontend requirements and user experience
-- `api-specifications.md` - Backend API design and endpoints
-- `export-import.md` - Story and memory export/import specifications
+- [Architecture](architecture_requirements.md) - System architecture and technical design
+- [Agents](agents_requirements.md) - Detailed specifications for each agent type
+- [Memory System](memory_requirements.md) - Memory management and persistence
+- [Workflow](workflow_requirements.md) - LangGraph workflow coordination and state management
+- [Configuration](configuration_requirements.md) - JSON configuration schemas and examples
+- [User Interface](ui_requirements.md) - Frontend requirements and user experience
+- [API specifications](api_requirements.md) - Backend API design and endpoints
+- [Export/Import](export_import_requirements.md) - Story and memory export/import specifications
 
 ## Success Criteria
 
