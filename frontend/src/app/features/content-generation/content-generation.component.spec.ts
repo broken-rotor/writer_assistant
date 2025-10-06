@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
@@ -92,18 +93,23 @@ describe('ContentGenerationComponent', () => {
       }
     };
 
+    // Set up mock return value BEFORE creating component
+    mockLocalStorageService.getStory.and.returnValue(mockStory);
+
     await TestBed.configureTestingModule({
       declarations: [ContentGenerationComponent],
       imports: [
         ReactiveFormsModule,
         FormsModule,
         BrowserAnimationsModule,
+        RouterModule.forRoot([]),
         MatFormFieldModule,
         MatInputModule,
         MatSelectModule,
         MatButtonModule,
         MatCardModule,
         MatProgressSpinnerModule,
+        MatProgressBarModule,
         MatChipsModule,
         MatExpansionModule,
         MatIconModule
@@ -117,7 +123,6 @@ describe('ContentGenerationComponent', () => {
       ]
     }).compileComponents();
 
-    mockLocalStorageService.getStory.and.returnValue(mockStory);
     fixture = TestBed.createComponent(ContentGenerationComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

@@ -7,7 +7,8 @@
       "Bash(npm test:*)",
       "Bash(venv/Scripts/activate:*)",
       "Bash(./venv/Scripts/python.exe -m pytest tests/ -v)",
-      "Bash(./venv/Scripts/python.exe -m pip install:*)"
+      "Bash(./venv/Scripts/python.exe -m pip install:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
