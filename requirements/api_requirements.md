@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Writer Assistant backend provides RESTful APIs for story management, agent coordination, and real-time collaboration. The API design supports the two-phase development workflow, multi-agent interactions, and comprehensive story persistence.
+The Writer Assistant backend provides stateless RESTful APIs that support user-driven story development through selective agent engagement. The server maintains no session state or story data - all state management and persistence is handled entirely client-side using browser local storage. Each API request is self-contained and includes all necessary context for processing.
 
 ## API Architecture
 
@@ -13,10 +13,9 @@ Development: http://localhost:8000/api/v1
 ```
 
 ### Authentication
-- **Method**: JWT-based authentication
-- **Headers**: `Authorization: Bearer <token>`
-- **Token Refresh**: Automatic refresh with refresh tokens
-- **Session Management**: Persistent sessions across devices
+- **Method**: None required - completely stateless API
+- **Access**: Open endpoints for story generation services
+- **Session Management**: None - all context provided in each request
 
 ### Response Format
 ```json
@@ -32,25 +31,29 @@ Development: http://localhost:8000/api/v1
 }
 ```
 
-## Story Management APIs
+## User-Driven Story Generation APIs
 
-### Story CRUD Operations
-
-#### Create New Story
+#### Generate Draft from User Input
 ```http
-POST /stories
+POST /generate/draft
 Content-Type: application/json
-Authorization: Bearer <token>
 
 {
-  "title": "My New Story",
-  "genre": "mystery",
-  "description": "A detective story set in Victorian London",
-  "initial_guidance": "Create a story about a detective solving a murder mystery in a locked room",
-  "configuration": {
+  "user_input": {
+    "type": "theme_topic_outline",
+    "content": "Create a mystery about a missing person in a small town where everyone has secrets",
+    "expansion_request": "develop this into a detailed story outline"
+  },
+  "user_preferences": {
     "style_profile": "literary_mystery",
-    "character_templates": ["detective_archetype", "victim", "suspects"],
-    "rater_preferences": ["mystery_expert", "character_consistency", "literary_quality"]
+    "length_preference": "novella",
+    "focus_areas": ["character_development", "atmospheric_setting"]
+  },
+  "story_context": {
+    "existing_content": null,
+    "characters": [],
+    "previous_drafts": [],
+    "user_feedback_history": []
   }
 }
 ```
@@ -60,151 +63,106 @@ Authorization: Bearer <token>
 {
   "success": true,
   "data": {
-    "story_id": "story_123",
-    "title": "My New Story",
-    "genre": "mystery",
-    "status": "outline_development",
-    "created_at": "2025-09-24T10:30:00Z",
-    "workflow_state": {
-      "current_phase": "outline_development",
-      "current_step": "initial_creation"
-    }
-  }
-}
-```
-
-#### Get Story Details
-```http
-GET /stories/{story_id}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "story_id": "story_123",
-    "title": "My New Story",
-    "genre": "mystery",
-    "status": "chapter_development",
-    "progress": {
-      "outline_approved": true,
-      "chapters_completed": 3,
-      "total_chapters_planned": 12,
-      "overall_progress": 0.25
-    },
-    "content": {
-      "outline": { ... },
-      "chapters": [ ... ],
-      "characters": [ ... ]
-    },
-    "workflow_state": { ... },
-    "metadata": {
-      "created_at": "2025-09-24T10:30:00Z",
-      "last_modified": "2025-09-24T15:45:00Z",
-      "word_count": 12500,
-      "revision_count": 7
-    }
-  }
-}
-```
-
-#### Update Story
-```http
-PUT /stories/{story_id}
-Content-Type: application/json
-
-{
-  "title": "Updated Story Title",
-  "description": "Updated description",
-  "configuration_updates": {
-    "style_profile": "commercial_mystery"
-  }
-}
-```
-
-#### Delete Story
-```http
-DELETE /stories/{story_id}
-```
-
-#### List User Stories
-```http
-GET /stories?limit=20&offset=0&status=active&sort=last_modified
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "stories": [
-      {
-        "story_id": "story_123",
-        "title": "My New Story",
-        "genre": "mystery",
-        "status": "chapter_development",
-        "progress": 0.25,
-        "last_modified": "2025-09-24T15:45:00Z"
+    "draft_content": {
+      "title": "Secrets of Millbrook",
+      "outline": {
+        "acts": [...],
+        "chapters": [...],
+        "characters": [...],
+        "themes": [...]
       }
-    ],
-    "pagination": {
-      "total": 45,
-      "limit": 20,
-      "offset": 0,
-      "has_more": true
+    },
+    "generation_metadata": {
+      "timestamp": "2025-09-24T10:30:00Z",
+      "request_id": "req_123456",
+      "processing_time": 2.3
     }
   }
 }
 ```
 
-## Workflow Management APIs
-
-### Phase Management
-
-#### Start Outline Development
+#### Revise Draft Based on User Feedback
 ```http
-POST /stories/{story_id}/workflow/outline/start
+POST /generate/revise-draft
 Content-Type: application/json
 
 {
-  "user_guidance": "Create a mystery story with a detective solving a locked room murder",
-  "parameters": {
-    "target_length": "novel",
-    "complexity_level": "moderate",
-    "character_count": 5
+  "original_draft": {
+    "title": "Secrets of Millbrook",
+    "outline": {...},
+    "characters": [...],
+    "themes": [...]
+  },
+  "user_feedback": "I like the overall concept but want the main character to be a journalist instead of a detective",
+  "specific_changes": [
+    "Change protagonist from detective to investigative journalist",
+    "Add newspaper/media angle to the investigation",
+    "Maintain the small town setting and secrets theme"
+  ],
+  "revision_context": {
+    "previous_revisions": [],
+    "user_preferences": {...}
   }
 }
 ```
 
-**Response:**
-```json
+#### Generate Character Reactions
+```http
+POST /character/generate-reactions
+Content-Type: application/json
+
 {
-  "success": true,
-  "data": {
-    "workflow_id": "wf_456",
-    "status": "in_progress",
-    "estimated_completion": "2025-09-24T11:00:00Z",
-    "active_agents": ["writer_agent"],
-    "steps": [
+  "story_draft": {
+    "title": "Secrets of Millbrook",
+    "outline": {...},
+    "characters": [
       {
-        "step": "context_assembly",
-        "status": "completed",
-        "duration": 1.2
+        "character_id": "sarah_journalist",
+        "name": "Sarah Chen",
+        "personality": {...},
+        "background": {...}
       },
       {
-        "step": "outline_generation",
-        "status": "in_progress",
-        "estimated_duration": 15.0
+        "character_id": "mayor_davidson",
+        "name": "Robert Davidson",
+        "personality": {...},
+        "background": {...}
       }
     ]
-  }
+  },
+  "selected_characters": ["sarah_journalist", "mayor_davidson"],
+  "reaction_prompt": "How do you each feel about the missing person case and the town's reaction?",
+  "story_context": "The investigation has just begun and tensions are rising in the small town"
 }
 ```
 
-#### Get Workflow Status
+## Character Dialog APIs
+
+#### Generate Character Dialog Response
 ```http
-GET /stories/{story_id}/workflow/status
+POST /character/dialog
+Content-Type: application/json
+
+{
+  "character_definition": {
+    "character_id": "sarah_journalist",
+    "name": "Sarah Chen",
+    "personality": {
+      "core_traits": ["curious", "persistent", "empathetic"],
+      "emotional_patterns": ["analytical_under_pressure"],
+      "speech_patterns": ["direct", "questioning"]
+    },
+    "background": {...},
+    "current_knowledge": [...],
+    "emotional_state": "cautiously_determined"
+  },
+  "conversation_context": {
+    "story_situation": "Sarah has just arrived in the small town to investigate the disappearance",
+    "previous_dialog": [],
+    "scene_setting": "Initial investigation phase"
+  },
+  "user_message": "How do you feel about investigating this missing person case?"
+}
 ```
 
 **Response:**
@@ -212,71 +170,211 @@ GET /stories/{story_id}/workflow/status
 {
   "success": true,
   "data": {
-    "workflow_id": "wf_456",
-    "current_phase": "outline_development",
-    "current_step": "rater_review",
-    "status": "awaiting_feedback",
-    "progress": 0.65,
-    "active_agents": ["consistency_rater", "flow_rater", "quality_rater"],
-    "completed_steps": [ ... ],
-    "pending_steps": [ ... ],
-    "estimated_completion": "2025-09-24T16:30:00Z"
+    "character_response": {
+      "character_id": "sarah_journalist",
+      "message": "I feel a mix of excitement and unease. This town feels like it's holding its breath, and everyone I've spoken to seems to be hiding something. There's definitely more to this disappearance than meets the eye.",
+      "emotional_state": "cautiously_determined",
+      "internal_thoughts": "Something about the way the sheriff avoided eye contact when I asked about the timeline bothers me.",
+      "personality_consistency_score": 0.95
+    },
+    "generation_metadata": {
+      "timestamp": "2025-09-24T10:30:00Z",
+      "processing_time": 1.2
+    }
   }
 }
 ```
 
-#### Submit User Feedback
+#### Generate Follow-up Character Dialog
 ```http
-POST /stories/{story_id}/workflow/feedback
+POST /character/dialog
 Content-Type: application/json
 
 {
-  "phase": "outline_development",
-  "feedback_type": "user_review",
-  "feedback": {
-    "overall_approval": false,
-    "specific_feedback": "The detective character needs more depth and personal stakes in the case",
-    "requested_changes": [
-      "Add personal connection between detective and victim",
-      "Increase emotional stakes for detective",
-      "Clarify detective's unique investigative approach"
+  "character_definition": {
+    "character_id": "sarah_journalist",
+    "name": "Sarah Chen",
+    "personality": {...},
+    "background": {...},
+    "current_knowledge": [...],
+    "emotional_state": "cautiously_determined"
+  },
+  "conversation_context": {
+    "story_situation": "Sarah investigating in small town",
+    "previous_dialog": [
+      {
+        "user": "How do you feel about investigating this missing person case?",
+        "character": "I feel a mix of excitement and unease. This town feels like it's holding its breath..."
+      }
     ],
-    "approval_status": "needs_revision"
-  }
+    "scene_setting": "Continuing investigation discussion"
+  },
+  "user_message": "What specifically makes you think people are hiding something?"
 }
 ```
 
-### Chapter Development
-
-#### Start Chapter Creation
+#### Generate Detailed Content
 ```http
-POST /stories/{story_id}/chapters/{chapter_number}/generate
+POST /generate/detailed-content
 Content-Type: application/json
 
 {
-  "user_guidance": "In this chapter, the detective interviews the first suspect and discovers a crucial clue",
-  "parameters": {
+  "story_draft": {
+    "title": "Secrets of Millbrook",
+    "outline": {...},
+    "characters": [...],
+    "themes": [...]
+  },
+  "selected_character_responses": [
+    {
+      "character_id": "sarah_journalist",
+      "responses": [
+        "I feel a mix of excitement and unease...",
+        "The way people avoid eye contact when I mention the missing person..."
+      ]
+    }
+  ],
+  "user_guidance": "Focus on Sarah's arrival in town and her first interviews with locals",
+  "generation_preferences": {
     "target_length": 2500,
-    "pov_character": "detective_main",
-    "mood": "tense_investigative",
-    "key_plot_points": [
-      "interview_suspect_1",
-      "discover_hidden_letter",
-      "character_development_detective"
+    "pov_character": "sarah_journalist",
+    "mood": "investigative_tension",
+    "style": "literary_mystery"
+  }
+}
+```
+
+## User Feedback Selection APIs
+
+#### Generate Agent Feedback
+```http
+POST /feedback/generate
+Content-Type: application/json
+
+{
+  "content_to_review": {
+    "type": "detailed_content",
+    "title": "Secrets of Millbrook - Chapter 1",
+    "text": "Sarah Chen's car crunched over the gravel...",
+    "word_count": 2347,
+    "metadata": {...}
+  },
+  "story_context": {
+    "outline": {...},
+    "characters": [...],
+    "themes": [...],
+    "previous_content": []
+  },
+  "feedback_agents": [
+    {
+      "agent_type": "character_consistency_rater",
+      "focus_areas": ["character_voice", "personality_consistency"],
+      "configuration": {...}
+    },
+    {
+      "agent_type": "narrative_flow_rater",
+      "focus_areas": ["pacing", "engagement"],
+      "configuration": {...}
+    }
+  ]
+}
+```
+
+#### Apply Selected Feedback
+```http
+POST /generate/apply-feedback
+Content-Type: application/json
+
+{
+  "original_content": {
+    "title": "Secrets of Millbrook - Chapter 1",
+    "text": "Sarah Chen's car crunched over the gravel...",
+    "metadata": {...}
+  },
+  "story_context": {
+    "outline": {...},
+    "characters": [...],
+    "themes": [...]
+  },
+  "selected_feedback": [
+    {
+      "feedback_source": "narrative_flow_rater",
+      "feedback_item": "Add more physical action to the interview scene",
+      "user_modification": "Add the action but keep it subtle and character-appropriate",
+      "priority": "high"
+    }
+  ],
+  "ignored_feedback": [
+    {
+      "feedback_source": "character_consistency_rater",
+      "feedback_item": "Clarify character motivation in scene",
+      "reason": "Character ambiguity is intentional for plot development"
+    }
+  ]
+}
+```
+
+## Health and Status APIs
+
+### Service Health
+
+#### Check API Health
+```http
+GET /health
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "timestamp": "2025-09-24T16:30:00Z",
+    "version": "1.0.0",
+    "services": {
+      "llm_backend": "available",
+      "generation_engine": "operational",
+      "feedback_agents": "ready"
+    }
+  }
+}
+```
+
+## Agent Configuration APIs
+
+#### Get Available Agent Types
+```http
+GET /agents/types
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "agent_types": [
+      {
+        "type": "character_consistency_rater",
+        "description": "Evaluates character voice and personality consistency",
+        "configurable_options": ["focus_areas", "strictness_level"],
+        "default_config": {...}
+      },
+      {
+        "type": "narrative_flow_rater",
+        "description": "Analyzes pacing and reader engagement",
+        "configurable_options": ["genre_focus", "target_audience"],
+        "default_config": {...}
+      }
     ]
-  },
-  "scene_context": {
-    "setting": "suspect's office",
-    "time_of_day": "afternoon",
-    "present_characters": ["detective_main", "suspect_1"],
-    "emotional_context": "professional_but_underlying_tension"
   }
 }
 ```
 
-#### Get Chapter Content
+## Configuration and Templates APIs
+
+#### Get Character Templates
 ```http
-GET /stories/{story_id}/chapters/{chapter_number}
+GET /templates/characters
 ```
 
 **Response:**
@@ -284,255 +382,46 @@ GET /stories/{story_id}/chapters/{chapter_number}
 {
   "success": true,
   "data": {
-    "chapter_number": 3,
-    "title": "The First Interview",
-    "content": {
-      "text": "The office felt smaller than Detective Morrison had expected...",
-      "word_count": 2347,
-      "character_perspectives": {
-        "detective_main": {
-          "internal_monologue": [ ... ],
-          "observations": [ ... ],
-          "emotional_state": "cautiously_optimistic"
-        }
-      }
-    },
-    "metadata": {
-      "generated_at": "2025-09-24T14:20:00Z",
-      "revision_count": 2,
-      "status": "awaiting_user_review",
-      "quality_scores": {
-        "consistency_rater": 8.2,
-        "flow_rater": 7.5,
-        "quality_rater": 8.0
-      }
-    },
-    "feedback": [ ... ]
-  }
-}
-```
-
-## Agent Management APIs
-
-### Agent Status and Control
-
-#### Get Agent Status
-```http
-GET /stories/{story_id}/agents/status
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "writer_agent": {
-      "status": "active",
-      "current_task": "chapter_3_revision",
-      "progress": 0.7,
-      "estimated_completion": "2025-09-24T15:10:00Z",
-      "memory_state": "loaded_and_current"
-    },
-    "character_agents": {
-      "detective_main": {
-        "status": "active",
-        "last_update": "2025-09-24T14:45:00Z",
-        "memory_updates": 3,
-        "perspective_ready": true
-      },
-      "suspect_1": {
-        "status": "standby",
-        "reason": "not_in_current_scene"
-      }
-    },
-    "rater_agents": {
-      "consistency_rater": {
-        "status": "completed",
-        "feedback_submitted": true,
-        "score": 8.2
-      },
-      "flow_rater": {
-        "status": "in_progress",
-        "progress": 0.4,
-        "estimated_completion": "2025-09-24T15:05:00Z"
-      }
-    }
-  }
-}
-```
-
-#### Cancel Agent Task
-```http
-POST /stories/{story_id}/agents/{agent_id}/cancel
-```
-
-#### Restart Failed Agent
-```http
-POST /stories/{story_id}/agents/{agent_id}/restart
-```
-
-## Feedback and Review APIs
-
-### Feedback Management
-
-#### Get Feedback Summary
-```http
-GET /stories/{story_id}/feedback?phase=chapter_development&chapter=3
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "overall_summary": {
-      "average_score": 7.9,
-      "status": "needs_minor_revision",
-      "consensus": "strong_character_work_pacing_needs_adjustment"
-    },
-    "rater_feedback": [
+    "character_templates": [
       {
-        "rater_id": "consistency_rater",
-        "score": 8.2,
-        "feedback": {
-          "strengths": ["character_voice_authentic", "internal_consistency_maintained"],
-          "concerns": ["minor_dialogue_inconsistency"],
-          "suggestions": ["clarify_detective_motivation_in_scene_2"],
-          "priority": "low"
-        }
+        "template_id": "investigative_journalist",
+        "name": "Investigative Journalist",
+        "personality_traits": ["curious", "persistent", "analytical"],
+        "background_elements": ["journalism_experience", "ethical_dilemmas"],
+        "speech_patterns": ["direct_questioning", "fact_focused"]
       },
       {
-        "rater_id": "flow_rater",
-        "score": 7.5,
-        "feedback": {
-          "strengths": ["engaging_opening", "good_tension_building"],
-          "concerns": ["pacing_slows_in_middle_section"],
-          "suggestions": ["tighten_interview_sequence", "add_physical_action"],
-          "priority": "medium"
-        }
+        "template_id": "small_town_mayor",
+        "name": "Small Town Mayor",
+        "personality_traits": ["diplomatic", "secretive", "protective"],
+        "background_elements": ["political_pressure", "community_ties"],
+        "speech_patterns": ["measured", "political_speak"]
       }
-    ],
-    "user_feedback": null,
-    "editor_feedback": {
-      "status": "pending",
-      "estimated_completion": "2025-09-24T15:30:00Z"
-    }
+    ]
   }
 }
 ```
 
-#### Submit Feedback Response
+### Utility APIs
+
+#### Validate Story Structure
 ```http
-POST /stories/{story_id}/feedback/respond
+POST /validate/story-structure
 Content-Type: application/json
 
 {
-  "feedback_id": "fb_789",
-  "response_type": "implementation",
-  "response": {
-    "changes_made": [
-      "Added physical gesture during interview to improve pacing",
-      "Clarified detective's emotional investment in case"
-    ],
-    "explanation": "Addressed pacing concerns by adding more dynamic elements to the interview scene",
-    "request_review": true
-  }
-}
-```
-
-## Memory Management APIs
-
-### Memory Operations
-
-#### Get Story Memory State
-```http
-GET /stories/{story_id}/memory
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "memory_summary": {
-      "total_size": "15.2KB",
-      "last_sync": "2025-09-24T14:50:00Z",
-      "consistency_score": 0.92
-    },
-    "agent_memories": {
-      "writer_agent": {
-        "working_memory_size": "3.2KB",
-        "episodic_events": 47,
-        "semantic_facts": 156,
-        "last_update": "2025-09-24T14:48:00Z"
-      },
-      "character_agents": {
-        "detective_main": {
-          "personal_memory_size": "2.1KB",
-          "internal_monologue_entries": 23,
-          "relationship_tracking": 4,
-          "memory_reliability": 0.87
-        }
-      }
-    },
-    "memory_conflicts": [],
-    "sync_status": "current"
-  }
-}
-```
-
-#### Export Memory State
-```http
-GET /stories/{story_id}/memory/export?format=json&include_full_context=true
-```
-
-#### Import Memory State
-```http
-POST /stories/{story_id}/memory/import
-Content-Type: application/json
-
-{
-  "memory_data": { ... },
-  "validation_level": "strict",
-  "conflict_resolution": "preserve_existing"
-}
-```
-
-## Configuration APIs
-
-### Configuration Management
-
-#### Get Configuration
-```http
-GET /stories/{story_id}/configuration
-```
-
-#### Update Configuration
-```http
-PUT /stories/{story_id}/configuration
-Content-Type: application/json
-
-{
-  "character_updates": {
-    "detective_main": {
-      "personality_profile.core_traits.primary": ["analytical", "determined", "empathetic"]
-    }
+  "story_content": {
+    "title": "Secrets of Millbrook",
+    "outline": {...},
+    "characters": [...],
+    "chapters": [...]
   },
-  "rater_updates": {
-    "consistency_rater": {
-      "standards_and_tolerances.quality_expectations.minimum_acceptable_score": 6.0
-    }
+  "validation_rules": {
+    "check_character_consistency": true,
+    "check_timeline_consistency": true,
+    "check_plot_coherence": true
   }
 }
-```
-
-## Export/Import APIs
-
-### Story Export
-
-#### Export Complete Story
-```http
-GET /stories/{story_id}/export?format=json&include_memory=true&include_config=true
 ```
 
 **Response:**
@@ -540,41 +429,60 @@ GET /stories/{story_id}/export?format=json&include_memory=true&include_config=tr
 {
   "success": true,
   "data": {
-    "export_metadata": {
-      "export_id": "exp_123",
-      "exported_at": "2025-09-24T16:00:00Z",
-      "format": "json",
-      "size": "2.4MB"
-    },
-    "download_url": "https://api.writer-assistant.com/v1/exports/exp_123/download",
-    "expires_at": "2025-09-25T16:00:00Z"
+    "validation_results": {
+      "overall_status": "valid_with_warnings",
+      "character_consistency": {
+        "status": "valid",
+        "issues": []
+      },
+      "timeline_consistency": {
+        "status": "warning",
+        "issues": [
+          {
+            "type": "minor_timeline_gap",
+            "description": "Two week gap between chapters 3 and 4",
+            "severity": "low",
+            "suggestions": ["add_transition_text", "bridge_timeline"]
+          }
+        ]
+      }
+    }
   }
 }
 ```
 
-#### Export Formats
-- **JSON**: Complete story with memory and configuration
-- **DOCX**: Formatted document for editing
-- **PDF**: Print-ready format
-- **EPUB**: E-book format
-- **TXT**: Plain text version
+## Data Privacy and Security APIs
 
-### Story Import
-
-#### Import Story
+#### Data Processing Information
 ```http
-POST /stories/import
-Content-Type: multipart/form-data
+GET /privacy/data-processing
+```
 
+**Response:**
+```json
 {
-  "file": <story_file>,
-  "import_options": {
-    "preserve_ids": false,
-    "merge_conflicts": "prompt_user",
-    "validation_level": "standard"
+  "success": true,
+  "data": {
+    "data_handling": {
+      "server_storage": "none",
+      "session_persistence": "none",
+      "data_retention": "no_retention",
+      "processing_location": "request_only"
+    },
+    "privacy_features": {
+      "client_side_storage": "complete",
+      "user_data_control": "full",
+      "export_import": "supported",
+      "data_portability": "json_format"
+    }
   }
 }
 ```
+
+## Rate Limiting and Performance
+
+
+
 
 ## WebSocket APIs
 
@@ -582,7 +490,7 @@ Content-Type: multipart/form-data
 
 #### Connection Endpoint
 ```
-WSS /stories/{story_id}/ws?token=<jwt_token>
+WSS /session/{session_id}/ws
 ```
 
 #### Message Formats
@@ -632,10 +540,8 @@ WSS /stories/{story_id}/ws?token=<jwt_token>
 ## Rate Limiting and Performance
 
 ### Rate Limits
-- **Story Operations**: 100 requests per hour per user
-- **Generation Requests**: 10 concurrent generations per user
-- **WebSocket Connections**: 5 concurrent connections per user
-- **Export Operations**: 20 exports per day per user
+- **Generation Requests**: 10 concurrent generations per session
+- **WebSocket Connections**: 5 concurrent connections per session
 
 ### Performance Targets
 - **API Response Time**: < 200ms for data retrieval
@@ -645,9 +551,8 @@ WSS /stories/{story_id}/ws?token=<jwt_token>
 - **Concurrent Users**: Support 1000+ concurrent story sessions
 
 ### Caching Strategy
-- **Story Data**: Redis cache for frequently accessed stories
 - **Agent Configurations**: In-memory cache with TTL
-- **Memory States**: Compressed cache for active sessions
+- **Session States**: Temporary cache for active generation sessions
 - **Generated Content**: Temporary cache for revision cycles
 
 ## Error Handling
@@ -757,31 +662,9 @@ WSS /stories/{story_id}/ws?token=<jwt_token>
 
 ### Authentication and Authorization
 
-#### JWT Token Structure
-```json
-{
-  "header": {
-    "alg": "RS256",
-    "typ": "JWT"
-  },
-  "payload": {
-    "user_id": "user_123",
-    "username": "writer_user",
-    "permissions": ["story.read", "story.write", "story.delete"],
-    "subscription_tier": "premium",
-    "exp": 1695657600,
-    "iat": 1695654000
-  }
-}
-```
-
-#### Permission System
-- **story.read**: View stories and content
-- **story.write**: Create and modify stories
-- **story.delete**: Delete stories
-- **story.share**: Share stories with others
-- **config.modify**: Modify system configurations
-- **admin.access**: Administrative functions
+#### No Authentication Required
+- Local development environment
+- Open access to generation APIs
 
 ### Input Validation
 
@@ -813,19 +696,12 @@ WSS /stories/{story_id}/ws?token=<jwt_token>
 
 ### Data Privacy
 
-#### Personal Data Handling
-- **Data Minimization**: Collect only necessary information
-- **Encryption**: AES-256 encryption for sensitive data
-- **Access Logging**: Log all access to personal data
-- **Data Retention**: Automatic deletion after specified periods
-- **User Rights**: Support for data export and deletion requests
-
-#### GDPR Compliance
-```http
-GET /users/{user_id}/data/export
-DELETE /users/{user_id}/data
-POST /users/{user_id}/data/anonymize
-```
+#### Stateless Data Handling
+- **No Server-Side Storage**: Server maintains no state or user data whatsoever
+- **Request-Only Processing**: Each request is processed independently with no persistence
+- **No Session Management**: No session cookies, tokens, or server-side session storage
+- **Complete Client Control**: All story data, memory, and state managed entirely by client
+- **Zero Data Retention**: No data retained on server after request completion
 
 ## API Documentation
 

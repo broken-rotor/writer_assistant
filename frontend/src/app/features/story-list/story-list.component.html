@@ -1,0 +1,193 @@
+<div class="story-list-container">
+  <!-- Header -->
+  <div class="header-section">
+    <h1>My Stories</h1>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="onCreateNew()">
+        <mat-icon>add</mat-icon>
+        New Story
+      </button>
+
+      <input
+        #fileInput
+        type="file"
+        accept=".json"
+        (change)="onImportStory($event)"
+        style="display: none;">
+
+      <button mat-button (click)="fileInput.click()">
+        <mat-icon>upload</mat-icon>
+        Import Story
+      </button>
+
+      <button mat-button (click)="onBackupAll()">
+        <mat-icon>backup</mat-icon>
+        Backup All
+      </button>
+    </div>
+  </div>
+
+  <!-- Storage Info -->
+  <mat-card class="storage-info-card" *ngIf="storageInfo$ | async as storageInfo">
+    <mat-card-content>
+      <div class="storage-stats">
+        <div class="stat-item">
+          <span class="stat-label">Stories:</span>
+          <span class="stat-value">{{ storageInfo.storiesCount }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Storage Used:</span>
+          <span class="stat-value">{{ (storageInfo.usedSpace / 1024).toFixed(1) }}KB</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Last Backup:</span>
+          <span class="stat-value">{{ storageInfo.lastBackup | date:'short' }}</span>
+        </div>
+      </div>
+      <mat-progress-bar
+        mode="determinate"
+        [value]="(storageInfo.usedSpace / storageInfo.availableSpace) * 100">
+      </mat-progress-bar>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Bulk Actions -->
+  <div class="bulk-actions" *ngIf="hasSelectedStories">
+    <mat-card>
+      <mat-card-content>
+        <span>{{ selectedStories.size }} stories selected</span>
+        <div class="bulk-buttons">
+          <button mat-button (click)="onBulkExport()">
+            <mat-icon>download</mat-icon>
+            Export Selected
+          </button>
+          <button mat-button color="warn" (click)="onBulkDelete()">
+            <mat-icon>delete</mat-icon>
+            Delete Selected
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Stories Table -->
+  <mat-card class="stories-table-card">
+    <mat-card-content>
+      <table mat-table [dataSource]="stories" class="stories-table">
+        <!-- Selection Column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox
+              [checked]="isAllSelected"
+              [indeterminate]="isIndeterminate"
+              (change)="onToggleAllSelection()">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let story">
+            <mat-checkbox
+              [checked]="selectedStories.has(story.id)"
+              (change)="onToggleStorySelection(story.id)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Title</th>
+          <td mat-cell *matCellDef="let story">
+            <div class="story-title-cell">
+              <h4>{{ story.title }}</h4>
+              <p class="story-theme">{{ story.theme | slice:0:80 }}{{ story.theme.length > 80 ? '...' : '' }}</p>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Genre Column -->
+        <ng-container matColumnDef="genre">
+          <th mat-header-cell *matHeaderCellDef>Genre</th>
+          <td mat-cell *matCellDef="let story">
+            <mat-chip-list>
+              <mat-chip>{{ story.genre }}</mat-chip>
+            </mat-chip-list>
+          </td>
+        </ng-container>
+
+        <!-- Phase Column -->
+        <ng-container matColumnDef="phase">
+          <th mat-header-cell *matHeaderCellDef>Progress</th>
+          <td mat-cell *matCellDef="let story">
+            <div class="phase-cell">
+              <span class="phase-label">{{ phaseLabels[story.currentPhase] }}</span>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="getPhaseProgress(story.currentPhase)"
+                [color]="getPhaseColor(story.currentPhase)">
+              </mat-progress-bar>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Last Modified Column -->
+        <ng-container matColumnDef="lastModified">
+          <th mat-header-cell *matHeaderCellDef>Last Modified</th>
+          <td mat-cell *matCellDef="let story">
+            {{ story.lastModified | date:'short' }}
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let story">
+            <div class="action-buttons">
+              <button
+                mat-raised-button
+                color="primary"
+                size="small"
+                (click)="onContinueStory(story)">
+                Continue
+              </button>
+
+              <button
+                mat-icon-button
+                [matMenuTriggerFor]="actionMenu"
+                aria-label="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+
+              <mat-menu #actionMenu="matMenu">
+                <button mat-menu-item (click)="onDuplicateStory(story)">
+                  <mat-icon>content_copy</mat-icon>
+                  Duplicate
+                </button>
+                <button mat-menu-item (click)="onExportStory(story)">
+                  <mat-icon>download</mat-icon>
+                  Export
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item (click)="onDeleteStory(story)" class="delete-action">
+                  <mat-icon>delete</mat-icon>
+                  Delete
+                </button>
+              </mat-menu>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="stories.length === 0">
+        <mat-icon>library_books</mat-icon>
+        <h3>No stories yet</h3>
+        <p>Create your first story to get started with collaborative writing!</p>
+        <button mat-raised-button color="primary" (click)="onCreateNew()">
+          <mat-icon>add</mat-icon>
+          Create Your First Story
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,115 @@
+<div class="story-input-container">
+  <mat-card class="story-input-card">
+    <mat-card-header>
+      <mat-card-title>Create New Story</mat-card-title>
+      <mat-card-subtitle>Provide your story concept and preferences</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="storyForm" (ngSubmit)="onSubmit()" class="story-form">
+        <!-- Title Input -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Story Title</mat-label>
+          <input matInput formControlName="title" placeholder="Enter your story title">
+          <mat-error *ngIf="storyForm.get('title')?.hasError('required')">
+            Title is required
+          </mat-error>
+          <mat-error *ngIf="storyForm.get('title')?.hasError('minlength')">
+            Title must be at least 3 characters long
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Genre Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Genre</mat-label>
+          <mat-select formControlName="genre">
+            <mat-option *ngFor="let genre of genres" [value]="genre">
+              {{ genre }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="storyForm.get('genre')?.hasError('required')">
+            Genre is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Length Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Target Length</mat-label>
+          <mat-select formControlName="length">
+            <mat-option *ngFor="let length of lengths" [value]="length.value">
+              {{ length.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="storyForm.get('length')?.hasError('required')">
+            Length is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Theme/Topic Input -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Theme, Topic, or Basic Outline</mat-label>
+          <textarea
+            matInput
+            formControlName="theme"
+            rows="4"
+            placeholder="Describe your story concept, theme, or provide a basic outline...">
+          </textarea>
+          <mat-error *ngIf="storyForm.get('theme')?.hasError('required')">
+            Theme or concept is required
+          </mat-error>
+          <mat-error *ngIf="storyForm.get('theme')?.hasError('minlength')">
+            Please provide at least 10 characters
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Style Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Writing Style</mat-label>
+          <mat-select formControlName="style">
+            <mat-option *ngFor="let style of styles" [value]="style">
+              {{ style }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="storyForm.get('style')?.hasError('required')">
+            Writing style is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Focus Areas Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Focus Areas</mat-label>
+          <mat-select formControlName="focusAreas" multiple>
+            <mat-option *ngFor="let area of focusAreaOptions" [value]="area">
+              {{ area }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="storyForm.get('focusAreas')?.hasError('required')">
+            Please select at least one focus area
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="storyForm.invalid || isGenerating"
+            class="generate-button">
+            <mat-icon *ngIf="isGenerating">autorenew</mat-icon>
+            <span *ngIf="!isGenerating">Generate Draft</span>
+            <span *ngIf="isGenerating">Generating...</span>
+          </button>
+
+          <button
+            mat-button
+            type="button"
+            routerLink="/stories"
+            [disabled]="isGenerating">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

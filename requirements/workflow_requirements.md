@@ -2,31 +2,64 @@
 
 ## Overview
 
-The Writer Assistant uses LangGraph to orchestrate complex multi-agent workflows that coordinate story development through two distinct phases: outline development and chapter creation. The workflow system manages agent interactions, memory synchronization, and feedback integration.
+The Writer Assistant uses client-side workflow management to coordinate story development through a user-driven, iterative process with stateless backend services. All workflow state, story data, and user decisions are managed entirely on the client-side, while the backend provides independent AI agent services without maintaining any session state or user data.
 
 ## Workflow Architecture
 
 ### Core Workflow Principles
 
-1. **Phase-Based Development**: Clear separation between outline and chapter development phases
-2. **Multi-Agent Coordination**: Parallel and sequential agent execution as appropriate
-3. **Dynamic Routing**: Workflow paths determined by story needs and agent feedback
-4. **State Persistence**: Maintain workflow state across user sessions
-5. **Error Recovery**: Graceful handling of agent failures and system interruptions
+1. **User-Driven Control**: Users initiate and approve every major step in the story development process
+2. **Iterative Refinement**: Continuous user-agent collaboration through multiple revision cycles
+3. **Agent Selection Freedom**: Users choose which character agents and feedback sources to engage
+4. **Flexible Story Progression**: Support for any story part - themes, topics, outlines, or detailed scenes
+5. **Client-Side Orchestration**: All workflow coordination managed by client application
+6. **Stateless Service Integration**: Backend services provide responses without maintaining workflow state
+7. **Client-Side State Persistence**: Complete workflow state maintained in browser local storage
+8. **Client-Side Error Recovery**: Error handling and recovery managed entirely by frontend
+9. **Client-Side Conversation Branching**: All branching logic and state managed in browser storage
+10. **Client-Side Memory Management**: Complete user access to examine and modify all memories locally
+11. **Client-Side Branch Isolation**: Independent workflow and memory states managed by client
 
-### LangGraph State Schema
+### Client-Side Workflow State Schema
 
-#### Global Workflow State
+#### Browser Local Storage State Structure
 ```json
 {
-  "story_context": {
-    "story_id": "uuid_123",
-    "title": "Story Title",
-    "genre": "mystery",
-    "user_id": "user_456",
-    "creation_date": "2025-09-24",
-    "current_phase": "outline_development", // or "chapter_development"
-    "development_stage": "initial_creation" // "revision", "approved", etc.
+  "client_workflow_state": {
+    "story_context": {
+      "story_id": "uuid_123",
+      "title": "Story Title",
+      "genre": "mystery",
+      "creation_date": "2025-09-24",
+      "current_phase": "outline_development",
+      "development_stage": "initial_creation",
+      "last_modified": "2025-09-24T10:30:00Z"
+    },
+  "conversation_tree": {
+    "current_branch_id": "main_branch",
+    "branch_metadata": {
+      "main_branch": {
+        "created_at": "2025-09-24T09:00:00Z",
+        "branched_from": null,
+        "description": "Main story development path"
+      },
+      "alt_branch_001": {
+        "created_at": "2025-09-24T14:30:00Z",
+        "branched_from": "prompt_005",
+        "description": "Alternative character development"
+      }
+    },
+    "prompt_history": {
+      "main_branch": [
+        {
+          "prompt_id": "prompt_001",
+          "timestamp": "2025-09-24T09:00:00Z",
+          "user_input": "Create a mystery story about a detective",
+          "state_snapshot": {...},
+          "editable": true
+        }
+      ]
+    }
   },
   "phase_state": {
     "outline_phase": {
@@ -96,119 +129,236 @@ The Writer Assistant uses LangGraph to orchestrate complex multi-agent workflows
 }
 ```
 
-## Phase 1: Outline Development Workflow
+## User-Driven Story Development Workflow
 
-### Outline Creation Flow
+### Story Part Development Flow
 
 ```mermaid
 graph TD
-    A[User Input Processing] --> B[Context Assembly]
-    B --> C[Writer Agent: Generate Outline]
-    C --> D{Outline Quality Check}
-    D -->|Pass| E[Parallel Rater Review]
-    D -->|Fail| F[Writer Agent: Revise Outline]
-    F --> D
-    E --> G[Rater Feedback Synthesis]
-    G --> H[User Review & Feedback]
-    H --> I{User Approval?}
-    I -->|No| J[Writer Agent: Incorporate Feedback]
-    J --> E
-    I -->|Yes| K{Rater Consensus?}
-    K -->|No| L[Conflict Resolution]
-    L --> J
-    K -->|Yes| M[Outline Approved & Locked]
+    A[User Proposes Theme/Topic/Outline] --> B[Writer Agent: Generate Expanded Draft]
+    B --> C[Present Draft to User]
+    C --> D{User Satisfied with Draft?}
+    D -->|No| E[User Provides Feedback]
+    E --> F[Writer Agent: Revise Draft]
+    F --> C
+    D -->|Yes| G[User Selects Character Agents]
+    G --> H[Character Agents: React to Proposed Events]
+    H --> I[Present Character Reactions to User]
+    I --> J{User Wants to Iterate?}
+    J -->|Yes| K[User Engages with Character Agents]
+    K --> L[Character Agents: Respond to User Dialog]
+    L --> I
+    J -->|No| M[User Selects Responses to Keep]
+    M --> N[Writer Agent: Generate Detailed Version]
+    N --> O[Present Detailed Version to User]
+    O --> P{User Satisfied?}
+    P -->|No| Q[User Requests Modifications]
+    Q --> R[Writer Agent: Make Changes]
+    R --> O
+    P -->|Yes| S{User Wants Feedback?}
+    S -->|No| T[Story Part Complete]
+    S -->|Yes| U[User Selects Raters/Editors]
+    U --> V[Selected Agents: Provide Feedback]
+    V --> W[Present Feedback to User]
+    W --> X{User Wants to Apply Feedback?}
+    X -->|Yes| Y[User Selects Which Feedback to Apply]
+    Y --> Z[Writer Agent: Incorporate Selected Feedback]
+    Z --> O
+    X -->|No| T
 ```
 
-### Outline Workflow State Management
+### User-Driven Workflow State Management
 
 **State Transitions**:
 ```python
 # Conceptual state transitions
-outline_states = {
-    "initial_creation": {
+story_development_states = {
+    "user_input": {
+        "entry_conditions": ["user_provides_theme_topic_or_outline"],
+        "active_agents": [],
+        "next_states": ["draft_generation"]
+    },
+    "draft_generation": {
         "entry_conditions": ["user_input_received"],
         "active_agents": ["writer_agent"],
-        "next_states": ["rater_review", "revision_needed"]
+        "next_states": ["draft_review", "draft_revision"]
     },
-    "rater_review": {
-        "entry_conditions": ["outline_generated"],
-        "active_agents": ["all_rater_agents"],
-        "parallel_execution": True,
-        "next_states": ["user_review", "revision_needed"]
+    "draft_review": {
+        "entry_conditions": ["draft_generated"],
+        "wait_for": "user_approval_or_feedback",
+        "next_states": ["draft_revision", "character_selection", "detailed_generation"]
     },
-    "user_review": {
-        "entry_conditions": ["rater_feedback_complete"],
-        "wait_for": "user_feedback",
-        "timeout": "24_hours",
-        "next_states": ["approved", "revision_needed"]
-    },
-    "revision_needed": {
-        "entry_conditions": ["feedback_received"],
+    "draft_revision": {
+        "entry_conditions": ["user_feedback_received"],
         "active_agents": ["writer_agent"],
-        "next_states": ["rater_review", "user_review"]
+        "next_states": ["draft_review"]
     },
-    "approved": {
-        "entry_conditions": ["user_approval", "rater_consensus"],
-        "actions": ["lock_outline", "initialize_chapter_phase"],
+    "character_selection": {
+        "entry_conditions": ["user_approves_draft"],
+        "wait_for": "user_selects_character_agents",
+        "next_states": ["character_reaction"]
+    },
+    "character_reaction": {
+        "entry_conditions": ["character_agents_selected"],
+        "active_agents": ["selected_character_agents"],
+        "parallel_execution": True,
+        "next_states": ["character_dialog", "response_selection"]
+    },
+    "character_dialog": {
+        "entry_conditions": ["user_wants_to_iterate"],
+        "active_agents": ["selected_character_agents"],
+        "wait_for": "user_dialog_input",
+        "next_states": ["character_reaction", "response_selection"]
+    },
+    "response_selection": {
+        "entry_conditions": ["user_satisfied_with_character_responses"],
+        "wait_for": "user_selects_responses_to_keep",
+        "next_states": ["detailed_generation"]
+    },
+    "detailed_generation": {
+        "entry_conditions": ["responses_selected_or_draft_approved"],
+        "active_agents": ["writer_agent"],
+        "next_states": ["detailed_review"]
+    },
+    "detailed_review": {
+        "entry_conditions": ["detailed_version_generated"],
+        "wait_for": "user_review",
+        "next_states": ["detailed_modification", "feedback_selection", "completion"]
+    },
+    "detailed_modification": {
+        "entry_conditions": ["user_requests_changes"],
+        "active_agents": ["writer_agent"],
+        "wait_for": "user_modification_requests",
+        "next_states": ["detailed_review"]
+    },
+    "feedback_selection": {
+        "entry_conditions": ["user_wants_feedback"],
+        "wait_for": "user_selects_raters_editors",
+        "next_states": ["feedback_generation"]
+    },
+    "feedback_generation": {
+        "entry_conditions": ["feedback_agents_selected"],
+        "active_agents": ["selected_rater_editor_agents"],
+        "parallel_execution": True,
+        "next_states": ["feedback_review"]
+    },
+    "feedback_review": {
+        "entry_conditions": ["feedback_received"],
+        "wait_for": "user_decides_on_feedback",
+        "next_states": ["feedback_application", "completion"]
+    },
+    "feedback_application": {
+        "entry_conditions": ["user_selects_feedback_to_apply"],
+        "active_agents": ["writer_agent"],
+        "next_states": ["detailed_review"]
+    },
+    "completion": {
+        "entry_conditions": ["user_satisfied_no_feedback_wanted"],
+        "actions": ["save_story_part", "prepare_for_next_part"],
         "final_state": True
     }
 }
 ```
 
-## Phase 2: Chapter Development Workflow
+## User Control Points and Decision Gates
 
-### Chapter Creation Flow
+### User Decision Framework
 
-```mermaid
-graph TD
-    A[Chapter Context Assembly] --> B[Character Agent Activation]
-    B --> C[Parallel Character Processing]
-    C --> D[Writer Agent: Synthesize Perspectives]
-    D --> E[Chapter Content Generation]
-    E --> F[Parallel Rater Review]
-    F --> G[Rater Feedback Synthesis]
-    G --> H[User Review]
-    H --> I{User Satisfaction?}
-    I -->|No| J[Writer Agent: Revise]
-    J --> F
-    I -->|Yes| K[Editor Final Review]
-    K --> L{Editor Approval?}
-    L -->|No| M[Writer Agent: Polish]
-    M --> K
-    L -->|Yes| N[Chapter Approved]
-    N --> O{Story Complete?}
-    O -->|No| P[Next Chapter]
-    P --> A
-    O -->|Yes| Q[Story Completion]
-```
+The workflow places the user at the center of every major decision, providing multiple control points throughout the story development process:
 
-### Chapter Workflow Coordination
+**Primary User Control Points**:
+1. **Initial Input**: User provides theme, topic, or basic outline
+2. **Draft Approval**: User reviews and approves/modifies writer's expanded draft
+3. **Character Selection**: User chooses which character agents to engage
+4. **Dialog Management**: User controls conversation flow with character agents
+5. **Response Curation**: User selects which character responses to incorporate
+6. **Content Review**: User reviews detailed generated content
+7. **Modification Requests**: User specifies exact changes needed
+8. **Feedback Selection**: User chooses which raters/editors to consult
+9. **Feedback Application**: User decides which feedback to implement
 
-**Agent Orchestration**:
-- **Scene-Based Activation**: Only activate character agents present in current scene
-- **Parallel Character Processing**: Characters process scene simultaneously without cross-contamination
-- **Sequential Review Stages**: Raters → User → Editor in defined sequence
-- **Memory Update Cascades**: Automatic memory synchronization after each major step
-
-**Dynamic Routing Logic**:
+**User Decision Gates**:
 ```json
 {
-  "routing_conditions": {
-    "character_activation": {
-      "condition": "character_present_in_scene",
-      "agents": ["relevant_character_agents"],
-      "execution": "parallel"
+  "decision_gates": {
+    "draft_approval_gate": {
+      "prompt": "Review the expanded draft outline",
+      "options": ["approve", "request_changes", "iterate_further"],
+      "required": true,
+      "blocking": true
     },
-    "rater_selection": {
-      "condition": "story_genre_and_phase",
-      "agents": ["genre_specific_raters", "always_active_raters"],
-      "execution": "parallel"
+    "character_engagement_gate": {
+      "prompt": "Select character agents to react to the proposed events",
+      "options": ["select_characters", "skip_character_input", "proceed_to_detailed_generation"],
+      "required": false,
+      "blocking": false
     },
-    "revision_routing": {
-      "condition": "feedback_severity_level",
-      "high_severity": ["writer_agent", "relevant_raters", "editor_agent"],
-      "low_severity": ["writer_agent"],
-      "execution": "sequential"
+    "character_dialog_gate": {
+      "prompt": "Continue dialog with character agents?",
+      "options": ["continue_dialog", "select_responses", "add_more_characters"],
+      "required": false,
+      "blocking": false
+    },
+    "detailed_content_gate": {
+      "prompt": "Review the detailed generated content",
+      "options": ["approve", "request_modifications", "regenerate"],
+      "required": true,
+      "blocking": true
+    },
+    "feedback_consultation_gate": {
+      "prompt": "Consult raters and editors for feedback?",
+      "options": ["select_feedback_agents", "skip_feedback", "complete_story_part"],
+      "required": false,
+      "blocking": false
+    },
+    "feedback_application_gate": {
+      "prompt": "Apply feedback to the content?",
+      "options": ["select_feedback_to_apply", "ignore_feedback", "request_clarification"],
+      "required": false,
+      "blocking": false
+    }
+  }
+}
+```
+
+### User-Driven Agent Coordination
+
+**User-Controlled Agent Orchestration**:
+- **User-Selected Activation**: Only activate agents chosen by the user
+- **Parallel Character Processing**: Selected characters process content simultaneously
+- **User-Directed Review Stages**: User chooses which raters/editors to engage and in what order
+- **User-Controlled Memory Updates**: Memory synchronization triggered by user decisions
+- **Flexible Agent Engagement**: Users can add or remove agents at any workflow stage
+
+**Dynamic Routing Based on User Choices**:
+```json
+{
+  "user_driven_routing": {
+    "character_agent_selection": {
+      "trigger": "user_selects_character_agents",
+      "agents": ["user_selected_characters"],
+      "execution": "parallel",
+      "user_options": ["add_more_agents", "remove_agents", "change_agent_focus"]
+    },
+    "feedback_agent_selection": {
+      "trigger": "user_requests_feedback",
+      "agents": ["user_selected_raters_and_editors"],
+      "execution": "parallel",
+      "user_options": ["selective_feedback", "comprehensive_review", "focused_critique"]
+    },
+    "revision_approach": {
+      "trigger": "user_requests_changes",
+      "routing_options": {
+        "direct_writer_revision": ["writer_agent"],
+        "character_informed_revision": ["writer_agent", "selected_character_agents"],
+        "feedback_guided_revision": ["writer_agent", "selected_feedback_agents"]
+      },
+      "user_choice": "required"
+    },
+    "iterative_refinement": {
+      "trigger": "user_wants_to_continue_iterating",
+      "available_agents": ["all_agent_types"],
+      "user_control": "select_any_combination_for_next_iteration"
     }
   }
 }
@@ -216,58 +366,74 @@ graph TD
 
 ## Workflow Execution Patterns
 
-### Parallel Processing
+### Client-Side Parallel Processing
 
-**Simultaneous Agent Execution**:
-- Character agents process scenes independently
-- Rater agents evaluate content from different perspectives
-- Memory updates happen without blocking other agents
-- Error in one agent doesn't block others
+**Client-Orchestrated Simultaneous Agent Requests**:
+- Client sends parallel requests to multiple stateless agent endpoints
+- Character agents and rater agents process requests independently without server coordination
+- Client manages response collection and user presentation
+- Failed requests handled by client retry logic without affecting other operations
 
-**Coordination Requirements**:
-- Shared context access without modification conflicts
-- Result aggregation and synthesis
-- Timeout handling for slow agents
-- Partial success handling
+**Client-Centered Coordination**:
+- Client provides all context needed for each agent request
+- Client presents results to user for selection and curation
+- Client manages request timeouts and retry logic
+- Client handles partial results and failed requests independently
 
-### Sequential Processing
+### Client-Managed Sequential Processing
 
-**Ordered Execution Chains**:
-- Writer synthesis after character processing
-- User review after rater feedback
-- Editor review after user approval
-- Memory synchronization after major updates
+**Client-Orchestrated Execution Chains**:
+- Client sends requests to stateless agent endpoints in user-defined sequence
+- Client presents all agent outputs to user before proceeding
+- Client manages workflow progression based on user decisions
+- Client updates local state when user approves changes
 
-**Dependency Management**:
-- Clear input/output specifications for each step
-- State validation before step execution
-- Rollback capability for failed steps
-- Progress tracking and resumption
+**Client-Side Dependency Management**:
+- Client presents results from each stateless request to user
+- Client validates user approval before sending next request
+- Client manages rollback to any previous state from local storage
+- Client tracks progress and provides user options to continue or modify
 
-### Conditional Workflows
+### User-Driven Conditional Workflows
 
-**Dynamic Path Selection**:
+**User-Controlled Dynamic Path Selection**:
 ```json
 {
-  "conditional_flows": {
-    "revision_complexity": {
-      "simple_revision": {
+  "user_controlled_flows": {
+    "revision_approach": {
+      "user_choice_simple": {
         "path": ["writer_agent", "user_review"],
-        "condition": "minor_feedback_only"
+        "trigger": "user_selects_simple_revision"
       },
-      "complex_revision": {
-        "path": ["writer_agent", "rater_review", "user_review", "editor_review"],
-        "condition": "major_structural_changes"
+      "user_choice_comprehensive": {
+        "path": ["writer_agent", "user_selected_feedback_agents", "user_review"],
+        "trigger": "user_selects_comprehensive_revision"
+      },
+      "user_choice_character_informed": {
+        "path": ["character_agents", "writer_agent", "user_review"],
+        "trigger": "user_wants_character_input_on_revisions"
       }
     },
-    "story_genre_adaptation": {
-      "mystery_story": {
-        "additional_agents": ["mystery_genre_rater", "clue_consistency_checker"],
-        "special_steps": ["red_herring_validation", "solution_fairness_check"]
+    "story_development_customization": {
+      "user_genre_focus": {
+        "available_agents": ["all_genre_specific_agents"],
+        "selection_method": "user_chooses_relevant_agents",
+        "special_features": ["user_defined_evaluation_criteria"]
       },
-      "romance_story": {
-        "additional_agents": ["romance_genre_rater", "relationship_dynamics_checker"],
-        "special_steps": ["chemistry_validation", "emotional_satisfaction_check"]
+      "user_creative_exploration": {
+        "available_agents": ["character_agents", "experimental_feedback_agents"],
+        "selection_method": "user_experiments_with_different_combinations",
+        "special_features": ["branch_and_compare_different_approaches"]
+      }
+    },
+    "feedback_integration_options": {
+      "selective_application": {
+        "process": "user_reviews_each_feedback_item_individually",
+        "user_control": "accept_reject_or_modify_each_suggestion"
+      },
+      "comprehensive_integration": {
+        "process": "user_selects_all_feedback_to_apply_simultaneously",
+        "user_control": "review_integrated_result_before_final_approval"
       }
     }
   }
@@ -374,5 +540,220 @@ graph TD
 - **Configuration Management**: Dynamic configuration loading during workflow
 - **Audit Trail**: Complete logging of workflow decisions and actions
 
-This workflow system ensures smooth coordination between all agents while maintaining flexibility for different story types and user preferences, with robust error handling and recovery capabilities.
+## Conversation Branching Workflows
+
+### Branch Creation and Management
+
+**Branch Creation Triggers**:
+- **Manual Branching**: User explicitly creates new branch from any point
+- **Automatic Branching**: System creates branch when user edits previous prompt
+- **Experimental Branching**: User creates temporary branches for testing ideas
+- **Recovery Branching**: Create branch from backup state during error recovery
+
+**Branch Creation Workflow**:
+```mermaid
+graph TD
+    A[User Selects Previous Prompt] --> B{Edit or Branch?}
+    B -->|Edit| C[Create Automatic Branch]
+    B -->|Branch| D[Create Manual Branch]
+    C --> E[Snapshot Current State]
+    D --> E
+    E --> F[Initialize Branch Memory]
+    F --> G[Restore State to Selected Point]
+    G --> H[Apply User Changes]
+    H --> I[Resume Workflow from Branch Point]
+```
+
+**Branch State Management**:
+```json
+{
+  "branch_workflow_state": {
+    "branch_isolation": {
+      "memory_separation": "each_branch_has_independent_agent_memories",
+      "story_state_separation": "separate_story_content_per_branch",
+      "workflow_independence": "parallel_workflow_execution_possible"
+    },
+    "cross_branch_operations": {
+      "memory_comparison": "compare_agent_memories_across_branches",
+      "state_merging": "selective_merge_of_story_elements",
+      "branch_switching": "instant_context_switching_between_branches"
+    }
+  }
+}
+```
+
+### Memory Editing Workflows
+
+**Memory Inspection Flow**:
+```mermaid
+graph TD
+    A[User Opens Memory Inspector] --> B[Select Agent/Memory Type]
+    B --> C[Display Memory in Editable Format]
+    C --> D{User Action}
+    D -->|Edit| E[Validate Changes]
+    D -->|Compare| F[Show Cross-Agent Memory View]
+    D -->|Branch| G[Create Memory Experiment Branch]
+    E --> H[Update Memory]
+    F --> I[Highlight Memory Conflicts]
+    G --> J[Test Changes in Isolation]
+    H --> K[Propagate Memory Changes]
+    I --> L[Suggest Resolution Options]
+    J --> M[Option to Merge or Discard]
+    K --> N[Update Related Memories]
+    L --> O[Apply Resolution]
+    M --> P[User Decision Point]
+    N --> Q[Refresh UI Display]
+    O --> Q
+    P --> Q
+```
+
+**Memory Change Propagation**:
+```json
+{
+  "memory_propagation_workflow": {
+    "change_detection": {
+      "triggers": ["direct_memory_edit", "relationship_change", "personality_update"],
+      "analysis": "identify_affected_memories_across_all_agents",
+      "validation": "ensure_changes_maintain_character_consistency"
+    },
+    "propagation_steps": [
+      {
+        "step": "impact_analysis",
+        "action": "calculate_cascading_effects_of_memory_change",
+        "output": "list_of_affected_memories_and_relationships"
+      },
+      {
+        "step": "consistency_checking",
+        "action": "validate_memory_coherence_across_agents",
+        "output": "conflict_report_and_resolution_suggestions"
+      },
+      {
+        "step": "memory_updates",
+        "action": "apply_changes_to_related_memories",
+        "output": "updated_memory_states_for_all_affected_agents"
+      },
+      {
+        "step": "workflow_integration",
+        "action": "ensure_changes_compatible_with_ongoing_workflow",
+        "output": "workflow_adjustment_recommendations"
+      }
+    ]
+  }
+}
+```
+
+### Prompt Editing and Restart Workflows
+
+**Prompt Edit Detection**:
+```json
+{
+  "prompt_edit_workflow": {
+    "edit_detection": {
+      "triggers": ["user_clicks_edit_on_previous_prompt"],
+      "pre_edit_actions": [
+        "create_state_snapshot",
+        "save_current_branch_state",
+        "prepare_rollback_checkpoint"
+      ]
+    },
+    "edit_processing": {
+      "steps": [
+        "pause_current_workflow",
+        "create_new_branch_from_edit_point",
+        "restore_story_state_to_selected_prompt",
+        "apply_user_modifications",
+        "restart_workflow_from_modified_prompt"
+      ]
+    },
+    "continuation_options": {
+      "restart_from_edit": "continue_workflow_with_modified_prompt",
+      "merge_changes": "apply_modifications_to_current_branch",
+      "parallel_development": "develop_both_branches_simultaneously"
+    }
+  }
+}
+```
+
+**State Restoration Workflow**:
+```mermaid
+graph TD
+    A[User Edits Previous Prompt] --> B[Create Branch Point]
+    B --> C[Snapshot Current State]
+    C --> D[Restore to Edit Point]
+    D --> E[Load Historical State]
+    E --> F[Apply User Modifications]
+    F --> G[Reinitialize Agent Memories]
+    G --> H[Restart Workflow from Modified Point]
+    H --> I[Resume Agent Processing]
+    I --> J[Continue Story Development]
+```
+
+### Advanced Branching Features
+
+**Branch Comparison Workflows**:
+```json
+{
+  "branch_comparison": {
+    "comparison_types": {
+      "story_content": "side_by_side_text_comparison",
+      "character_development": "character_arc_progression_comparison",
+      "memory_states": "agent_memory_difference_analysis",
+      "workflow_paths": "decision_tree_comparison"
+    },
+    "comparison_workflow": [
+      "select_branches_to_compare",
+      "identify_divergence_points",
+      "analyze_content_differences",
+      "highlight_character_development_variations",
+      "show_memory_state_differences",
+      "provide_merge_recommendations"
+    ]
+  }
+}
+```
+
+**Branch Merging Workflows**:
+```mermaid
+graph TD
+    A[User Initiates Branch Merge] --> B[Analyze Branch Differences]
+    B --> C[Identify Conflicts]
+    C --> D[Present Resolution Options]
+    D --> E{User Selects Resolution}
+    E -->|Automatic| F[Apply AI-Suggested Merge]
+    E -->|Manual| G[User-Guided Conflict Resolution]
+    E -->|Selective| H[Choose Elements from Each Branch]
+    F --> I[Validate Merged State]
+    G --> I
+    H --> I
+    I --> J[Update Memory States]
+    J --> K[Create Merged Branch]
+    K --> L[Archive Source Branches]
+```
+
+### Memory Experiment Workflows
+
+**Memory Testing Framework**:
+```json
+{
+  "memory_experiments": {
+    "experiment_types": {
+      "character_personality_variation": "test_different_character_traits",
+      "relationship_dynamics_exploration": "explore_alternative_character_relationships",
+      "emotional_state_testing": "experiment_with_character_emotional_states",
+      "memory_reliability_adjustment": "test_character_memory_accuracy_variations"
+    },
+    "experiment_workflow": [
+      "create_experiment_branch",
+      "modify_target_memories",
+      "run_generation_simulation",
+      "analyze_narrative_impact",
+      "compare_with_baseline",
+      "present_results_to_user",
+      "option_to_apply_or_discard_changes"
+    ]
+  }
+}
+```
+
+This enhanced workflow system ensures smooth coordination between all agents while providing complete user control over memory states and conversation flow, with robust branching and experimentation capabilities for creative exploration.
     

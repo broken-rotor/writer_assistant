@@ -1,0 +1,211 @@
+<div class="content-generation-container" *ngIf="story">
+  <!-- Story Header -->
+  <mat-card class="story-header-card">
+    <mat-card-header>
+      <mat-card-title>{{ story.title }}</mat-card-title>
+      <mat-card-subtitle>Content Generation Phase - Create detailed story content</mat-card-subtitle>
+    </mat-card-header>
+  </mat-card>
+
+  <!-- Selected Responses Summary -->
+  <mat-card class="selected-responses-card" *ngIf="hasSelectedResponses">
+    <mat-card-header>
+      <mat-card-title>Character Responses to Include</mat-card-title>
+      <mat-card-subtitle>{{ responsesToUse.length }} character responses will be incorporated</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="responses-summary">
+        <div class="response-item" *ngFor="let response of responsesToUse">
+          <div class="response-header">
+            <span class="character-name">{{ getCharacterName(response.characterId) }}</span>
+            <span class="response-timestamp">{{ response.timestamp | date:'short' }}</span>
+          </div>
+          <p class="response-preview">{{ response.content | slice:0:150 }}...</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Generation Guidance Form -->
+  <mat-card class="guidance-card">
+    <mat-card-header>
+      <mat-card-title>Content Generation Guidance</mat-card-title>
+      <mat-card-subtitle>Provide direction for the detailed content generation</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="guidanceForm" class="guidance-form">
+        <!-- User Guidance -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Generation Instructions</mat-label>
+          <textarea
+            matInput
+            formControlName="userGuidance"
+            rows="4"
+            placeholder="Describe how you want the detailed content to be developed...">
+          </textarea>
+          <mat-error *ngIf="guidanceForm.get('userGuidance')?.hasError('required')">
+            Generation guidance is required
+          </mat-error>
+          <mat-error *ngIf="guidanceForm.get('userGuidance')?.hasError('minlength')">
+            Please provide more detailed guidance
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Generation Preferences -->
+        <div class="preferences-grid">
+          <!-- Target Length -->
+          <mat-form-field appearance="outline">
+            <mat-label>Target Length</mat-label>
+            <mat-select formControlName="targetLength">
+              <mat-option *ngFor="let length of generationPreferences.targetLength" [value]="length.value">
+                {{ length.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Mood -->
+          <mat-form-field appearance="outline">
+            <mat-label>Mood/Tone</mat-label>
+            <mat-select formControlName="mood">
+              <mat-option *ngFor="let mood of generationPreferences.mood" [value]="mood">
+                {{ mood }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Style -->
+          <mat-form-field appearance="outline">
+            <mat-label>Writing Style</mat-label>
+            <mat-select formControlName="style">
+              <mat-option *ngFor="let style of generationPreferences.style" [value]="style">
+                {{ style }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Generation Button -->
+        <div class="generation-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="!canGenerate"
+            (click)="onGenerateContent()"
+            class="generate-button">
+            <mat-icon *ngIf="isGenerating">autorenew</mat-icon>
+            <span *ngIf="!isGenerating">Generate Detailed Content</span>
+            <span *ngIf="isGenerating">Generating Content...</span>
+          </button>
+
+          <button
+            mat-button
+            *ngIf="hasGeneratedContent"
+            (click)="onModifyContent()">
+            <mat-icon>edit</mat-icon>
+            Modify Parameters
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Generated Content Display -->
+  <mat-card class="content-display-card" *ngIf="hasGeneratedContent">
+    <mat-card-header>
+      <mat-card-title>Generated Content</mat-card-title>
+      <mat-card-subtitle>
+        {{ getWordCount() }} words • Review and approve or request changes
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Content Title -->
+      <div class="content-section" *ngIf="generatedContent.title">
+        <h3>Title</h3>
+        <h2 class="content-title">{{ generatedContent.title }}</h2>
+      </div>
+
+      <!-- Main Content -->
+      <div class="content-section">
+        <h3>Story Content</h3>
+        <div class="story-content">
+          <div *ngFor="let paragraph of generatedContent.content.split('\n')" class="content-paragraph">
+            {{ paragraph }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Metadata -->
+      <div class="content-metadata" *ngIf="generatedContent.metadata">
+        <h4>Generation Details</h4>
+        <div class="metadata-grid">
+          <div class="metadata-item">
+            <span class="metadata-label">Processing Time:</span>
+            <span class="metadata-value">{{ generatedContent.metadata.processingTime }}ms</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Generated At:</span>
+            <span class="metadata-value">{{ generatedContent.metadata.timestamp | date:'medium' }}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Word Count:</span>
+            <span class="metadata-value">{{ getWordCount() }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Action Buttons -->
+  <div class="action-section" *ngIf="hasGeneratedContent">
+    <div class="primary-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onApproveContent()">
+        <mat-icon>check_circle</mat-icon>
+        Approve Content
+      </button>
+
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="onRequestFeedback()">
+        <mat-icon>feedback</mat-icon>
+        Get Feedback & Refine
+      </button>
+    </div>
+
+    <div class="secondary-actions">
+      <button mat-button (click)="onModifyContent()">
+        <mat-icon>edit</mat-icon>
+        Regenerate with Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation Actions -->
+  <div class="navigation-section">
+    <div class="secondary-actions">
+      <button mat-button routerLink="/character-dialog/{{story.id}}">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Character Dialog
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress Indicator -->
+  <div class="progress-section">
+    <h4>Story Development Progress</h4>
+    <mat-progress-bar mode="determinate" [value]="75"></mat-progress-bar>
+    <p class="progress-text">Phase 3 of 4: Content Generation</p>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="!story">
+  <mat-spinner></mat-spinner>
+  <p>Loading story...</p>
+</div>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Writer Assistant provides comprehensive export and import capabilities to ensure story portability, backup, and cross-platform compatibility. The system supports multiple formats and maintains complete story state including content, memory, configuration, and workflow status.
+The Writer Assistant provides comprehensive client-side export and import capabilities to ensure story portability, backup, and cross-platform compatibility. All export/import operations are handled in the browser using local storage, with no server-side storage requirements. The system supports multiple formats and maintains complete story state including content, memory, configuration, and workflow status.
 
 ## Export System
 
@@ -176,47 +176,48 @@ The Writer Assistant provides comprehensive export and import capabilities to en
 }
 ```
 
-### Export Processing Pipeline
+### Client-Side Export Processing Pipeline
 
-#### Export Workflow
-1. **Request Validation**: Verify export permissions and parameters
-2. **Content Assembly**: Gather all requested story components
+#### Browser Export Workflow
+1. **Data Gathering**: Collect story data from browser local storage
+2. **Content Assembly**: Gather all requested story components from local storage
 3. **Memory Serialization**: Convert memory states to exportable format
 4. **Configuration Packaging**: Bundle all configuration files
-5. **Format Conversion**: Transform to requested output format
+5. **Format Conversion**: Transform to requested output format in browser
 6. **Quality Validation**: Verify export integrity and completeness
-7. **File Generation**: Create final export file with metadata
-8. **Delivery**: Provide download link or direct file transfer
+7. **File Generation**: Create final export file with metadata in browser
+8. **Download Trigger**: Initiate browser download of generated file
 
-#### Processing Steps for JSON Export
-```python
-# Conceptual export pipeline
-def export_story_json(story_id, options):
-    # 1. Validate request
-    validate_export_permissions(story_id, user_id)
-    validate_export_options(options)
-    
-    # 2. Assemble content
-    story_data = gather_story_content(story_id, options.content_selection)
-    memory_data = serialize_memory_state(story_id, options.memory_inclusion)
-    config_data = package_configurations(story_id, options.configuration_inclusion)
-    
-    # 3. Create export package
-    export_package = {
-        "export_metadata": generate_metadata(),
-        "story_metadata": story_data.metadata,
-        "configuration": config_data,
-        "story_content": story_data.content,
-        "memory_state": memory_data,
-        "workflow_state": story_data.workflow,
-        "generation_history": story_data.history if options.include_history else None
-    }
-    
-    # 4. Validate and finalize
-    validate_export_integrity(export_package)
-    compressed_data = compress_if_requested(export_package, options.compression)
-    
-    return create_download_link(compressed_data)
+#### Processing Steps for Browser-Based JSON Export
+```javascript
+// Conceptual client-side export pipeline
+function exportStoryJSON(storyId, options) {
+    // 1. Validate request
+    validateExportOptions(options);
+
+    // 2. Gather data from local storage
+    const storyData = gatherStoryContentFromStorage(storyId, options.contentSelection);
+    const memoryData = serializeMemoryStateFromStorage(storyId, options.memoryInclusion);
+    const configData = packageConfigurationsFromStorage(storyId, options.configurationInclusion);
+
+    // 3. Create export package
+    const exportPackage = {
+        "export_metadata": generateMetadata(),
+        "story_metadata": storyData.metadata,
+        "configuration": configData,
+        "story_content": storyData.content,
+        "memory_state": memoryData,
+        "workflow_state": storyData.workflow,
+        "generation_history": options.includeHistory ? storyData.history : null
+    };
+
+    // 4. Validate and finalize
+    validateExportIntegrity(exportPackage);
+    const compressedData = options.compression ? compress(exportPackage) : exportPackage;
+
+    // 5. Trigger browser download
+    return triggerBrowserDownload(compressedData, `story_${storyId}_export.json`);
+}
 ```
 
 ## Import System
@@ -275,49 +276,56 @@ def export_story_json(story_id, options):
 }
 ```
 
-### Import Processing Pipeline
+### Client-Side Import Processing Pipeline
 
-#### Import Workflow
-1. **File Validation**: Verify file format and integrity
-2. **Content Parsing**: Extract story content and structure
-3. **Schema Validation**: Ensure compatibility with current system
-4. **Conflict Detection**: Identify potential conflicts with existing data
-5. **Memory Reconstruction**: Rebuild agent memory systems
-6. **Configuration Integration**: Merge or replace configuration settings
-7. **Validation**: Verify import completeness and consistency
-8. **Finalization**: Complete import and prepare for user access
+#### Browser Import Workflow
+1. **File Upload**: User selects file for import via browser file input
+2. **File Validation**: Verify file format and integrity in browser
+3. **Content Parsing**: Extract story content and structure using JavaScript
+4. **Schema Validation**: Ensure compatibility with current system version
+5. **Conflict Detection**: Check for conflicts with existing local storage data
+6. **Memory Reconstruction**: Rebuild agent memory systems in browser
+7. **Local Storage Integration**: Store imported data in browser local storage
+8. **Validation**: Verify import completeness and consistency
+9. **UI Update**: Update interface to show newly imported story
 
-#### JSON Import Processing
-```python
-# Conceptual import pipeline
-def import_story_json(file_data, options):
-    # 1. Validate file
-    validate_file_format(file_data)
-    validate_schema_compatibility(file_data.metadata)
-    
-    # 2. Parse content
-    parsed_data = parse_json_export(file_data)
-    validate_data_integrity(parsed_data)
-    
-    # 3. Handle conflicts
-    conflicts = detect_conflicts(parsed_data, existing_stories)
-    if conflicts and options.conflict_resolution == "prompt_user":
-        return prompt_conflict_resolution(conflicts)
-    
-    # 4. Reconstruct story
-    story = create_story_from_import(parsed_data.story_metadata)
-    restore_content(story, parsed_data.story_content)
-    
-    # 5. Rebuild memory systems
-    memory_state = reconstruct_memory_state(parsed_data.memory_state)
-    initialize_agent_memories(story, memory_state)
-    
-    # 6. Apply configurations
-    apply_configurations(story, parsed_data.configuration, options.configuration_handling)
-    
-    # 7. Validate and finalize
-    validate_import_consistency(story)
-    return story
+#### Browser-Based JSON Import Processing
+```javascript
+// Conceptual client-side import pipeline
+async function importStoryJSON(fileData, options) {
+    // 1. Validate file
+    validateFileFormat(fileData);
+    validateSchemaCompatibility(fileData.metadata);
+
+    // 2. Parse content
+    const parsedData = parseJSONExport(fileData);
+    validateDataIntegrity(parsedData);
+
+    // 3. Handle conflicts with local storage
+    const existingStories = getStoriesFromLocalStorage();
+    const conflicts = detectConflicts(parsedData, existingStories);
+    if (conflicts && options.conflictResolution === "prompt_user") {
+        return await promptConflictResolution(conflicts);
+    }
+
+    // 4. Reconstruct story in local storage
+    const storyId = generateStoryId();
+    storeStoryContentToLocalStorage(storyId, parsedData.storyContent);
+    storeStoryMetadataToLocalStorage(storyId, parsedData.storyMetadata);
+
+    // 5. Rebuild memory systems in local storage
+    const memoryState = reconstructMemoryState(parsedData.memoryState);
+    storeMemoryStateToLocalStorage(storyId, memoryState);
+
+    // 6. Apply configurations to local storage
+    storeConfigurationToLocalStorage(storyId, parsedData.configuration);
+
+    // 7. Update stories index and UI
+    updateStoriesIndex(storyId);
+    refreshUI();
+
+    return storyId;
+}
 ```
 
 ### Import Validation and Error Handling
@@ -402,22 +410,22 @@ def import_story_json(file_data, options):
 
 ## Performance and Scalability
 
-### Export Performance
-- **Streaming Export**: Large stories exported in chunks
-- **Compression**: Gzip compression for JSON exports
-- **Parallel Processing**: Concurrent export of different components
-- **Caching**: Cache frequently exported stories
+### Browser Export Performance
+- **Client-Side Processing**: All export operations handled in browser
+- **Compression**: Browser-based compression for JSON exports
+- **Progressive Generation**: Show progress indicators during export
+- **Memory Management**: Efficient browser memory usage during export
 
-### Import Performance
+### Browser Import Performance
+- **File Reader API**: Efficient file reading using browser APIs
 - **Progressive Loading**: Display progress during large imports
-- **Memory Management**: Efficient handling of large story files
-- **Validation Optimization**: Fast validation algorithms
+- **Local Storage Optimization**: Efficient storage of imported data
 - **Error Recovery**: Quick recovery from import failures
 
-### Storage Requirements
-- **Export Storage**: Temporary storage for generated exports
-- **Cleanup**: Automatic cleanup of old export files
-- **Compression Ratios**: Typical compression ratios for different formats
-- **Size Limits**: Maximum file size restrictions per format
+### Browser Storage Requirements
+- **Local Storage Quotas**: Manage browser storage limits (~5-10MB typical)
+- **Data Compression**: Compress story data for efficient storage
+- **Storage Cleanup**: Tools for managing local storage usage
+- **Size Monitoring**: Track and display storage usage to user
 
 This export/import system ensures complete story portability while maintaining data integrity and providing flexible options for different use cases and platforms.

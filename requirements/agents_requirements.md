@@ -2,42 +2,45 @@
 
 ## Overview
 
-The Writer Assistant employs a multi-agent system where each agent has specialized roles, individual memory systems, and unique perspectives on story development. Agents collaborate through LangGraph workflows while maintaining their distinct viewpoints and expertise areas.
+The Writer Assistant employs a user-driven multi-agent system where specialized agents provide their unique perspectives and expertise only when selected and engaged by the user. Each agent maintains individual memory systems and distinct viewpoints, with all agent interactions subject to user control, selection, and approval.
 
 ## Agent Types and Responsibilities
 
-### 1. Writer Agent (Main Orchestrator)
+### 1. Writer Agent (User-Directed Content Generator)
 
-**Primary Role**: Main story generator that synthesizes inputs from all other agents
-
-**Core Responsibilities**:
-- Generate story outlines based on user guidance
-- Create detailed chapter content with character perspectives
-- Access and synthesize all character internal monologues and memories
-- Maintain narrative coherence and story progression
-- Coordinate with other agents for comprehensive story development
-
-**Memory Access**:
-- **Omniscient Story Memory**: Complete access to all character memories and internal states
-- **Narrative Craft Memory**: Track foreshadowing, themes, and story techniques
-- **User Preference Memory**: Remember user feedback and story direction preferences
-- **Revision History**: Track changes and improvements over story development
-
-**Output Formats**:
-- Story outlines with plot structure and character arcs
-- Detailed chapter content with multi-perspective integration
-- Revision responses incorporating feedback from raters and editor
-
-### 2. Character Sub-Agents
-
-**Primary Role**: Maintain individual character perspectives and authentic subjective experiences
+**Primary Role**: Generate story content based on user direction and selectively incorporate user-chosen agent inputs
 
 **Core Responsibilities**:
-- Generate authentic character-specific internal monologues
-- Maintain character-consistent memory interpretation and bias
-- Track individual character emotional journeys and growth
-- Provide character-specific reactions to story events
-- Ensure personality consistency across story development
+- Generate expanded story drafts from user-provided themes, topics, or outlines
+- Create detailed content incorporating only user-selected character responses
+- Access memories and perspectives only when user grants permission
+- Revise content based on user-specified modifications and feedback
+- Respond to user requests for specific changes or improvements
+- Synthesize only user-approved inputs from other agents
+
+**User-Controlled Memory Access**:
+- **User-Granted Story Memory**: Access to character memories only when user permits
+- **User-Directed Narrative Memory**: Track only user-approved themes and techniques
+- **User Preference Memory**: Remember all user feedback and decisions
+- **User-Visible Revision History**: Complete transparent tracking of all changes and user decisions
+
+**User-Requested Output Formats**:
+- Expanded story drafts based on user input
+- Detailed content incorporating user-selected character inputs
+- Revision responses addressing user-specified modifications
+- Final polished content incorporating user-chosen feedback
+
+### 2. Character Sub-Agents (User-Interactive Character Voices)
+
+**Primary Role**: Engage in direct dialog with users while maintaining authentic character perspectives
+
+**Core Responsibilities**:
+- React to user-proposed story events and outlines from character perspective
+- Engage in iterative dialog with users about story developments
+- Provide character-specific insights and concerns about proposed plot points
+- Maintain character-consistent responses throughout user conversations
+- Present authentic character viewpoints for user consideration
+- Respond to user questions about character motivations and reactions
 
 **Individual Character Memory Structure**:
 ```json
@@ -161,51 +164,53 @@ The Writer Assistant employs a multi-agent system where each agent has specializ
 }
 ```
 
-## Agent Communication Patterns
+## User-Mediated Agent Communication Patterns
 
-### Memory Sharing Protocol
+### User-Controlled Interaction Protocol
 
-**Character → Writer Agent**:
-- Internal monologues and private thoughts
-- Subjective memory interpretations
-- Character-specific emotional responses
-- Hidden motivations and desires
+**Character Agents → User** (Direct Dialog):
+- Character reactions to user-proposed story events
+- Responses to user questions about character perspectives
+- Character-specific concerns and insights about plot developments
+- Direct conversation about character motivations and feelings
 
-**Character → Character** (Limited):
-- Only observable actions and dialogue
-- Public reactions and behaviors
-- Shared experiences from different perspectives
+**User → Character Agents** (Interactive Dialog):
+- Questions about character reactions and motivations
+- Requests for character perspectives on story events
+- Iterative conversation to explore character viewpoints
+- User feedback on character responses and authenticity
 
-**Writer → All Agents**:
-- Narrative decisions and story direction
-- Scene outcomes and plot developments
-- User feedback and revision requirements
+**User → Writer Agent** (Content Direction):
+- Story themes, topics, and outline proposals
+- Specific content modification requests
+- Selection of character responses to incorporate
+- Approval or rejection of generated content
 
-**Rater → Writer** (Direct Feedback):
-- Specific improvement suggestions
-- Quality assessments and ratings
-- Problem identification and solutions
-- Opportunity highlighting
+**Feedback Agents → User** (When Requested):
+- Quality assessments and improvement suggestions
+- Specific problem identification and solutions
+- Evaluations based on user-selected criteria
+- Recommendations for story enhancement
 
-**Editor → Writer**:
-- Consistency issues and corrections
-- Tone and coherence adjustments
-- Technical polish requirements
-- Final approval or revision requests
+**User → All Agents** (Central Control):
+- Agent selection and activation decisions
+- Memory access permissions and restrictions
+- Workflow direction and progression choices
+- Final approval for all agent outputs
 
-### Workflow Coordination
+### User-Directed Workflow Coordination
 
-**Agent Activation Patterns**:
-- Scene-based activation (only relevant character agents)
-- Parallel processing where appropriate
-- Sequential review stages (raters → editor)
-- Conditional flows based on story needs and feedback
+**User-Controlled Agent Activation**:
+- User selects which character agents to engage for each story phase
+- User decides when to request feedback from rater and editor agents
+- User controls parallel vs. sequential agent engagement
+- User determines workflow progression based on their satisfaction with outputs
 
-**Conflict Resolution**:
-- Writer agent synthesizes conflicting perspectives
-- Editor agent provides final consistency arbitration
-- User preferences override agent recommendations
-- Compromise solutions addressing multiple concerns
+**User-Centered Conflict Resolution**:
+- User reviews all agent perspectives and makes final decisions
+- User chooses which agent recommendations to follow or ignore
+- User preferences always take precedence over agent suggestions
+- User creates custom solutions by selecting elements from different agent outputs
 
 ## Agent Configuration Requirements
 

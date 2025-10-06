@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "mcp__linear-server__create_issue",
+      "Bash(npm test:*)",
+      "Bash(venv/Scripts/activate:*)",
+      "Bash(./venv/Scripts/python.exe -m pytest tests/ -v)",
+      "Bash(./venv/Scripts/python.exe -m pip install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

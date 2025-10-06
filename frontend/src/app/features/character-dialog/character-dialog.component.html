@@ -1,0 +1,243 @@
+<div class="character-dialog-container" *ngIf="story">
+  <!-- Story Header -->
+  <mat-card class="story-header-card">
+    <mat-card-header>
+      <mat-card-title>{{ story.title }}</mat-card-title>
+      <mat-card-subtitle>Character Dialog Phase - Engage with your characters</mat-card-subtitle>
+    </mat-card-header>
+  </mat-card>
+
+  <!-- Character Selection -->
+  <mat-card class="character-selection-card">
+    <mat-card-header>
+      <mat-card-title>Select Characters</mat-card-title>
+      <mat-card-subtitle>Choose which characters to engage with</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="characters-grid" *ngIf="story.currentDraft?.characters">
+        <mat-card
+          class="character-card"
+          *ngFor="let character of story.currentDraft.characters"
+          [class.selected]="isCharacterSelected(character)">
+
+          <mat-card-header>
+            <mat-card-title>
+              <mat-checkbox
+                [checked]="isCharacterSelected(character)"
+                (change)="onCharacterSelectionChange(character, $event.checked)">
+                {{ character.name }}
+              </mat-checkbox>
+            </mat-card-title>
+          </mat-card-header>
+
+          <mat-card-content>
+            <p><strong>Role:</strong> {{ character.role }}</p>
+            <p><strong>Personality:</strong> {{ character.personality }}</p>
+            <p class="character-background">{{ character.background }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <div class="no-characters" *ngIf="!story.currentDraft?.characters || story.currentDraft.characters.length === 0">
+        <p>No characters available. Please go back to draft review to generate characters.</p>
+        <button mat-button routerLink="/draft-review/{{story.id}}">
+          Back to Draft Review
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Context Setup -->
+  <mat-card class="context-card">
+    <mat-card-header>
+      <mat-card-title>Conversation Context</mat-card-title>
+      <mat-card-subtitle>Set the context for character interactions</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="contextForm">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Context Description</mat-label>
+          <textarea
+            matInput
+            formControlName="context"
+            rows="3"
+            placeholder="Describe the current situation or scene context...">
+          </textarea>
+        </mat-form-field>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Message Input -->
+  <mat-card class="message-input-card">
+    <mat-card-header>
+      <mat-card-title>Send Message to Characters</mat-card-title>
+      <mat-card-subtitle>Communicate with your selected characters</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Quick Prompts -->
+      <div class="quick-prompts">
+        <span class="prompts-label">Quick prompts:</span>
+        <button
+          mat-chip-option
+          *ngFor="let prompt of reactionPrompts"
+          (click)="onUsePrompt(prompt)"
+          class="prompt-chip">
+          {{ prompt }}
+        </button>
+      </div>
+
+      <!-- Message Form -->
+      <form [formGroup]="messageForm" (ngSubmit)="onSendMessage()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Your Message</mat-label>
+          <textarea
+            matInput
+            formControlName="message"
+            rows="3"
+            placeholder="Ask your characters about their thoughts, feelings, or reactions...">
+          </textarea>
+          <mat-error *ngIf="messageForm.get('message')?.hasError('required')">
+            Message is required
+          </mat-error>
+        </mat-form-field>
+
+        <div class="message-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="messageForm.invalid || !hasSelectedCharacters || isGeneratingResponse">
+            <mat-icon *ngIf="isGeneratingResponse">autorenew</mat-icon>
+            <span *ngIf="!isGeneratingResponse">Send Message</span>
+            <span *ngIf="isGeneratingResponse">Generating Responses...</span>
+          </button>
+
+          <button
+            mat-button
+            type="button"
+            (click)="onClearConversation()"
+            [disabled]="conversationHistory.length === 0">
+            Clear Conversation
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Conversation History -->
+  <mat-card class="conversation-card" *ngIf="conversationHistory.length > 0">
+    <mat-card-header>
+      <mat-card-title>Conversation History</mat-card-title>
+      <mat-card-subtitle>Review and select character responses</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="conversation-thread">
+        <div
+          class="message-item"
+          *ngFor="let message of conversationHistory; trackBy: message.id"
+          [class.user-message]="message.characterId === 'user'"
+          [class.character-message]="message.characterId !== 'user'"
+          [class.selected]="message.selected">
+
+          <div class="message-header">
+            <div class="message-info">
+              <span class="character-name">{{ getCharacterName(message.characterId) }}</span>
+              <span class="message-timestamp">{{ message.timestamp | date:'short' }}</span>
+              <span class="emotional-state" *ngIf="message.emotionalState && message.characterId !== 'user'">
+                ({{ message.emotionalState }})
+              </span>
+            </div>
+
+            <div class="message-actions" *ngIf="message.characterId !== 'user'">
+              <mat-checkbox
+                [checked]="message.selected"
+                (change)="onToggleResponseSelection(message)"
+                matTooltip="Select this response">
+              </mat-checkbox>
+
+              <mat-checkbox
+                [checked]="message.useInStory"
+                (change)="onToggleUseInStory(message)"
+                [disabled]="!message.selected"
+                matTooltip="Use in final story">
+                Use in Story
+              </mat-checkbox>
+            </div>
+          </div>
+
+          <div class="message-content">
+            <p>{{ message.content }}</p>
+          </div>
+
+          <div class="internal-thoughts" *ngIf="message.internalThoughts">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>Internal Thoughts</mat-panel-title>
+              </mat-expansion-panel-header>
+              <p>{{ message.internalThoughts }}</p>
+            </mat-expansion-panel>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Selected Responses Summary -->
+  <mat-card class="selected-responses-card" *ngIf="hasSelectedResponses">
+    <mat-card-header>
+      <mat-card-title>Selected Responses</mat-card-title>
+      <mat-card-subtitle>{{ selectedResponses.length }} responses selected, {{ responsesToUseInStory.length }} marked for story use</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="response-summary">
+        <div class="summary-item" *ngFor="let response of selectedResponses">
+          <div class="response-info">
+            <span class="character-name">{{ getCharacterName(response.characterId) }}</span>
+            <mat-icon *ngIf="response.useInStory" class="use-in-story-icon">check_circle</mat-icon>
+          </div>
+          <p class="response-preview">{{ response.content | slice:0:100 }}...</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Action Buttons -->
+  <div class="action-section">
+    <div class="primary-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="!hasSelectedResponses"
+        (click)="onProceedToContentGeneration()">
+        <mat-icon>arrow_forward</mat-icon>
+        Proceed to Content Generation
+      </button>
+    </div>
+
+    <div class="secondary-actions">
+      <button mat-button routerLink="/draft-review/{{story.id}}">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Draft Review
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress Indicator -->
+  <div class="progress-section">
+    <h4>Story Development Progress</h4>
+    <mat-progress-bar mode="determinate" [value]="50"></mat-progress-bar>
+    <p class="progress-text">Phase 2 of 4: Character Dialog</p>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="!story">
+  <mat-spinner></mat-spinner>
+  <p>Loading story...</p>
+</div>

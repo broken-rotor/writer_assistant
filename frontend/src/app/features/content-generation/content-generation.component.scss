@@ -1,0 +1,277 @@
+.content-generation-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.story-header-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.story-header-card mat-card-title,
+.story-header-card mat-card-subtitle {
+  color: white;
+}
+
+.selected-responses-card {
+  background-color: #f0f8ff;
+  border: 1px solid #b3d9ff;
+}
+
+.responses-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.response-item {
+  padding: 1rem;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.character-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.response-timestamp {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.response-preview {
+  margin: 0;
+  color: #555;
+  line-height: 1.4;
+}
+
+.guidance-card,
+.content-display-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.guidance-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.generation-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.generate-button {
+  min-width: 200px;
+}
+
+.generate-button mat-icon {
+  margin-right: 0.5rem;
+}
+
+.generate-button mat-icon[ng-reflect-font-icon="autorenew"] {
+  animation: spin 1s linear infinite;
+}
+
+.content-display-card {
+  background-color: #fafafa;
+}
+
+.content-section {
+  margin-bottom: 2rem;
+}
+
+.content-section h3 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 0.5rem;
+}
+
+.content-title {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
+  font-weight: 400;
+}
+
+.story-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  line-height: 1.7;
+  font-size: 1rem;
+  color: #333;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.content-paragraph {
+  margin-bottom: 1rem;
+  text-align: justify;
+}
+
+.content-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.content-metadata {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.content-metadata h4 {
+  margin: 0 0 1rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metadata-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.metadata-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.metadata-value {
+  color: #333;
+}
+
+.action-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.primary-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.secondary-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.navigation-section {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1rem;
+}
+
+.progress-section {
+  text-align: center;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.progress-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.progress-text {
+  margin: 0.5rem 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  gap: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .content-generation-container {
+    padding: 0.5rem;
+  }
+
+  .preferences-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .generation-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .generate-button {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .story-content {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .metadata-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metadata-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .primary-actions,
+  .secondary-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .primary-actions button,
+  .secondary-actions button {
+    width: 100%;
+    max-width: 250px;
+  }
+}

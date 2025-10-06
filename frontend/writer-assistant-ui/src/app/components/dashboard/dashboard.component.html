@@ -1,0 +1,74 @@
+<div class="dashboard">
+  <header class="dashboard-header">
+    <h2>Story Dashboard</h2>
+    <div class="header-actions">
+      <button class="btn-secondary" routerLink="/storage">
+        Storage Management
+      </button>
+      <button class="btn-info" (click)="exportAllStories()">
+        Export All
+      </button>
+      <button class="btn-primary" routerLink="/create-story">
+        + New Story
+      </button>
+    </div>
+  </header>
+
+  <!-- Storage Overview -->
+  <div class="storage-overview">
+    <h3>Local Storage Usage</h3>
+    <div class="storage-meter">
+      <div class="storage-bar" [class]="getStoragePercentageClass()">
+        <div class="storage-fill" [style.width.%]="storageQuota.percentage"></div>
+      </div>
+      <div class="storage-info">
+        <span>{{ (storageQuota.used / (1024 * 1024)).toFixed(2) }} MB used of {{ (storageQuota.total / (1024 * 1024)).toFixed(0) }} MB</span>
+        <span class="storage-percentage">{{ storageQuota.percentage.toFixed(1) }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stories-grid" *ngIf="stories.length > 0; else noStories">
+    <div class="story-card" *ngFor="let story of stories">
+      <div class="story-header">
+        <h3>{{ story.title }}</h3>
+        <span class="story-genre">{{ story.genre }}</span>
+      </div>
+      <p class="story-description">{{ story.description || 'No description' }}</p>
+
+      <!-- Progress indicator -->
+      <div class="story-progress">
+        <div class="progress-label">Progress: {{ getProgressPercentage(story) }}%</div>
+        <div class="progress-bar">
+          <div class="progress-fill" [class]="getProgressClass(story)" [style.width.%]="getProgressPercentage(story)"></div>
+        </div>
+      </div>
+
+      <div class="story-meta">
+        <span class="story-phase">{{ story.current_phase | titlecase }}</span>
+        <span class="story-status">{{ story.status | titlecase }}</span>
+        <span class="story-date">Modified: {{ getFormattedDate(story.updated_at) }}</span>
+      </div>
+
+      <div class="story-actions">
+        <button class="btn-secondary" [routerLink]="['/story', story.id]">
+          Continue
+        </button>
+        <button class="btn-danger" (click)="deleteStory(story.id)">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noStories>
+    <div class="no-stories">
+      <h3>No stories yet</h3>
+      <p>Create your first story to get started with AI-powered collaborative writing.</p>
+      <p class="offline-note">✓ Your stories are stored locally and work offline</p>
+      <button class="btn-primary" routerLink="/create-story">
+        Create Your First Story
+      </button>
+    </div>
+  </ng-template>
+</div>
