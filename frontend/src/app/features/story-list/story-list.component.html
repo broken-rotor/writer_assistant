@@ -106,9 +106,9 @@
         <ng-container matColumnDef="genre">
           <th mat-header-cell *matHeaderCellDef>Genre</th>
           <td mat-cell *matCellDef="let story">
-            <mat-chip-list>
-              <mat-chip>{{ story.genre }}</mat-chip>
-            </mat-chip-list>
+            <mat-chip-listbox>
+              <mat-chip-option>{{ story.genre }}</mat-chip-option>
+            </mat-chip-listbox>
           </td>
         </ng-container>
 

@@ -18,7 +18,7 @@
       <div class="characters-grid" *ngIf="story.currentDraft?.characters">
         <mat-card
           class="character-card"
-          *ngFor="let character of story.currentDraft.characters"
+          *ngFor="let character of story.currentDraft?.characters"
           [class.selected]="isCharacterSelected(character)">
 
           <mat-card-header>
@@ -39,7 +39,7 @@
         </mat-card>
       </div>
 
-      <div class="no-characters" *ngIf="!story.currentDraft?.characters || story.currentDraft.characters.length === 0">
+      <div class="no-characters" *ngIf="!story.currentDraft?.characters || (story.currentDraft?.characters?.length || 0) === 0">
         <p>No characters available. Please go back to draft review to generate characters.</p>
         <button mat-button routerLink="/draft-review/{{story.id}}">
           Back to Draft Review
@@ -139,7 +139,7 @@
       <div class="conversation-thread">
         <div
           class="message-item"
-          *ngFor="let message of conversationHistory; trackBy: message.id"
+          *ngFor="let message of conversationHistory; trackBy: trackByMessageId"
           [class.user-message]="message.characterId === 'user'"
           [class.character-message]="message.characterId !== 'user'"
           [class.selected]="message.selected">

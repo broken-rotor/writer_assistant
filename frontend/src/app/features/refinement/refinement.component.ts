@@ -334,4 +334,57 @@ export class RefinementComponent implements OnInit {
     if (!this.story?.finalContent?.content) return 0;
     return this.story.finalContent.content.split(/\s+/).length;
   }
+
+  getTotalSuggestions(): number {
+    return this.feedbackData.reduce((total, fd) => {
+      if (Array.isArray(fd.suggestions)) {
+        return total + fd.suggestions.length;
+      }
+      return total;
+    }, 0);
+  }
+
+  getFeedbackSuggestions(feedback: FeedbackData): FeedbackItem[] {
+    if (Array.isArray(feedback.suggestions) && feedback.suggestions.length > 0) {
+      const first = feedback.suggestions[0];
+      if (typeof first === 'string') {
+        // Convert string[] to FeedbackItem[]
+        return (feedback.suggestions as string[]).map((s, index) => ({
+          id: `${feedback.agentId}-${index}`,
+          agentId: feedback.agentId,
+          type: 'suggestion' as const,
+          content: s,
+          priority: feedback.priority || 'medium',
+          actionable: true,
+          selected: false
+        }));
+      }
+      return feedback.suggestions as FeedbackItem[];
+    }
+    return [];
+  }
+
+  getFeedbackStrengths(feedback: FeedbackData): string[] {
+    return feedback.strengths || [];
+  }
+
+  getFeedbackConcerns(feedback: FeedbackData): string[] {
+    return feedback.concerns || [];
+  }
+
+  trackByFeedbackId(index: number, item: FeedbackData): string {
+    return item.agentId;
+  }
+
+  trackBySuggestionId(index: number, item: FeedbackItem): string {
+    return item.id;
+  }
+
+  trackByAgentId(index: number, agent: any): string {
+    return agent.id;
+  }
+
+  trackByString(index: number, item: string): string {
+    return `${index}-${item}`;
+  }
 }

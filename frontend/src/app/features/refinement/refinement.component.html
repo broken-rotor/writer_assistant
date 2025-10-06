@@ -32,7 +32,7 @@
       <div class="agents-grid">
         <mat-card
           class="agent-card"
-          *ngFor="let agent of availableAgents"
+          *ngFor="let agent of availableAgents; trackBy: trackByAgentId"
           [class.selected]="selectedAgents.has(agent.id)">
 
           <mat-card-header>
@@ -50,9 +50,9 @@
             <p class="agent-description">{{ agent.description }}</p>
             <div class="focus-areas">
               <span class="focus-label">Focus Areas:</span>
-              <mat-chip-list>
-                <mat-chip *ngFor="let area of agent.focusAreas">{{ area }}</mat-chip>
-              </mat-chip-list>
+              <mat-chip-listbox>
+                <mat-chip-option *ngFor="let area of agent.focusAreas; trackBy: trackByString">{{ area }}</mat-chip-option>
+              </mat-chip-listbox>
             </div>
           </mat-card-content>
         </mat-card>
@@ -93,7 +93,7 @@
               <span class="stat-label">Ignored</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value">{{ feedbackData.reduce((total, fd) => total + fd.suggestions.length, 0) }}</span>
+              <span class="stat-value">{{ getTotalSuggestions() }}</span>
               <span class="stat-label">Total Suggestions</span>
             </div>
           </div>
@@ -103,7 +103,7 @@
 
     <!-- Agent Feedback Cards -->
     <div class="feedback-cards">
-      <mat-card class="agent-feedback-card" *ngFor="let feedback of feedbackData">
+      <mat-card class="agent-feedback-card" *ngFor="let feedback of feedbackData; trackBy: trackByFeedbackId">
         <mat-card-header>
           <mat-card-title>{{ feedback.agentName }}</mat-card-title>
           <mat-card-subtitle>
@@ -113,28 +113,28 @@
 
         <mat-card-content>
           <!-- Strengths -->
-          <div class="feedback-section" *ngIf="feedback.strengths.length > 0">
+          <div class="feedback-section" *ngIf="getFeedbackStrengths(feedback).length > 0">
             <h4>Strengths</h4>
             <ul class="strengths-list">
-              <li *ngFor="let strength of feedback.strengths">{{ strength }}</li>
+              <li *ngFor="let strength of getFeedbackStrengths(feedback); trackBy: trackByString">{{ strength }}</li>
             </ul>
           </div>
 
           <!-- Concerns -->
-          <div class="feedback-section" *ngIf="feedback.concerns.length > 0">
+          <div class="feedback-section" *ngIf="getFeedbackConcerns(feedback).length > 0">
             <h4>Concerns</h4>
             <ul class="concerns-list">
-              <li *ngFor="let concern of feedback.concerns">{{ concern }}</li>
+              <li *ngFor="let concern of getFeedbackConcerns(feedback); trackBy: trackByString">{{ concern }}</li>
             </ul>
           </div>
 
           <!-- Suggestions -->
-          <div class="feedback-section" *ngIf="feedback.suggestions.length > 0">
+          <div class="feedback-section" *ngIf="getFeedbackSuggestions(feedback).length > 0">
             <h4>Suggestions</h4>
             <div class="suggestions-list">
               <div
                 class="suggestion-item"
-                *ngFor="let suggestion of feedback.suggestions"
+                *ngFor="let suggestion of getFeedbackSuggestions(feedback); trackBy: trackBySuggestionId"
                 [class.selected]="getFeedbackSelectionState(suggestion) === 'selected'"
                 [class.ignored]="getFeedbackSelectionState(suggestion) === 'ignored'">
 
@@ -180,7 +180,7 @@
         <div class="selected-feedback-preview" *ngIf="hasSelectedFeedback">
           <h4>Selected Suggestions:</h4>
           <div class="preview-list">
-            <div class="preview-item" *ngFor="let item of selectedFeedback">
+            <div class="preview-item" *ngFor="let item of selectedFeedback; trackBy: trackBySuggestionId">
               <span class="preview-type">{{ item.type | titlecase }}:</span>
               <span class="preview-content">{{ item.content | slice:0:100 }}...</span>
             </div>

@@ -279,4 +279,8 @@ export class CharacterDialogComponent implements OnInit {
   getMessagesByCharacter(characterId: string): DialogMessage[] {
     return this.conversationHistory.filter(m => m.characterId === characterId);
   }
+
+  trackByMessageId(index: number, message: DialogMessage): string {
+    return message.id;
+  }
 }

@@ -18,7 +18,7 @@ export class StoryListComponent implements OnInit {
 
   displayedColumns: string[] = ['select', 'title', 'genre', 'phase', 'lastModified', 'actions'];
 
-  phaseLabels = {
+  phaseLabels: { [key: string]: string } = {
     'draft': 'Draft Development',
     'character_dialog': 'Character Dialog',
     'detailed_content': 'Content Generation',
@@ -229,7 +229,7 @@ export class StoryListComponent implements OnInit {
   }
 
   getPhaseProgress(phase: string): number {
-    const progressMap = {
+    const progressMap: { [key: string]: number } = {
       'draft': 25,
       'character_dialog': 50,
       'detailed_content': 75,
@@ -240,7 +240,7 @@ export class StoryListComponent implements OnInit {
   }
 
   getPhaseColor(phase: string): string {
-    const colorMap = {
+    const colorMap: { [key: string]: string } = {
       'draft': 'accent',
       'character_dialog': 'primary',
       'detailed_content': 'primary',

@@ -53,9 +53,9 @@
       <!-- Themes -->
       <div class="draft-section" *ngIf="story.currentDraft.themes && story.currentDraft.themes.length > 0">
         <h3>Key Themes</h3>
-        <mat-chip-list>
-          <mat-chip *ngFor="let theme of story.currentDraft.themes">{{ theme }}</mat-chip>
-        </mat-chip-list>
+        <mat-chip-listbox>
+          <mat-chip-option *ngFor="let theme of story.currentDraft.themes">{{ theme }}</mat-chip-option>
+        </mat-chip-listbox>
       </div>
     </mat-card-content>
   </mat-card>

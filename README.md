@@ -66,6 +66,39 @@ Writer Assistant employs a sophisticated multi-agent architecture where speciali
 
 Once the backend is running, visit http://localhost:8000/docs for interactive API documentation.
 
+## Testing and Building
+
+### Automated Test and Build Scripts
+
+The project includes cross-platform scripts for testing and building:
+
+**Quick Start:**
+```bash
+# Windows PowerShell (Recommended)
+.\test-and-build.ps1
+
+# Windows Command Prompt
+test-and-build.bat
+
+# Git Bash / WSL / Linux / Mac
+./test-and-build.sh
+
+# Quick development tests (fast feedback)
+./quick-test.sh
+```
+
+**What gets tested:**
+- ✅ Backend: Python unit tests with pytest + coverage
+- ✅ Frontend: ESLint linting + Karma/Jasmine tests
+- ✅ Frontend: Production build compilation
+
+**Output locations:**
+- Backend coverage: `backend/htmlcov/index.html`
+- Frontend build: `frontend/dist/`
+- Logs: `frontend/frontend-*.log`
+
+For detailed documentation, see `TEST_BUILD_README.md` and `SCRIPTS_SUMMARY.md`.
+
 ## Development Workflow
 
 ### Two-Phase Story Development
