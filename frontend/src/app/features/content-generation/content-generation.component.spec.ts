@@ -318,6 +318,9 @@ describe('ContentGenerationComponent', () => {
     });
 
     it('should check if can generate', () => {
+      // Ensure the form is valid (should be populated by ngOnInit)
+      expect(component.guidanceForm.valid).toBeTruthy();
+
       component.isGenerating = false;
       expect(component.canGenerate).toBeTruthy();
 

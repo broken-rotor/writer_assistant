@@ -31,6 +31,7 @@ describe('StoryListComponent', () => {
       title: 'Test Story 1',
       genre: 'Mystery',
       length: 'short_story',
+      theme: 'A detective investigates a mysterious case',
       style: 'Literary',
       focusAreas: ['character', 'plot'],
       createdAt: new Date('2024-01-01'),
@@ -44,6 +45,7 @@ describe('StoryListComponent', () => {
       title: 'Test Story 2',
       genre: 'Romance',
       length: 'novella',
+      theme: 'A love story that transcends time',
       style: 'Contemporary',
       focusAreas: ['character'],
       createdAt: new Date('2024-01-03'),
@@ -63,6 +65,7 @@ describe('StoryListComponent', () => {
   };
 
   beforeEach(async () => {
+    // Create spies
     mockLocalStorageService = jasmine.createSpyObj('LocalStorageService', [
       'getAllStories',
       'getStory',
@@ -78,6 +81,7 @@ describe('StoryListComponent', () => {
     mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
     mockSnackBar = jasmine.createSpyObj('MatSnackBar', ['open']);
 
+    // Set up return values
     mockLocalStorageService.getAllStories.and.returnValue(mockStories);
     mockLocalStorageService.getStorageInfo$.and.returnValue(of(mockStorageInfo));
 
