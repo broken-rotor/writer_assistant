@@ -75,7 +75,10 @@ describe('DraftReviewComponent', () => {
             currentKnowledge: ['crime scene'],
             relationships: {}
           },
-          memorySize: 1024
+          memorySize: 1024,
+          isHidden: false,
+          creationSource: 'user_defined',
+          aiExpansionHistory: []
         }
       ],
       themes: ['justice', 'truth'],

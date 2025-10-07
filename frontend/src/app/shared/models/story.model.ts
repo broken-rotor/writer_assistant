@@ -48,6 +48,19 @@ export interface Character {
   background: string;
   currentState: CharacterState;
   memorySize: number;
+  isHidden: boolean;
+  creationSource: 'user_defined' | 'ai_generated';
+  aiExpansionHistory: AIExpansionRecord[];
+}
+
+export interface AIExpansionRecord {
+  date: Date;
+  expansionType: 'personality_details' | 'background' | 'relationships' | 'traits' | 'other';
+  userPrompt: string;
+  aiGeneratedContent: {
+    section: string;
+    addedDetails: string;
+  };
 }
 
 export interface PersonalityTraits {

@@ -44,7 +44,10 @@ describe('CharacterDialogComponent', () => {
       currentKnowledge: ['crime scene'],
       relationships: {}
     },
-    memorySize: 1024
+    memorySize: 1024,
+    isHidden: false,
+    creationSource: 'user_defined',
+    aiExpansionHistory: []
   };
 
   const mockStory: Story = {
@@ -126,6 +129,11 @@ describe('CharacterDialogComponent', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    // Reset mock to default for all tests
+    mockLocalStorageService.getStory.and.returnValue(mockStory);
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -141,6 +149,12 @@ describe('CharacterDialogComponent', () => {
       // Characters are already loaded from ngOnInit in beforeEach
       expect(component.selectedCharacters.length).toBe(1);
       expect(component.selectedCharacters[0]?.name).toBe('Detective Smith');
+    });
+
+    it('should set default context from story outline', () => {
+      const contextValue = component.contextForm.get('context')?.value;
+      expect(contextValue).toBeTruthy();
+      expect(contextValue).toContain('The Beginning: Investigation begins');
     });
 
     it('should navigate to stories if no story ID', () => {
@@ -165,12 +179,6 @@ describe('CharacterDialogComponent', () => {
       component.ngOnInit();
 
       expect(mockRouter.navigate).toHaveBeenCalled();
-    });
-
-    it('should set default context from story outline', () => {
-      const contextValue = component.contextForm.get('context')?.value;
-      expect(contextValue).toBeTruthy();
-      expect(contextValue).toContain('The Beginning: Investigation begins');
     });
   });
 
@@ -247,6 +255,13 @@ describe('CharacterDialogComponent', () => {
 
   describe('Message Sending', () => {
     beforeEach(() => {
+      // Ensure the mock returns valid story
+      mockLocalStorageService.getStory.and.returnValue(mockStory);
+
+      // Ensure component has valid state
+      component.story = mockStory;
+      component.selectedCharacters = [mockCharacter];
+
       component.messageForm.patchValue({
         message: 'What do you think about the case?'
       });
@@ -277,8 +292,10 @@ describe('CharacterDialogComponent', () => {
     });
 
     it('should handle API errors during message generation', async () => {
+      spyOn(console, 'error');
+      const errorResponse = new Error('API Error');
       mockApiService.generateCharacterDialog.and.returnValue(
-        throwError(() => new Error('API Error'))
+        throwError(() => errorResponse)
       );
 
       component.onSendMessage();
@@ -286,6 +303,7 @@ describe('CharacterDialogComponent', () => {
       // Wait for promises to resolve
       await new Promise(resolve => setTimeout(resolve, 100));
 
+      expect(console.error).toHaveBeenCalledWith('Error generating character responses:', errorResponse);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Error generating character responses. Please try again.',
         'Close',

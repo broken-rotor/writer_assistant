@@ -1,0 +1,208 @@
+<div class="character-management">
+  <div class="management-container">
+    <!-- Character List Panel -->
+    <div class="character-list-panel">
+      <h3>Character Management</h3>
+
+      <!-- Active Characters -->
+      <div class="character-section">
+        <div class="section-header">
+          <h4>Active Characters ({{ activeCharacterCount }})</h4>
+          <button mat-icon-button (click)="onCreateNew()" title="Create New Character">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+
+        <div class="character-list">
+          <div *ngFor="let character of activeCharacters"
+               class="character-item"
+               [class.selected]="selectedCharacter?.id === character.id"
+               (click)="onSelectCharacter(character)">
+            <div class="character-info">
+              <div class="character-name">{{ character.name }}</div>
+              <div class="character-role">{{ character.role }}</div>
+              <div class="character-badge" *ngIf="character.creationSource === 'user_defined'">
+                User Created
+              </div>
+            </div>
+            <button mat-icon-button
+                    (click)="onHideCharacter(character); $event.stopPropagation()"
+                    title="Hide Character">
+              <mat-icon>visibility_off</mat-icon>
+            </button>
+          </div>
+
+          <div *ngIf="activeCharacters.length === 0" class="empty-message">
+            No active characters. Create one to get started.
+          </div>
+        </div>
+      </div>
+
+      <!-- Hidden Characters -->
+      <div class="character-section" *ngIf="hiddenCharacterCount > 0">
+        <div class="section-header">
+          <h4>Hidden Characters ({{ hiddenCharacterCount }})</h4>
+        </div>
+
+        <div class="character-list">
+          <div *ngFor="let character of hiddenCharacters"
+               class="character-item hidden">
+            <div class="character-info">
+              <div class="character-name">{{ character.name }}</div>
+              <div class="character-role">{{ character.role }}</div>
+            </div>
+            <button mat-icon-button
+                    (click)="onUnhideCharacter(character)"
+                    title="Unhide Character">
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Character Editor Panel -->
+    <div class="character-editor-panel">
+      <div *ngIf="selectedCharacter || isCreatingNew" class="editor-content">
+        <div class="editor-header">
+          <h3>{{ isCreatingNew ? 'Create New Character' : selectedCharacter?.name }}</h3>
+          <div class="header-actions" *ngIf="!isCreatingNew && selectedCharacter">
+            <span class="visibility-badge" *ngIf="!selectedCharacter.isHidden">
+              <mat-icon>visibility</mat-icon> Visible
+            </span>
+            <span class="creation-badge">
+              {{ selectedCharacter.creationSource === 'user_defined' ? 'User Created' : 'AI Generated' }}
+            </span>
+          </div>
+        </div>
+
+        <form [formGroup]="characterForm" class="character-form">
+          <!-- Basic Info -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" [readonly]="!canEdit" />
+            <mat-error *ngIf="characterForm.get('name')?.hasError('required')">
+              Name is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Role</mat-label>
+            <mat-select formControlName="role" [disabled]="!canEdit">
+              <mat-option value="protagonist">Protagonist</mat-option>
+              <mat-option value="antagonist">Antagonist</mat-option>
+              <mat-option value="supporting">Supporting</mat-option>
+              <mat-option value="minor">Minor</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Personality Traits -->
+          <div class="form-section">
+            <div class="section-title">
+              <h4>Personality Traits</h4>
+              <button mat-icon-button
+                      (click)="onExpandWithAI('personality')"
+                      *ngIf="!isCreatingNew"
+                      title="Expand with AI">
+                <mat-icon>auto_awesome</mat-icon>
+              </button>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Core Traits (comma-separated)</mat-label>
+              <input matInput formControlName="coreTraits" [readonly]="!canEdit"
+                     placeholder="e.g., curious, determined, independent" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Emotional Patterns (comma-separated)</mat-label>
+              <input matInput formControlName="emotionalPatterns" [readonly]="!canEdit"
+                     placeholder="e.g., optimistic, anxious, passionate" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Speech Patterns (comma-separated)</mat-label>
+              <input matInput formControlName="speechPatterns" [readonly]="!canEdit"
+                     placeholder="e.g., formal, colloquial, verbose" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Motivations (comma-separated)</mat-label>
+              <input matInput formControlName="motivations" [readonly]="!canEdit"
+                     placeholder="e.g., justice, revenge, love" />
+            </mat-form-field>
+          </div>
+
+          <!-- Background -->
+          <div class="form-section">
+            <div class="section-title">
+              <h4>Background</h4>
+              <button mat-icon-button
+                      (click)="onExpandWithAI('background')"
+                      *ngIf="!isCreatingNew"
+                      title="Expand with AI">
+                <mat-icon>auto_awesome</mat-icon>
+              </button>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Background Story</mat-label>
+              <textarea matInput formControlName="background"
+                        [readonly]="!canEdit"
+                        rows="6"
+                        placeholder="Describe the character's background..."></textarea>
+            </mat-form-field>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="form-actions">
+            <button mat-raised-button
+                    *ngIf="!canEdit"
+                    (click)="onEditMode()"
+                    color="primary">
+              <mat-icon>edit</mat-icon> Edit
+            </button>
+
+            <ng-container *ngIf="canEdit">
+              <button mat-raised-button
+                      color="primary"
+                      (click)="onSaveCharacter()"
+                      [disabled]="!characterForm.valid">
+                <mat-icon>save</mat-icon> Save
+              </button>
+
+              <button mat-button
+                      (click)="onCancelEdit()">
+                Cancel
+              </button>
+            </ng-container>
+
+            <button mat-button
+                    *ngIf="!isCreatingNew && selectedCharacter"
+                    (click)="onHideCharacter(selectedCharacter)"
+                    color="warn">
+              <mat-icon>visibility_off</mat-icon> Hide Character
+            </button>
+          </div>
+        </form>
+
+        <!-- AI Expansion History -->
+        <div class="expansion-history" *ngIf="hasExpansionHistory && !isCreatingNew">
+          <h4>AI Expansion History</h4>
+          <div class="history-list">
+            <div *ngFor="let record of selectedCharacter?.aiExpansionHistory" class="history-item">
+              <div class="history-date">{{ record.date | date:'short' }}</div>
+              <div class="history-type">{{ record.expansionType | titlecase }}</div>
+              <div class="history-prompt">{{ record.userPrompt }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!selectedCharacter && !isCreatingNew" class="empty-editor">
+        <mat-icon>person</mat-icon>
+        <p>Select a character to edit or create a new one</p>
+      </div>
+    </div>
+  </div>
+</div>

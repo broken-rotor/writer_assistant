@@ -116,7 +116,10 @@ describe('ApiService', () => {
           currentKnowledge: ['crime scene details'],
           relationships: {}
         },
-        memorySize: 1024
+        memorySize: 1024,
+        isHidden: false,
+        creationSource: 'user_defined',
+        aiExpansionHistory: []
       };
 
       const mockResponse: ApiResponse<any> = {

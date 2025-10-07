@@ -59,7 +59,10 @@ describe('ContentGenerationComponent', () => {
             currentKnowledge: ['crime scene'],
             relationships: {}
           },
-          memorySize: 1024
+          memorySize: 1024,
+          isHidden: false,
+          creationSource: 'user_defined',
+          aiExpansionHistory: []
         }
       ],
       themes: ['justice', 'truth'],
@@ -123,9 +126,29 @@ describe('ContentGenerationComponent', () => {
       ]
     }).compileComponents();
 
+    mockLocalStorageService.getStory.and.returnValue(mockStory);
     fixture = TestBed.createComponent(ContentGenerationComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    // Reset mock and component state to default for all tests
+    mockLocalStorageService.getStory.and.returnValue(mockStory);
+    mockActivatedRoute.snapshot.paramMap.get.and.returnValue('test-story-1');
+
+    // Reset component state
+    component.story = mockStory;
+    component.isGenerating = false;
+    component.generatedContent = null;
+
+    // Reset form to default valid state
+    component.guidanceForm.patchValue({
+      userGuidance: 'Generate detailed content incorporating the selected character responses. Focus on perspectives from: Detective Smith. Emphasize themes of: justice, truth. Maintain consistency with the established character personalities and story outline.',
+      targetLength: 2500,
+      mood: 'investigative_tension',
+      style: 'literary_mystery'
+    });
   });
 
   it('should create', () => {
@@ -137,6 +160,23 @@ describe('ContentGenerationComponent', () => {
       expect(component.story).toBeTruthy();
       expect(component.story?.id).toBe('test-story-1');
       expect(mockLocalStorageService.getStory).toHaveBeenCalledWith('test-story-1');
+    });
+
+    it('should set default guidance based on story context', () => {
+      expect(component.guidanceForm.get('userGuidance')?.value).toContain('Generate detailed content');
+      expect(component.guidanceForm.get('userGuidance')?.value).toContain('Detective Smith');
+    });
+
+    it('should load existing content if available', () => {
+      const storyWithContent = {
+        ...mockStory,
+        finalContent: { content: 'Existing content' }
+      };
+      mockLocalStorageService.getStory.and.returnValue(storyWithContent);
+
+      component.ngOnInit();
+
+      expect(component.generatedContent).toBeTruthy();
     });
 
     it('should navigate to stories if no story ID', () => {
@@ -162,26 +202,22 @@ describe('ContentGenerationComponent', () => {
 
       expect(mockRouter.navigate).toHaveBeenCalled();
     });
-
-    it('should set default guidance based on story context', () => {
-      expect(component.guidanceForm.get('userGuidance')?.value).toContain('Generate detailed content');
-      expect(component.guidanceForm.get('userGuidance')?.value).toContain('Detective Smith');
-    });
-
-    it('should load existing content if available', () => {
-      const storyWithContent = {
-        ...mockStory,
-        finalContent: { content: 'Existing content' }
-      };
-      mockLocalStorageService.getStory.and.returnValue(storyWithContent);
-
-      component.ngOnInit();
-
-      expect(component.generatedContent).toBeTruthy();
-    });
   });
 
   describe('Form Validation', () => {
+    beforeEach(() => {
+      // Ensure component has valid story state for form validation tests
+      mockLocalStorageService.getStory.and.returnValue(mockStory);
+      component.story = mockStory;
+      // Reset form to ensure it has default values
+      component.guidanceForm.patchValue({
+        userGuidance: 'Generate detailed content incorporating the selected character responses. Focus on perspectives from: Detective Smith. Emphasize themes of: justice, truth. Maintain consistency with the established character personalities and story outline.',
+        targetLength: 2500,
+        mood: 'investigative_tension',
+        style: 'literary_mystery'
+      });
+    });
+
     it('should initialize with valid default values', () => {
       expect(component.guidanceForm.valid).toBeTruthy();
     });
@@ -205,6 +241,12 @@ describe('ContentGenerationComponent', () => {
   });
 
   describe('Content Generation', () => {
+    beforeEach(() => {
+      // Ensure component has valid story state
+      mockLocalStorageService.getStory.and.returnValue(mockStory);
+      component.story = mockStory;
+    });
+
     const mockApiResponse = {
       success: true,
       data: {
@@ -244,12 +286,15 @@ describe('ContentGenerationComponent', () => {
     });
 
     it('should handle API errors', () => {
+      spyOn(console, 'error');
+      const errorResponse = new Error('API Error');
       mockApiService.generateDetailedContent.and.returnValue(
-        throwError(() => new Error('API Error'))
+        throwError(() => errorResponse)
       );
 
       component.onGenerateContent();
 
+      expect(console.error).toHaveBeenCalledWith('Error generating content:', errorResponse);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Error generating content. Please try again.',
         'Close',
@@ -307,6 +352,16 @@ describe('ContentGenerationComponent', () => {
   });
 
   describe('Getters and Helpers', () => {
+    beforeEach(() => {
+      // Ensure component has valid story state
+      mockLocalStorageService.getStory.and.returnValue(mockStory);
+      component.story = mockStory;
+      // Reset form to valid state
+      component.guidanceForm.patchValue({
+        userGuidance: 'Generate detailed content incorporating the selected character responses. Focus on perspectives from: Detective Smith. Emphasize themes of: justice, truth. Maintain consistency with the established character personalities and story outline.'
+      });
+    });
+
     it('should check if has selected responses', () => {
       expect(component.hasSelectedResponses).toBeTruthy();
     });

@@ -17,6 +17,13 @@ The Writer Assistant employs a user-driven multi-agent system where specialized 
 - Revise content based on user-specified modifications and feedback
 - Respond to user requests for specific changes or improvements
 - Synthesize only user-approved inputs from other agents
+- Assist with AI-powered character detail expansion when requested by user
+
+**Character Expansion Support**:
+- **User-Requested Expansion**: When user requests character detail expansion, generate detailed content for specified aspects (personality, background, relationships, etc.)
+- **Context-Aware Generation**: Use existing character information and story context to create coherent expansions
+- **User Review Required**: All AI-generated character expansions require user review and approval before being saved to character configuration
+- **Expansion Tracking**: Log all expansion requests and generated content in character's `ai_expansion_history`
 
 **User-Controlled Memory Access**:
 - **User-Granted Story Memory**: Access to character memories only when user permits
@@ -42,9 +49,30 @@ The Writer Assistant employs a user-driven multi-agent system where specialized 
 - Present authentic character viewpoints for user consideration
 - Respond to user questions about character motivations and reactions
 
+**Character Visibility Filtering**:
+- **Active Characters Only**: Character agents only participate when `is_hidden: false` in their configuration
+- **Automatic Exclusion**: Hidden characters (`is_hidden: true`) are automatically filtered from:
+  - Agent selection prompts and character lists
+  - Dialog interface character options
+  - User feedback/reaction opportunities
+  - Multi-character conversation participation
+- **Immediate Activation**: When character is unhidden (`is_hidden: false`), agent immediately becomes available for all interactions
+- **Memory Preservation**: Hidden characters retain all memory state and configuration for seamless restoration
+
+**Character Configuration Integration**:
+- **User-Defined Foundation**: Characters created by users with basic physical, psychological, emotional characteristics and personality
+- **AI-Expanded Details**: Users can request AI expansion of character details, stored directly in character configuration
+- **Dynamic Management**: Characters can be added or hidden at any point during story development
+- **Soft-Delete System**: Hidden characters maintain all data but are excluded from agent interactions and user prompts
+
 **Individual Character Memory Structure**:
 ```json
 {
+  "character_metadata": {
+    "is_hidden": false,
+    "creation_source": "user_defined",
+    "ai_expansion_history": [...]
+  },
   "personal_memory": {
     "internal_monologue": [...],
     "subjective_experiences": [...],
@@ -179,6 +207,8 @@ The Writer Assistant employs a user-driven multi-agent system where specialized 
 - Requests for character perspectives on story events
 - Iterative conversation to explore character viewpoints
 - User feedback on character responses and authenticity
+- Character detail expansion requests (processed through Writer Agent)
+- Character visibility management (hide/unhide operations)
 
 **User → Writer Agent** (Content Direction):
 - Story themes, topics, and outline proposals
@@ -202,9 +232,11 @@ The Writer Assistant employs a user-driven multi-agent system where specialized 
 
 **User-Controlled Agent Activation**:
 - User selects which character agents to engage for each story phase
+- Only non-hidden characters (`is_hidden: false`) are presented in selection interfaces
 - User decides when to request feedback from rater and editor agents
 - User controls parallel vs. sequential agent engagement
 - User determines workflow progression based on their satisfaction with outputs
+- User can hide/unhide characters at any point to control agent participation
 
 **User-Centered Conflict Resolution**:
 - User reviews all agent perspectives and makes final decisions
@@ -220,6 +252,16 @@ The Writer Assistant employs a user-driven multi-agent system where specialized 
 ```json
 {
   "character_id": "john_smith",
+  "is_hidden": false,
+  "creation_source": "user_defined",
+  "ai_expansion_history": [
+    {
+      "date": "2025-10-07",
+      "section": "personality_traits",
+      "user_prompt": "Expand analytical traits",
+      "generated_content": {...}
+    }
+  ],
   "personality_traits": {
     "core_traits": ["introverted", "analytical", "protective"],
     "emotional_patterns": ["tends_to_internalize", "conflict_avoidant"],

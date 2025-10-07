@@ -56,7 +56,9 @@ The Writer Assistant uses JSON-based configuration files to define character per
     "archetype": "reluctant_hero",
     "created_date": "2025-09-24",
     "version": "1.0",
-    "description": "Introverted software engineer with protective instincts"
+    "description": "Introverted software engineer with protective instincts",
+    "is_hidden": false,
+    "creation_source": "user_defined"
   },
   "personality_profile": {
     "core_traits": {
@@ -180,9 +182,55 @@ The Writer Assistant uses JSON-based configuration files to define character per
     "thematic_connections": ["trust_vs_control", "love_vs_fear", "growth_vs_safety"],
     "plot_utilities": ["problem_solver", "information_gatherer", "emotional_catalyst"],
     "reader_connection": ["relatable_flaws", "understandable_motivations", "growth_potential"]
+  },
+  "character_management": {
+    "visibility_status": {
+      "is_hidden": false,
+      "hidden_date": null,
+      "hidden_reason": ""
+    },
+    "ai_expansion_history": {
+      "expansion_requests": [
+        {
+          "date": "2025-09-24",
+          "expansion_type": "personality_details",
+          "user_prompt": "Expand John's analytical traits",
+          "ai_generated_content": {
+            "section": "personality_profile.psychological_patterns",
+            "added_details": "..."
+          }
+        }
+      ],
+      "last_expansion": "2025-09-24"
+    }
   }
 }
 ```
+
+### Character Management Features
+
+**Character Creation and Modification**:
+- **User-Defined Characters**: Users provide basic physical, psychological, emotional characteristics and personality
+- **AI-Assisted Expansion**: Users can request AI to expand and elaborate character details, which are stored directly in character configuration
+- **Dynamic Character Management**: Characters can be added or removed (hidden) at any point during story development
+- **Character Visibility Control**: Soft-delete system using `is_hidden` flag to hide characters without data loss
+
+**Character Visibility States**:
+- **Active (`is_hidden: false`)**: Character participates in agent interactions, appears in user selection prompts, and receives feedback/reaction opportunities
+- **Hidden (`is_hidden: true`)**: Character excluded from future agent interactions and user prompts but data preserved for potential restoration
+- **Restoration**: Users can unhide previously hidden characters to restore full participation
+
+**AI Expansion Workflow**:
+1. User creates character with basic details
+2. User requests AI expansion for specific aspects (personality, background, relationships, etc.)
+3. AI generates detailed content based on user prompt
+4. Expanded details stored directly in character configuration JSON
+5. Expansion history tracked for reference and auditability
+
+**Character Introduction Guidelines**:
+- **Mid-Story Addition**: When users add characters during chapter development, they guide the introduction process
+- **User-Controlled Integration**: No automatic backstory generation - user directs how new characters appear
+- **Memory Continuity**: New characters start with fresh memory state unless user specifies otherwise
 
 ### Character Template System
 

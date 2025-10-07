@@ -5,6 +5,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Story, Character, DialogMessage, DialogConversation, SelectedResponse } from '../../shared/models';
 import { ApiService } from '../../core/services/api.service';
 import { LocalStorageService } from '../../core/services/local-storage.service';
+import { CharacterService } from '../../core/services/character.service';
 
 @Component({
   selector: 'app-character-dialog',
@@ -30,12 +31,15 @@ export class CharacterDialogComponent implements OnInit {
     'What would you do in this situation?'
   ];
 
+  availableCharacters: Character[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder,
     private apiService: ApiService,
     private localStorageService: LocalStorageService,
+    private characterService: CharacterService,
     private snackBar: MatSnackBar
   ) {
     this.messageForm = this.fb.group({
@@ -71,10 +75,11 @@ export class CharacterDialogComponent implements OnInit {
       return;
     }
 
-    // Initialize with available characters from the draft
-    if (this.story.currentDraft?.characters) {
-      this.selectedCharacters = [...this.story.currentDraft.characters];
-    }
+    // Initialize with available active (non-hidden) characters only
+    this.availableCharacters = this.characterService.getActiveCharacters(storyId);
+
+    // Pre-select all available characters for convenience
+    this.selectedCharacters = [...this.availableCharacters];
 
     // Load existing conversation history
     this.conversationHistory = this.story.conversationHistory || [];

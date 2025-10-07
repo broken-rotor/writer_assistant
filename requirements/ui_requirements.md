@@ -1018,10 +1018,12 @@ interface MemoryStateComponent {
 ### 5. Character Management Interface
 
 **Character Configuration UI**:
-- Visual character profile editor
+- Visual character profile editor with AI expansion support
 - Personality trait sliders and selectors
 - Relationship mapping interface
 - Memory pattern configuration
+- Character visibility controls (hide/unhide/restore)
+- AI-assisted detail expansion interface
 
 **Character Profile Editor**:
 ```json
@@ -1031,13 +1033,16 @@ interface MemoryStateComponent {
       "name_field": "text_input",
       "role_selector": "dropdown_with_custom",
       "archetype": "searchable_select",
-      "image_upload": "drag_drop_with_preview"
+      "image_upload": "drag_drop_with_preview",
+      "visibility_toggle": "show_hide_switch",
+      "creation_source": "display_only_badge"
     },
     "personality": {
       "trait_sliders": "visual_scale_0_to_10",
       "trait_tags": "selectable_chips",
       "psychology_questionnaire": "guided_form",
-      "freeform_notes": "rich_text_area"
+      "freeform_notes": "rich_text_area",
+      "ai_expansion_button": "expand_with_ai_assistant"
     },
     "relationships": {
       "relationship_network": "interactive_graph",
@@ -1048,9 +1053,160 @@ interface MemoryStateComponent {
       "bias_patterns": "checkbox_groups",
       "reliability_settings": "slider_controls",
       "attention_preferences": "weighted_selection"
+    },
+    "character_management": {
+      "hide_character": "soft_delete_with_confirmation",
+      "unhide_character": "restore_from_hidden_list",
+      "expansion_history": "view_ai_expansion_log",
+      "request_ai_expansion": "guided_expansion_dialog"
     }
   }
 }
+```
+
+**Character Management Workflows**:
+
+#### A. Character Creation Workflow
+```
+User Action Flow:
+1. Click "Create New Character"
+2. Enter basic details (name, role, physical/psychological/emotional traits)
+3. Option: "Expand with AI" button for any section
+   → User specifies what to expand (e.g., "Elaborate on personality traits")
+   → AI generates detailed content
+   → User reviews and approves AI-generated content
+   → Content saved directly to character configuration
+4. Save character (stored in local browser storage)
+```
+
+#### B. Character Visibility Management
+```
+Hide Character Workflow:
+1. User selects character from character list
+2. Clicks "Hide Character" button
+3. Confirmation dialog: "Are you sure? Character data will be preserved but excluded from future interactions"
+4. Character marked as is_hidden: true
+5. Character no longer appears in:
+   - Agent selection prompts
+   - Feedback/reaction opportunities
+   - Dialog interface character lists
+6. Character remains in hidden characters list for potential restoration
+
+Unhide Character Workflow:
+1. User opens "Hidden Characters" list
+2. Selects character to restore
+3. Clicks "Unhide Character"
+4. Character marked as is_hidden: false
+5. Character immediately available for all interactions
+```
+
+#### C. AI-Assisted Character Expansion
+```
+Expansion Request Workflow:
+1. User opens character profile editor
+2. Clicks "Expand with AI" for specific section (personality, background, relationships)
+3. Expansion dialog opens:
+   - Display current content
+   - Text area for expansion prompt (e.g., "Add more detail about childhood trauma")
+   - AI generates expanded content
+   - Preview expanded content side-by-side with original
+4. User reviews AI suggestions:
+   - Accept all
+   - Accept partial
+   - Request alternative expansion
+   - Edit AI suggestions manually
+5. Approved content saved directly to character configuration JSON
+6. Expansion logged in ai_expansion_history for reference
+```
+
+#### D. Mid-Story Character Addition
+```
+Add Character During Story Development:
+1. User clicks "Add New Character" during chapter development
+2. Creates character with basic or detailed profile
+3. User provides guidance for introduction:
+   - Where character appears in story
+   - How character is introduced (user writes or guides AI)
+   - Initial relationships with existing characters
+4. Character agent initialized with fresh memory state
+5. Character available for subsequent interactions
+```
+
+**Character Management Interface Layout**:
+```
+┌─────────────────────────────────────────────────────┐
+│ Character Management                                │
+├─────────────────┬───────────────────────────────────┤
+│ Character List  │ Character Profile Editor          │
+│ ┌─────────────┐ │ ┌───────────────────────────────┐ │
+│ │ Active:     │ │ │ Name: Sarah Chen              │ │
+│ │ ☑ Sarah Chen│ │ │ Role: Protagonist [▼]         │ │
+│ │   Journalist│ │ │ [👁 Visible] [Created: User]  │ │
+│ │   [Edit]    │ │ │                               │ │
+│ │             │ │ │ Personality Traits:           │ │
+│ │ ☑ John Smith│ │ │ • Curious [Edit] [🤖 Expand]  │ │
+│ │   Detective │ │ │ • Determined [Edit] [🤖 Expand]│ │
+│ │   [Edit]    │ │ │ • Independent                 │ │
+│ │             │ │ │ [+ Add Trait] [🤖 AI Expand All]│ │
+│ │ [+ New]     │ │ │                               │ │
+│ └─────────────┘ │ │ Background:                   │ │
+│                 │ │ Former journalist turned      │ │
+│ ┌─────────────┐ │ │ investigator...               │ │
+│ │ Hidden (2): │ │ │ [Edit] [🤖 Expand Background] │ │
+│ │ ☐ Mayor     │ │ │                               │ │
+│ │   Davidson  │ │ │ Relationships:                │ │
+│ │   [Unhide]  │ │ │ • John Smith: Complicated past│ │
+│ │             │ │ │   [Edit] [🤖 Elaborate]        │ │
+│ │ ☐ Sheriff   │ │ │ [+ Add Relationship]          │ │
+│ │   Collins   │ │ │                               │ │
+│ │   [Unhide]  │ │ │ [Save] [Hide Character]       │ │
+│ └─────────────┘ │ └───────────────────────────────┘ │
+│                 │                                   │
+│                 │ ┌───────────────────────────────┐ │
+│                 │ │ AI Expansion History          │ │
+│                 │ │ • Personality expanded (5 min)│ │
+│                 │ │ • Background elaborated (1 hr)│ │
+│                 │ │ [View Details] [Export]       │ │
+│                 │ └───────────────────────────────┘ │
+└─────────────────┴───────────────────────────────────┘
+```
+
+**AI Expansion Dialog Interface**:
+```
+┌─────────────────────────────────────────────────────┐
+│ Expand Character Details with AI                    │
+├─────────────────────────────────────────────────────┤
+│ Section: Personality Traits                        │
+│                                                     │
+│ Current Content:                                    │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ • Curious                                       │ │
+│ │ • Determined                                    │ │
+│ │ • Independent                                   │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ Your Expansion Request:                            │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Expand on how Sarah's curiosity manifests in    │ │
+│ │ her investigative work and personal life        │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ [Generate Expansion] [Cancel]                       │
+├─────────────────────────────────────────────────────┤
+│ AI-Generated Expansion (Preview):                  │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Curiosity:                                      │ │
+│ │ • Professional: Relentless pursuit of truth,    │ │
+│ │   asks probing questions, digs beyond surface  │ │
+│ │ • Personal: Reads constantly, tries new         │ │
+│ │   experiences, fascinated by human psychology  │ │
+│ │ • Shadow side: Can be intrusive, struggles      │ │
+│ │   with boundaries...                            │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ [✓ Accept] [Edit Before Accepting] [Regenerate]    │
+│ [Request Alternative] [Cancel]                      │
+└─────────────────────────────────────────────────────┘
 ```
 
 ### 6. Feedback and Review Interface

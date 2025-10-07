@@ -10,7 +10,10 @@
       "Bash(./venv/Scripts/python.exe -m pip install:*)",
       "Bash(npx tsc:*)",
       "Bash(npx ng test:*)",
-      "Bash(timeout 180 npx ng test --watch=false --browsers=ChromeHeadless)"
+      "Bash(timeout 180 npx ng test --watch=false --browsers=ChromeHeadless)",
+      "Bash(for i in {1..3})",
+      "Bash(do echo \"=== Run $i ===\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

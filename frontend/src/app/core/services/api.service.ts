@@ -211,4 +211,23 @@ export class ApiService {
       { headers: this.getHeaders() }
     );
   }
+
+  // Character Expansion API
+  generateCharacterExpansion(expansionRequest: any): Observable<ApiResponse<any>> {
+    const payload = {
+      character: expansionRequest.character,
+      section: expansionRequest.section,
+      user_prompt: expansionRequest.userPrompt,
+      expansion_context: {
+        current_content: expansionRequest.character.currentContent,
+        story_context: {}
+      }
+    };
+
+    return this.http.post<ApiResponse<any>>(
+      `${this.baseUrl}/character/expand`,
+      payload,
+      { headers: this.getHeaders() }
+    );
+  }
 }
