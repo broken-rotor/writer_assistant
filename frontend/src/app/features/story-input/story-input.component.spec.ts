@@ -167,11 +167,13 @@ describe('StoryInputComponent', () => {
     });
 
     it('should handle API errors gracefully', () => {
+      spyOn(console, 'error');
       const errorResponse = new Error('API Error');
       mockApiService.generateDraft.and.returnValue(throwError(() => errorResponse));
 
       component.onSubmit();
 
+      expect(console.error).toHaveBeenCalledWith('Error generating draft:', errorResponse);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Error generating story draft. Please try again.',
         'Close',

@@ -132,7 +132,7 @@ describe('StoryListComponent', () => {
     });
 
     it('should initialize displayed columns', () => {
-      expect(component.displayedColumns.length).toBe(5);
+      expect(component.displayedColumns.length).toBe(6);
       expect(component.displayedColumns).toContain('title');
       expect(component.displayedColumns).toContain('actions');
     });
@@ -146,56 +146,57 @@ describe('StoryListComponent', () => {
     });
 
     it('should navigate to draft phase', () => {
-      const story: Story = { ...mockStories[0], currentPhase: 'draft' as const };
+      const story: Story = { ...component.stories[0], currentPhase: 'draft' as const };
 
       component.onContinueStory(story);
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/draft-review', 'story-1']);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/draft-review', story.id]);
     });
 
     it('should navigate to character dialog phase', () => {
-      const story: Story = { ...mockStories[0], currentPhase: 'character_dialog' as const };
+      const story: Story = { ...component.stories[0], currentPhase: 'character_dialog' as const };
 
       component.onContinueStory(story);
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/character-dialog', 'story-1']);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/character-dialog', story.id]);
     });
 
     it('should navigate to detailed content phase', () => {
-      const story: Story = { ...mockStories[0], currentPhase: 'detailed_content' as const };
+      const story: Story = { ...component.stories[0], currentPhase: 'detailed_content' as const };
 
       component.onContinueStory(story);
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/content-generation', 'story-1']);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/content-generation', story.id]);
     });
 
     it('should navigate to refinement phase', () => {
-      const story: Story = { ...mockStories[0], currentPhase: 'refinement' as const };
+      const story: Story = { ...component.stories[0], currentPhase: 'refinement' as const };
 
       component.onContinueStory(story);
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/refinement', 'story-1']);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/refinement', story.id]);
     });
 
     it('should navigate to completed story view', () => {
-      const story: Story = { ...mockStories[0], currentPhase: 'completed' as const };
+      const story: Story = { ...component.stories[0], currentPhase: 'completed' as const };
 
       component.onContinueStory(story);
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/story-view', 'story-1']);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/story-view', story.id]);
     });
   });
 
   describe('Story Management', () => {
     it('should duplicate story', () => {
-      const duplicatedStory = { ...mockStories[0], id: 'story-1-copy', title: 'Test Story 1 (Copy)' };
+      const storyToDuplicate = component.stories[0];
+      const duplicatedStory = { ...storyToDuplicate, id: storyToDuplicate.id + '-copy', title: storyToDuplicate.title + ' (Copy)' };
       mockLocalStorageService.duplicateStory.and.returnValue(duplicatedStory);
 
-      component.onDuplicateStory(mockStories[0]);
+      component.onDuplicateStory(storyToDuplicate);
 
-      expect(mockLocalStorageService.duplicateStory).toHaveBeenCalledWith('story-1');
+      expect(mockLocalStorageService.duplicateStory).toHaveBeenCalledWith(storyToDuplicate.id);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
-        'Story "Test Story 1 (Copy)" duplicated successfully!',
+        `Story "${duplicatedStory.title}" duplicated successfully!`,
         'Close',
         { duration: 3000 }
       );
@@ -215,12 +216,13 @@ describe('StoryListComponent', () => {
 
     it('should delete story with confirmation', () => {
       spyOn(window, 'confirm').and.returnValue(true);
+      const storyToDelete = component.stories[0];
 
-      component.onDeleteStory(mockStories[0]);
+      component.onDeleteStory(storyToDelete);
 
-      expect(mockLocalStorageService.deleteStory).toHaveBeenCalledWith('story-1');
+      expect(mockLocalStorageService.deleteStory).toHaveBeenCalledWith(storyToDelete.id);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
-        'Story "Test Story 1" deleted successfully',
+        `Story "${storyToDelete.title}" deleted successfully`,
         'Close',
         { duration: 3000 }
       );
@@ -237,13 +239,14 @@ describe('StoryListComponent', () => {
 
   describe('Export and Import', () => {
     it('should export story', () => {
-      const exportData = JSON.stringify({ story: mockStories[0] });
+      const storyToExport = component.stories[0];
+      const exportData = JSON.stringify({ story: storyToExport });
       mockLocalStorageService.exportStory.and.returnValue(exportData);
       spyOn(component as any, 'downloadFile');
 
-      component.onExportStory(mockStories[0]);
+      component.onExportStory(storyToExport);
 
-      expect(mockLocalStorageService.exportStory).toHaveBeenCalledWith('story-1');
+      expect(mockLocalStorageService.exportStory).toHaveBeenCalledWith(storyToExport.id);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Story exported successfully!',
         'Close',
@@ -251,7 +254,7 @@ describe('StoryListComponent', () => {
       );
     });
 
-    it('should import story', () => {
+    it('should import story', (done) => {
       const importedStory = mockStories[0];
       mockLocalStorageService.importStory.and.returnValue(importedStory);
 
@@ -271,6 +274,7 @@ describe('StoryListComponent', () => {
       // Wait for file reading
       setTimeout(() => {
         expect(mockSnackBar.open).toHaveBeenCalled();
+        done();
       }, 100);
     });
 

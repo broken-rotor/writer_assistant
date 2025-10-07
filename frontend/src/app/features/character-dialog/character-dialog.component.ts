@@ -82,8 +82,11 @@ export class CharacterDialogComponent implements OnInit {
 
     // Set default context from story outline
     if (this.story.currentDraft?.outline) {
+      const contextText = this.story.currentDraft.outline
+        .map(chapter => `${chapter.title}: ${chapter.summary}`)
+        .join('\n\n');
       this.contextForm.patchValue({
-        context: this.story.currentDraft.outline.join(' ')
+        context: contextText
       });
     }
   }

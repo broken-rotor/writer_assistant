@@ -244,12 +244,15 @@ describe('DraftReviewComponent', () => {
     });
 
     it('should handle API errors during revision', () => {
+      spyOn(console, 'error');
+      const errorResponse = new Error('API Error');
       mockApiService.reviseDraft.and.returnValue(
-        throwError(() => new Error('API Error'))
+        throwError(() => errorResponse)
       );
 
       component.onRequestRevision();
 
+      expect(console.error).toHaveBeenCalledWith('Error revising draft:', errorResponse);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Error revising draft. Please try again.',
         'Close',

@@ -63,7 +63,7 @@ describe('CharacterDialogComponent', () => {
         id: 'ch-1',
         number: 1,
         title: 'The Beginning',
-        summary: 'The story begins...',
+        summary: 'Investigation begins',
         keyEvents: ['Investigation starts'],
         charactersPresent: ['char-1']
       }],
@@ -138,8 +138,7 @@ describe('CharacterDialogComponent', () => {
     });
 
     it('should initialize selected characters from draft', () => {
-      // Re-initialize the component to test initialization
-      component.ngOnInit();
+      // Characters are already loaded from ngOnInit in beforeEach
       expect(component.selectedCharacters.length).toBe(1);
       expect(component.selectedCharacters[0]?.name).toBe('Detective Smith');
     });
@@ -171,8 +170,7 @@ describe('CharacterDialogComponent', () => {
     it('should set default context from story outline', () => {
       const contextValue = component.contextForm.get('context')?.value;
       expect(contextValue).toBeTruthy();
-      // When joining objects, they become "[object Object]"
-      expect(contextValue).toContain('[object Object]');
+      expect(contextValue).toContain('The Beginning: Investigation begins');
     });
   });
 
@@ -371,6 +369,7 @@ describe('CharacterDialogComponent', () => {
     });
 
     it('should check hasSelectedResponses getter', () => {
+      component.selectedResponses = [];
       expect(component.hasSelectedResponses).toBeFalsy();
 
       component.selectedResponses = [{
