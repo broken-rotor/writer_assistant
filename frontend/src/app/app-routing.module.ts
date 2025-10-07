@@ -6,6 +6,7 @@ import { DraftReviewComponent } from './features/draft-review/draft-review.compo
 import { CharacterDialogComponent } from './features/character-dialog/character-dialog.component';
 import { ContentGenerationComponent } from './features/content-generation/content-generation.component';
 import { RefinementComponent } from './features/refinement/refinement.component';
+import { CharacterManagementComponent } from './features/character-management/character-management.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/stories', pathMatch: 'full' },
@@ -13,6 +14,7 @@ const routes: Routes = [
   { path: 'story-input', component: StoryInputComponent },
   { path: 'draft-review/:id', component: DraftReviewComponent },
   { path: 'character-dialog/:id', component: CharacterDialogComponent },
+  { path: 'character-management/:id', component: CharacterManagementComponent },
   { path: 'content-generation/:id', component: ContentGenerationComponent },
   { path: 'refinement/:id', component: RefinementComponent },
   { path: '**', redirectTo: '/stories' }

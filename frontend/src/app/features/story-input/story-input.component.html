@@ -88,6 +88,34 @@
           </mat-error>
         </mat-form-field>
 
+        <!-- Initial Characters Section -->
+        <mat-divider></mat-divider>
+        <div class="section-header">
+          <h3>Initial Characters (Optional)</h3>
+          <p class="section-description">Add main characters for your story. You can add more later.</p>
+        </div>
+
+        <div class="characters-list">
+          <div *ngFor="let char of initialCharacters; let i = index" class="character-item">
+            <div class="character-info">
+              <strong>{{ char.name }}</strong>
+              <span class="character-role">{{ char.role }}</span>
+            </div>
+            <button mat-icon-button (click)="removeCharacter(i)" type="button" color="warn">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+
+          <div *ngIf="initialCharacters.length === 0" class="empty-characters">
+            No characters added yet. Click "Add Character" to create one.
+          </div>
+        </div>
+
+        <button mat-stroked-button type="button" (click)="addCharacter()" class="add-character-btn">
+          <mat-icon>person_add</mat-icon>
+          Add Character
+        </button>
+
         <!-- Action Buttons -->
         <div class="action-buttons">
           <button

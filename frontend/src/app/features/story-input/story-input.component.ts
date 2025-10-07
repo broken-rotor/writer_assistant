@@ -2,9 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { StoryInput, Story, StoryDraft } from '../../shared/models';
+import { MatDialog } from '@angular/material/dialog';
+import { StoryInput, Story, StoryDraft, Character } from '../../shared/models';
 import { ApiService } from '../../core/services/api.service';
 import { LocalStorageService } from '../../core/services/local-storage.service';
+import { CharacterInputDialogComponent } from './character-input-dialog.component';
 
 @Component({
   selector: 'app-story-input',
@@ -14,6 +16,7 @@ import { LocalStorageService } from '../../core/services/local-storage.service';
 export class StoryInputComponent implements OnInit {
   storyForm: FormGroup;
   isGenerating = false;
+  initialCharacters: any[] = [];
 
   genres = [
     'Mystery', 'Romance', 'Thriller', 'Literary Fiction',
@@ -42,7 +45,8 @@ export class StoryInputComponent implements OnInit {
     private apiService: ApiService,
     private localStorageService: LocalStorageService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {
     this.storyForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
@@ -55,6 +59,22 @@ export class StoryInputComponent implements OnInit {
   }
 
   ngOnInit(): void {}
+
+  addCharacter(): void {
+    const dialogRef = this.dialog.open(CharacterInputDialogComponent, {
+      width: '500px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.initialCharacters.push(result);
+      }
+    });
+  }
+
+  removeCharacter(index: number): void {
+    this.initialCharacters.splice(index, 1);
+  }
 
   onSubmit(): void {
     if (this.storyForm.valid && !this.isGenerating) {
@@ -101,6 +121,38 @@ export class StoryInputComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           story.currentDraft = response.data;
+
+          // Add initial characters to the draft
+          if (this.initialCharacters.length > 0) {
+            const characters: Character[] = this.initialCharacters.map(char => ({
+              id: this.generateId(),
+              name: char.name,
+              role: char.role,
+              personality: {
+                coreTraits: char.coreTraits || [],
+                emotionalPatterns: [],
+                speechPatterns: [],
+                motivations: []
+              },
+              background: char.background || '',
+              currentState: {
+                emotionalState: 'neutral',
+                activeGoals: [],
+                currentKnowledge: [],
+                relationships: {}
+              },
+              memorySize: 0,
+              isHidden: false,
+              creationSource: 'user_defined',
+              aiExpansionHistory: []
+            }));
+
+            if (!story.currentDraft.characters) {
+              story.currentDraft.characters = [];
+            }
+            story.currentDraft.characters.push(...characters);
+          }
+
           story.lastModified = new Date();
           this.localStorageService.saveStory(story);
 

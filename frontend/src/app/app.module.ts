@@ -35,10 +35,14 @@ import { DraftReviewComponent } from './features/draft-review/draft-review.compo
 import { CharacterDialogComponent } from './features/character-dialog/character-dialog.component';
 import { ContentGenerationComponent } from './features/content-generation/content-generation.component';
 import { RefinementComponent } from './features/refinement/refinement.component';
+import { CharacterManagementComponent } from './features/character-management/character-management.component';
+import { AiExpansionDialogComponent } from './features/ai-expansion-dialog/ai-expansion-dialog.component';
+import { CharacterInputDialogComponent } from './features/story-input/character-input-dialog.component';
 
 // Services
 import { ApiService } from './core/services/api.service';
 import { LocalStorageService } from './core/services/local-storage.service';
+import { CharacterService } from './core/services/character.service';
 
 @NgModule({
   declarations: [
@@ -48,7 +52,10 @@ import { LocalStorageService } from './core/services/local-storage.service';
     DraftReviewComponent,
     CharacterDialogComponent,
     ContentGenerationComponent,
-    RefinementComponent
+    RefinementComponent,
+    CharacterManagementComponent,
+    AiExpansionDialogComponent,
+    CharacterInputDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -79,7 +86,8 @@ import { LocalStorageService } from './core/services/local-storage.service';
   ],
   providers: [
     ApiService,
-    LocalStorageService
+    LocalStorageService,
+    CharacterService
   ],
   bootstrap: [AppComponent]
 })
