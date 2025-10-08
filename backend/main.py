@@ -57,8 +57,11 @@ class GenerateDraftRequest(BaseModel):
     story_context: StoryContext
 
 # Mock response generators
-def generate_mock_story_draft(story_input: StoryInput) -> Dict[str, Any]:
+def generate_mock_story_draft(story_input: StoryInput, existing_characters: List[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate a mock story draft based on input"""
+    # Use existing characters if provided, otherwise return empty list
+    characters = existing_characters if existing_characters else []
+
     return {
         "title": f"The {story_input.theme.split()[0]} Mystery",
         "outline": [
@@ -70,30 +73,7 @@ def generate_mock_story_draft(story_input: StoryInput) -> Dict[str, Any]:
             "Climactic confrontation or revelation",
             "Resolution that ties back to the opening theme"
         ],
-        "characters": [
-            {
-                "id": "char_001",
-                "name": "Alex Morgan",
-                "role": "protagonist",
-                "personality": "Determined, analytical, with hidden vulnerabilities",
-                "background": f"Someone deeply connected to the {story_input.theme.lower()} at the story's heart",
-                "currentState": {
-                    "currentKnowledge": "Limited understanding of the full situation",
-                    "emotionalState": "Curious but apprehensive"
-                }
-            },
-            {
-                "id": "char_002",
-                "name": "Dr. Elena Vasquez",
-                "role": "mentor/ally",
-                "personality": "Wise, experienced, but harboring secrets",
-                "background": "Expert in the field relevant to the story's central mystery",
-                "currentState": {
-                    "currentKnowledge": "Much more than they initially reveal",
-                    "emotionalState": "Protective yet conflicted"
-                }
-            }
-        ],
+        "characters": characters,
         "themes": [
             story_input.theme,
             "Identity and self-discovery",
@@ -215,8 +195,11 @@ async def generate_draft(request: GenerateDraftRequest):
             focusAreas=request.user_preferences.focus_areas
         )
 
-        # Generate mock draft
-        draft_data = generate_mock_story_draft(story_input)
+        # Generate mock draft with existing characters from story context
+        draft_data = generate_mock_story_draft(
+            story_input,
+            existing_characters=request.story_context.characters
+        )
 
         return ApiResponse(
             success=True,

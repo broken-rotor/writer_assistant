@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -174,7 +174,7 @@ describe('AiExpansionDialogComponent', () => {
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
 
-  it('should regenerate content', () => {
+  it('should regenerate content', fakeAsync(() => {
     const mockResponse = {
       success: true,
       data: {
@@ -192,10 +192,14 @@ describe('AiExpansionDialogComponent', () => {
 
     component.onRegenerate();
 
-    expect(component.showPreview).toBe(false);
-    expect(component.generatedContent).toBe('');
+    // Process the async observable - since of() is synchronous, tick immediately processes it
+    tick();
+
+    // After completion, verify the API was called and new content was generated
     expect(apiService.generateCharacterExpansion).toHaveBeenCalled();
-  });
+    expect(component.showPreview).toBe(true);
+    expect(component.generatedContent).toBe('Regenerated content');
+  }));
 
   it('should cancel and close dialog', () => {
     component.onCancel();

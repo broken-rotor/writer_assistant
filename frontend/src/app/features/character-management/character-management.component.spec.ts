@@ -168,7 +168,7 @@ describe('CharacterManagementComponent', () => {
     component.characterForm.patchValue({
       name: 'Charlie',
       role: 'supporting',
-      background: 'A helper',
+      background: 'A helpful friend who assists the protagonist',
       coreTraits: 'friendly, helpful',
       emotionalPatterns: 'cheerful',
       speechPatterns: 'casual',
@@ -185,7 +185,7 @@ describe('CharacterManagementComponent', () => {
         speechPatterns: ['casual'],
         motivations: ['help others']
       },
-      background: 'A helper',
+      background: 'A helpful friend who assists the protagonist',
       currentState: {
         emotionalState: 'neutral',
         activeGoals: [],

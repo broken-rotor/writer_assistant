@@ -91,6 +91,54 @@ describe('CharacterService', () => {
 
     service = TestBed.inject(CharacterService);
     localStorageService = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
+
+    // Reset mock story to original state before each test to prevent mutation
+    mockStory.currentDraft!.characters = [
+      {
+        id: 'char-1',
+        name: 'Alice',
+        role: 'protagonist',
+        personality: {
+          coreTraits: ['brave', 'curious'],
+          emotionalPatterns: ['optimistic'],
+          speechPatterns: ['direct'],
+          motivations: ['justice']
+        },
+        background: 'A detective',
+        currentState: {
+          emotionalState: 'determined',
+          activeGoals: [],
+          currentKnowledge: [],
+          relationships: {}
+        },
+        memorySize: 0,
+        isHidden: false,
+        creationSource: 'user_defined',
+        aiExpansionHistory: []
+      },
+      {
+        id: 'char-2',
+        name: 'Bob',
+        role: 'antagonist',
+        personality: {
+          coreTraits: ['cunning', 'ruthless'],
+          emotionalPatterns: ['cold'],
+          speechPatterns: ['formal'],
+          motivations: ['power']
+        },
+        background: 'A criminal mastermind',
+        currentState: {
+          emotionalState: 'calculating',
+          activeGoals: [],
+          currentKnowledge: [],
+          relationships: {}
+        },
+        memorySize: 0,
+        isHidden: true,
+        creationSource: 'user_defined',
+        aiExpansionHistory: []
+      }
+    ];
   });
 
   it('should be created', () => {
