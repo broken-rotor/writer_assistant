@@ -328,7 +328,7 @@ class TestAPIErrorHandling:
         """Test malformed JSON in request"""
         response = client.post(
             "/api/v1/generate/outline",
-            data="invalid json",
+            content="invalid json",
             headers={"Content-Type": "application/json"}
         )
         assert response.status_code == 422

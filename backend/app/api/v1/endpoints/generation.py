@@ -2,7 +2,7 @@ from typing import Dict, Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 router = APIRouter()
 
@@ -72,7 +72,7 @@ async def generate_outline(request: OutlineGenerationRequest):
             success=True,
             data=outline_data,
             metadata={
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "request_id": session_id,
                 "version": "1.0"
             }
@@ -119,7 +119,7 @@ The investigation was just beginning, and Morrison knew that every detail would 
             success=True,
             data=chapter_data,
             metadata={
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "request_id": str(uuid.uuid4()),
                 "version": "1.0"
             }
@@ -139,14 +139,14 @@ async def get_session_status(session_id: str):
             "status": "awaiting_feedback",
             "progress": 0.65,
             "active_agents": ["consistency_rater", "flow_rater", "quality_rater"],
-            "estimated_completion": datetime.utcnow().isoformat()
+            "estimated_completion": datetime.now(UTC).isoformat()
         }
 
         return GenerationResponse(
             success=True,
             data=status_data,
             metadata={
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "request_id": str(uuid.uuid4()),
                 "version": "1.0"
             }
@@ -163,14 +163,14 @@ async def submit_feedback(session_id: str, feedback: FeedbackRequest):
             "session_id": session_id,
             "feedback_processed": True,
             "next_action": "revision_started" if feedback.feedback.get("approval_status") == "needs_revision" else "approved",
-            "estimated_completion": datetime.utcnow().isoformat()
+            "estimated_completion": datetime.now(UTC).isoformat()
         }
 
         return GenerationResponse(
             success=True,
             data=feedback_response,
             metadata={
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "request_id": str(uuid.uuid4()),
                 "version": "1.0"
             }
@@ -188,13 +188,13 @@ async def get_agent_status(session_id: str):
                 "status": "active",
                 "current_task": "chapter_3_revision",
                 "progress": 0.7,
-                "estimated_completion": datetime.utcnow().isoformat(),
+                "estimated_completion": datetime.now(UTC).isoformat(),
                 "memory_state": "loaded_and_current"
             },
             "character_agents": {
                 "detective_main": {
                     "status": "active",
-                    "last_update": datetime.utcnow().isoformat(),
+                    "last_update": datetime.now(UTC).isoformat(),
                     "memory_updates": 3,
                     "perspective_ready": True
                 }
@@ -208,7 +208,7 @@ async def get_agent_status(session_id: str):
                 "flow_rater": {
                     "status": "in_progress",
                     "progress": 0.4,
-                    "estimated_completion": datetime.utcnow().isoformat()
+                    "estimated_completion": datetime.now(UTC).isoformat()
                 }
             }
         }
@@ -217,7 +217,7 @@ async def get_agent_status(session_id: str):
             success=True,
             data=agent_status,
             metadata={
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "request_id": str(uuid.uuid4()),
                 "version": "1.0"
             }
