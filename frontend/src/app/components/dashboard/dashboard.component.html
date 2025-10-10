@@ -1,0 +1,88 @@
+<div class="dashboard">
+  <header class="dashboard-header">
+    <h2>Story Dashboard</h2>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="triggerImport()">
+        <span class="icon">📥</span> Import Stories
+      </button>
+      <button class="btn-primary" (click)="createNewStory()">
+        <span class="icon">➕</span> New Story
+      </button>
+    </div>
+  </header>
+
+  <!-- Hidden file input for import -->
+  <input
+    #fileInput
+    type="file"
+    accept="application/json"
+    (change)="onFileSelected($event)"
+    style="display: none"
+  />
+
+  <!-- Storage Overview -->
+  <div class="storage-overview">
+    <div class="storage-meter">
+      <div class="storage-bar" [class]="getStoragePercentageClass()">
+        <div class="storage-fill" [style.width.%]="storageQuota.percentage"></div>
+      </div>
+      <div class="storage-info">
+        <span class="storage-label">Storage:</span>
+        <span class="storage-used">{{ (storageQuota.used / (1024 * 1024)).toFixed(2) }} MB</span>
+        <span class="storage-separator">/</span>
+        <span class="storage-total">{{ (storageQuota.total / (1024 * 1024)).toFixed(0) }} MB</span>
+        <span class="storage-percentage">({{ storageQuota.percentage.toFixed(1) }}%)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stories List -->
+  <div class="stories-section">
+    <div class="stories-header">
+      <h3>Your Stories ({{ stories.length }})</h3>
+      <button class="btn-info btn-sm" (click)="exportAllStories()" *ngIf="stories.length > 0">
+        <span class="icon">📤</span> Export All
+      </button>
+    </div>
+
+    <div class="stories-list" *ngIf="stories.length > 0; else noStories">
+      <div class="story-item" *ngFor="let story of stories">
+        <div class="story-info">
+          <h4 class="story-title">{{ story.title }}</h4>
+          <div class="story-details">
+            <span class="story-chapters">
+              <span class="icon">📖</span> {{ story.chapterCount }} chapter{{ story.chapterCount !== 1 ? 's' : '' }}
+            </span>
+            <span class="story-date">
+              <span class="icon">🕒</span> {{ getFormattedDate(story.lastModified) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="story-actions">
+          <button class="btn-primary btn-sm" [routerLink]="['/story', story.id]" title="Edit story">
+            <span class="icon">✏️</span> Edit
+          </button>
+          <button class="btn-secondary btn-sm" (click)="exportStory(story.id)" title="Export this story">
+            <span class="icon">📤</span> Export
+          </button>
+          <button class="btn-danger btn-sm" (click)="deleteStory(story.id)" title="Delete story">
+            <span class="icon">🗑️</span> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noStories>
+      <div class="no-stories">
+        <div class="no-stories-icon">📚</div>
+        <h3>No stories yet</h3>
+        <p>Create your first story to get started with AI-powered collaborative writing.</p>
+        <p class="offline-note">✓ Your stories are stored locally and work offline</p>
+        <button class="btn-primary" (click)="createNewStory()">
+          <span class="icon">➕</span> Create Your First Story
+        </button>
+      </div>
+    </ng-template>
+  </div>
+</div>

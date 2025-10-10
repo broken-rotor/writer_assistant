@@ -1,0 +1,51 @@
+Story creation page:
+- General tab
+  - Title of the story (user-provided)
+  - Main system prompt prefix (user-provided, will be added to every other system prompt before it, can be empty)
+  - Main system prompt suffix (user-provided, will be addded to every other system prompt after it, can be empty)
+  - Assistant system prompt (user-provided)
+  - Editor system prompt (user-provided)
+  - Overall setting / worldbuilding (user-provided, assisstant can flesh out, user can edit)
+- Characters tab
+  - Add/Remove/Hide/Unhide characters
+  - For each character:
+    - Basic bio (user-provided, assisstant can flesh out, user can edit)
+    - Name (assisstant generated based on basic bio if not explicitly provided, user can edit)
+    - Sex, gender, sexual preference, and age (assisstant generated based on basic bio, user can edit)
+    - Physical appearance (assisstant generated based on basic bio, user can edit)
+    - Usual clothing (assisstant generated based on basic bio, user can edit)
+    - Personality (assisstant generated based on basic bio, user can edit)
+    - Motivations (assisstant generated based on basic bio, user can edit)
+    - Fears (assisstant generated based on basic bio, user can edit)
+    - Relationships (assisstant generated based on basic bio, user can edit; a button to regenerate/expand to account for other characters, user can edit)
+- Raters tab
+  - Add/Remove raters
+  - For each rater:
+    - Name (user-provided)
+    - Rater system prompt (user-provided)
+- Story tab
+    - The generated story (initially blank)
+    - Buttons to add chapters (either in between existing chapters or at the end), edit chapters (switches to different tab)
+    - Button to delete chapters
+    - An assistant generated summary of the overall story.
+- Chapter Creation tab
+    - Plot point (user-provided, assisstant can flesh out, user can edit)
+    - A list of incorporated feedback (initially empty)
+    - A list of the characters not hidden, the raters. When the user clicks on them, the agents will evaluate the plot point and alredy incorporated feedback and generate their own feedback:
+      - For characters, the agents will generate:
+        - Actions (what they do)
+        - Dialog (what they say)
+        - Physical sensations (what they experience)
+        - Emotions (what they feel)
+        - Internal monologue (what they think)
+      - For raters:
+        - Their opinion of the story plot point and already incorporated feedback
+        - Their suggestions
+      - The user can suggest changes (editbox, agent regenerates with previous feedback + new user feedback), accept some or all components of the character or rater feedback to be incorporated above.
+    - The process of getting feedback from characeters and raters can keep going until the user decides.
+    - A generate button that takes the plot point and all the incorporated feedback, and the writer assistant generates a chapter using all that information.
+    - The user can then suggest edits to the story by directly modifying the output, or prompting the assistant.
+    - A review button that takes the edited story and uses the writer editor to suggest final changes.  The user decides which suggestions to follow, and the writer assistant changes the story accordingly.
+    - A final review of the produced story by the user, that allows they to keep prompting the editor & writting assistant, or accept it. If they accept it, it will be addeed as a chapter to the story.
+
+All these elements are stored locally on the browser's local storage.

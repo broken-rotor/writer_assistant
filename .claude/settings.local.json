@@ -14,7 +14,8 @@
       "Bash(for i in {1..3})",
       "Bash(do echo \"=== Run $i ===\")",
       "Bash(done)",
-      "Bash(timeout 180 npm test -- --watch=false --browsers=ChromeHeadless)"
+      "Bash(timeout 180 npm test -- --watch=false --browsers=ChromeHeadless)",
+      "Bash(ng generate component:*)"
     ],
     "deny": [],
     "ask": []

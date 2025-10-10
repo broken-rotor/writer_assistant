@@ -2,1543 +2,666 @@
 
 ## Overview
 
-The Writer Assistant frontend provides a user-centric, intuitive interface that puts complete control of story development in the user's hands. Built with Angular, the interface manages all state client-side and orchestrates user-driven workflows through stateless backend services. The UI emphasizes clear interaction patterns for each phase of the story development process.
+The Writer Assistant frontend provides a tabbed interface that gives users complete control over story development. Built with Angular, the interface manages all state client-side in browser local storage and coordinates with stateless backend AI services. The UI emphasizes a simple, direct workflow for creating stories chapter by chapter with AI assistance.
 
-## Basic User Interaction Workflows
+## Core UI Structure
 
-The Writer Assistant supports a streamlined, user-driven workflow with four main interaction patterns:
+The application uses a single-page, tabbed interface for story creation and management:
 
-1. **Story Creation & Draft Generation**: User inputs theme/topic → Writer generates expanded draft → User reviews/revises
-2. **Character Agent Dialog**: User selects characters → Engages in conversation → Curates responses for story use
-3. **Detailed Content Generation**: User approves outline → Writer generates detailed content → User reviews/modifies
-4. **Feedback & Refinement**: User selects critics → Reviews feedback → Chooses what to apply → Final polish
+### Story Creation Page
 
-### Workflow 1: Story Creation & Draft Generation
+The main workspace consists of five tabs:
 
-**User Journey**:
-```
-Start → Enter Theme/Topic → Generate Draft → Review → [Revise | Approve] → Continue
-```
+1. **General Tab** - Overall story configuration
+2. **Characters Tab** - Character creation and management
+3. **Raters Tab** - Feedback agent configuration
+4. **Story Tab** - View generated story content
+5. **Chapter Creation Tab** - Interactive chapter development workspace
 
-**UI Components Required**:
-- Story input text area with guided prompts
-- "Generate Draft" button with loading indicator
-- Draft preview panel with approval controls
-- Revision request interface with specific feedback fields
-- Progress indicator showing workflow stage
+All data is automatically persisted to browser local storage.
 
-**Layout Flow**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Story Creation Workspace                            │
-├─────────────────────────────────────────────────────┤
-│ 1. Story Input                                      │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ "Create a mystery about a missing person in a  │ │
-│ │  small town where everyone has secrets..."      │ │
-│ │                                                 │ │
-│ │ Genre: [Mystery ▼] Length: [Novella ▼]        │ │
-│ │ [Generate Draft] [Save for Later]              │ │
-│ └─────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│ 2. Generated Draft Review                          │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Generated Outline: "Secrets of Millbrook"      │ │
-│ │ • Chapter 1: Journalist arrives in town...     │ │
-│ │ • Chapter 2: First interview reveals...        │ │
-│ │                                                 │ │
-│ │ [✓ Approve Draft] [Request Changes] [Regenerate]│ │
-│ └─────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────┘
-```
+## Tab 1: General
 
-### Workflow 2: Character Agent Dialog
+**Purpose**: Configure global story settings and system prompts
 
-**User Journey**:
-```
-Select Characters → Ask Questions → Review Responses → [Continue Dialog | Select Responses] → Use in Story
-```
+**Components**:
 
-**UI Components Required**:
-- Character selection interface with previews
-- Dialog conversation panel with chat-like interface
-- Response curation tools with selection checkboxes
-- Character context panel showing personality & background
-- "Use Selected Responses" confirmation interface
-
-**Layout Flow**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Character Dialog Interface                          │
-├─────────────────┬───────────────────────────────────┤
-│ Character Panel │ Dialog Conversation               │
-│ ┌─────────────┐ │ ┌───────────────────────────────┐ │
-│ │☑ Sarah Chen│ │ │ You: How do you feel about    │ │
-│ │  Journalist │ │ │      investigating this case?│ │
-│ │             │ │ │                               │ │
-│ │☑ Mayor     │ │ │ Sarah: "I feel a mix of       │ │
-│ │  Davidson   │ │ │ excitement and unease..."     │ │
-│ │             │ │ │ [☑ Keep] [Modify] [Alternative]│ │
-│ │☐ Sheriff   │ │ │                               │ │
-│ │  Collins    │ │ │ Mayor: "This investigation    │ │
-│ └─────────────┘ │ │ concerns me deeply..."        │ │
-├─────────────────┤ │ [☐ Keep] [Modify] [Alternative]│ │
-│ [Ask Question]  │ │                               │ │
-│ [Add Character] │ │ Your Message:                 │ │
-│ [Use Selected]  │ │ ┌───────────────────────────┐ │ │
-│                 │ │ │ What are you hiding?      │ │ │
-│                 │ │ │ [Send] [Clear]            │ │ │
-│                 │ │ └───────────────────────────┘ │ │
-│                 │ └───────────────────────────────┘ │
-└─────────────────┴───────────────────────────────────┘
-```
-
-### Workflow 3: Detailed Content Generation
-
-**User Journey**:
-```
-Approved Outline → Generate Detailed Content → Review → [Modify | Request Changes | Approve] → Continue
-```
-
-**UI Components Required**:
-- Content generation trigger with parameters
-- Rich text editor for detailed content review
-- Inline editing tools for modifications
-- Content approval interface with clear actions
-- Progress tracking for content generation
-
-**Layout Flow**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Content Generation Workspace                        │
-├─────────────────────────────────────────────────────┤
-│ Source Context                                      │
-│ • Approved outline: "Secrets of Millbrook"         │
-│ • Selected character responses: 3 items            │
-│ • User guidance: "Focus on Sarah's investigation"  │
-│                                                     │
-│ [Generate Detailed Content] [Cancel]               │
-├─────────────────────────────────────────────────────┤
-│ Generated Content                                   │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Chapter 1: Arrival                             │ │
-│ │                                                 │ │
-│ │ Sarah Chen's car crunched over the gravel as   │ │
-│ │ she pulled into Millbrook's main street. The   │ │
-│ │ town felt smaller than she'd expected, with...  │ │
-│ │                                                 │ │
-│ │ [Word count: 2,347]                            │ │
-│ └─────────────────────────────────────────────────┘ │
-│                                                     │
-│ [✓ Approve] [Request Changes] [Get Feedback] [Edit] │
-└─────────────────────────────────────────────────────┘
-```
-
-### Workflow 4: Feedback & Refinement
-
-**User Journey**:
-```
-Select Critics → Review Feedback → Choose What to Apply → Generate Refined Version → Final Review
-```
-
-**UI Components Required**:
-- Critic/editor selection interface with specialties
-- Feedback review panel with scoring and comments
-- Selective feedback application with checkboxes
-- Refinement generation with applied feedback preview
-- Final approval interface
-
-**Layout Flow**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Feedback & Refinement Interface                     │
-├─────────────────┬───────────────────────────────────┤
-│ Available       │ Feedback Review                   │
-│ Critics         │ ┌───────────────────────────────┐ │
-│ ┌─────────────┐ │ │ Character Consistency (8.2/10)│ │
-│ │☑ Character │ │ │ ✓ Strong character voice      │ │
-│ │  Consistency│ │ │ ⚠ Minor dialogue issue        │ │
-│ │             │ │ │ [☑ Apply] Fix dialogue tags   │ │
-│ │☑ Narrative │ │ │                               │ │
-│ │  Flow       │ │ │ Narrative Flow (7.5/10)       │ │
-│ │             │ │ │ ✓ Good tension building       │ │
-│ │☐ Line      │ │ │ ⚠ Pacing slows in middle      │ │
-│ │  Editor     │ │ │ [☑ Apply] Add physical action │ │
-│ └─────────────┘ │ │                               │ │
-│                 │ │ Line Editor (9.1/10)          │ │
-│ [Get Feedback]  │ │ ✓ Clean prose style           │ │
-│ [Apply Selected]│ │ ☐ Consider minor word choice  │ │
-│                 │ │ [☐ Apply] Suggested changes   │ │
-│                 │ └───────────────────────────────┘ │
-└─────────────────┴───────────────────────────────────┘
-```
-
-## Core UI Components
-
-### 1. Story Creation & Draft Generation Interface
-
-**Primary Functions**:
-- Story input collection with guided prompts
-- Draft generation triggering and progress tracking
-- Draft review and approval workflow
-- Revision request management
-
-**Core Components**:
-
-#### A. Story Input Component
+### Story Title Field
 ```typescript
-interface StoryInputComponent {
-  storyInput: {
-    theme: string;
-    genre: string;
-    length: 'short_story' | 'novella' | 'novel';
-    style: string;
-    focusAreas: string[];
-  };
-
-  actions: {
-    generateDraft(): void;
-    saveDraft(): void;
-    loadTemplate(templateId: string): void;
-  };
-
+interface StoryTitleComponent {
+  title: string;
+  placeholder: "Enter story title";
   validation: {
-    minimumInputLength: number;
-    requiredFields: string[];
+    required: true;
+    maxLength: 200;
   };
 }
 ```
 
-**Layout Requirements**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Story Creation Interface                            │
-├─────────────────────────────────────────────────────┤
-│ Input Section                                       │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Theme/Topic:                                    │ │
-│ │ ┌─────────────────────────────────────────────┐ │ │
-│ │ │ Create a mystery about a missing person...  │ │ │
-│ │ │                                             │ │ │
-│ │ │                              [400/2000]     │ │ │
-│ │ └─────────────────────────────────────────────┘ │ │
-│ │                                                 │ │
-│ │ Genre: [Mystery ▼] Length: [Novella ▼]        │ │
-│ │ Style: [Literary ▼] Focus: [☑ Character ☑ Plot]│ │
-│ │                                                 │ │
-│ │ [Load Template] [Save Input] [Generate Draft]   │ │
-│ └─────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│ Generation Progress                                 │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ ⏳ Generating story draft...                    │ │
-│ │ ████████████████░░░░░░░░░░░░ 65%                │ │
-│ │ Current step: Character development             │ │
-│ │ [Cancel Generation]                             │ │
-│ └─────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────┘
+### System Prompt Configuration
+```typescript
+interface SystemPromptConfig {
+  mainPrefix: string;  // Added before every agent system prompt
+  mainSuffix: string;  // Added after every agent system prompt
+  assistantSystemPrompt: string;  // Writer assistant's system prompt
+  editorSystemPrompt: string;     // Editor agent's system prompt
+
+  promptComposition: {
+    // Final prompt = mainPrefix + agentPrompt + mainSuffix
+    example: "[prefix] [agent specific prompt] [suffix]";
+  };
+}
 ```
 
-#### B. Draft Review Component
+### Worldbuilding Section
 ```typescript
-interface DraftReviewComponent {
-  draftContent: {
+interface WorldbuildingComponent {
+  content: string;
+  source: "user" | "ai_assisted" | "mixed";
+
+  actions: {
+    aiFleshOut(): void;      // User can request AI to expand
+    userEdit(): void;        // User can manually edit
+    resetToOriginal(): void; // Restore to initial version
+  };
+
+  history: {
+    userProvided: string;
+    aiExpansions: Array<{
+      timestamp: Date;
+      content: string;
+      userPrompt: string;
+    }>;
+  };
+}
+```
+
+**Layout**:
+```
+┌─────────────────────────────────────────────────┐
+│ General Tab                                     │
+├─────────────────────────────────────────────────┤
+│ Story Title                                     │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ [Enter story title]                         │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ Main System Prompt Prefix (optional)           │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ [Text added before every agent prompt]      │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ Main System Prompt Suffix (optional)           │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ [Text added after every agent prompt]       │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ Writer Assistant System Prompt                 │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ [Assistant's system prompt configuration]   │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ Editor System Prompt                           │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ [Editor's system prompt configuration]      │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ Overall Setting / Worldbuilding                │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ [User-provided worldbuilding]               │ │
+│ │                                             │ │
+│ │ [AI can flesh out, user can edit]          │ │
+│ └─────────────────────────────────────────────┘ │
+│ [AI Flesh Out] [Reset to Original]            │
+└─────────────────────────────────────────────────┘
+```
+
+## Tab 2: Characters
+
+**Purpose**: Create, configure, and manage story characters
+
+**Components**:
+
+### Character List Panel
+```typescript
+interface CharacterListComponent {
+  characters: Character[];
+
+  displayStates: {
+    active: Character[];    // is_hidden: false
+    hidden: Character[];    // is_hidden: true
+  };
+
+  actions: {
+    addCharacter(): void;
+    removeCharacter(id: string): void;
+    hideCharacter(id: string): void;
+    unhideCharacter(id: string): void;
+  };
+}
+```
+
+### Character Detail Editor
+```typescript
+interface CharacterDetailComponent {
+  basicBio: string;  // User-provided foundation
+
+  // AI-generated from basic bio, user can edit
+  generatedFields: {
+    name: string;
+    sex: string;
+    gender: string;
+    sexualPreference: string;
+    age: number;
+    physicalAppearance: string;
+    usualClothing: string;
+    personality: string;
+    motivations: string;
+    fears: string;
+    relationships: string;
+  };
+
+  actions: {
+    generateFromBio(): void;           // Generate all fields from basic bio
+    regenerateField(field: string): void;  // Regenerate specific field
+    regenerateRelationships(): void;   // Update relationships to account for other characters
+    userEdit(field: string): void;     // Manual user editing
+  };
+
+  metadata: {
+    isHidden: boolean;
+    creationSource: "user" | "ai_generated" | "imported";
+    lastModified: Date;
+  };
+}
+```
+
+**Workflow**:
+1. User clicks "Add Character"
+2. User provides basic bio
+3. User triggers AI generation (or manually enters all fields)
+4. AI generates name, demographics, appearance, personality, motivations, fears
+5. AI generates initial relationships based on basic bio
+6. User reviews and edits any generated fields
+7. User can click "regenerate/expand" button for relationships to account for other characters
+8. Character saved to local storage
+
+**Layout**:
+```
+┌─────────────────────────────────────────────────┐
+│ Characters Tab                                  │
+├─────────────┬───────────────────────────────────┤
+│ Character   │ Character Details                 │
+│ List        │                                   │
+│ ┌─────────┐ │ Basic Bio (user-provided)         │
+│ │ Active: │ │ ┌───────────────────────────────┐ │
+│ │ Sarah   │ │ │ A curious journalist who...   │ │
+│ │  [Edit] │ │ └───────────────────────────────┘ │
+│ │  [Hide] │ │                                   │
+│ │         │ │ Name (AI-generated, user editable)│
+│ │ John    │ │ ┌───────────────────────────────┐ │
+│ │  [Edit] │ │ │ Sarah Chen                    │ │
+│ │  [Hide] │ │ └───────────────────────────────┘ │
+│ │         │ │                                   │
+│ └─────────┘ │ Demographics (AI-generated)       │
+│             │ Sex: [Female] Gender: [Female]    │
+│ ┌─────────┐ │ Sexual Pref: [Heterosexual]       │
+│ │ Hidden: │ │ Age: [32]                         │
+│ │ Mayor   │ │                                   │
+│ │ [Unhide]│ │ Physical Appearance               │
+│ │         │ │ ┌───────────────────────────────┐ │
+│ └─────────┘ │ │ [AI-generated description]    │ │
+│             │ └───────────────────────────────┘ │
+│ [+ Add]     │                                   │
+│             │ Usual Clothing, Personality,      │
+│             │ Motivations, Fears...             │
+│             │ (all AI-generated, user-editable) │
+│             │                                   │
+│             │ Relationships                     │
+│             │ ┌───────────────────────────────┐ │
+│             │ │ [AI-generated relationships]  │ │
+│             │ └───────────────────────────────┘ │
+│             │ [Regenerate for Other Characters] │
+│             │                                   │
+│             │ [Generate from Bio] [Save]        │
+└─────────────┴───────────────────────────────────┘
+```
+
+## Tab 3: Raters
+
+**Purpose**: Configure feedback agents for story evaluation
+
+**Components**:
+
+### Rater List and Configuration
+```typescript
+interface RaterComponent {
+  raters: Rater[];
+
+  raterConfig: {
+    name: string;              // User-provided name
+    systemPrompt: string;      // User-provided system prompt
+    specialty?: string;        // Optional specialty description
+    enabled: boolean;          // Active/inactive toggle
+  };
+
+  actions: {
+    addRater(): void;
+    removeRater(id: string): void;
+    editRaterPrompt(id: string): void;
+    toggleRater(id: string): void;
+  };
+}
+```
+
+**Layout**:
+```
+┌─────────────────────────────────────────────────┐
+│ Raters Tab                                      │
+├─────────────────────────────────────────────────┤
+│ Configured Raters                               │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ Character Consistency Rater  [Edit] [Remove]│ │
+│ │ System Prompt: "Evaluate character..."      │ │
+│ │ [Enabled ✓]                                 │ │
+│ ├─────────────────────────────────────────────┤ │
+│ │ Narrative Flow Rater        [Edit] [Remove] │ │
+│ │ System Prompt: "Assess story flow..."      │ │
+│ │ [Enabled ✓]                                 │ │
+│ ├─────────────────────────────────────────────┤ │
+│ │ Genre Expert                [Edit] [Remove] │ │
+│ │ System Prompt: "Review genre fit..."       │ │
+│ │ [Enabled ☐]                                 │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ [+ Add New Rater]                              │
+│                                                 │
+│ Add/Edit Rater                                 │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ Name: [                    ]                │ │
+│ │                                             │ │
+│ │ System Prompt:                              │ │
+│ │ ┌─────────────────────────────────────────┐ │ │
+│ │ │                                         │ │ │
+│ │ │                                         │ │ │
+│ │ └─────────────────────────────────────────┘ │ │
+│ │                                             │ │
+│ │ [Save Rater] [Cancel]                       │ │
+│ └─────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────┘
+```
+
+## Tab 4: Story
+
+**Purpose**: Display generated story content and manage chapters
+
+**Components**:
+
+### Story Summary Display
+```typescript
+interface StorySummaryComponent {
+  summary: string;  // AI-generated overall story summary
+  autoUpdate: boolean;  // Regenerate when chapters change
+
+  actions: {
+    regenerateSummary(): void;
+    editSummary(): void;
+  };
+}
+```
+
+### Chapter List and Management
+```typescript
+interface ChapterListComponent {
+  chapters: Chapter[];
+
+  chapterDisplay: {
+    number: number;
     title: string;
-    outline: Chapter[];
-    characters: Character[];
-    themes: string[];
-    metadata: GenerationMetadata;
-  };
-
-  reviewActions: {
-    approveDraft(): void;
-    requestChanges(feedback: string): void;
-    regenerateDraft(): void;
-    editDraftDirectly(): void;
-  };
-
-  revisionInterface: {
-    specificChanges: string[];
-    overallFeedback: string;
-    regenerationOptions: RegenerationOptions;
-  };
-}
-```
-
-**Layout Requirements**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Draft Review Interface                              │
-├─────────────────────────────────────────────────────┤
-│ Generated Content Preview                           │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Title: "Secrets of Millbrook"                   │ │
-│ │                                                 │ │
-│ │ Chapter Outline:                                │ │
-│ │ 1. Sarah arrives in Millbrook                   │ │
-│ │    • Investigative journalist background        │ │
-│ │    • Town's secretive atmosphere               │ │
-│ │                                                 │ │
-│ │ 2. First interviews reveal inconsistencies      │ │
-│ │    • Mayor's evasive responses                  │ │
-│ │    • Missing person's troubled history          │ │
-│ │                                                 │ │
-│ │ Characters:                                     │ │
-│ │ • Sarah Chen (Protagonist - Journalist)        │ │
-│ │ • Robert Davidson (Mayor)                       │ │
-│ │ • Missing: Jennifer Walsh                       │ │
-│ │                                                 │ │
-│ │ [Expand Details] [Character Profiles]           │ │
-│ └─────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│ Review Actions                                      │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ ✓ I like this direction                         │ │
-│ │ [✓ Approve Draft & Continue]                    │ │
-│ │                                                 │ │
-│ │ ⚠ I want changes:                               │ │
-│ │ ┌─────────────────────────────────────────────┐ │ │
-│ │ │ Change the protagonist to a detective       │ │ │
-│ │ │ instead of a journalist...                  │ │ │
-│ │ └─────────────────────────────────────────────┘ │ │
-│ │ [Request Specific Changes]                      │ │
-│ │                                                 │ │
-│ │ 🔄 Start over: [Regenerate Draft]               │ │
-│ └─────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────┘
-```
-
-### 2. Character Dialog Interface
-
-**Primary Functions**:
-- Character agent selection and management
-- Real-time conversation with selected characters
-- Response curation and selection tools
-- Character context and background display
-- Dialog history management
-
-**Core Components**:
-
-#### A. Character Selection Panel
-```typescript
-interface CharacterSelectionComponent {
-  availableCharacters: Character[];
-  selectedCharacters: Character[];
-
-  actions: {
-    selectCharacter(characterId: string): void;
-    deselectCharacter(characterId: string): void;
-    createNewCharacter(template: CharacterTemplate): void;
-    viewCharacterProfile(characterId: string): void;
-  };
-
-  characterDisplay: {
-    showPersonality: boolean;
-    showBackground: boolean;
-    showCurrentState: boolean;
-  };
-}
-```
-
-#### B. Dialog Conversation Component
-```typescript
-interface DialogConversationComponent {
-  conversation: {
-    messages: DialogMessage[];
-    activeCharacters: string[];
-    conversationId: string;
-  };
-
-  messageInterface: {
-    userInput: string;
-    sendMessage(message: string): void;
-    requestAlternativeResponse(messageId: string): void;
-    selectResponse(messageId: string, selected: boolean): void;
-  };
-
-  responseManagement: {
-    selectedResponses: DialogMessage[];
-    curateResponses(): void;
-    useSelectedInStory(): void;
-  };
-}
-```
-
-**Layout Requirements**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Character Dialog Interface                          │
-├─────────────────┬───────────────────────────────────┤
-│ Character Panel │ Conversation Area                 │
-│ ┌─────────────┐ │ ┌───────────────────────────────┐ │
-│ │Available:   │ │ │ Conversation Context:         │ │
-│ │☑ Sarah Chen│ │ │ "Missing person investigation" │ │
-│ │  Journalist │ │ │                               │ │
-│ │  🔍 Curious │ │ │ You: How do you feel about    │ │
-│ │  💪 Determined│ │ investigating this case?      │ │
-│ │             │ │ │                               │ │
-│ │☑ Mayor     │ │ │ Sarah: [Selected ✓]           │ │
-│ │  Davidson   │ │ │ "I feel a mix of excitement   │ │
-│ │  🎭 Diplomatic│ │ and unease. This town feels  │ │
-│ │  🤐 Secretive│ │ │ like it's holding its breath" │ │
-│ │             │ │ │ [Keep] [Alternative] [Edit]   │ │
-│ │☐ Sheriff   │ │ │                               │ │
-│ │  Collins    │ │ │ Mayor: [Not Selected ☐]      │ │
-│ └─────────────┘ │ │ "This investigation worries   │ │
-├─────────────────┤ │ me. Outsiders stirring up...│ │
-│ [Create New]    │ │ [Keep] [Alternative] [Edit]   │ │
-│ [Import]        │ │                               │ │
-│ [Character      │ │ Your Next Message:            │ │
-│  Profiles]      │ │ ┌───────────────────────────┐ │ │
-│                 │ │ │ What specifically worries │ │ │
-│ Selected: 2/5   │ │ │ you about this case?      │ │ │
-│ [Start Dialog]  │ │ │ [Send] [Save Draft]       │ │ │
-│ [Use Selected]  │ │ └───────────────────────────┘ │ │
-│                 │ └───────────────────────────────┘ │
-└─────────────────┴───────────────────────────────────┘
-```
-
-#### C. Response Curation Tools
-```typescript
-interface ResponseCurationComponent {
-  selectedResponses: {
-    characterId: string;
-    messageId: string;
     content: string;
-    timestamp: Date;
-    useInStory: boolean;
-  }[];
-
-  curationActions: {
-    selectResponse(messageId: string): void;
-    deselectResponse(messageId: string): void;
-    editResponse(messageId: string, newContent: string): void;
-    requestAlternative(messageId: string): void;
-    previewInStory(): void;
+    wordCount: number;
+    lastModified: Date;
   };
 
-  storyIntegration: {
-    prepareCuratedContent(): CuratedContent;
-    generateDetailedContent(): void;
-    saveSelectedResponses(): void;
+  actions: {
+    addChapterAtEnd(): void;
+    insertChapterAfter(position: number): void;
+    editChapter(id: string): void;
+    deleteChapter(id: string): void;
+    moveChapter(from: number, to: number): void;
   };
 }
 ```
 
-**Curation Interface Layout**:
+**Layout**:
 ```
-┌─────────────────────────────────────────────────────┐
-│ Response Curation Panel                             │
-├─────────────────────────────────────────────────────┤
-│ Selected Responses for Story Use                    │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ ✓ Sarah: "I feel a mix of excitement and unease"│ │
-│ │   [Edit] [Remove] [Request Alternative]         │ │
-│ │                                                 │ │
-│ │ ✓ Sarah: "Something about the sheriff's         │ │
-│ │   evasiveness bothers me..."                    │ │
-│ │   [Edit] [Remove] [Request Alternative]         │ │
-│ │                                                 │ │
-│ │ ☐ Mayor: "Outsiders always stir up trouble"    │ │
-│ │   [Add] [Edit] [Request Alternative]            │ │
-│ └─────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│ Actions                                             │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Selected: 2 responses from 2 characters        │ │
-│ │                                                 │ │
-│ │ [Preview in Story Context]                      │ │
-│ │ [Continue Dialog] [Generate Detailed Content]   │ │
-│ │ [Save Progress] [Export Responses]              │ │
-│ └─────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│ Story Tab                                       │
+├─────────────────────────────────────────────────┤
+│ Overall Story Summary (AI-generated)            │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ This mystery follows Sarah Chen as she...  │ │
+│ │                                             │ │
+│ └─────────────────────────────────────────────┘ │
+│ [Regenerate Summary]                            │
+├─────────────────────────────────────────────────┤
+│ Chapters                                        │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ Chapter 1: The Arrival                      │ │
+│ │ [Edit] [Delete] [Insert After]             │ │
+│ │ ┌───────────────────────────────────────┐   │ │
+│ │ │ Sarah Chen's car crunched over the... │   │ │
+│ │ │ [Expand to read full chapter]         │   │ │
+│ │ └───────────────────────────────────────┘   │ │
+│ ├─────────────────────────────────────────────┤ │
+│ │ Chapter 2: First Impressions                │ │
+│ │ [Edit] [Delete] [Insert After]             │ │
+│ │ ┌───────────────────────────────────────┐   │ │
+│ │ │ The diner smelled of coffee and...   │   │ │
+│ │ │ [Expand to read full chapter]         │   │ │
+│ │ └───────────────────────────────────────┘   │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ [+ Add Chapter at End] [+ Insert Chapter]      │
+└─────────────────────────────────────────────────┘
 ```
 
-### 3. Feedback Selection & Content Refinement Interface
+## Tab 5: Chapter Creation
 
-**Primary Functions**:
-- Agent/critic selection for feedback generation
-- Feedback review and analysis
-- Selective feedback application
-- Content refinement and polishing
-- Quality assessment tracking
+**Purpose**: Interactive workspace for creating new chapters with AI assistance
 
-**Core Components**:
+**Workflow**:
+1. User provides plot point
+2. User can request AI to flesh out plot point
+3. User selects characters/raters to get feedback
+4. Each selected agent generates their feedback
+5. User can iterate with agents (suggest changes, regenerate)
+6. User accepts some or all feedback to incorporate
+7. User clicks "Generate" to create chapter from plot point + incorporated feedback
+8. User can directly edit generated chapter or prompt assistant for changes
+9. User clicks "Review" to get editor suggestions
+10. User decides which editor suggestions to follow
+11. User accepts final chapter or continues iterating
 
-#### A. Feedback Agent Selection
+**Components**:
+
+### Plot Point Editor
 ```typescript
-interface FeedbackAgentSelectionComponent {
+interface PlotPointComponent {
+  plotPoint: string;  // User-provided
+  source: "user" | "ai_assisted" | "mixed";
+
+  actions: {
+    aiFleshOut(): void;    // Ask AI to expand plot point
+    userEdit(): void;      // Direct editing
+    reset(): void;         // Back to original
+  };
+}
+```
+
+### Incorporated Feedback List
+```typescript
+interface IncorporatedFeedbackComponent {
+  feedbackItems: Array<{
+    source: string;        // Character or rater name
+    type: "action" | "dialog" | "sensation" | "emotion" | "thought" | "suggestion";
+    content: string;
+    incorporated: boolean;
+  }>;
+
+  actions: {
+    removeFeedback(id: string): void;
+    editFeedback(id: string): void;
+  };
+}
+```
+
+### Agent Feedback Panel
+```typescript
+interface AgentFeedbackComponent {
   availableAgents: {
-    raters: RaterAgent[];
-    editors: EditorAgent[];
-    specialists: SpecialistAgent[];
+    characters: Character[];  // Only non-hidden characters
+    raters: Rater[];          // All enabled raters
   };
 
-  selectionInterface: {
-    selectedAgents: string[];
-    feedbackFocus: string[];
-    customInstructions: string;
+  feedbackRequests: Map<string, {
+    status: "pending" | "generating" | "ready";
+    feedback: CharacterFeedback | RaterFeedback;
+  }>;
+
+  actions: {
+    requestFeedback(agentId: string): void;
+    suggestChanges(agentId: string, userFeedback: string): void;
+    acceptFeedback(agentId: string, items: string[]): void;
+  };
+}
+```
+
+### Character Feedback Structure
+```typescript
+interface CharacterFeedback {
+  characterName: string;
+
+  feedback: {
+    actions: string[];           // What they would do
+    dialog: string[];            // What they would say
+    physicalSensations: string[]; // What they would experience
+    emotions: string[];          // What they would feel
+    internalMonologue: string[]; // What they would think
   };
 
-  agentCapabilities: {
-    [agentId: string]: {
-      specialties: string[];
-      focusAreas: string[];
-      description: string;
-      typicalScore: number;
+  userInteraction: {
+    canSuggestChanges: boolean;
+    canRequestAlternative: boolean;
+    canAcceptSelectively: boolean;
+  };
+}
+```
+
+### Rater Feedback Structure
+```typescript
+interface RaterFeedback {
+  raterName: string;
+
+  feedback: {
+    opinion: string;        // Overall assessment of plot point + incorporated feedback
+    suggestions: string[];  // Specific suggestions
+  };
+
+  userInteraction: {
+    canSuggestChanges: boolean;
+    canRequestAlternative: boolean;
+    canAcceptSelectively: boolean;
+  };
+}
+```
+
+### Chapter Generation and Editing
+```typescript
+interface ChapterGenerationComponent {
+  status: "not_started" | "generating" | "ready" | "user_editing" | "under_review";
+
+  generatedContent: {
+    text: string;
+    wordCount: number;
+    metadata: {
+      plotPoint: string;
+      incorporatedFeedback: string[];
+      generationTimestamp: Date;
     };
   };
 
   actions: {
-    selectAgent(agentId: string): void;
-    configureFeedback(agentId: string, focus: string[]): void;
-    requestFeedback(): void;
+    generate(): void;              // Generate from plot point + feedback
+    directEdit(): void;            // User manual editing
+    promptAssistant(change: string): void;  // Ask AI for specific changes
+    requestReview(): void;         // Get editor feedback
+    acceptChapter(): void;         // Finalize and add to story
   };
 }
 ```
 
-#### B. Feedback Review Interface
+### Editor Review Interface
 ```typescript
-interface FeedbackReviewComponent {
-  feedbackData: {
-    agentId: string;
-    score: number;
-    strengths: string[];
-    concerns: string[];
-    suggestions: FeedbackItem[];
-    priority: 'low' | 'medium' | 'high';
-  }[];
+interface EditorReviewComponent {
+  editorSuggestions: Array<{
+    issue: string;
+    suggestion: string;
+    priority: "high" | "medium" | "low";
+    selected: boolean;
+  }>;
 
-  reviewInterface: {
-    selectedFeedback: string[];
-    feedbackFilter: 'all' | 'high_priority' | 'actionable';
-    sortBy: 'score' | 'priority' | 'agent';
-  };
-
-  applicationActions: {
-    selectFeedbackItem(itemId: string): void;
-    previewChanges(): void;
-    applySelectedFeedback(): void;
-    requestClarification(itemId: string): void;
+  actions: {
+    acceptSelected(): void;        // Apply selected suggestions
+    acceptAll(): void;             // Apply all suggestions
+    rejectAll(): void;             // Ignore all suggestions
+    customEdit(suggestion: string): void;  // Modify suggestion before applying
   };
 }
 ```
 
-**Layout Requirements**:
+**Layout**:
 ```
-┌─────────────────────────────────────────────────────┐
-│ Feedback Selection & Review Interface               │
-├─────────────────┬───────────────────────────────────┤
-│ Agent Selection │ Feedback Review                   │
-│ ┌─────────────┐ │ ┌───────────────────────────────┐ │
-│ │Available:   │ │ │ Character Consistency (8.2/10)│ │
-│ │             │ │ │ Agent: Literary Expert        │ │
-│ │☑ Character │ │ │                               │ │
-│ │  Consistency│ │ │ ✓ Strengths:                  │ │
-│ │  Literary   │ │ │ • Authentic character voice   │ │
-│ │  Expert     │ │ │ • Consistent personality      │ │
-│ │             │ │ │                               │ │
-│ │☑ Narrative │ │ │ ⚠ Concerns:                   │ │
-│ │  Flow       │ │ │ • Minor dialogue issue Ch.2   │ │
-│ │  Specialist │ │ │ [☑ Apply] Fix dialogue tags   │ │
-│ │             │ │ │                               │ │
-│ │☐ Line      │ │ │ 💡 Suggestions:               │ │
-│ │  Editor     │ │ │ • Consider character backstory│ │
-│ │  Grammar Pro│ │ │ [☐ Apply] Add backstory ref   │ │
-│ │             │ │ │                               │ │
-│ │☐ Genre     │ │ │ [Expand Details] [Clarify]    │ │
-│ │  Expert     │ │ └───────────────────────────────┘ │
-│ │  Mystery    │ │                                   │ │
-│ └─────────────┘ │ ┌───────────────────────────────┐ │
-│                 │ │ Narrative Flow (7.5/10)       │ │
-│ Focus Areas:    │ │ Agent: Flow Specialist        │ │
-│ ☑ Dialogue      │ │                               │ │
-│ ☑ Pacing        │ │ ✓ Strengths:                  │ │
-│ ☐ Setting       │ │ • Good tension building       │ │
-│ ☐ Plot          │ │ • Engaging opening            │ │
-│                 │ │                               │ │
-│ [Get Feedback]  │ │ ⚠ Concerns:                   │ │
-│ [Clear All]     │ │ • Pacing slows in middle      │ │
-│                 │ │ [☑ Apply] Add action sequence │ │
-│                 │ └───────────────────────────────┘ │
-└─────────────────┴───────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│ Chapter Creation Tab                            │
+├─────────────────────────────────────────────────┤
+│ Plot Point                                      │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ Sarah discovers a hidden letter in the...  │ │
+│ │                                             │ │
+│ └─────────────────────────────────────────────┘ │
+│ [AI Flesh Out] [Reset]                         │
+├─────────────────────────────────────────────────┤
+│ Incorporated Feedback                           │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ • Sarah (Action): "Carefully open letter"  │ │
+│ │   [Remove]                                  │ │
+│ │ • Consistency Rater: "Add tension"         │ │
+│ │   [Remove]                                  │ │
+│ └─────────────────────────────────────────────┘ │
+├─────────────┬───────────────────────────────────┤
+│ Agent List  │ Agent Feedback                    │
+│ Characters: │                                   │
+│ ☐ Sarah     │ (Click agent to get feedback)     │
+│ ☐ John      │                                   │
+│ ☐ Detective │ Sarah (Character)                 │
+│             │ ┌───────────────────────────────┐ │
+│ Raters:     │ │ Actions:                      │ │
+│ ☐ Consistency│ │ • Carefully unfold the letter│ │
+│ ☐ Flow      │ │ ☐ Accept                      │ │
+│ ☐ Quality   │ │                               │ │
+│             │ │ Dialog:                       │ │
+│             │ │ • "This changes everything"   │ │
+│             │ │ ☑ Accept                      │ │
+│             │ │                               │ │
+│             │ │ Emotions:                     │ │
+│             │ │ • Shock mixed with excitement │ │
+│             │ │ ☑ Accept                      │ │
+│             │ └───────────────────────────────┘ │
+│             │                                   │
+│             │ User Changes: [                 ] │
+│             │ [Suggest Changes] [Regenerate]    │
+│             │ [Accept Selected]                 │
+└─────────────┴───────────────────────────────────┘
+│                                                 │
+│ [Generate Chapter]                              │
+│                                                 │
+│ Generated Chapter                               │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ Sarah's hand trembled as she unfolded the   │ │
+│ │ letter. The paper was yellowed with age...  │ │
+│ │                                             │ │
+│ │ (Full chapter text - editable)              │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ [Direct Edit] [Prompt Assistant for Changes]   │
+│ [Request Editor Review]                         │
+│                                                 │
+│ Editor Suggestions                              │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ ☑ Add more sensory detail in opening       │ │
+│ │ ☑ Strengthen emotional reaction             │ │
+│ │ ☐ Consider pacing in middle section         │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ [Apply Selected] [Apply All] [Keep Iterating]  │
+│ [Accept Chapter - Add to Story]                │
+└─────────────────────────────────────────────────┘
 ```
 
-#### C. Content Refinement Interface
+## Data Storage Architecture
+
+All data persisted to browser local storage:
+
 ```typescript
-interface ContentRefinementComponent {
-  originalContent: string;
-  selectedFeedback: FeedbackItem[];
-
-  refinementInterface: {
-    previewChanges: boolean;
-    showDiff: boolean;
-    refinementInProgress: boolean;
-  };
-
-  refinementActions: {
-    applyFeedback(feedbackIds: string[]): void;
-    previewRefinements(): void;
-    approveRefinements(): void;
-    rejectRefinements(): void;
-    customRefinement(instructions: string): void;
-  };
-
-  qualityTracking: {
-    beforeScore: number;
-    afterScore: number;
-    improvementAreas: string[];
-    remainingIssues: string[];
-  };
-}
-```
-
-**Refinement Interface Layout**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Content Refinement Workspace                        │
-├─────────────────────────────────────────────────────┤
-│ Selected Feedback to Apply (3 items)               │
-│ ☑ Fix dialogue tags in Chapter 2                   │
-│ ☑ Add action sequence in middle section            │
-│ ☐ Consider character backstory reference            │
-│                                                     │
-│ [Preview Changes] [Apply Selected] [Custom Edit]    │
-├─────────────────────────────────────────────────────┤
-│ Content Comparison                                  │
-│ ┌─────────────────┬─────────────────────────────────┤
-│ │ Original        │ Refined Version                 │
-│ │ ┌─────────────┐ │ ┌───────────────────────────┐ │ │
-│ │ │"She said    │ │ │"She said," Sarah replied, │ │ │
-│ │ │quietly."    │ │ │her voice barely above a   │ │ │
-│ │ │             │ │ │whisper.                   │ │ │
-│ │ │Sarah walked │ │ │                           │ │ │
-│ │ │to the car.  │ │ │Sarah walked quickly to    │ │ │
-│ │ │             │ │ │the car, glancing over her│ │ │
-│ │ │             │ │ │shoulder nervously.        │ │ │
-│ │ └─────────────┘ │ └───────────────────────────┘ │ │
-│ └─────────────────┴─────────────────────────────────┤
-│                                                     │
-│ Quality Improvement: 7.5 → 8.4 (+0.9)             │
-│ [✓ Approve Changes] [Make Adjustments] [Reject]     │
-└─────────────────────────────────────────────────────┘
-```
-
-### 4. Story Dashboard
-
-**Primary Functions**:
-- Overview of all user stories with progress tracking
-- Quick access to active stories and recent work
-- Story creation and import functionality
-- Performance metrics and writing statistics
-
-**Layout Requirements**:
-```
-┌─────────────────────────────────────────┐
-│ Header: Navigation + User Profile        │
-├─────────────────────────────────────────┤
-│ Quick Actions: [New Story] [Import] [+] │
-├─────────────────────────────────────────┤
-│ Active Stories                          │
-│ ┌─────┐ ┌─────┐ ┌─────┐                │
-│ │Story│ │Story│ │Story│                │
-│ │ #1  │ │ #2  │ │ #3  │                │
-│ │ 65% │ │ 23% │ │ 89% │                │
-│ └─────┘ └─────┘ └─────┘                │
-├─────────────────────────────────────────┤
-│ Recent Activity Feed                    │
-├─────────────────────────────────────────┤
-│ Writing Statistics & Achievements       │
-└─────────────────────────────────────────┘
-```
-
-**Story Card Components**:
-- Story title and genre
-- Progress indicators (outline/chapter status)
-- Last modified timestamp
-- Current phase indicator
-- Storage size indicator
-- Quick action buttons (continue, export, settings)
-- Visual progress bar showing completion percentage
-
-### 5. Client-Side State Management Interface
-
-**Primary Functions**:
-- Complete local storage management
-- Story state persistence and recovery
-- Memory data organization and export
-- Workflow state tracking and restoration
-- Conversation branching and versioning
-
-**Core Components**:
-
-#### A. Local Storage Manager
-```typescript
-interface LocalStorageManagerComponent {
-  storageInfo: {
-    usedSpace: number;
-    availableSpace: number;
-    storiesCount: number;
-    lastBackup: Date;
-  };
-
-  storyManagement: {
-    exportStory(storyId: string): void;
-    importStory(storyData: string): void;
-    duplicateStory(storyId: string): void;
-    deleteStory(storyId: string): void;
-  };
-
-  dataOperations: {
-    backupAllData(): void;
-    restoreFromBackup(backupData: string): void;
-    clearAllData(): void;
-    optimizeStorage(): void;
-  };
-
-  memoryManagement: {
-    viewMemoryState(agentId: string): void;
-    exportMemories(): void;
-    importMemories(memoryData: string): void;
-    resetMemories(agentIds: string[]): void;
-  };
-}
-```
-
-**Storage Management Interface**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Client-Side Storage Management                      │
-├─────────────────────────────────────────────────────┤
-│ Storage Overview                                    │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Used: 2.3 MB / 5.0 MB Available               │ │
-│ │ ████████████░░░░░░░░░░ 46%                      │ │
-│ │                                                 │ │
-│ │ Stories: 12 active, 3 archived                 │ │
-│ │ Last backup: 2 hours ago                       │ │
-│ │                                                 │ │
-│ │ [Create Backup] [Optimize Storage] [Settings]   │ │
-│ └─────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│ Story Data Management                               │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ "Secrets of Millbrook" [Active]                │ │
-│ │ Size: 245 KB | Characters: 3 | Chapters: 5     │ │
-│ │ [Export] [Duplicate] [Archive] [Delete]        │ │
-│ │                                                 │ │
-│ │ "Urban Fantasy Project" [Draft]                │ │
-│ │ Size: 89 KB | Characters: 2 | Chapters: 2      │ │
-│ │ [Export] [Duplicate] [Archive] [Delete]        │ │
-│ │                                                 │ │
-│ │ [Import Story] [Bulk Export] [Cleanup]          │ │
-│ └─────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────┘
-```
-
-#### B. Conversation Branching Manager
-```typescript
-interface ConversationBranchingComponent {
-  conversationTree: {
-    branches: ConversationBranch[];
-    currentBranch: string;
-    rootPrompt: string;
-  };
-
-  branchOperations: {
-    createBranch(fromPromptId: string): void;
-    switchBranch(branchId: string): void;
-    mergeBranches(sourceBranch: string, targetBranch: string): void;
-    deleteBranch(branchId: string): void;
-  };
-
-  stateManagement: {
-    saveCheckpoint(name: string): void;
-    restoreCheckpoint(checkpointId: string): void;
-    compareStates(stateA: string, stateB: string): void;
-  };
-
-  visualization: {
-    showBranchTree: boolean;
-    expandedBranches: string[];
-    highlightDifferences: boolean;
-  };
-}
-```
-
-**Branching Interface**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Conversation Branching & State Management           │
-├─────────────────────────────────────────────────────┤
-│ Branch Tree Visualization                           │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ 📝 Root: "Create mystery story..."              │ │
-│ │ ├── 🌿 Main Branch [Current]                     │ │
-│ │ │   ├── "Make protagonist journalist"            │ │
-│ │ │   └── "Add small town setting"                │ │
-│ │ │                                                │ │
-│ │ └── 🌱 Alternative: Detective Version            │ │
-│ │     ├── "Make protagonist detective"             │ │
-│ │     └── "Urban setting"                         │ │
-│ │                                                 │ │
-│ │ [Create Branch] [Switch] [Merge] [Compare]       │ │
-│ └─────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│ State Checkpoints                                   │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ ✓ "Before character selection" - 2 hours ago    │ │
-│ │ ✓ "After outline approval" - 1 hour ago        │ │
-│ │ ✓ "Mid-chapter generation" - 30 mins ago       │ │
-│ │                                                 │ │
-│ │ [Save Checkpoint] [Restore] [Auto-Save: ON]     │ │
-│ └─────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────┘
-```
-
-#### C. Memory State Viewer & Editor
-```typescript
-interface MemoryStateComponent {
-  memoryView: {
-    selectedAgent: string;
-    memoryType: 'working' | 'episodic' | 'semantic' | 'all';
-    editMode: boolean;
-  };
-
-  memoryData: {
-    [agentId: string]: {
-      workingMemory: any;
-      episodicMemory: any;
-      semanticMemory: any;
-      lastUpdated: Date;
+interface LocalStorageSchema {
+  stories: Map<string, {
+    general: {
+      title: string;
+      systemPrompts: {
+        mainPrefix: string;
+        mainSuffix: string;
+        assistantPrompt: string;
+        editorPrompt: string;
+      };
+      worldbuilding: string;
     };
-  };
 
-  editingTools: {
-    addMemoryElement(agentId: string, type: string, data: any): void;
-    editMemoryElement(elementId: string, newData: any): void;
-    deleteMemoryElement(elementId: string): void;
-    validateMemoryConsistency(): ValidationResult;
-  };
+    characters: Map<string, Character>;
+    raters: Map<string, Rater>;
 
-  exportImport: {
-    exportAgentMemory(agentId: string): string;
-    importAgentMemory(agentId: string, data: string): void;
-    exportAllMemories(): string;
-    resetMemoriesToDefaults(): void;
-  };
+    story: {
+      summary: string;
+      chapters: Chapter[];
+    };
+
+    chapterDrafts: Map<string, ChapterDraft>;
+
+    metadata: {
+      created: Date;
+      lastModified: Date;
+      version: string;
+    };
+  }>;
 }
 ```
 
-**Memory Management Interface**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Memory State Viewer & Editor                        │
-├─────────────────┬───────────────────────────────────┤
-│ Agent Selection │ Memory Content                    │
-│ ┌─────────────┐ │ ┌───────────────────────────────┐ │
-│ │● Sarah Chen │ │ │ Working Memory                │ │
-│ │  Journalist │ │ │ • Current scene: Investigation│ │
-│ │  💾 245 KB  │ │ │ • Emotional state: Determined │ │
-│ │             │ │ │ • Active goals: Find truth    │ │
-│ │● Mayor      │ │ │                               │ │
-│ │  Davidson   │ │ │ Episodic Memory               │ │
-│ │  💾 189 KB  │ │ │ • Meeting with sheriff        │ │
-│ │             │ │ │ • First interview failed      │ │
-│ │● Sheriff    │ │ │ • Suspicious town reaction    │ │
-│ │  Collins    │ │ │                               │ │
-│ │  💾 156 KB  │ │ │ Semantic Memory               │ │
-│ └─────────────┘ │ │ • Journalist background      │ │
-│                 │ │ • Investigation techniques    │ │
-│ Memory Type:    │ │ • Town layout knowledge       │ │
-│ ○ Working       │ │                               │ │
-│ ○ Episodic      │ │ [Edit] [Add Element] [Export] │ │
-│ ○ Semantic      │ └───────────────────────────────┘ │
-│ ● All          │                                   │ │
-│                 │ ┌───────────────────────────────┐ │
-│ [Edit Mode]     │ │ Validation Status             │ │
-│ [Export All]    │ │ ✓ Character consistency       │ │
-│ [Import]        │ │ ⚠ Timeline conflict detected   │ │
-│ [Reset]         │ │ ✓ Memory coherence            │ │
-│                 │ │ [Fix Issues] [Ignore]         │ │
-│                 │ └───────────────────────────────┘ │
-└─────────────────┴───────────────────────────────────┘
-```
+## Key UI/UX Features
 
-### 6. User-Driven Story Workspace
+### Auto-Save
+- All changes automatically saved to local storage every 30 seconds
+- Immediate save on tab switch
+- Save indicator shows last save time
 
-**User-Controlled Writing Interface**:
-- User decision-driven layout with agent interaction panels
-- User approval gates and content review interfaces
-- Agent selection and dialog management tools
-- User-controlled workflow progression
-
-**Layout Structure**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Story Header: Title | User Control Mode | Status   │
-├─────────────────┬───────────────────────────────────┤
-│ User Controls   │ Main Content Area                 │
-│ ┌─────────────┐ │ ┌───────────────────────────────┐ │
-│ │ Agent       │ │ │                               │ │
-│ │ Selection   │ │ │  Generated Content            │ │
-│ │ ┌─────────┐ │ │ │  (Pending User Approval)      │ │
-│ │ │ Writer  │ │ │ │                               │ │
-│ │ │ John ✓  │ │ │ │  [Approve] [Request Changes]  │ │
-│ │ │ Mary    │ │ │ │  [Get Feedback] [Regenerate]  │ │
-│ │ └─────────┘ │ │ └───────────────────────────────┘ │
-│ └─────────────┘ │                                   │
-├─────────────────┼───────────────────────────────────┤
-│ User Decisions  │ Agent Response Panel              │
-│ ┌─────────────┐ │ ┌───────────────────────────────┐ │
-│ │ ○ Approve   │ │ │ Character Reactions           │ │
-│ │ ○ Modify    │ │ │ [Select Responses to Keep]    │ │
-│ │ ○ Get       │ │ │ [Continue Dialog]             │ │
-│ │   Feedback  │ │ │ [Add More Characters]         │ │
-│ └─────────────┘ │ └───────────────────────────────┘ │
-└─────────────────┴───────────────────────────────────┘
-```
-
-### 4. Character Dialog Interface
-
-**User-Character Conversation Panel**:
-- Direct conversation interface between user and selected character agents
-- Real-time character responses to user questions and story proposals
-- Character response selection and curation tools
-- Iterative dialog management for exploring character perspectives
-
-**Dialog Interface Layout**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Character Dialog: John Smith                        │
-├─────────────────────────────────────────────────────┤
-│ Story Context: "John discovers Mary has been lying" │
-├─────────────────────────────────────────────────────┤
-│ User: How do you feel about Mary's deception?      │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ John: "I feel betrayed but also protective.     │ │
-│ │ Part of me wonders if she had good reasons..."  │ │
-│ │ [Keep This Response] [Continue Dialog] [Modify] │ │
-│ └─────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│ User Input: ┌─────────────────────────────────────┐ │
-│             │ What would you do if you...         │ │
-│             │ [Send] [Character Context] [Voice]  │ │
-│             └─────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│ Selected Responses for Story:                       │
-│ • "I feel betrayed but protective..." [Remove]     │
-│ • "She's always been secretive..." [Remove]        │
-│ [Use Selected in Story] [Continue Dialog]          │
-└─────────────────────────────────────────────────────┘
-```
-
-**Character Dialog Features**:
-- **Multi-Character Conversations**: Dialog with multiple characters simultaneously
-- **Response Curation**: Select which character responses to keep for story use
-- **Character Context**: View character memories and personality during conversation
-- **Dialog History**: Complete conversation history with character agents
-- **Voice Consistency**: Character responses maintain personality and speech patterns
-
-### 5. Outline Development Interface
-
-**Phase 1 Workflow UI**:
-- Structured outline editor with drag-and-drop organization
-- Character arc visualization
-- Rater feedback integration
-- Approval tracking interface
-
-**Outline Editor Features**:
-```json
-{
-  "outline_components": {
-    "story_structure": {
-      "acts": ["expandable_collapsible_sections"],
-      "chapters": ["draggable_reorderable"],
-      "scenes": ["inline_editing"],
-      "plot_points": ["visual_connectors"]
-    },
-    "character_arcs": {
-      "arc_visualization": "timeline_based",
-      "growth_tracking": "milestone_markers",
-      "relationship_mapping": "interactive_network"
-    },
-    "theme_tracking": {
-      "theme_threads": "color_coded_indicators",
-      "motif_placement": "visual_annotations",
-      "symbolism_notes": "contextual_tooltips"
-    }
-  }
-}
-```
-
-**Feedback Integration**:
-- Real-time rater feedback display
-- Feedback categorization (structure, character, pacing)
-- Resolution tracking and status indicators
-- Direct response to feedback interface
-
-### 4. Chapter Development Interface
-
-**Phase 2 Workflow UI**:
-- Rich text editor with markdown support
-- Character perspective indicators
-- Memory context display
-- Real-time collaboration features
-
-**Editor Components**:
-- **Main Editor**: Rich text with format controls
-- **Character Panel**: Active character perspectives and memories
-- **Context Sidebar**: Relevant story context and continuity notes
-- **Feedback Integration**: Inline comments and suggestions
-
-**Character Perspective Integration**:
-```
-┌─────────────────────────────────────────┐
-│ Chapter 5: The Confrontation            │
-├─────────────────┬───────────────────────┤
-│ Character Panel │ Main Text Editor      │
-│ ┌─────────────┐ │ ┌───────────────────┐ │
-│ │ John Smith  │ │ │ The kitchen felt  │ │
-│ │ Status: 😠  │ │ │ smaller than      │ │
-│ │ "I can't    │ │ │ usual as John     │ │
-│ │  tell her   │ │ │ entered, seeing   │ │
-│ │  about..."  │ │ │ Mary's expectant  │ │
-│ │             │ │ │ face...           │ │
-│ │ Mary Jones  │ │ │                   │ │
-│ │ Status: 😕  │ │ │ [Character        │ │
-│ │ "He's       │ │ │  thoughts and     │ │
-│ │  hiding     │ │ │  dialogue         │ │
-│ │  something" │ │ │  integrated]      │ │
-│ └─────────────┘ │ │                   │ │
-│                 │ └───────────────────┘ │
-└─────────────────┴───────────────────────┘
-```
-
-### 5. Character Management Interface
-
-**Character Configuration UI**:
-- Visual character profile editor with AI expansion support
-- Personality trait sliders and selectors
-- Relationship mapping interface
-- Memory pattern configuration
-- Character visibility controls (hide/unhide/restore)
-- AI-assisted detail expansion interface
-
-**Character Profile Editor**:
-```json
-{
-  "ui_components": {
-    "basic_info": {
-      "name_field": "text_input",
-      "role_selector": "dropdown_with_custom",
-      "archetype": "searchable_select",
-      "image_upload": "drag_drop_with_preview",
-      "visibility_toggle": "show_hide_switch",
-      "creation_source": "display_only_badge"
-    },
-    "personality": {
-      "trait_sliders": "visual_scale_0_to_10",
-      "trait_tags": "selectable_chips",
-      "psychology_questionnaire": "guided_form",
-      "freeform_notes": "rich_text_area",
-      "ai_expansion_button": "expand_with_ai_assistant"
-    },
-    "relationships": {
-      "relationship_network": "interactive_graph",
-      "relationship_details": "expandable_cards",
-      "dynamic_tracking": "timeline_visualization"
-    },
-    "memory_settings": {
-      "bias_patterns": "checkbox_groups",
-      "reliability_settings": "slider_controls",
-      "attention_preferences": "weighted_selection"
-    },
-    "character_management": {
-      "hide_character": "soft_delete_with_confirmation",
-      "unhide_character": "restore_from_hidden_list",
-      "expansion_history": "view_ai_expansion_log",
-      "request_ai_expansion": "guided_expansion_dialog"
-    }
-  }
-}
-```
-
-**Character Management Workflows**:
-
-#### A. Character Creation Workflow
-```
-User Action Flow:
-1. Click "Create New Character"
-2. Enter basic details (name, role, physical/psychological/emotional traits)
-3. Option: "Expand with AI" button for any section
-   → User specifies what to expand (e.g., "Elaborate on personality traits")
-   → AI generates detailed content
-   → User reviews and approves AI-generated content
-   → Content saved directly to character configuration
-4. Save character (stored in local browser storage)
-```
-
-#### B. Character Visibility Management
-```
-Hide Character Workflow:
-1. User selects character from character list
-2. Clicks "Hide Character" button
-3. Confirmation dialog: "Are you sure? Character data will be preserved but excluded from future interactions"
-4. Character marked as is_hidden: true
-5. Character no longer appears in:
-   - Agent selection prompts
-   - Feedback/reaction opportunities
-   - Dialog interface character lists
-6. Character remains in hidden characters list for potential restoration
-
-Unhide Character Workflow:
-1. User opens "Hidden Characters" list
-2. Selects character to restore
-3. Clicks "Unhide Character"
-4. Character marked as is_hidden: false
-5. Character immediately available for all interactions
-```
-
-#### C. AI-Assisted Character Expansion
-```
-Expansion Request Workflow:
-1. User opens character profile editor
-2. Clicks "Expand with AI" for specific section (personality, background, relationships)
-3. Expansion dialog opens:
-   - Display current content
-   - Text area for expansion prompt (e.g., "Add more detail about childhood trauma")
-   - AI generates expanded content
-   - Preview expanded content side-by-side with original
-4. User reviews AI suggestions:
-   - Accept all
-   - Accept partial
-   - Request alternative expansion
-   - Edit AI suggestions manually
-5. Approved content saved directly to character configuration JSON
-6. Expansion logged in ai_expansion_history for reference
-```
-
-#### D. Mid-Story Character Addition
-```
-Add Character During Story Development:
-1. User clicks "Add New Character" during chapter development
-2. Creates character with basic or detailed profile
-3. User provides guidance for introduction:
-   - Where character appears in story
-   - How character is introduced (user writes or guides AI)
-   - Initial relationships with existing characters
-4. Character agent initialized with fresh memory state
-5. Character available for subsequent interactions
-```
-
-**Character Management Interface Layout**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Character Management                                │
-├─────────────────┬───────────────────────────────────┤
-│ Character List  │ Character Profile Editor          │
-│ ┌─────────────┐ │ ┌───────────────────────────────┐ │
-│ │ Active:     │ │ │ Name: Sarah Chen              │ │
-│ │ ☑ Sarah Chen│ │ │ Role: Protagonist [▼]         │ │
-│ │   Journalist│ │ │ [👁 Visible] [Created: User]  │ │
-│ │   [Edit]    │ │ │                               │ │
-│ │             │ │ │ Personality Traits:           │ │
-│ │ ☑ John Smith│ │ │ • Curious [Edit] [🤖 Expand]  │ │
-│ │   Detective │ │ │ • Determined [Edit] [🤖 Expand]│ │
-│ │   [Edit]    │ │ │ • Independent                 │ │
-│ │             │ │ │ [+ Add Trait] [🤖 AI Expand All]│ │
-│ │ [+ New]     │ │ │                               │ │
-│ └─────────────┘ │ │ Background:                   │ │
-│                 │ │ Former journalist turned      │ │
-│ ┌─────────────┐ │ │ investigator...               │ │
-│ │ Hidden (2): │ │ │ [Edit] [🤖 Expand Background] │ │
-│ │ ☐ Mayor     │ │ │                               │ │
-│ │   Davidson  │ │ │ Relationships:                │ │
-│ │   [Unhide]  │ │ │ • John Smith: Complicated past│ │
-│ │             │ │ │   [Edit] [🤖 Elaborate]        │ │
-│ │ ☐ Sheriff   │ │ │ [+ Add Relationship]          │ │
-│ │   Collins   │ │ │                               │ │
-│ │   [Unhide]  │ │ │ [Save] [Hide Character]       │ │
-│ └─────────────┘ │ └───────────────────────────────┘ │
-│                 │                                   │
-│                 │ ┌───────────────────────────────┐ │
-│                 │ │ AI Expansion History          │ │
-│                 │ │ • Personality expanded (5 min)│ │
-│                 │ │ • Background elaborated (1 hr)│ │
-│                 │ │ [View Details] [Export]       │ │
-│                 │ └───────────────────────────────┘ │
-└─────────────────┴───────────────────────────────────┘
-```
-
-**AI Expansion Dialog Interface**:
-```
-┌─────────────────────────────────────────────────────┐
-│ Expand Character Details with AI                    │
-├─────────────────────────────────────────────────────┤
-│ Section: Personality Traits                        │
-│                                                     │
-│ Current Content:                                    │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ • Curious                                       │ │
-│ │ • Determined                                    │ │
-│ │ • Independent                                   │ │
-│ └─────────────────────────────────────────────────┘ │
-│                                                     │
-│ Your Expansion Request:                            │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Expand on how Sarah's curiosity manifests in    │ │
-│ │ her investigative work and personal life        │ │
-│ └─────────────────────────────────────────────────┘ │
-│                                                     │
-│ [Generate Expansion] [Cancel]                       │
-├─────────────────────────────────────────────────────┤
-│ AI-Generated Expansion (Preview):                  │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Curiosity:                                      │ │
-│ │ • Professional: Relentless pursuit of truth,    │ │
-│ │   asks probing questions, digs beyond surface  │ │
-│ │ • Personal: Reads constantly, tries new         │ │
-│ │   experiences, fascinated by human psychology  │ │
-│ │ • Shadow side: Can be intrusive, struggles      │ │
-│ │   with boundaries...                            │ │
-│ └─────────────────────────────────────────────────┘ │
-│                                                     │
-│ [✓ Accept] [Edit Before Accepting] [Regenerate]    │
-│ [Request Alternative] [Cancel]                      │
-└─────────────────────────────────────────────────────┘
-```
-
-### 6. Feedback and Review Interface
-
-**Multi-Perspective Feedback Display**:
-- Tabbed interface for different rater perspectives
-- Aggregated feedback summary
-- Action item tracking
-- Response and revision interface
-
-**Feedback Panel Layout**:
-```
-┌─────────────────────────────────────────┐
-│ Feedback Summary                        │
-│ Overall Score: 7.2/10 | Status: Needs  │
-│ Revision | 3 Action Items              │
-├─────────────────────────────────────────┤
-│ [Consistency] [Flow] [Quality] [Editor] │
-├─────────────────────────────────────────┤
-│ Character Consistency Rater             │
-│ Score: 8/10                            │
-│ ✓ John's protective instincts well      │
-│   portrayed                            │
-│ ⚠ Mary's reaction seems inconsistent    │
-│   with established caring nature        │
-│ 💡 Suggestion: Add internal monologue   │
-│   showing Mary's underlying worry       │
-│ ┌─────────────────────────────────────┐ │
-│ │ [Mark as Addressed] [Respond]       │ │
-│ └─────────────────────────────────────┘ │
-└─────────────────────────────────────────┘
-```
-
-### 7. System Configuration Interface
-
-**Settings and Preferences**:
-- Global system settings
-- Story-specific configurations
-- Agent behavior customization
-- Local storage management
-- Import/export management
-
-**Configuration Sections**:
-- **Writing Preferences**: Style, tone, genre defaults
-- **Agent Settings**: Rater personalities, feedback styles
-- **System Settings**: Performance, memory limits, timeouts
-- **Local Storage Management**: Storage usage, cleanup tools, backup/restore
-- **Privacy Settings**: Local data handling preferences
-
-### 8. Local Storage Management Interface
-
-**Storage Dashboard**:
-- **Storage Usage Meter**: Visual display of browser storage usage
-- **Story Size Breakdown**: Individual story storage consumption
-- **Cleanup Tools**: Remove unused or old data
-- **Export/Backup Tools**: Quick access to export all stories
-
-**Storage Management Features**:
-```json
-{
-  "ui_components": {
-    "storage_overview": {
-      "total_usage": "progress_bar_with_percentage",
-      "available_space": "remaining_quota_display",
-      "story_breakdown": "pie_chart_by_story",
-      "cleanup_suggestions": "actionable_recommendations"
-    },
-    "story_management": {
-      "individual_story_sizes": "sortable_list_with_sizes",
-      "archive_options": "compress_or_export_controls",
-      "delete_confirmations": "safety_confirmation_dialogs"
-    },
-    "backup_tools": {
-      "export_all_stories": "single_click_bulk_export",
-      "import_from_backup": "drag_drop_import_zone",
-      "auto_backup_schedule": "configurable_auto_export"
-    }
-  }
-}
-```
-
-### 9. Memory Inspector Interface
-
-**Complete Memory Transparency**:
-- **Agent Memory Browser**: Navigate through all agent memories with hierarchical view
-- **Real-time Memory Editing**: Modify any memory element with immediate validation
-- **Memory Comparison View**: Compare how different agents remember the same events
-- **Memory Timeline**: Chronological view of memory formation across all agents
-- **Memory Conflict Detection**: Highlight and resolve memory inconsistencies
-
-**Memory Inspector Layout**:
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Memory Inspector                                             │
-├─────────────────┬───────────────────────────────────────────┤
-│ Agent Navigator │ Memory Content Viewer                     │
-│ ┌─────────────┐ │ ┌───────────────────────────────────────┐ │
-│ │ Writer      │ │ │ Memory: Internal Monologue            │ │
-│ │ Characters  │ │ │ ┌───────────────────────────────────┐ │ │
-│ │ ├ John      │ │ │ │ "Mary seems suspicious of         │ │ │
-│ │ ├ Mary      │ │ │ │  something..."                    │ │ │
-│ │ └ Detective │ │ │ │                                   │ │ │
-│ │ Raters      │ │ │ │ Emotional State: defensive_anxiety│ │ │
-│ │ ├ Quality   │ │ │ │ Confidence: 0.9                   │ │ │
-│ │ └ Flow      │ │ │ │ [Edit] [Delete] [Add Alternative] │ │ │
-│ └─────────────┘ │ │ └───────────────────────────────────┘ │ │
-├─────────────────┼───────────────────────────────────────────┤
-│ Memory Tools    │ Memory Impact Analysis                    │
-│ ┌─────────────┐ │ ┌───────────────────────────────────────┐ │
-│ │ [Compare]   │ │ │ Changes to this memory will affect:   │ │
-│ │ [Timeline]  │ │ │ • John's trust level with Mary       │ │
-│ │ [Conflicts] │ │ │ • Mary's character perception         │ │
-│ │ [Export]    │ │ │ • Future scene dynamics               │ │
-│ └─────────────┘ │ └───────────────────────────────────────┘ │
-└─────────────────┴───────────────────────────────────────────┘
-```
-
-**Memory Editing Features**:
-```json
-{
-  "memory_editing": {
-    "direct_editing": {
-      "inline_editing": "edit_memory_content_directly_in_interface",
-      "guided_editing": "ai_suggestions_for_memory_improvements",
-      "template_insertion": "pre_built_memory_templates",
-      "batch_operations": "modify_multiple_related_memories"
-    },
-    "memory_validation": {
-      "consistency_checking": "real_time_validation_against_character_personality",
-      "impact_preview": "show_effects_before_confirming_changes",
-      "conflict_detection": "highlight_memory_contradictions",
-      "rollback_support": "undo_changes_with_full_state_restoration"
-    },
-    "memory_experiments": {
-      "sandbox_mode": "test_memory_changes_without_committing",
-      "ab_testing": "compare_different_memory_configurations",
-      "what_if_scenarios": "explore_narrative_impact_of_changes"
-    }
-  }
-}
-```
-
-### 10. Conversation Branching Interface
-
-**Interactive Conversation Timeline**:
-- **Visual Prompt History**: Timeline showing all user inputs with edit capabilities
-- **Branch Visualization**: Tree structure showing conversation branches and divergence points
-- **One-Click Branching**: Create new branches from any previous prompt
-- **Branch Comparison**: Side-by-side view of different conversation paths
-- **State Restoration**: Jump to any point in conversation history
-
-**Conversation Timeline Layout**:
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Conversation Timeline                                        │
-├─────────────────────────────────────────────────────────────┤
-│ ┌─ Prompt 1: "Create mystery story"           [Edit] [Branch]│
-│ │   └─ Generated outline                                     │
-│ │                                                            │
-│ ├─ Prompt 2: "Make detective more cynical"   [Edit] [Branch]│
-│ │   └─ Character personality updated                         │
-│ │   │                                                        │
-│ │   ├─ Main Branch (Current)                                 │
-│ │   │   ├─ Prompt 3: "Add romantic subplot" [Edit] [Branch] │
-│ │   │   └─ Generated chapter 1                               │
-│ │   │                                                        │
-│ │   └─ Alt Branch: "Make detective optimistic instead"      │
-│ │       └─ Alternative chapter 1                             │
-│ │                                                            │
-│ └─ [+ New Prompt]                                            │
-├─────────────────────────────────────────────────────────────┤
-│ Branch Actions: [Compare Branches] [Merge] [Switch] [Delete]│
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Branch Management Features**:
-```json
-{
-  "branching_interface": {
-    "branch_creation": {
-      "automatic_branching": "create_branch_when_editing_previous_prompt",
-      "manual_branching": "explicit_branch_creation_from_any_point",
-      "experimental_branching": "temporary_branches_for_testing_ideas"
-    },
-    "branch_navigation": {
-      "visual_tree": "interactive_tree_view_of_all_branches",
-      "branch_switching": "instant_context_switching_between_branches",
-      "branch_comparison": "side_by_side_comparison_of_different_paths"
-    },
-    "branch_operations": {
-      "merge_branches": "combine_elements_from_multiple_branches",
-      "archive_branches": "save_branches_for_later_reference",
-      "branch_metadata": "descriptions_and_notes_for_each_branch"
-    }
-  }
-}
-```
-
-## User Experience Requirements
-
-### User-Centric Navigation and Flow
-
-**User Control Navigation Patterns**:
-- **Decision-Point Navigation**: Clear navigation between user decision points
-- **Agent Selection Menus**: Quick access to agent selection and configuration
-- **Approval Gate Navigation**: Easy movement between content review and approval stages
-- **User Choice History**: Navigation through previous user decisions and their impacts
-
-**User-Driven Workflow Integration**:
-- **User Control Onboarding**: Tutorial emphasizing user control over the entire process
-- **Decision-Point Help**: Contextual assistance for each user decision point
-- **User Progress Indicators**: Clear feedback on user-driven workflow progression
-- **User Recovery Options**: User-controlled error handling and workflow recovery
-
-### Real-Time Features
-
-**Live Updates**:
-- **Agent Status**: Real-time indication of agent activity
-- **Progress Tracking**: Live updates on story generation progress
-- **Collaborative Indicators**: Show when agents are active
-- **Notification System**: Non-intrusive alerts for important events
-
-**WebSocket Integration**:
-```json
-{
-  "real_time_features": {
-    "agent_status_updates": {
-      "frequency": "immediate",
-      "display": "status_indicators_and_progress_bars",
-      "timeout_handling": "graceful_degradation"
-    },
-    "generation_progress": {
-      "granularity": "step_level_updates",
-      "visualization": "progress_animation",
-      "cancellation": "user_controlled_stop"
-    },
-    "collaborative_awareness": {
-      "agent_activity": "live_indicators",
-      "conflict_detection": "immediate_notification",
-      "resolution_support": "guided_conflict_resolution"
-    }
-  }
-}
-```
+### AI Generation Indicators
+- Loading spinners during AI generation
+- Progress messages
+- Ability to cancel long-running operations
 
 ### Responsive Design
+- Desktop-first design
+- Tablet support with optimized layouts
+- Mobile support for viewing (limited editing)
 
-**Device Support**:
-- **Desktop**: Full-featured interface with multi-pane layouts
-- **Tablet**: Optimized layout with collapsible panels
-- **Mobile**: Essential features with simplified navigation
-
-**Responsive Breakpoints**:
-```css
-/* Conceptual breakpoints */
-@media (min-width: 1200px) { /* Desktop full */ }
-@media (min-width: 992px) { /* Desktop compact */ }
-@media (min-width: 768px) { /* Tablet */ }
-@media (max-width: 767px) { /* Mobile */ }
-```
-
-### Accessibility Requirements
-
-**WCAG 2.1 AA Compliance**:
-- **Keyboard Navigation**: Full keyboard accessibility
-- **Screen Reader Support**: Proper semantic markup and ARIA labels
-- **Color Contrast**: Minimum 4.5:1 contrast ratio
-- **Focus Indicators**: Clear visual focus indicators
-- **Alternative Text**: Descriptive alt text for all images
-
-**Inclusive Design Features**:
-- **Font Scaling**: Support for user font size preferences
-- **High Contrast Mode**: Optional high contrast theme
-- **Reduced Motion**: Respect user motion preferences
-- **Voice Control**: Support for voice navigation tools
-
-## Data Visualization
-
-### Story Progress Tracking
-
-**Visual Progress Indicators**:
-- **Story Completion**: Overall progress with milestone markers
-- **Phase Progress**: Separate tracking for outline and chapter phases
-- **Quality Metrics**: Visual representation of rater scores over time
-- **Character Development**: Timeline showing character arc progression
-
-**Dashboard Analytics**:
-```json
-{
-  "visualization_components": {
-    "progress_charts": {
-      "story_timeline": "gantt_chart_with_milestones",
-      "quality_trends": "line_chart_with_trend_analysis",
-      "word_count_tracking": "area_chart_with_daily_goals",
-      "revision_cycles": "cycle_visualization_with_feedback_integration"
-    },
-    "character_analytics": {
-      "screen_time": "pie_chart_character_presence",
-      "development_tracking": "timeline_with_growth_markers",
-      "relationship_evolution": "network_graph_with_temporal_dimension"
-    }
-  }
-}
-```
-
-### Memory and Context Visualization
-
-**Memory State Display**:
-- **Character Memory**: Visual representation of character perspectives
-- **Story Context**: Hierarchical view of story elements and relationships
-- **Memory Conflicts**: Highlighting areas where character memories diverge
-- **Context Relevance**: Visual indicators of memory importance to current scene
+### Accessibility
+- Keyboard navigation for all features
+- Screen reader support
+- High contrast mode
+- Font scaling support
 
 ## Performance Requirements
 
-### Response Times
-- **Page Load**: < 2 seconds for initial page load
-- **Agent Responses**: < 5 seconds for status updates
-- **Content Generation**: Progress indicators for longer operations
-- **Navigation**: < 500ms for interface transitions
+- Initial load: < 2 seconds
+- Tab switching: < 100ms
+- AI generation: Show progress, allow cancellation
+- Local storage operations: < 50ms
+- Character limit warnings before storage quota exceeded
 
-### Data Management
-- **Auto-save to Local Storage**: Automatic saving every 30 seconds to browser local storage
-- **Offline Support**: Full functionality available without internet connection using local storage
-- **Local Data Management**: All story data managed in browser local storage
-- **Version Control**: Built-in version tracking for all content changes stored locally
-- **Storage Quota Monitoring**: Display storage usage and manage local storage limits
+## Error Handling
 
-### Error Handling
-- **Graceful Degradation**: Core features remain available during system issues
-- **Error Recovery**: Clear recovery paths for common error scenarios
-- **User Feedback**: Informative error messages with suggested actions
-- **Support Integration**: Easy access to help and support resources
+- Clear error messages for AI generation failures
+- Recovery options for interrupted operations
+- Validation messages for required fields
+- Confirmation dialogs for destructive actions (delete character, delete chapter)
 
-This user interface design ensures an intuitive, efficient, and accessible experience for writers collaborating with AI agents to create compelling stories.
+This simplified, tab-based interface provides users with direct control over every aspect of story creation while seamlessly integrating AI assistance throughout the creative process.

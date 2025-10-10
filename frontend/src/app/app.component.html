@@ -1,44 +1,13 @@
-<div class="app-container">
-  <!-- Navigation Header -->
-  <mat-toolbar class="app-toolbar" color="primary">
-    <div class="toolbar-content">
-      <div class="brand" (click)="onNavigateToStories()">
-        <mat-icon>edit_note</mat-icon>
-        <span class="brand-text">{{ title }}</span>
-      </div>
-
-      <div class="nav-actions">
-        <button
-          mat-button
-          [class.active]="isCurrentRoute('/stories')"
-          (click)="onNavigateToStories()">
-          <mat-icon>library_books</mat-icon>
-          My Stories
-        </button>
-
-        <button
-          mat-raised-button
-          color="accent"
-          (click)="onCreateNewStory()">
-          <mat-icon>add</mat-icon>
-          New Story
-        </button>
-      </div>
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-brand">
+      <h1>Writer Assistant</h1>
     </div>
-  </mat-toolbar>
-
-  <!-- Main Content -->
-  <main class="app-main">
-    <router-outlet></router-outlet>
-  </main>
-
-  <!-- Footer -->
-  <footer class="app-footer">
-    <div class="footer-content">
-      <p>&copy; 2024 Writer Assistant - Collaborative AI Storytelling</p>
-      <div class="footer-links">
-        <span>Powered by Multi-Agent AI</span>
-      </div>
+    <div class="nav-links">
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
     </div>
-  </footer>
-</div>
+  </div>
+</nav>
+
+
+<router-outlet />

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -14,6 +14,8 @@ import { LocalStorageService, StorageQuota } from '../../services/local-storage.
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   stories: StoryListItem[] = [];
   storageQuota: StorageQuota = { used: 0, available: 0, total: 0, percentage: 0 };
 
@@ -51,11 +53,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   createNewStory(): void {
-    const title = prompt('Enter story title:');
-    if (title && title.trim()) {
-      const story = this.storyService.createStory(title.trim());
-      this.router.navigate(['/story', story.id]);
-    }
+    const story = this.storyService.createStory('Untitled Story');
+    this.router.navigate(['/story', story.id]);
   }
 
   deleteStory(storyId: string): void {
@@ -77,6 +76,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return date.toLocaleDateString();
   }
 
+  exportStory(storyId: string): void {
+    const story = this.storyService.getStory(storyId);
+    if (!story) {
+      alert('Story not found');
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(story, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const filename = story.general.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
+
   exportAllStories(): void {
     const blob = this.localStorageService.exportAllStories();
     const url = window.URL.createObjectURL(blob);
@@ -85,5 +101,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
     link.download = `writer_assistant_backup_${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     window.URL.revokeObjectURL(url);
+  }
+
+  triggerImport(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  async onFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    if (file.type !== 'application/json') {
+      alert('Please select a valid JSON file');
+      return;
+    }
+
+    try {
+      const result = await this.localStorageService.importStory(file);
+
+      if (result.success) {
+        alert('Successfully imported story');
+        this.loadStories();
+        this.loadStorageInfo();
+      } else {
+        alert(`Import failed: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      alert('Failed to import story. Please check the file format.');
+    } finally {
+      // Reset the file input
+      input.value = '';
+    }
   }
 }

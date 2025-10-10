@@ -2,330 +2,284 @@
 
 ## Overview
 
-The Writer Assistant employs a user-driven multi-agent system where specialized agents provide their unique perspectives and expertise only when selected and engaged by the user. Each agent maintains individual memory systems and distinct viewpoints, with all agent interactions subject to user control, selection, and approval.
+The Writer Assistant uses specialized agents that provide stateless services for story creation. Each agent type serves a specific purpose in the chapter-by-chapter writing workflow, responding to requests with no persistent state between invocations. All agent behavior is configured through user-defined system prompts and character configurations stored client-side.
 
 ## Agent Types and Responsibilities
 
-### 1. Writer Agent (User-Directed Content Generator)
+### 1. Writer Assistant Agent
 
-**Primary Role**: Generate story content based on user direction and selectively incorporate user-chosen agent inputs
+**Primary Role**: Generate chapter content from plot points and incorporated feedback
 
-**Core Responsibilities**:
-- Generate expanded story drafts from user-provided themes, topics, or outlines
-- Create detailed content incorporating only user-selected character responses
-- Access memories and perspectives only when user grants permission
-- Revise content based on user-specified modifications and feedback
-- Respond to user requests for specific changes or improvements
-- Synthesize only user-approved inputs from other agents
-- Assist with AI-powered character detail expansion when requested by user
+**Operations**:
 
-**Character Expansion Support**:
-- **User-Requested Expansion**: When user requests character detail expansion, generate detailed content for specified aspects (personality, background, relationships, etc.)
-- **Context-Aware Generation**: Use existing character information and story context to create coherent expansions
-- **User Review Required**: All AI-generated character expansions require user review and approval before being saved to character configuration
-- **Expansion Tracking**: Log all expansion requests and generated content in character's `ai_expansion_history`
+#### Chapter Generation
+- **Input**: Plot point, incorporated feedback, story context, characters, previous chapters, worldbuilding
+- **System Prompt**: Composed from: `mainPrefix + assistantSystemPrompt + mainSuffix`
+- **Output**: Full chapter text
+- **Stateless**: No memory between requests
 
-**User-Controlled Memory Access**:
-- **User-Granted Story Memory**: Access to character memories only when user permits
-- **User-Directed Narrative Memory**: Track only user-approved themes and techniques
-- **User Preference Memory**: Remember all user feedback and decisions
-- **User-Visible Revision History**: Complete transparent tracking of all changes and user decisions
+#### Chapter Modification
+- **Input**: Current chapter text, user modification request, story context
+- **System Prompt**: Composed from: `mainPrefix + assistantSystemPrompt + mainSuffix`
+- **Output**: Modified chapter text
+- **Stateless**: No memory of previous modifications
 
-**User-Requested Output Formats**:
-- Expanded story drafts based on user input
-- Detailed content incorporating user-selected character inputs
-- Revision responses addressing user-specified modifications
-- Final polished content incorporating user-chosen feedback
+#### AI Flesh-Out
+- **Input**: Content to expand (worldbuilding, plot point), story context
+- **System Prompt**: Composed from: `mainPrefix + assistantSystemPrompt + mainSuffix`
+- **Output**: Expanded content
+- **Stateless**: Each expansion independent
 
-### 2. Character Sub-Agents (User-Interactive Character Voices)
+#### Character Detail Generation
+- **Input**: Basic bio, story context
+- **System Prompt**: Composed from: `mainPrefix + assistantSystemPrompt + mainSuffix`
+- **Output**: Generated character fields (name, demographics, personality, etc.)
+- **Stateless**: No memory of previous generations
 
-**Primary Role**: Engage in direct dialog with users while maintaining authentic character perspectives
+**Key Principle**: All context provided in each request, no persistent state
 
-**Core Responsibilities**:
-- React to user-proposed story events and outlines from character perspective
-- Engage in iterative dialog with users about story developments
-- Provide character-specific insights and concerns about proposed plot points
-- Maintain character-consistent responses throughout user conversations
-- Present authentic character viewpoints for user consideration
-- Respond to user questions about character motivations and reactions
+### 2. Character Feedback Agents
 
-**Character Visibility Filtering**:
-- **Active Characters Only**: Character agents only participate when `is_hidden: false` in their configuration
-- **Automatic Exclusion**: Hidden characters (`is_hidden: true`) are automatically filtered from:
-  - Agent selection prompts and character lists
-  - Dialog interface character options
-  - User feedback/reaction opportunities
-  - Multi-character conversation participation
-- **Immediate Activation**: When character is unhidden (`is_hidden: false`), agent immediately becomes available for all interactions
-- **Memory Preservation**: Hidden characters retain all memory state and configuration for seamless restoration
+**Primary Role**: Provide character-specific feedback on plot points
 
-**Character Configuration Integration**:
-- **User-Defined Foundation**: Characters created by users with basic physical, psychological, emotional characteristics and personality
-- **AI-Expanded Details**: Users can request AI expansion of character details, stored directly in character configuration
-- **Dynamic Management**: Characters can be added or hidden at any point during story development
-- **Soft-Delete System**: Hidden characters maintain all data but are excluded from agent interactions and user prompts
+**Operation**:
 
-**Individual Character Memory Structure**:
+#### Feedback Generation
+- **Input**:
+  - Character configuration (name, personality, motivations, fears, relationships, etc.)
+  - Plot point
+  - Incorporated feedback (from previous iterations)
+  - Story context (title, worldbuilding, other characters, previous chapters)
+- **System Prompt**: Generated from character personality and traits
+- **Output Structure**:
 ```json
 {
-  "character_metadata": {
-    "is_hidden": false,
-    "creation_source": "user_defined",
-    "ai_expansion_history": [...]
-  },
-  "personal_memory": {
-    "internal_monologue": [...],
-    "subjective_experiences": [...],
-    "private_knowledge": [...],
-    "emotional_states": [...],
-    "personality_evolution": [...]
-  },
-  "observed_events": {
-    "recent_summary": "...",
-    "witnessed_actions": [...],
-    "overheard_conversations": [...],
-    "environmental_changes": [...]
-  },
-  "relationship_dynamics": {
-    "character_name": {
-      "perceived_relationship": "...",
-      "hidden_feelings": "...",
-      "interaction_history": [...],
-      "trust_level": 0.7
-    }
+  "actions": ["What character would do"],
+  "dialog": ["What character would say"],
+  "physicalSensations": ["What character would physically experience"],
+  "emotions": ["What character would feel"],
+  "internalMonologue": ["What character would think"]
+}
+```
+- **Stateless**: Each request independent, character personality from configuration
+
+**Character Configuration Structure**:
+```json
+{
+  "basicBio": "User-provided foundation",
+  "name": "Generated or user-provided",
+  "sex": "...",
+  "gender": "...",
+  "sexualPreference": "...",
+  "age": 0,
+  "physicalAppearance": "...",
+  "usualClothing": "...",
+  "personality": "...",
+  "motivations": "...",
+  "fears": "...",
+  "relationships": "...",
+  "isHidden": false,
+  "metadata": {
+    "creationSource": "user | ai_generated | imported",
+    "lastModified": "..."
   }
 }
 ```
 
-**Key Features**:
-- **Subjective Memory**: Characters remember events through their personality lens
-- **Emotional Filtering**: Memory colored by emotional state during event
-- **Knowledge Limitations**: Only know what they realistically could know
-- **Perspective Authenticity**: Maintain character-specific viewpoints and biases
+**Visibility Rules**:
+- Only characters with `isHidden: false` appear in Chapter Creation tab
+- Hidden characters excluded from all feedback opportunities
+- Character configuration stored client-side, loaded for each request
 
-### 3. Rater Agents (Multi-Perspective Critics)
+### 3. Rater Feedback Agents
 
-**Primary Role**: Provide specialized feedback from different evaluation perspectives
+**Primary Role**: Provide evaluation feedback on plot points
 
-#### 3.1 Character Consistency Rater
+**Operation**:
 
-**Focus Areas**:
-- Character voice and personality consistency
-- Psychological realism of character memories and reactions
-- Character growth trajectory believability
-- Dialogue authenticity and character-specific speech patterns
-
-**Evaluation Criteria**:
-- Memory authenticity and bias patterns
-- Emotional reaction consistency with established personality
-- Character development pacing and motivation
-- Relationship dynamic believability
-
-#### 3.2 Narrative Flow Rater
-
-**Focus Areas**:
-- Reader engagement and story pacing
-- Perspective clarity and navigation
-- Information revelation timing
-- Emotional impact and reader connection
-
-**Evaluation Criteria**:
-- Scene transitions and story rhythm
-- Perspective shift smoothness
-- Reader confusion prevention
-- Tension building and release patterns
-
-#### 3.3 Literary Quality Rater
-
-**Focus Areas**:
-- Thematic depth and integration
-- Artistic merit and originality
-- Prose quality and style consistency
-- Sophisticated narrative techniques
-
-**Evaluation Criteria**:
-- Theme development and symbolic resonance
-- Unreliable narrator effectiveness
-- Perspective sophistication and complexity
-- Writing craft and technical execution
-
-#### 3.4 Genre-Specific Raters
-
-**Configurable Based on Story Genre**:
-- Mystery: Clue management, red herrings, fair play principle
-- Romance: Relationship development, emotional satisfaction, chemistry
-- Thriller: Tension maintenance, pacing, suspense building
-- Literary Fiction: Character depth, thematic complexity, artistic merit
-
-### 4. Editor Agent (Final Quality Gate)
-
-**Primary Role**: Ensure overall story consistency, tone coherence, and narrative flow
-
-**Core Responsibilities**:
-- Verify adherence to approved story outline
-- Check continuity and consistency across chapters
-- Maintain tone and voice consistency throughout story
-- Ensure narrative coherence and logical progression
-- Provide final technical polish before user presentation
-
-**Review Criteria**:
+#### Feedback Generation
+- **Input**:
+  - Rater configuration (name, system prompt)
+  - Plot point
+  - Incorporated feedback (from previous iterations)
+  - Story context (title, worldbuilding, characters, previous chapters)
+- **System Prompt**: Composed from: `mainPrefix + raterSystemPrompt + mainSuffix`
+- **Output Structure**:
 ```json
 {
-  "consistency_checking": {
-    "plot_continuity": "Do events unfold logically?",
-    "character_consistency": "Are characters behaving consistently?",
-    "world_consistency": "Do setting and rules remain stable?",
-    "timeline_verification": "Is sequence of events logical?"
-  },
-  "tone_maintenance": {
-    "voice_consistency": "Is narrative voice stable?",
-    "emotional_tone": "Do emotional beats serve story arc?",
-    "style_coherence": "Is writing style consistent?",
-    "mood_appropriateness": "Does chapter mood fit progression?"
-  },
-  "quality_assurance": {
-    "outline_adherence": "Does chapter deliver outline promises?",
-    "reader_experience": "Will chapter satisfy readers?",
-    "professional_polish": "Is content ready for publication?",
-    "narrative_flow": "Does chapter flow smoothly to next?"
+  "opinion": "Overall assessment of plot point + incorporated feedback",
+  "suggestions": [
+    "Specific recommendation 1",
+    "Specific recommendation 2",
+    "..."
+  ]
+}
+```
+- **Stateless**: Each request independent, no memory of previous evaluations
+
+**Rater Configuration Structure**:
+```json
+{
+  "name": "User-provided name",
+  "systemPrompt": "User-provided prompt defining role and criteria",
+  "enabled": true,
+  "metadata": {
+    "created": "...",
+    "lastModified": "..."
   }
 }
 ```
 
-## User-Mediated Agent Communication Patterns
+**Common Rater Types** (user-configured examples):
+- **Character Consistency Rater**: Focus on character voice, personality consistency
+- **Narrative Flow Rater**: Focus on pacing, tension, engagement
+- **Genre Expert**: Focus on genre-specific conventions (mystery, romance, etc.)
+- **Prose Quality Rater**: Focus on writing craft, style
 
-### User-Controlled Interaction Protocol
+**Key Points**:
+- Raters are fully user-configurable through system prompts
+- Only enabled raters appear in Chapter Creation tab
+- Rater configuration stored client-side, loaded for each request
 
-**Character Agents → User** (Direct Dialog):
-- Character reactions to user-proposed story events
-- Responses to user questions about character perspectives
-- Character-specific concerns and insights about plot developments
-- Direct conversation about character motivations and feelings
+### 4. Editor Review Agent
 
-**User → Character Agents** (Interactive Dialog):
-- Questions about character reactions and motivations
-- Requests for character perspectives on story events
-- Iterative conversation to explore character viewpoints
-- User feedback on character responses and authenticity
-- Character detail expansion requests (processed through Writer Agent)
-- Character visibility management (hide/unhide operations)
+**Primary Role**: Provide final review suggestions for generated chapters
 
-**User → Writer Agent** (Content Direction):
-- Story themes, topics, and outline proposals
-- Specific content modification requests
-- Selection of character responses to incorporate
-- Approval or rejection of generated content
+**Operation**:
 
-**Feedback Agents → User** (When Requested):
-- Quality assessments and improvement suggestions
-- Specific problem identification and solutions
-- Evaluations based on user-selected criteria
-- Recommendations for story enhancement
-
-**User → All Agents** (Central Control):
-- Agent selection and activation decisions
-- Memory access permissions and restrictions
-- Workflow direction and progression choices
-- Final approval for all agent outputs
-
-### User-Directed Workflow Coordination
-
-**User-Controlled Agent Activation**:
-- User selects which character agents to engage for each story phase
-- Only non-hidden characters (`is_hidden: false`) are presented in selection interfaces
-- User decides when to request feedback from rater and editor agents
-- User controls parallel vs. sequential agent engagement
-- User determines workflow progression based on their satisfaction with outputs
-- User can hide/unhide characters at any point to control agent participation
-
-**User-Centered Conflict Resolution**:
-- User reviews all agent perspectives and makes final decisions
-- User chooses which agent recommendations to follow or ignore
-- User preferences always take precedence over agent suggestions
-- User creates custom solutions by selecting elements from different agent outputs
-
-## Agent Configuration Requirements
-
-### Personality Configuration
-
-**Character Agents**:
+#### Review Generation
+- **Input**:
+  - Chapter draft text
+  - Plot point used
+  - Incorporated feedback
+  - Story context (title, worldbuilding, characters, previous chapters)
+- **System Prompt**: Composed from: `mainPrefix + editorSystemPrompt + mainSuffix`
+- **Output Structure**:
 ```json
 {
-  "character_id": "john_smith",
-  "is_hidden": false,
-  "creation_source": "user_defined",
-  "ai_expansion_history": [
+  "suggestions": [
     {
-      "date": "2025-10-07",
-      "section": "personality_traits",
-      "user_prompt": "Expand analytical traits",
-      "generated_content": {...}
-    }
-  ],
-  "personality_traits": {
-    "core_traits": ["introverted", "analytical", "protective"],
-    "emotional_patterns": ["tends_to_internalize", "conflict_avoidant"],
-    "speech_patterns": ["formal", "precise", "understated"],
-    "bias_tendencies": ["defensive_attribution", "protective_filtering"]
-  },
-  "background": {
-    "age": 34,
-    "occupation": "software_engineer",
-    "key_experiences": [...],
-    "relationships": {...},
-    "fears_and_desires": [...]
-  },
-  "memory_characteristics": {
-    "reliability_level": 0.8,
-    "emotional_filtering": "high",
-    "attention_focus": ["technical_details", "relationship_dynamics"],
-    "bias_patterns": ["confirmation_bias", "self_protective"]
-  }
+      "issue": "Description of issue",
+      "suggestion": "Specific recommendation",
+      "priority": "high | medium | low"
+    },
+    ...
+  ]
 }
 ```
+- **Stateless**: Each review independent, no memory of previous reviews
 
-**Rater Agents**:
+**Editor Configuration**:
+- System prompt defined in General tab
+- Composed with mainPrefix and mainSuffix for consistency
+- Focus typically on:
+  - Continuity and consistency
+  - Tone and voice
+  - Professional polish
+  - Readability and flow
+
+**Key Principle**: Provides suggestions, user decides what to apply
+
+## Agent Interaction Patterns
+
+### Stateless Request-Response Model
+
+All agents follow a simple stateless pattern:
+
+**Request Flow**:
+1. Client sends complete context in HTTP request
+2. Server processes with appropriate agent
+3. Server returns response (no state retained)
+4. Client decides what to do with response
+
+**No Direct Agent Communication**:
+- Agents never communicate directly with each other
+- All coordination through client-side state
+- User explicitly incorporates feedback between agents
+
+### User Control Points
+
+**Character Feedback**:
+- User clicks character name to request feedback
+- User can iterate (suggest changes, regenerate)
+- User selects which feedback elements to incorporate
+- Incorporated feedback added to client state
+
+**Rater Feedback**:
+- User clicks rater name to request feedback
+- User reviews opinion and suggestions
+- User can iterate or incorporate selectively
+
+**Chapter Generation**:
+- User triggers when ready
+- User reviews generated chapter
+- User can edit directly or request AI modifications
+
+**Editor Review**:
+- User requests when chapter complete
+- User selects which suggestions to apply
+- User can iterate or accept chapter
+
+## Agent Configuration
+
+### System Prompt Composition
+
+All agents use composed system prompts:
+
+**Format**: `mainPrefix + agentSpecificPrompt + mainSuffix`
+
+**Example**:
+```
+mainPrefix: "You are helping write a mystery novel."
+assistantPrompt: "Generate chapter content based on plot points..."
+mainSuffix: "Always maintain suspense and foreshadowing."
+
+Final prompt: "You are helping write a mystery novel. Generate chapter content based on plot points... Always maintain suspense and foreshadowing."
+```
+
+### Configuration Storage
+
+All configuration stored client-side in browser local storage:
+
+**Story Configuration**:
 ```json
 {
-  "rater_id": "character_consistency_expert",
-  "evaluation_focus": {
-    "primary_criteria": ["authenticity", "consistency", "psychological_realism"],
-    "weight_preferences": {
-      "character_voice": 0.9,
-      "memory_authenticity": 0.8,
-      "growth_believability": 0.7
-    }
+  "general": {
+    "title": "...",
+    "systemPrompts": {
+      "mainPrefix": "...",
+      "mainSuffix": "...",
+      "assistantPrompt": "...",
+      "editorPrompt": "..."
+    },
+    "worldbuilding": "..."
   },
-  "feedback_style": {
-    "tone": "analytical_constructive",
-    "directness": 0.7,
-    "encouragement_level": 0.5,
-    "detail_level": "comprehensive"
-  },
-  "standards": {
-    "quality_threshold": 7.0,
-    "consistency_tolerance": 0.2,
-    "improvement_focus": "character_development"
-  }
+  "characters": {...},
+  "raters": {...}
 }
 ```
 
-## Agent Performance Requirements
+No server-side configuration or state.
 
-### Response Quality
-- Character agents must maintain personality consistency across all interactions
-- Rater agents must provide actionable, specific feedback
-- Writer agent must effectively synthesize multiple perspectives
-- Editor agent must catch consistency errors and quality issues
+## Performance Requirements
 
-### Performance Metrics
-- Response time: < 30 seconds for chapter generation
-- Memory efficiency: < 4KB context per agent per chapter
-- Consistency scores: > 85% character consistency across story
-- User satisfaction: > 4.0/5.0 rating on generated content
+### Response Times
+- Character feedback: < 10 seconds
+- Rater feedback: < 10 seconds
+- Chapter generation: < 30 seconds
+- Editor review: < 15 seconds
+- AI flesh-out: < 10 seconds
+
+### Quality Expectations
+- Character consistency with configuration
+- Actionable, specific feedback from raters
+- Coherent chapter generation incorporating feedback
+- Editor suggestions addressing real issues
 
 ### Error Handling
-- Graceful degradation when agents encounter errors
-- Recovery procedures for memory corruption or inconsistencies
-- Fallback modes when specific agents are unavailable
-- User notification for system limitations or issues
+- Clear error messages on generation failures
+- Retry capability for failed requests
+- Timeouts for long-running operations
+- User notification for system issues
+
+This simplified agent architecture provides powerful AI assistance while maintaining complete user control and zero server-side state.

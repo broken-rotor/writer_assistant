@@ -1,76 +1,88 @@
 /* Global Styles */
-
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
 }
 
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
 }
 
-/* Material Design customizations */
-.mat-toolbar {
-  background-color: #3f51b5;
+/* Button Styles */
+.btn-primary {
+  background-color: #1976d2;
   color: white;
-}
-
-/* Utility classes */
-.spacer {
-  flex: 1 1 auto;
-}
-
-.mt-2 {
-  margin-top: 1rem;
-}
-
-.mb-2 {
-  margin-bottom: 1rem;
-}
-
-.p-2 {
-  padding: 1rem;
-}
-
-/* Container styles */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-/* Card styles */
-.card {
-  background: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+
+  &:hover:not(:disabled) {
+    background-color: #1565c0;
+  }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #5a6268;
+  }
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #c82333;
+  }
+}
+
+/* Form Styles */
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: #1976d2;
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+  }
+}
+
+.form-group {
   margin-bottom: 1.5rem;
-}
 
-/* Button spacing */
-.button-row {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-/* Loading states */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+  }
 }

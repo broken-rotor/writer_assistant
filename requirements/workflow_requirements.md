@@ -1,759 +1,710 @@
-# LangGraph Workflow Requirements
+# Workflow Requirements
 
 ## Overview
 
-The Writer Assistant uses client-side workflow management to coordinate story development through a user-driven, iterative process with stateless backend services. All workflow state, story data, and user decisions are managed entirely on the client-side, while the backend provides independent AI agent services without maintaining any session state or user data.
+The Writer Assistant uses a simplified, chapter-by-chapter workflow where users directly control story creation through a tabbed interface. All workflow state is managed client-side in browser local storage, while the backend provides stateless AI agent services.
 
-## Workflow Architecture
+## Core Workflow Principles
 
-### Core Workflow Principles
+1. **Tabbed Interface**: Users navigate between General, Characters, Raters, Story, and Chapter Creation tabs
+2. **Chapter-Centric Development**: Stories are built chapter by chapter with AI assistance
+3. **User-Driven Feedback**: Users explicitly request feedback from selected agents
+4. **Iterative Refinement**: Users iterate with agents until satisfied, then finalize
+5. **Client-Side State**: All workflow state persisted in browser local storage
+6. **Stateless Services**: Backend provides independent AI responses without session state
 
-1. **User-Driven Control**: Users initiate and approve every major step in the story development process
-2. **Iterative Refinement**: Continuous user-agent collaboration through multiple revision cycles
-3. **Agent Selection Freedom**: Users choose which character agents and feedback sources to engage
-4. **Flexible Story Progression**: Support for any story part - themes, topics, outlines, or detailed scenes
-5. **Client-Side Orchestration**: All workflow coordination managed by client application
-6. **Stateless Service Integration**: Backend services provide responses without maintaining workflow state
-7. **Client-Side State Persistence**: Complete workflow state maintained in browser local storage
-8. **Client-Side Error Recovery**: Error handling and recovery managed entirely by frontend
-9. **Client-Side Conversation Branching**: All branching logic and state managed in browser storage
-10. **Client-Side Memory Management**: Complete user access to examine and modify all memories locally
-11. **Client-Side Branch Isolation**: Independent workflow and memory states managed by client
+## Workflow Phases
 
-### Client-Side Workflow State Schema
+### Phase 1: Story Setup
 
-#### Browser Local Storage State Structure
+**Tab: General**
+
+User configures story-level settings:
+
+```
+User Actions:
+1. Enter story title
+2. Configure system prompts (optional):
+   - Main prefix (added before all agent prompts)
+   - Main suffix (added after all agent prompts)
+   - Writer assistant system prompt
+   - Editor system prompt
+3. Provide worldbuilding/setting
+4. (Optional) Request AI to flesh out worldbuilding
+```
+
+**State Updates**:
+- Save all settings to local storage on change
+- Auto-save every 30 seconds
+- Immediate save on tab switch
+
+### Phase 2: Character Configuration
+
+**Tab: Characters**
+
+User creates and configures story characters:
+
+```
+User Actions:
+1. Click "Add Character"
+2. Provide basic bio
+3. (Option A) Click "Generate from Bio" for AI assistance:
+   - AI generates: name, demographics, appearance, clothing,
+     personality, motivations, fears, relationships
+   - User reviews and edits any generated fields
+4. (Option B) Manually fill all character fields
+5. Click "Regenerate Relationships" to update for all characters
+6. Save character
+
+Character Management:
+- Hide/Unhide characters (soft delete)
+- Edit existing characters
+- Remove characters permanently
+```
+
+**State Updates**:
+- Character configurations saved to local storage
+- Hidden characters retain all data (is_hidden: true)
+- Only non-hidden characters available for chapter creation
+
+### Phase 3: Rater Configuration
+
+**Tab: Raters**
+
+User configures feedback agents:
+
+```
+User Actions:
+1. Click "Add New Rater"
+2. Provide name
+3. Write system prompt defining rater's role and criteria
+4. Save rater
+5. Enable/disable raters as needed
+
+Rater Management:
+- Edit rater prompts
+- Remove raters
+- Toggle enabled/disabled status
+```
+
+**State Updates**:
+- Rater configurations saved to local storage
+- Only enabled raters available for chapter creation
+
+### Phase 4: Chapter Creation
+
+**Tab: Chapter Creation**
+
+Core workflow for creating each chapter:
+
+#### Step 1: Plot Point Definition
+
+```
+User Actions:
+1. Enter plot point describing what should happen in chapter
+2. (Optional) Click "AI Flesh Out" to expand plot point
+3. User can edit fleshed-out version
+```
+
+**Client State**:
 ```json
 {
-  "client_workflow_state": {
-    "story_context": {
-      "story_id": "uuid_123",
-      "title": "Story Title",
-      "genre": "mystery",
-      "creation_date": "2025-09-24",
-      "current_phase": "outline_development",
-      "development_stage": "initial_creation",
-      "last_modified": "2025-09-24T10:30:00Z"
-    },
-  "conversation_tree": {
-    "current_branch_id": "main_branch",
-    "branch_metadata": {
-      "main_branch": {
-        "created_at": "2025-09-24T09:00:00Z",
-        "branched_from": null,
-        "description": "Main story development path"
-      },
-      "alt_branch_001": {
-        "created_at": "2025-09-24T14:30:00Z",
-        "branched_from": "prompt_005",
-        "description": "Alternative character development"
-      }
-    },
-    "prompt_history": {
-      "main_branch": [
-        {
-          "prompt_id": "prompt_001",
-          "timestamp": "2025-09-24T09:00:00Z",
-          "user_input": "Create a mystery story about a detective",
-          "state_snapshot": {...},
-          "editable": true
-        }
-      ]
-    }
-  },
-  "phase_state": {
-    "outline_phase": {
-      "status": "in_progress", // "pending", "completed", "approved"
-      "iteration_count": 2,
-      "user_feedback_received": true,
-      "rater_feedback_pending": ["flow_rater", "genre_rater"],
-      "approval_status": {
-        "user_approved": false,
-        "rater_consensus": false,
-        "blocking_issues": ["pacing_concerns", "character_arc_issues"]
-      }
-    },
-    "chapter_phase": {
-      "current_chapter": 3,
-      "status": "awaiting_rater_feedback",
-      "iteration_count": 1,
-      "review_cycle": {
-        "rater_feedback_received": ["consistency_rater"],
-        "rater_feedback_pending": ["flow_rater", "quality_rater"],
-        "user_review_status": "not_started",
-        "editor_review_status": "pending"
-      }
-    }
-  },
-  "agent_states": {
-    "writer_agent": {
-      "current_task": "chapter_generation",
-      "status": "active",
-      "context_loaded": true,
-      "memory_sync_status": "current"
-    },
-    "character_agents": {
-      "john_character": {
-        "active_in_scene": true,
-        "memory_updated": "2025-09-24T10:30:00",
-        "perspective_ready": true
-      }
-    },
-    "rater_agents": {
-      "consistency_rater": {
-        "review_status": "completed",
-        "feedback_submitted": true,
-        "rating_score": 7.5
-      }
-    }
-  },
-  "workflow_history": {
-    "completed_steps": [
-      {
-        "step": "user_input_processing",
-        "timestamp": "2025-09-24T09:00:00",
-        "duration": 1.2,
-        "success": true
-      }
-    ],
-    "current_step": "rater_feedback_collection",
-    "pending_steps": ["editor_review", "user_presentation"],
-    "error_history": []
-  },
-  "memory_sync_status": {
-    "last_global_sync": "2025-09-24T10:25:00",
-    "pending_updates": [],
-    "sync_conflicts": [],
-    "next_sync_required": false
+  "plotPoint": {
+    "original": "user entered text",
+    "current": "potentially AI-expanded text",
+    "source": "user | ai_assisted | mixed"
   }
 }
 ```
 
-## User-Driven Story Development Workflow
+#### Step 2: Agent Feedback Collection
 
-### Story Part Development Flow
+```
+User Actions:
+1. Click on character names (non-hidden only) to request feedback
+2. Click on rater names (enabled only) to request feedback
+3. Review agent feedback when ready
 
-```mermaid
-graph TD
-    A[User Proposes Theme/Topic/Outline] --> B[Writer Agent: Generate Expanded Draft]
-    B --> C[Present Draft to User]
-    C --> D{User Satisfied with Draft?}
-    D -->|No| E[User Provides Feedback]
-    E --> F[Writer Agent: Revise Draft]
-    F --> C
-    D -->|Yes| G[User Selects Character Agents]
-    G --> H[Character Agents: React to Proposed Events]
-    H --> I[Present Character Reactions to User]
-    I --> J{User Wants to Iterate?}
-    J -->|Yes| K[User Engages with Character Agents]
-    K --> L[Character Agents: Respond to User Dialog]
-    L --> I
-    J -->|No| M[User Selects Responses to Keep]
-    M --> N[Writer Agent: Generate Detailed Version]
-    N --> O[Present Detailed Version to User]
-    O --> P{User Satisfied?}
-    P -->|No| Q[User Requests Modifications]
-    Q --> R[Writer Agent: Make Changes]
-    R --> O
-    P -->|Yes| S{User Wants Feedback?}
-    S -->|No| T[Story Part Complete]
-    S -->|Yes| U[User Selects Raters/Editors]
-    U --> V[Selected Agents: Provide Feedback]
-    V --> W[Present Feedback to User]
-    W --> X{User Wants to Apply Feedback?}
-    X -->|Yes| Y[User Selects Which Feedback to Apply]
-    Y --> Z[Writer Agent: Incorporate Selected Feedback]
-    Z --> O
-    X -->|No| T
+For Characters:
+- Agent generates:
+  * Actions (what they would do)
+  * Dialog (what they would say)
+  * Physical sensations (what they would experience)
+  * Emotions (what they would feel)
+  * Internal monologue (what they would think)
+
+For Raters:
+- Agent generates:
+  * Opinion (assessment of plot point + incorporated feedback)
+  * Suggestions (specific recommendations)
 ```
 
-### User-Driven Workflow State Management
+**Backend Request** (stateless):
+```json
+{
+  "agentType": "character | rater",
+  "agentConfig": {...},
+  "context": {
+    "storyTitle": "...",
+    "worldbuilding": "...",
+    "allCharacters": [...],
+    "previousChapters": [...],
+    "plotPoint": "...",
+    "incorporatedFeedback": [...]
+  }
+}
+```
 
-**State Transitions**:
+**Backend Response** (stateless):
+```json
+{
+  "agentName": "Sarah",
+  "feedback": {
+    "actions": ["Carefully open the letter"],
+    "dialog": ["This changes everything"],
+    "physicalSensations": ["Heart racing"],
+    "emotions": ["Shock mixed with excitement"],
+    "internalMonologue": ["Could this be the evidence?"]
+  }
+}
+```
+
+**Client State Update**:
+```json
+{
+  "feedbackRequests": {
+    "sarah_character": {
+      "status": "ready",
+      "feedback": {...}
+    }
+  }
+}
+```
+
+#### Step 3: Feedback Iteration
+
+```
+User Actions:
+1. Review agent feedback
+2. (Optional) Enter user feedback in text box
+3. Click "Suggest Changes" to ask agent to regenerate with user guidance
+4. Click "Regenerate" to get alternative version without user input
+5. Select specific feedback items to accept (checkboxes)
+6. Click "Accept Selected" to move feedback to incorporated list
+```
+
+**Iteration Loop**:
+- User can iterate with same agent multiple times
+- Each iteration sends new stateless request with updated context
+- Previous feedback not automatically included (user must explicitly incorporate)
+
+**Client State Update**:
+```json
+{
+  "incorporatedFeedback": [
+    {
+      "source": "Sarah",
+      "type": "dialog",
+      "content": "This changes everything",
+      "incorporated": true
+    },
+    {
+      "source": "Consistency Rater",
+      "type": "suggestion",
+      "content": "Add more tension",
+      "incorporated": true
+    }
+  ]
+}
+```
+
+#### Step 4: Chapter Generation
+
+```
+User Actions:
+1. Click "Generate Chapter"
+2. Wait for AI to generate full chapter text
+3. Review generated chapter
+```
+
+**Backend Request** (stateless):
+```json
+{
+  "operation": "generateChapter",
+  "context": {
+    "storyTitle": "...",
+    "worldbuilding": "...",
+    "characters": [...],
+    "previousChapters": [...],
+    "plotPoint": "...",
+    "incorporatedFeedback": [...]
+  },
+  "systemPrompt": "[prefix] + [assistant prompt] + [suffix]"
+}
+```
+
+**Backend Response**:
+```json
+{
+  "chapterText": "Full generated chapter content...",
+  "wordCount": 2347,
+  "metadata": {
+    "generatedAt": "2025-10-10T14:30:00Z"
+  }
+}
+```
+
+**Client State Update**:
+```json
+{
+  "chapterDraft": {
+    "text": "...",
+    "status": "ready",
+    "plotPoint": "...",
+    "incorporatedFeedback": [...],
+    "metadata": {...}
+  }
+}
+```
+
+#### Step 5: Chapter Editing
+
+```
+User Actions:
+(Option A) Direct editing:
+1. Click "Direct Edit"
+2. Modify chapter text in editor
+3. Save changes
+
+(Option B) AI-assisted editing:
+1. Enter desired changes in prompt box
+2. Click "Prompt Assistant for Changes"
+3. Review modified chapter
+4. Accept or iterate further
+```
+
+**Backend Request for AI-assisted editing** (stateless):
+```json
+{
+  "operation": "modifyChapter",
+  "currentChapter": "...",
+  "userRequest": "Add more sensory details",
+  "context": {...},
+  "systemPrompt": "[prefix] + [assistant prompt] + [suffix]"
+}
+```
+
+#### Step 6: Editor Review
+
+```
+User Actions:
+1. Click "Request Editor Review"
+2. Review editor suggestions
+3. Select suggestions to apply (checkboxes)
+4. Click "Apply Selected" or "Apply All"
+5. (Optional) Click "Reject All" to ignore suggestions
+```
+
+**Backend Request** (stateless):
+```json
+{
+  "operation": "editorReview",
+  "chapterText": "...",
+  "context": {...},
+  "systemPrompt": "[prefix] + [editor prompt] + [suffix]"
+}
+```
+
+**Backend Response**:
+```json
+{
+  "suggestions": [
+    {
+      "issue": "Opening lacks sensory detail",
+      "suggestion": "Add description of sounds, smells",
+      "priority": "high"
+    },
+    {
+      "issue": "Emotional reaction could be stronger",
+      "suggestion": "Show physical manifestation of emotion",
+      "priority": "medium"
+    }
+  ]
+}
+```
+
+**Client State Update**:
+```json
+{
+  "editorReview": {
+    "suggestions": [...],
+    "userSelections": [true, true, false]
+  }
+}
+```
+
+#### Step 7: Chapter Finalization
+
+```
+User Actions:
+1. Review final chapter
+2. (Optional) Continue iterating:
+   - More editor reviews
+   - More assistant edits
+   - More direct edits
+3. Click "Accept Chapter - Add to Story"
+```
+
+**Client State Update**:
+- Move chapter from draft to finalized chapters list
+- Clear chapter creation workspace
+- Update story summary (optional automatic regeneration)
+- Save to local storage
+
+**Navigation**:
+- User switches to Story tab to see new chapter
+- User can start new chapter in Chapter Creation tab
+
+### Phase 5: Story Management
+
+**Tab: Story**
+
+User views and manages completed story:
+
+```
+User Actions:
+1. View overall story summary
+2. Click "Regenerate Summary" to update based on chapters
+3. Read/expand individual chapters
+4. Click "Edit" to modify existing chapter (loads into Chapter Creation tab)
+5. Click "Delete" to remove chapter
+6. Click "Insert After" to create new chapter between existing ones
+7. Use "Add Chapter at End" to create next chapter
+```
+
+**State Management**:
+- Chapters stored as ordered list
+- Each chapter retains metadata (plot point, feedback used, timestamps)
+- Story summary regenerated on demand or automatically
+
+## State Management
+
+### Client-Side State Structure
+
+All state maintained in browser local storage:
+
+```typescript
+interface StoryState {
+  general: {
+    title: string;
+    systemPrompts: {
+      mainPrefix: string;
+      mainSuffix: string;
+      assistantPrompt: string;
+      editorPrompt: string;
+    };
+    worldbuilding: string;
+  };
+
+  characters: Map<string, {
+    basicBio: string;
+    name: string;
+    demographics: {...};
+    physicalAppearance: string;
+    usualClothing: string;
+    personality: string;
+    motivations: string;
+    fears: string;
+    relationships: string;
+    isHidden: boolean;
+    metadata: {...};
+  }>;
+
+  raters: Map<string, {
+    name: string;
+    systemPrompt: string;
+    enabled: boolean;
+  }>;
+
+  story: {
+    summary: string;
+    chapters: Array<{
+      number: number;
+      title: string;
+      content: string;
+      plotPoint: string;
+      incorporatedFeedback: FeedbackItem[];
+      metadata: {
+        created: Date;
+        lastModified: Date;
+        wordCount: number;
+      };
+    }>;
+  };
+
+  chapterCreation: {
+    plotPoint: string;
+    incorporatedFeedback: FeedbackItem[];
+    feedbackRequests: Map<string, AgentFeedback>;
+    generatedChapter?: {
+      text: string;
+      status: string;
+      metadata: {...};
+    };
+    editorReview?: {
+      suggestions: EditorSuggestion[];
+      userSelections: boolean[];
+    };
+  };
+
+  metadata: {
+    storyId: string;
+    version: string;
+    created: Date;
+    lastModified: Date;
+  };
+}
+```
+
+### State Persistence
+
+**Auto-Save Strategy**:
+- Save on every user action (debounced 300ms)
+- Full save every 30 seconds
+- Immediate save on tab switch
+- Save indicator shows last save time
+
+**Storage Keys**:
+```
+writer_assistant_story_{storyId}
+writer_assistant_active_story  // Currently active story ID
+writer_assistant_story_list   // List of all story IDs
+```
+
+## Backend Service Patterns
+
+### Stateless Request-Response
+
+All backend services are completely stateless:
+
+**Character Feedback Service**:
 ```python
-# Conceptual state transitions
-story_development_states = {
-    "user_input": {
-        "entry_conditions": ["user_provides_theme_topic_or_outline"],
-        "active_agents": [],
-        "next_states": ["draft_generation"]
-    },
-    "draft_generation": {
-        "entry_conditions": ["user_input_received"],
-        "active_agents": ["writer_agent"],
-        "next_states": ["draft_review", "draft_revision"]
-    },
-    "draft_review": {
-        "entry_conditions": ["draft_generated"],
-        "wait_for": "user_approval_or_feedback",
-        "next_states": ["draft_revision", "character_selection", "detailed_generation"]
-    },
-    "draft_revision": {
-        "entry_conditions": ["user_feedback_received"],
-        "active_agents": ["writer_agent"],
-        "next_states": ["draft_review"]
-    },
-    "character_selection": {
-        "entry_conditions": ["user_approves_draft"],
-        "wait_for": "user_selects_character_agents",
-        "next_states": ["character_reaction"]
-    },
-    "character_reaction": {
-        "entry_conditions": ["character_agents_selected"],
-        "active_agents": ["selected_character_agents"],
-        "parallel_execution": True,
-        "next_states": ["character_dialog", "response_selection"]
-    },
-    "character_dialog": {
-        "entry_conditions": ["user_wants_to_iterate"],
-        "active_agents": ["selected_character_agents"],
-        "wait_for": "user_dialog_input",
-        "next_states": ["character_reaction", "response_selection"]
-    },
-    "response_selection": {
-        "entry_conditions": ["user_satisfied_with_character_responses"],
-        "wait_for": "user_selects_responses_to_keep",
-        "next_states": ["detailed_generation"]
-    },
-    "detailed_generation": {
-        "entry_conditions": ["responses_selected_or_draft_approved"],
-        "active_agents": ["writer_agent"],
-        "next_states": ["detailed_review"]
-    },
-    "detailed_review": {
-        "entry_conditions": ["detailed_version_generated"],
-        "wait_for": "user_review",
-        "next_states": ["detailed_modification", "feedback_selection", "completion"]
-    },
-    "detailed_modification": {
-        "entry_conditions": ["user_requests_changes"],
-        "active_agents": ["writer_agent"],
-        "wait_for": "user_modification_requests",
-        "next_states": ["detailed_review"]
-    },
-    "feedback_selection": {
-        "entry_conditions": ["user_wants_feedback"],
-        "wait_for": "user_selects_raters_editors",
-        "next_states": ["feedback_generation"]
-    },
-    "feedback_generation": {
-        "entry_conditions": ["feedback_agents_selected"],
-        "active_agents": ["selected_rater_editor_agents"],
-        "parallel_execution": True,
-        "next_states": ["feedback_review"]
-    },
-    "feedback_review": {
-        "entry_conditions": ["feedback_received"],
-        "wait_for": "user_decides_on_feedback",
-        "next_states": ["feedback_application", "completion"]
-    },
-    "feedback_application": {
-        "entry_conditions": ["user_selects_feedback_to_apply"],
-        "active_agents": ["writer_agent"],
-        "next_states": ["detailed_review"]
-    },
-    "completion": {
-        "entry_conditions": ["user_satisfied_no_feedback_wanted"],
-        "actions": ["save_story_part", "prepare_for_next_part"],
-        "final_state": True
-    }
-}
+@app.post("/api/character-feedback")
+def character_feedback(request: CharacterFeedbackRequest):
+    # Build system prompt
+    system_prompt = (
+        request.systemPrompts.mainPrefix +
+        request.character.systemPrompt +
+        request.systemPrompts.mainSuffix
+    )
+
+    # Build context from request
+    context = build_context(request)
+
+    # Generate feedback (no state retained)
+    feedback = llm.generate(system_prompt, context)
+
+    # Return response (no state saved)
+    return CharacterFeedbackResponse(feedback)
 ```
 
-## User Control Points and Decision Gates
+**Chapter Generation Service**:
+```python
+@app.post("/api/generate-chapter")
+def generate_chapter(request: ChapterGenerationRequest):
+    system_prompt = (
+        request.systemPrompts.mainPrefix +
+        request.systemPrompts.assistantPrompt +
+        request.systemPrompts.mainSuffix
+    )
 
-### User Decision Framework
+    context = build_chapter_context(request)
 
-The workflow places the user at the center of every major decision, providing multiple control points throughout the story development process:
+    chapter_text = llm.generate(system_prompt, context)
 
-**Primary User Control Points**:
-1. **Initial Input**: User provides theme, topic, or basic outline
-2. **Draft Approval**: User reviews and approves/modifies writer's expanded draft
-3. **Character Selection**: User chooses which character agents to engage
-4. **Dialog Management**: User controls conversation flow with character agents
-5. **Response Curation**: User selects which character responses to incorporate
-6. **Content Review**: User reviews detailed generated content
-7. **Modification Requests**: User specifies exact changes needed
-8. **Feedback Selection**: User chooses which raters/editors to consult
-9. **Feedback Application**: User decides which feedback to implement
+    return ChapterGenerationResponse(chapter_text)
+```
 
-**User Decision Gates**:
+**Editor Review Service**:
+```python
+@app.post("/api/editor-review")
+def editor_review(request: EditorReviewRequest):
+    system_prompt = (
+        request.systemPrompts.mainPrefix +
+        request.systemPrompts.editorPrompt +
+        request.systemPrompts.mainSuffix
+    )
+
+    context = build_review_context(request)
+
+    suggestions = llm.generate(system_prompt, context)
+
+    return EditorReviewResponse(suggestions)
+```
+
+### Context Building
+
+Each stateless request includes all necessary context:
+
+**Character Feedback Context**:
+- Story title
+- Worldbuilding
+- All character configurations
+- Previous chapters (full text)
+- Current plot point
+- Already incorporated feedback
+
+**Chapter Generation Context**:
+- Story title
+- Worldbuilding
+- Character configurations
+- Previous chapters
+- Plot point
+- Incorporated feedback from characters and raters
+
+**Editor Review Context**:
+- Story title and worldbuilding
+- Previous chapters
+- Current chapter draft
+- Plot point and incorporated feedback
+
+## Workflow State Transitions
+
+### Chapter Creation State Machine
+
+```
+States:
+- plot_point_entry
+- requesting_feedback
+- reviewing_feedback
+- generating_chapter
+- editing_chapter
+- requesting_review
+- reviewing_editor_suggestions
+- finalizing
+
+Transitions:
+plot_point_entry -> requesting_feedback (user clicks character/rater)
+requesting_feedback -> reviewing_feedback (agent response ready)
+reviewing_feedback -> requesting_feedback (user requests more feedback)
+reviewing_feedback -> generating_chapter (user clicks "Generate Chapter")
+generating_chapter -> editing_chapter (generation complete)
+editing_chapter -> requesting_review (user clicks "Request Editor Review")
+editing_chapter -> finalizing (user clicks "Accept Chapter")
+requesting_review -> reviewing_editor_suggestions (editor response ready)
+reviewing_editor_suggestions -> editing_chapter (user applies suggestions)
+reviewing_editor_suggestions -> finalizing (user accepts without changes)
+finalizing -> plot_point_entry (chapter added, workspace cleared)
+```
+
+### User Decision Points
+
+Users control all major transitions:
+1. When to request feedback (which agents)
+2. When to stop iterating with agents
+3. When to generate chapter
+4. Whether to edit directly or use AI assistance
+5. Whether to request editor review
+6. Which editor suggestions to apply
+7. When to finalize chapter
+
+## Error Handling
+
+### Client-Side Error Recovery
+
+**Failed AI Requests**:
+- Show error message
+- Retain all user input
+- Offer retry button
+- Allow user to continue with other actions
+
+**Local Storage Errors**:
+- Detect storage quota exceeded
+- Offer to export story
+- Suggest deleting old stories
+- Provide manual save option
+
+**Network Errors**:
+- Queue requests for retry
+- Show offline indicator
+- Allow continued editing
+- Retry when connection restored
+
+### Backend Error Responses
+
+**Stateless Error Handling**:
 ```json
 {
-  "decision_gates": {
-    "draft_approval_gate": {
-      "prompt": "Review the expanded draft outline",
-      "options": ["approve", "request_changes", "iterate_further"],
-      "required": true,
-      "blocking": true
-    },
-    "character_engagement_gate": {
-      "prompt": "Select character agents to react to the proposed events",
-      "options": ["select_characters", "skip_character_input", "proceed_to_detailed_generation"],
-      "required": false,
-      "blocking": false
-    },
-    "character_dialog_gate": {
-      "prompt": "Continue dialog with character agents?",
-      "options": ["continue_dialog", "select_responses", "add_more_characters"],
-      "required": false,
-      "blocking": false
-    },
-    "detailed_content_gate": {
-      "prompt": "Review the detailed generated content",
-      "options": ["approve", "request_modifications", "regenerate"],
-      "required": true,
-      "blocking": true
-    },
-    "feedback_consultation_gate": {
-      "prompt": "Consult raters and editors for feedback?",
-      "options": ["select_feedback_agents", "skip_feedback", "complete_story_part"],
-      "required": false,
-      "blocking": false
-    },
-    "feedback_application_gate": {
-      "prompt": "Apply feedback to the content?",
-      "options": ["select_feedback_to_apply", "ignore_feedback", "request_clarification"],
-      "required": false,
-      "blocking": false
-    }
-  }
+  "error": true,
+  "errorType": "generation_failed",
+  "message": "Failed to generate content",
+  "retryable": true
 }
 ```
 
-### User-Driven Agent Coordination
+Client decides how to handle:
+- Retry immediately
+- Retry with modifications
+- Cancel and continue without AI
+- Switch to manual editing
 
-**User-Controlled Agent Orchestration**:
-- **User-Selected Activation**: Only activate agents chosen by the user
-- **Parallel Character Processing**: Selected characters process content simultaneously
-- **User-Directed Review Stages**: User chooses which raters/editors to engage and in what order
-- **User-Controlled Memory Updates**: Memory synchronization triggered by user decisions
-- **Flexible Agent Engagement**: Users can add or remove agents at any workflow stage
+## Performance Optimization
 
-**Dynamic Routing Based on User Choices**:
-```json
-{
-  "user_driven_routing": {
-    "character_agent_selection": {
-      "trigger": "user_selects_character_agents",
-      "agents": ["user_selected_characters"],
-      "execution": "parallel",
-      "user_options": ["add_more_agents", "remove_agents", "change_agent_focus"]
-    },
-    "feedback_agent_selection": {
-      "trigger": "user_requests_feedback",
-      "agents": ["user_selected_raters_and_editors"],
-      "execution": "parallel",
-      "user_options": ["selective_feedback", "comprehensive_review", "focused_critique"]
-    },
-    "revision_approach": {
-      "trigger": "user_requests_changes",
-      "routing_options": {
-        "direct_writer_revision": ["writer_agent"],
-        "character_informed_revision": ["writer_agent", "selected_character_agents"],
-        "feedback_guided_revision": ["writer_agent", "selected_feedback_agents"]
-      },
-      "user_choice": "required"
-    },
-    "iterative_refinement": {
-      "trigger": "user_wants_to_continue_iterating",
-      "available_agents": ["all_agent_types"],
-      "user_control": "select_any_combination_for_next_iteration"
-    }
-  }
-}
-```
+### Client-Side Caching
 
-## Workflow Execution Patterns
+**Previous Chapters**:
+- Cache formatted chapter text
+- Only send necessary chapters to backend (recent + referenced)
 
-### Client-Side Parallel Processing
+**Agent Configurations**:
+- Cache system prompt compositions
+- Avoid re-composition on every request
 
-**Client-Orchestrated Simultaneous Agent Requests**:
-- Client sends parallel requests to multiple stateless agent endpoints
-- Character agents and rater agents process requests independently without server coordination
-- Client manages response collection and user presentation
-- Failed requests handled by client retry logic without affecting other operations
+### Request Batching
 
-**Client-Centered Coordination**:
-- Client provides all context needed for each agent request
-- Client presents results to user for selection and curation
-- Client manages request timeouts and retry logic
-- Client handles partial results and failed requests independently
+**Multiple Agent Requests**:
+- Client can send parallel requests for multiple agents
+- Display results as they arrive
+- No server-side coordination needed
 
-### Client-Managed Sequential Processing
+### Incremental Loading
 
-**Client-Orchestrated Execution Chains**:
-- Client sends requests to stateless agent endpoints in user-defined sequence
-- Client presents all agent outputs to user before proceeding
-- Client manages workflow progression based on user decisions
-- Client updates local state when user approves changes
+**Story Tab**:
+- Load chapter list first
+- Load chapter content on expand
+- Lazy load older chapters
 
-**Client-Side Dependency Management**:
-- Client presents results from each stateless request to user
-- Client validates user approval before sending next request
-- Client manages rollback to any previous state from local storage
-- Client tracks progress and provides user options to continue or modify
+## Integration Points
 
-### User-Driven Conditional Workflows
+### Angular Frontend
 
-**User-Controlled Dynamic Path Selection**:
-```json
-{
-  "user_controlled_flows": {
-    "revision_approach": {
-      "user_choice_simple": {
-        "path": ["writer_agent", "user_review"],
-        "trigger": "user_selects_simple_revision"
-      },
-      "user_choice_comprehensive": {
-        "path": ["writer_agent", "user_selected_feedback_agents", "user_review"],
-        "trigger": "user_selects_comprehensive_revision"
-      },
-      "user_choice_character_informed": {
-        "path": ["character_agents", "writer_agent", "user_review"],
-        "trigger": "user_wants_character_input_on_revisions"
-      }
-    },
-    "story_development_customization": {
-      "user_genre_focus": {
-        "available_agents": ["all_genre_specific_agents"],
-        "selection_method": "user_chooses_relevant_agents",
-        "special_features": ["user_defined_evaluation_criteria"]
-      },
-      "user_creative_exploration": {
-        "available_agents": ["character_agents", "experimental_feedback_agents"],
-        "selection_method": "user_experiments_with_different_combinations",
-        "special_features": ["branch_and_compare_different_approaches"]
-      }
-    },
-    "feedback_integration_options": {
-      "selective_application": {
-        "process": "user_reviews_each_feedback_item_individually",
-        "user_control": "accept_reject_or_modify_each_suggestion"
-      },
-      "comprehensive_integration": {
-        "process": "user_selects_all_feedback_to_apply_simultaneously",
-        "user_control": "review_integrated_result_before_final_approval"
-      }
-    }
-  }
-}
-```
+**Services**:
+- `LocalStorageService`: All state persistence
+- `StoryService`: Story state management
+- `AgentService`: Backend API calls
+- `WorkflowService`: Tab navigation and state transitions
 
-## Error Handling and Recovery
+**Components**:
+- `GeneralTabComponent`
+- `CharactersTabComponent`
+- `RatersTabComponent`
+- `StoryTabComponent`
+- `ChapterCreationTabComponent`
 
-### Failure Modes
+### Python Backend
 
-**Agent Failure Recovery**:
-- **Individual Agent Timeout**: Continue workflow with available agents
-- **Critical Agent Failure**: Pause workflow and notify user
-- **Memory Corruption**: Restore from last known good state
-- **Context Overflow**: Implement emergency context compression
+**Endpoints**:
+- `POST /api/character-feedback`: Character agent responses
+- `POST /api/rater-feedback`: Rater agent responses
+- `POST /api/generate-chapter`: Chapter text generation
+- `POST /api/modify-chapter`: Chapter editing assistance
+- `POST /api/editor-review`: Editor suggestions
+- `POST /api/flesh-out`: AI expansion (worldbuilding, plot points)
+- `POST /api/generate-character`: Character detail generation
 
-**Workflow Interruption Handling**:
-- **User Session Timeout**: Save workflow state for resumption
-- **System Restart**: Restore workflow from persistent state
-- **Resource Exhaustion**: Graceful degradation with user notification
-- **Configuration Errors**: Fallback to default configurations
+**LangChain Integration**:
+- Individual chains for each operation
+- No persistent memory between requests
+- Context building from request parameters
 
-### Recovery Procedures
-
-**State Recovery Protocol**:
-```json
-{
-  "recovery_procedures": {
-    "agent_failure": {
-      "detection": "timeout_or_error_response",
-      "immediate_action": "isolate_failed_agent",
-      "recovery_steps": [
-        "restart_agent_with_clean_state",
-        "restore_memory_from_backup",
-        "resume_workflow_from_last_checkpoint"
-      ],
-      "fallback": "continue_without_failed_agent_if_non_critical"
-    },
-    "workflow_corruption": {
-      "detection": "state_validation_failure",
-      "immediate_action": "pause_all_agents",
-      "recovery_steps": [
-        "restore_from_last_checkpoint",
-        "validate_memory_consistency",
-        "resume_with_user_confirmation"
-      ],
-      "user_notification": "explain_recovery_process_and_potential_loss"
-    }
-  }
-}
-```
-
-## Performance and Optimization
-
-### Workflow Efficiency
-
-**Optimization Strategies**:
-- **Batched Operations**: Group similar operations for efficiency
-- **Predictive Loading**: Prepare next workflow steps in advance
-- **Resource Pooling**: Share computational resources across agents
-- **Caching**: Cache frequently used workflow patterns
-
-**Performance Monitoring**:
-- **Step Duration Tracking**: Monitor time for each workflow step
-- **Agent Response Times**: Track individual agent performance
-- **Memory Usage**: Monitor memory consumption during workflow execution
-- **User Wait Times**: Track total time from user input to output
-
-### Scalability Considerations
-
-**Concurrent User Support**:
-- **Workflow Isolation**: Separate workflow instances for different users
-- **Resource Allocation**: Fair resource distribution across active workflows
-- **Priority Queuing**: Prioritize workflows based on user tier or urgency
-- **Load Balancing**: Distribute agent processing across available resources
-
-## Integration Requirements
-
-### LangChain Integration
-
-**Chain Composition**:
-- **Agent Chains**: Individual chains for each agent type
-- **Workflow Chains**: Meta-chains that orchestrate agent interactions
-- **Memory Chains**: Chains specifically for memory management operations
-- **Feedback Chains**: Chains for processing and integrating feedback
-
-**Custom Tools Integration**:
-- **Story Analysis Tools**: Custom tools for narrative analysis
-- **Memory Management Tools**: Tools for memory operations and synchronization
-- **Quality Assessment Tools**: Automated quality checking tools
-- **Export/Import Tools**: Tools for story and workflow state persistence
-
-### External System Integration
-
-**User Interface Integration**:
-- **Real-time Updates**: WebSocket connections for workflow progress updates
-- **Interactive Checkpoints**: User decision points during workflow execution
-- **Progress Visualization**: Visual representation of workflow progress
-- **Error Reporting**: User-friendly error messages and recovery options
-
-**Storage System Integration**:
-- **Workflow State Persistence**: Regular saving of workflow state
-- **Memory Synchronization**: Coordination with memory storage systems
-- **Configuration Management**: Dynamic configuration loading during workflow
-- **Audit Trail**: Complete logging of workflow decisions and actions
-
-## Conversation Branching Workflows
-
-### Branch Creation and Management
-
-**Branch Creation Triggers**:
-- **Manual Branching**: User explicitly creates new branch from any point
-- **Automatic Branching**: System creates branch when user edits previous prompt
-- **Experimental Branching**: User creates temporary branches for testing ideas
-- **Recovery Branching**: Create branch from backup state during error recovery
-
-**Branch Creation Workflow**:
-```mermaid
-graph TD
-    A[User Selects Previous Prompt] --> B{Edit or Branch?}
-    B -->|Edit| C[Create Automatic Branch]
-    B -->|Branch| D[Create Manual Branch]
-    C --> E[Snapshot Current State]
-    D --> E
-    E --> F[Initialize Branch Memory]
-    F --> G[Restore State to Selected Point]
-    G --> H[Apply User Changes]
-    H --> I[Resume Workflow from Branch Point]
-```
-
-**Branch State Management**:
-```json
-{
-  "branch_workflow_state": {
-    "branch_isolation": {
-      "memory_separation": "each_branch_has_independent_agent_memories",
-      "story_state_separation": "separate_story_content_per_branch",
-      "workflow_independence": "parallel_workflow_execution_possible"
-    },
-    "cross_branch_operations": {
-      "memory_comparison": "compare_agent_memories_across_branches",
-      "state_merging": "selective_merge_of_story_elements",
-      "branch_switching": "instant_context_switching_between_branches"
-    }
-  }
-}
-```
-
-### Memory Editing Workflows
-
-**Memory Inspection Flow**:
-```mermaid
-graph TD
-    A[User Opens Memory Inspector] --> B[Select Agent/Memory Type]
-    B --> C[Display Memory in Editable Format]
-    C --> D{User Action}
-    D -->|Edit| E[Validate Changes]
-    D -->|Compare| F[Show Cross-Agent Memory View]
-    D -->|Branch| G[Create Memory Experiment Branch]
-    E --> H[Update Memory]
-    F --> I[Highlight Memory Conflicts]
-    G --> J[Test Changes in Isolation]
-    H --> K[Propagate Memory Changes]
-    I --> L[Suggest Resolution Options]
-    J --> M[Option to Merge or Discard]
-    K --> N[Update Related Memories]
-    L --> O[Apply Resolution]
-    M --> P[User Decision Point]
-    N --> Q[Refresh UI Display]
-    O --> Q
-    P --> Q
-```
-
-**Memory Change Propagation**:
-```json
-{
-  "memory_propagation_workflow": {
-    "change_detection": {
-      "triggers": ["direct_memory_edit", "relationship_change", "personality_update"],
-      "analysis": "identify_affected_memories_across_all_agents",
-      "validation": "ensure_changes_maintain_character_consistency"
-    },
-    "propagation_steps": [
-      {
-        "step": "impact_analysis",
-        "action": "calculate_cascading_effects_of_memory_change",
-        "output": "list_of_affected_memories_and_relationships"
-      },
-      {
-        "step": "consistency_checking",
-        "action": "validate_memory_coherence_across_agents",
-        "output": "conflict_report_and_resolution_suggestions"
-      },
-      {
-        "step": "memory_updates",
-        "action": "apply_changes_to_related_memories",
-        "output": "updated_memory_states_for_all_affected_agents"
-      },
-      {
-        "step": "workflow_integration",
-        "action": "ensure_changes_compatible_with_ongoing_workflow",
-        "output": "workflow_adjustment_recommendations"
-      }
-    ]
-  }
-}
-```
-
-### Prompt Editing and Restart Workflows
-
-**Prompt Edit Detection**:
-```json
-{
-  "prompt_edit_workflow": {
-    "edit_detection": {
-      "triggers": ["user_clicks_edit_on_previous_prompt"],
-      "pre_edit_actions": [
-        "create_state_snapshot",
-        "save_current_branch_state",
-        "prepare_rollback_checkpoint"
-      ]
-    },
-    "edit_processing": {
-      "steps": [
-        "pause_current_workflow",
-        "create_new_branch_from_edit_point",
-        "restore_story_state_to_selected_prompt",
-        "apply_user_modifications",
-        "restart_workflow_from_modified_prompt"
-      ]
-    },
-    "continuation_options": {
-      "restart_from_edit": "continue_workflow_with_modified_prompt",
-      "merge_changes": "apply_modifications_to_current_branch",
-      "parallel_development": "develop_both_branches_simultaneously"
-    }
-  }
-}
-```
-
-**State Restoration Workflow**:
-```mermaid
-graph TD
-    A[User Edits Previous Prompt] --> B[Create Branch Point]
-    B --> C[Snapshot Current State]
-    C --> D[Restore to Edit Point]
-    D --> E[Load Historical State]
-    E --> F[Apply User Modifications]
-    F --> G[Reinitialize Agent Memories]
-    G --> H[Restart Workflow from Modified Point]
-    H --> I[Resume Agent Processing]
-    I --> J[Continue Story Development]
-```
-
-### Advanced Branching Features
-
-**Branch Comparison Workflows**:
-```json
-{
-  "branch_comparison": {
-    "comparison_types": {
-      "story_content": "side_by_side_text_comparison",
-      "character_development": "character_arc_progression_comparison",
-      "memory_states": "agent_memory_difference_analysis",
-      "workflow_paths": "decision_tree_comparison"
-    },
-    "comparison_workflow": [
-      "select_branches_to_compare",
-      "identify_divergence_points",
-      "analyze_content_differences",
-      "highlight_character_development_variations",
-      "show_memory_state_differences",
-      "provide_merge_recommendations"
-    ]
-  }
-}
-```
-
-**Branch Merging Workflows**:
-```mermaid
-graph TD
-    A[User Initiates Branch Merge] --> B[Analyze Branch Differences]
-    B --> C[Identify Conflicts]
-    C --> D[Present Resolution Options]
-    D --> E{User Selects Resolution}
-    E -->|Automatic| F[Apply AI-Suggested Merge]
-    E -->|Manual| G[User-Guided Conflict Resolution]
-    E -->|Selective| H[Choose Elements from Each Branch]
-    F --> I[Validate Merged State]
-    G --> I
-    H --> I
-    I --> J[Update Memory States]
-    J --> K[Create Merged Branch]
-    K --> L[Archive Source Branches]
-```
-
-### Memory Experiment Workflows
-
-**Memory Testing Framework**:
-```json
-{
-  "memory_experiments": {
-    "experiment_types": {
-      "character_personality_variation": "test_different_character_traits",
-      "relationship_dynamics_exploration": "explore_alternative_character_relationships",
-      "emotional_state_testing": "experiment_with_character_emotional_states",
-      "memory_reliability_adjustment": "test_character_memory_accuracy_variations"
-    },
-    "experiment_workflow": [
-      "create_experiment_branch",
-      "modify_target_memories",
-      "run_generation_simulation",
-      "analyze_narrative_impact",
-      "compare_with_baseline",
-      "present_results_to_user",
-      "option_to_apply_or_discard_changes"
-    ]
-  }
-}
-```
-
-This enhanced workflow system ensures smooth coordination between all agents while providing complete user control over memory states and conversation flow, with robust branching and experimentation capabilities for creative exploration.
-    
+This simplified workflow provides a clear, user-controlled process for story creation with AI assistance at every step.
