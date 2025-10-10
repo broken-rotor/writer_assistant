@@ -3,4 +3,4 @@ from app.api.v1.endpoints import generation, ai_generation
 
 api_router = APIRouter()
 api_router.include_router(generation.router, prefix="/generate", tags=["generation"])
-api_router.include_router(ai_generation.router, prefix="/api", tags=["ai-generation"])
+api_router.include_router(ai_generation.router, tags=["ai-generation"])

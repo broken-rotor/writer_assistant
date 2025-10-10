@@ -13,7 +13,7 @@ import {
 describe('ApiService', () => {
   let service: ApiService;
   let httpMock: HttpTestingController;
-  const baseUrl = 'http://localhost:8000/api';
+  const baseUrl = 'http://localhost:8000/api/v1';
 
   beforeEach(() => {
     TestBed.configureTestingModule({

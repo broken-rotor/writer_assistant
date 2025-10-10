@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { StoryWorkspaceComponent } from './story-workspace.component';
 import { StoryService } from '../../services/story.service';
@@ -36,6 +38,8 @@ describe('StoryWorkspaceComponent', () => {
     await TestBed.configureTestingModule({
       imports: [StoryWorkspaceComponent, FormsModule],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: StoryService, useValue: storySpy },
         { provide: ActivatedRoute, useValue: activatedRoute }
       ]

@@ -15,7 +15,10 @@
       "Bash(do echo \"=== Run $i ===\")",
       "Bash(done)",
       "Bash(timeout 180 npm test -- --watch=false --browsers=ChromeHeadless)",
-      "Bash(ng generate component:*)"
+      "Bash(ng generate component:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

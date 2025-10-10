@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { Story } from '../../models/story.model';
 import { StoryService } from '../../services/story.service';
+import { GenerationService } from '../../services/generation.service';
 
 @Component({
   selector: 'app-story-workspace',
@@ -36,7 +37,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
-    private storyService: StoryService
+    private storyService: StoryService,
+    private generationService: GenerationService
   ) {}
 
   ngOnInit() {
@@ -179,8 +181,36 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   generateCharacterDetails() {
-    // TODO: Call API to generate character details from basic bio
-    console.log('Generate character details from bio');
+    if (!this.story || !this.editingCharacter || !this.editingCharacter.basicBio) {
+      alert('Please enter a basic bio first');
+      return;
+    }
+
+    this.generationService.generateCharacterDetails(
+      this.story,
+      this.editingCharacter.basicBio,
+      this.activeCharacters
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          // Populate the editing character with generated details
+          this.editingCharacter.name = response.name;
+          this.editingCharacter.sex = response.sex;
+          this.editingCharacter.gender = response.gender;
+          this.editingCharacter.sexualPreference = response.sexualPreference;
+          this.editingCharacter.age = response.age;
+          this.editingCharacter.physicalAppearance = response.physicalAppearance;
+          this.editingCharacter.usualClothing = response.usualClothing;
+          this.editingCharacter.personality = response.personality;
+          this.editingCharacter.motivations = response.motivations;
+          this.editingCharacter.fears = response.fears;
+          this.editingCharacter.relationships = response.relationships;
+        },
+        error: (err) => {
+          console.error('Error generating character details:', err);
+          alert('Failed to generate character details');
+        }
+      });
   }
 
   regenerateRelationships() {
@@ -271,24 +301,103 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   // Chapter Creation tab methods
   aiFleshOutPlotPoint() {
-    // TODO: Call API to flesh out plot point
-    console.log('AI flesh out plot point');
+    if (!this.story || !this.story.chapterCreation.plotPoint) {
+      alert('Please enter a plot point first');
+      return;
+    }
+
+    this.generationService.fleshOut(
+      this.story,
+      this.story.chapterCreation.plotPoint,
+      'plot point expansion'
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (this.story) {
+            this.story.chapterCreation.plotPoint = response.fleshedOutText;
+            this.storyService.saveStory(this.story);
+          }
+        },
+        error: (err) => {
+          console.error('Error fleshing out plot point:', err);
+          alert('Failed to flesh out plot point');
+        }
+      });
   }
 
   requestCharacterFeedback(characterId: string) {
+    if (!this.story) return;
+
+    const character = this.story.characters.get(characterId);
+    if (!character) return;
+
     this.generatingFeedback.add(characterId);
-    // TODO: Call API to get character feedback
-    setTimeout(() => {
-      this.generatingFeedback.delete(characterId);
-    }, 2000);
+
+    this.generationService.requestCharacterFeedback(
+      this.story,
+      character,
+      this.story.chapterCreation.plotPoint
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (this.story) {
+            const characterFeedback: any = {
+              characterName: response.characterName,
+              actions: response.feedback.actions,
+              dialog: response.feedback.dialog,
+              physicalSensations: response.feedback.sensations,
+              emotions: response.feedback.emotions,
+              internalMonologue: response.feedback.thoughts
+            };
+            this.story.chapterCreation.feedbackRequests.set(characterId, {
+              feedback: characterFeedback,
+              status: 'ready'
+            });
+          }
+          this.generatingFeedback.delete(characterId);
+        },
+        error: (err) => {
+          console.error('Error requesting character feedback:', err);
+          alert('Failed to get character feedback');
+          this.generatingFeedback.delete(characterId);
+        }
+      });
   }
 
   requestRaterFeedback(raterId: string) {
+    if (!this.story) return;
+
+    const rater = this.story.raters.get(raterId);
+    if (!rater) return;
+
     this.generatingFeedback.add(raterId);
-    // TODO: Call API to get rater feedback
-    setTimeout(() => {
-      this.generatingFeedback.delete(raterId);
-    }, 2000);
+
+    this.generationService.requestRaterFeedback(
+      this.story,
+      rater,
+      this.story.chapterCreation.plotPoint
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (this.story) {
+            const raterFeedback: any = {
+              raterName: response.raterName,
+              opinion: response.feedback.opinion,
+              suggestions: response.feedback.suggestions.map((s: any) => s.suggestion)
+            };
+            this.story.chapterCreation.feedbackRequests.set(raterId, {
+              feedback: raterFeedback,
+              status: 'ready'
+            });
+          }
+          this.generatingFeedback.delete(raterId);
+        },
+        error: (err) => {
+          console.error('Error requesting rater feedback:', err);
+          alert('Failed to get rater feedback');
+          this.generatingFeedback.delete(raterId);
+        }
+      });
   }
 
   incorporateFeedback(source: string, items: any[]) {
@@ -302,24 +411,85 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   generateChapter() {
+    if (!this.story) return;
+
     this.generatingChapter = true;
-    // TODO: Call API to generate chapter
-    setTimeout(() => {
-      this.generatingChapter = false;
-    }, 3000);
+
+    this.generationService.generateChapter(this.story)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (this.story) {
+            this.story.chapterCreation.generatedChapter = {
+              text: response.chapterText,
+              status: 'ready',
+              metadata: {}
+            };
+            this.storyService.saveStory(this.story);
+          }
+          this.generatingChapter = false;
+        },
+        error: (err) => {
+          console.error('Error generating chapter:', err);
+          alert('Failed to generate chapter');
+          this.generatingChapter = false;
+        }
+      });
   }
 
   promptAssistantForChanges(request: string) {
-    // TODO: Call API to modify chapter based on user request
-    console.log('Prompt assistant:', request);
+    if (!this.story || !this.story.chapterCreation.generatedChapter) {
+      alert('Generate a chapter first');
+      return;
+    }
+
+    this.generationService.modifyChapter(
+      this.story,
+      this.story.chapterCreation.generatedChapter.text,
+      request
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (this.story && this.story.chapterCreation.generatedChapter) {
+            this.story.chapterCreation.generatedChapter.text = response.modifiedChapterText;
+            this.storyService.saveStory(this.story);
+          }
+        },
+        error: (err) => {
+          console.error('Error modifying chapter:', err);
+          alert('Failed to modify chapter');
+        }
+      });
   }
 
   requestEditorReview() {
+    if (!this.story || !this.story.chapterCreation.generatedChapter) {
+      alert('Generate a chapter first');
+      return;
+    }
+
     this.generatingReview = true;
-    // TODO: Call API to get editor review
-    setTimeout(() => {
-      this.generatingReview = false;
-    }, 2000);
+
+    this.generationService.requestEditorReview(
+      this.story,
+      this.story.chapterCreation.generatedChapter.text
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (this.story) {
+            this.story.chapterCreation.editorReview = {
+              suggestions: response.suggestions,
+              userSelections: response.suggestions.map(() => false)
+            };
+          }
+          this.generatingReview = false;
+        },
+        error: (err) => {
+          console.error('Error requesting editor review:', err);
+          alert('Failed to get editor review');
+          this.generatingReview = false;
+        }
+      });
   }
 
   applyEditorSuggestions(selectedIndices: number[]) {
