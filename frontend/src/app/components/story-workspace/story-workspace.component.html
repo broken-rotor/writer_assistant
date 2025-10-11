@@ -51,7 +51,7 @@
         <label for="worldbuilding">Overall Setting / Worldbuilding</label>
         <textarea id="worldbuilding" [(ngModel)]="story.general.worldbuilding" placeholder="User-provided worldbuilding. AI can flesh out, user can edit." rows="10"></textarea>
         <div class="button-group">
-          <button class="secondary-button">AI Flesh Out</button>
+          <button class="secondary-button" (click)="aiFleshOutWorldbuilding()">AI Flesh Out</button>
           <button class="secondary-button">Reset to Original</button>
         </div>
       </div>
@@ -160,7 +160,7 @@
           <div class="form-section">
             <label>Relationships</label>
             <textarea [(ngModel)]="editingCharacter.relationships" rows="4"></textarea>
-            <button class="secondary-button" (click)="regenerateRelationships()">Regenerate for Other Characters</button>
+            <button class="secondary-button" (click)="regenerateRelationships()">Regenerate Relationships</button>
           </div>
 
           <div class="button-group">

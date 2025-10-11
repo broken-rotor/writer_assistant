@@ -89,7 +89,7 @@ python-dotenv==1.0.0
 EOF
 fi
 
-pip install -r requirements.txt
+pip install -q -r requirements.txt
 if [ $? -ne 0 ]; then
     echo "Error: Failed to install backend dependencies"
     kill $FRONTEND_PID 2>/dev/null

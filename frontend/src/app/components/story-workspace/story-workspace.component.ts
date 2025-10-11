@@ -86,6 +86,32 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     return this.story?.metadata.lastModified || null;
   }
 
+  // General tab methods
+  aiFleshOutWorldbuilding() {
+    if (!this.story || !this.story.general.worldbuilding) {
+      alert('Please enter worldbuilding text first');
+      return;
+    }
+
+    this.generationService.fleshOut(
+      this.story,
+      this.story.general.worldbuilding,
+      'worldbuilding expansion'
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (this.story) {
+            this.story.general.worldbuilding = response.fleshedOutText;
+            this.storyService.saveStory(this.story);
+          }
+        },
+        error: (err) => {
+          console.error('Error fleshing out worldbuilding:', err);
+          alert('Failed to flesh out worldbuilding');
+        }
+      });
+  }
+
   // Helper methods
   get charactersArray() {
     return this.story ? Array.from(this.story.characters.values()) : [];
@@ -214,8 +240,41 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   regenerateRelationships() {
-    // TODO: Call API to regenerate relationships considering all characters
-    console.log('Regenerate relationships');
+    if (!this.story || !this.editingCharacter) {
+      alert('Please select a character first');
+      return;
+    }
+
+    if (!this.editingCharacter.basicBio) {
+      alert('Character must have a basic bio to regenerate relationships');
+      return;
+    }
+
+    // Get all other characters (excluding the current one)
+    const otherCharacters = this.activeCharacters.filter(c => c.id !== this.editingCharacter.id);
+
+    if (otherCharacters.length === 0) {
+      alert('No other characters exist. Add more characters to generate relationships.');
+      return;
+    }
+
+    this.generationService.regenerateRelationships(
+      this.story,
+      this.editingCharacter,
+      otherCharacters
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          // Only update the relationships field
+          if (this.editingCharacter) {
+            this.editingCharacter.relationships = response.relationships;
+          }
+        },
+        error: (err) => {
+          console.error('Error regenerating relationships:', err);
+          alert('Failed to regenerate relationships');
+        }
+      });
   }
 
   // Raters tab methods
@@ -279,8 +338,32 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   editChapter(chapterId: string) {
-    // TODO: Load chapter into Chapter Creation tab for editing
-    console.log('Edit chapter:', chapterId);
+    if (!this.story) return;
+
+    const chapter = this.story.story.chapters.find(c => c.id === chapterId);
+    if (!chapter) {
+      alert('Chapter not found');
+      return;
+    }
+
+    // Load chapter data into chapter creation state
+    this.story.chapterCreation = {
+      plotPoint: chapter.plotPoint || '',
+      incorporatedFeedback: chapter.incorporatedFeedback || [],
+      feedbackRequests: new Map(),
+      generatedChapter: {
+        text: chapter.content,
+        status: 'ready',
+        metadata: {}
+      },
+      editorReview: undefined
+    };
+
+    // Save the story with the updated chapter creation state
+    this.storyService.saveStory(this.story);
+
+    // Switch to chapter creation tab
+    this.selectTab('chapter-creation');
   }
 
   deleteChapter(chapterId: string) {

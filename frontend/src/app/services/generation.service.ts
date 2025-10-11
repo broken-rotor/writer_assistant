@@ -237,4 +237,29 @@ export class GenerationService {
 
     return this.apiService.generateCharacterDetails(request);
   }
+
+  // Regenerate Relationships for a Character
+  regenerateRelationships(
+    story: Story,
+    character: Character,
+    otherCharacters: Character[]
+  ): Observable<GenerateCharacterDetailsResponse> {
+    // Use the same endpoint but we'll only extract the relationships field
+    const request: GenerateCharacterDetailsRequest = {
+      systemPrompts: {
+        mainPrefix: story.general.systemPrompts.mainPrefix,
+        mainSuffix: story.general.systemPrompts.mainSuffix
+      },
+      worldbuilding: story.general.worldbuilding,
+      storySummary: story.story.summary,
+      basicBio: character.basicBio,
+      existingCharacters: otherCharacters.map(c => ({
+        name: c.name,
+        basicBio: c.basicBio,
+        relationships: c.relationships
+      }))
+    };
+
+    return this.apiService.generateCharacterDetails(request);
+  }
 }
