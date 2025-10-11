@@ -609,12 +609,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     ).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          console.log('Modify chapter response:', response);
           if (this.story && this.story.chapterCreation.generatedChapter) {
-            console.log('Before update:', this.story.chapterCreation.generatedChapter.text);
             // The backend returns 'modifiedChapter', not 'modifiedChapterText'
             this.story.chapterCreation.generatedChapter.text = response.modifiedChapter || response.modifiedChapterText;
-            console.log('After update:', this.story.chapterCreation.generatedChapter.text);
             this.storyService.saveStory(this.story);
             this.changeRequest = ''; // Clear the request after successful modification
             // Manually trigger change detection
@@ -691,12 +688,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     ).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          console.log('Apply editor suggestions response:', response);
           if (this.story && this.story.chapterCreation.generatedChapter) {
-            console.log('Before update:', this.story.chapterCreation.generatedChapter.text);
             // The backend returns 'modifiedChapter', not 'modifiedChapterText'
             this.story.chapterCreation.generatedChapter.text = response.modifiedChapter || response.modifiedChapterText;
-            console.log('After update:', this.story.chapterCreation.generatedChapter.text);
             this.story.chapterCreation.editorReview = undefined; // Clear editor review after applying
             this.storyService.saveStory(this.story);
             // Manually trigger change detection
