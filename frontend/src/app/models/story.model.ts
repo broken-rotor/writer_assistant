@@ -309,7 +309,10 @@ export interface GenerateChapterResponse {
 }
 
 export interface ModifyChapterResponse {
-  modifiedChapterText: string;
+  modifiedChapter: string;
+  modifiedChapterText?: string; // For backward compatibility
+  wordCount: number;
+  changesSummary: string;
 }
 
 export interface EditorReviewResponse {

@@ -546,10 +546,42 @@ button {
   }
 
   .generated-chapter-section {
+    max-width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+
     textarea {
+      width: 100% !important;
       min-height: 400px;
       font-family: 'Georgia', serif;
       line-height: 1.8;
+      box-sizing: border-box;
+    }
+
+    .prompt-changes-section {
+      margin-top: 24px;
+      padding: 16px;
+      background-color: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+
+      h4 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-size: 16px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 80px;
+        margin-bottom: 12px;
+        font-family: inherit;
+        line-height: 1.6;
+      }
+
+      button {
+        display: block;
+      }
     }
   }
 

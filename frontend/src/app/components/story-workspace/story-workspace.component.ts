@@ -35,6 +35,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   selectedAgentId: string | null = null; // Track currently selected agent for feedback display
   editingFeedbackIndex: number | null = null; // Track which feedback item is being edited
   editingFeedbackContent: string = ''; // Store the edited content temporarily
+  changeRequest: string = ''; // User's request for chapter changes
 
   private destroy$ = new Subject<void>();
 
@@ -588,27 +589,43 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       });
   }
 
-  promptAssistantForChanges(request: string) {
+  promptAssistantForChanges() {
     if (!this.story || !this.story.chapterCreation.generatedChapter) {
       alert('Generate a chapter first');
       return;
     }
 
+    if (!this.changeRequest) {
+      alert('Please describe the changes you want');
+      return;
+    }
+
+    this.generatingChapter = true;
+
     this.generationService.modifyChapter(
       this.story,
       this.story.chapterCreation.generatedChapter.text,
-      request
+      this.changeRequest
     ).pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: (response: any) => {
+          console.log('Modify chapter response:', response);
           if (this.story && this.story.chapterCreation.generatedChapter) {
-            this.story.chapterCreation.generatedChapter.text = response.modifiedChapterText;
+            console.log('Before update:', this.story.chapterCreation.generatedChapter.text);
+            // The backend returns 'modifiedChapter', not 'modifiedChapterText'
+            this.story.chapterCreation.generatedChapter.text = response.modifiedChapter || response.modifiedChapterText;
+            console.log('After update:', this.story.chapterCreation.generatedChapter.text);
             this.storyService.saveStory(this.story);
+            this.changeRequest = ''; // Clear the request after successful modification
+            // Manually trigger change detection
+            this.cdr.detectChanges();
           }
+          this.generatingChapter = false;
         },
         error: (err) => {
           console.error('Error modifying chapter:', err);
           alert('Failed to modify chapter');
+          this.generatingChapter = false;
         }
       });
   }
@@ -643,9 +660,56 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       });
   }
 
-  applyEditorSuggestions(selectedIndices: number[]) {
-    // TODO: Apply selected editor suggestions to chapter
-    console.log('Apply suggestions:', selectedIndices);
+  applyEditorSuggestions(applyAll: boolean) {
+    if (!this.story || !this.story.chapterCreation.generatedChapter || !this.story.chapterCreation.editorReview) {
+      return;
+    }
+
+    // Collect selected suggestions or all suggestions
+    const suggestions = applyAll
+      ? this.story.chapterCreation.editorReview.suggestions
+      : this.story.chapterCreation.editorReview.suggestions.filter(s => s.selected);
+
+    if (suggestions.length === 0) {
+      alert('Please select at least one suggestion to apply');
+      return;
+    }
+
+    // Format suggestions as a string for the writer assistant
+    const suggestionsText = suggestions.map((s, i) =>
+      `${i + 1}. ${s.issue}: ${s.suggestion}`
+    ).join('\n');
+
+    const modificationRequest = `Apply the following editor suggestions:\n\n${suggestionsText}`;
+
+    this.generatingChapter = true;
+
+    this.generationService.modifyChapter(
+      this.story,
+      this.story.chapterCreation.generatedChapter.text,
+      modificationRequest
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          console.log('Apply editor suggestions response:', response);
+          if (this.story && this.story.chapterCreation.generatedChapter) {
+            console.log('Before update:', this.story.chapterCreation.generatedChapter.text);
+            // The backend returns 'modifiedChapter', not 'modifiedChapterText'
+            this.story.chapterCreation.generatedChapter.text = response.modifiedChapter || response.modifiedChapterText;
+            console.log('After update:', this.story.chapterCreation.generatedChapter.text);
+            this.story.chapterCreation.editorReview = undefined; // Clear editor review after applying
+            this.storyService.saveStory(this.story);
+            // Manually trigger change detection
+            this.cdr.detectChanges();
+          }
+          this.generatingChapter = false;
+        },
+        error: (err) => {
+          console.error('Error applying editor suggestions:', err);
+          alert('Failed to apply editor suggestions');
+          this.generatingChapter = false;
+        }
+      });
   }
 
   acceptChapter() {

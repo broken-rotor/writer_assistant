@@ -458,9 +458,16 @@
         <h3>Generated Chapter</h3>
         <textarea [(ngModel)]="story.chapterCreation.generatedChapter.text" rows="20"></textarea>
 
+        <div class="prompt-changes-section">
+          <h4>Prompt Writer for Changes</h4>
+          <textarea [(ngModel)]="changeRequest" placeholder="Describe the changes you want (e.g., 'Make the dialogue more tense', 'Add more description of the setting')" rows="3"></textarea>
+          <button class="secondary-button" (click)="promptAssistantForChanges()" [disabled]="!changeRequest || generatingChapter">
+            <span *ngIf="!generatingChapter">Apply Changes</span>
+            <span *ngIf="generatingChapter">Applying... ⏳</span>
+          </button>
+        </div>
+
         <div class="button-group">
-          <button class="secondary-button">Direct Edit</button>
-          <button class="secondary-button">Prompt Assistant for Changes</button>
           <button class="secondary-button" (click)="requestEditorReview()" [disabled]="generatingReview">
             <span *ngIf="!generatingReview">Request Editor Review</span>
             <span *ngIf="generatingReview">Reviewing... ⏳</span>
@@ -483,9 +490,14 @@
             </div>
           </div>
           <div class="button-group">
-            <button class="secondary-button">Apply Selected</button>
-            <button class="secondary-button">Apply All</button>
-            <button class="secondary-button">Keep Iterating</button>
+            <button class="secondary-button" (click)="applyEditorSuggestions(false)" [disabled]="generatingChapter">
+              <span *ngIf="!generatingChapter">Apply Selected</span>
+              <span *ngIf="generatingChapter">Applying... ⏳</span>
+            </button>
+            <button class="secondary-button" (click)="applyEditorSuggestions(true)" [disabled]="generatingChapter">
+              <span *ngIf="!generatingChapter">Apply All</span>
+              <span *ngIf="generatingChapter">Applying... ⏳</span>
+            </button>
           </div>
         </div>
 
