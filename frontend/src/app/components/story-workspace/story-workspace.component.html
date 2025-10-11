@@ -360,35 +360,50 @@
                 <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).actions?.length > 0">
                   <strong>Actions:</strong>
                   <ul>
-                    <li *ngFor="let action of $any(feedbackRequest.feedback).actions">{{ action }}</li>
+                    <li *ngFor="let action of $any(feedbackRequest.feedback).actions">
+                      {{ action }}
+                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'action', action)">+</button>
+                    </li>
                   </ul>
                 </div>
 
                 <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).dialog?.length > 0">
                   <strong>Dialog:</strong>
                   <ul>
-                    <li *ngFor="let line of $any(feedbackRequest.feedback).dialog">"{{ line }}"</li>
+                    <li *ngFor="let line of $any(feedbackRequest.feedback).dialog">
+                      "{{ line }}"
+                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'dialog', line)">+</button>
+                    </li>
                   </ul>
                 </div>
 
                 <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).physicalSensations?.length > 0">
                   <strong>Physical Sensations:</strong>
                   <ul>
-                    <li *ngFor="let sensation of $any(feedbackRequest.feedback).physicalSensations">{{ sensation }}</li>
+                    <li *ngFor="let sensation of $any(feedbackRequest.feedback).physicalSensations">
+                      {{ sensation }}
+                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'sensation', sensation)">+</button>
+                    </li>
                   </ul>
                 </div>
 
                 <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).emotions?.length > 0">
                   <strong>Emotions:</strong>
                   <ul>
-                    <li *ngFor="let emotion of $any(feedbackRequest.feedback).emotions">{{ emotion }}</li>
+                    <li *ngFor="let emotion of $any(feedbackRequest.feedback).emotions">
+                      {{ emotion }}
+                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'emotion', emotion)">+</button>
+                    </li>
                   </ul>
                 </div>
 
                 <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).internalMonologue?.length > 0">
                   <strong>Internal Monologue:</strong>
                   <ul>
-                    <li *ngFor="let thought of $any(feedbackRequest.feedback).internalMonologue">{{ thought }}</li>
+                    <li *ngFor="let thought of $any(feedbackRequest.feedback).internalMonologue">
+                      {{ thought }}
+                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'thought', thought)">+</button>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -403,7 +418,10 @@
                 <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).suggestions?.length > 0">
                   <strong>Suggestions:</strong>
                   <ul>
-                    <li *ngFor="let suggestion of $any(feedbackRequest.feedback).suggestions">{{ suggestion }}</li>
+                    <li *ngFor="let suggestion of $any(feedbackRequest.feedback).suggestions">
+                      {{ suggestion.suggestion || suggestion }}
+                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'suggestion', suggestion.suggestion || suggestion)">+</button>
+                    </li>
                   </ul>
                 </div>
               </div>

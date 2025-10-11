@@ -518,9 +518,18 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       });
   }
 
-  incorporateFeedback(source: string, items: any[]) {
-    // TODO: Add selected feedback items to incorporated feedback list
-    console.log('Incorporate feedback from', source, items);
+  incorporateFeedback(source: string, type: string, content: string) {
+    if (!this.story) return;
+
+    const feedbackItem = {
+      source: source,
+      type: type as 'action' | 'dialog' | 'sensation' | 'emotion' | 'thought' | 'suggestion',
+      content: content,
+      incorporated: false
+    };
+
+    this.story.chapterCreation.incorporatedFeedback.push(feedbackItem);
+    this.storyService.saveStory(this.story);
   }
 
   removeFeedbackItem(index: number) {
