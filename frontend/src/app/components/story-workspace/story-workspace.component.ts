@@ -32,6 +32,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   generatingFeedback: Set<string> = new Set();
   generatingChapter = false;
   generatingReview = false;
+  selectedAgentId: string | null = null; // Track currently selected agent for feedback display
 
   private destroy$ = new Subject<void>();
 
@@ -135,16 +136,17 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   get feedbackRequestsArray() {
-    if (!this.story) {
-      console.log('No story available');
+    if (!this.story || !this.selectedAgentId) {
       return [];
     }
-    const requests = Array.from(this.story.chapterCreation.feedbackRequests.entries()).map(([id, request]) => ({
-      id,
+    const request = this.story.chapterCreation.feedbackRequests.get(this.selectedAgentId);
+    if (!request) {
+      return [];
+    }
+    return [{
+      id: this.selectedAgentId,
       ...request
-    }));
-    console.log('feedbackRequestsArray getter called, returning:', requests);
-    return requests;
+    }];
   }
 
   // Type-safe helper methods for template
@@ -441,6 +443,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     const character = this.story.characters.get(characterId);
     if (!character) return;
 
+    // Set this as the selected agent
+    this.selectedAgentId = characterId;
     this.generatingFeedback.add(characterId);
 
     this.generationService.requestCharacterFeedback(
@@ -463,8 +467,6 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
               feedback: characterFeedback,
               status: 'ready'
             });
-            console.log('Character feedback stored:', characterFeedback);
-            console.log('Total feedback requests:', this.feedbackRequestsArray.length);
             // Manually trigger change detection
             this.cdr.detectChanges();
           }
@@ -484,6 +486,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     const rater = this.story.raters.get(raterId);
     if (!rater) return;
 
+    // Set this as the selected agent
+    this.selectedAgentId = raterId;
     this.generatingFeedback.add(raterId);
 
     this.generationService.requestRaterFeedback(
@@ -503,8 +507,6 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
               feedback: raterFeedback,
               status: 'ready'
             });
-            console.log('Rater feedback stored:', raterFeedback);
-            console.log('Total feedback requests:', this.feedbackRequestsArray.length);
             // Manually trigger change detection
             this.cdr.detectChanges();
           }

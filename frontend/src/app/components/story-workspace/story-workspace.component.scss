@@ -398,6 +398,12 @@ button {
         cursor: wait;
       }
 
+      &.selected {
+        background-color: #e3f2fd;
+        border-color: #2196F3;
+        font-weight: 600;
+      }
+
       .spinner {
         float: right;
       }

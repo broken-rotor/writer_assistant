@@ -315,6 +315,7 @@
                 <button *ngFor="let character of activeCharacters"
                         class="agent-button"
                         [class.loading]="generatingFeedback.has(character.id)"
+                        [class.selected]="selectedAgentId === character.id"
                         (click)="requestCharacterFeedback(character.id)">
                   {{ character.name }}
                   <span *ngIf="generatingFeedback.has(character.id)" class="spinner">⏳</span>
@@ -331,6 +332,7 @@
                 <button *ngFor="let rater of enabledRaters"
                         class="agent-button"
                         [class.loading]="generatingFeedback.has(rater.id)"
+                        [class.selected]="selectedAgentId === rater.id"
                         (click)="requestRaterFeedback(rater.id)">
                   {{ rater.name }}
                   <span *ngIf="generatingFeedback.has(rater.id)" class="spinner">⏳</span>
