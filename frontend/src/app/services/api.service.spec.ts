@@ -64,9 +64,9 @@ describe('ApiService', () => {
         feedback: {
           actions: ['Draw sword'],
           dialog: ['I must be brave'],
-          sensations: ['Heart pounding'],
+          physicalSensations: ['Heart pounding'],
           emotions: ['Fear', 'Determination'],
-          thoughts: ['What dangers await?']
+          internalMonologue: ['What dangers await?']
         }
       };
 

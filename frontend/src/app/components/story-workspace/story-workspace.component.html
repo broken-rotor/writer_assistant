@@ -346,12 +346,6 @@
           <div class="feedback-display-panel">
             <h3>Agent Feedback</h3>
 
-            <!-- Debug Info -->
-            <div style="background: #ffeb3b; padding: 10px; margin-bottom: 10px; font-size: 12px;">
-              DEBUG: feedbackRequestsArray.length = {{ feedbackRequestsArray.length }}
-              <pre>{{ feedbackRequestsArray | json }}</pre>
-            </div>
-
             <div *ngIf="feedbackRequestsArray.length === 0">
               <p class="hint">Click an agent to request feedback. Results will appear here.</p>
             </div>
