@@ -291,10 +291,23 @@
         <h3>Incorporated Feedback</h3>
         <div class="feedback-list">
           <div *ngFor="let item of story.chapterCreation.incorporatedFeedback; let i = index" class="feedback-item">
-            <div class="feedback-content">
+            <div class="feedback-content" *ngIf="editingFeedbackIndex !== i">
               <strong>{{ item.source }}</strong> ({{ item.type }}): {{ item.content }}
             </div>
-            <button class="icon-button" (click)="removeFeedbackItem(i)">✕</button>
+            <div class="feedback-edit-form" *ngIf="editingFeedbackIndex === i">
+              <div class="feedback-header-edit">
+                <strong>{{ item.source }}</strong> ({{ item.type }})
+              </div>
+              <textarea [(ngModel)]="editingFeedbackContent" rows="3"></textarea>
+              <div class="button-group">
+                <button class="secondary-button" (click)="saveFeedbackEdit()">Save</button>
+                <button class="secondary-button" (click)="cancelFeedbackEdit()">Cancel</button>
+              </div>
+            </div>
+            <div class="item-actions" *ngIf="editingFeedbackIndex !== i">
+              <button class="icon-button" (click)="editFeedbackItem(i)" title="Edit">✏️</button>
+              <button class="icon-button" (click)="removeFeedbackItem(i)" title="Remove">✕</button>
+            </div>
           </div>
           <div *ngIf="story.chapterCreation.incorporatedFeedback.length === 0" class="empty-state">
             No feedback incorporated yet. Request feedback from characters or raters below.

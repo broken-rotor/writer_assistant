@@ -33,6 +33,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   generatingChapter = false;
   generatingReview = false;
   selectedAgentId: string | null = null; // Track currently selected agent for feedback display
+  editingFeedbackIndex: number | null = null; // Track which feedback item is being edited
+  editingFeedbackContent: string = ''; // Store the edited content temporarily
 
   private destroy$ = new Subject<void>();
 
@@ -537,6 +539,26 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   removeFeedbackItem(index: number) {
     if (!this.story) return;
     this.story.chapterCreation.incorporatedFeedback.splice(index, 1);
+    this.storyService.saveStory(this.story);
+  }
+
+  editFeedbackItem(index: number) {
+    if (!this.story) return;
+    this.editingFeedbackIndex = index;
+    this.editingFeedbackContent = this.story.chapterCreation.incorporatedFeedback[index].content;
+  }
+
+  saveFeedbackEdit() {
+    if (!this.story || this.editingFeedbackIndex === null) return;
+    this.story.chapterCreation.incorporatedFeedback[this.editingFeedbackIndex].content = this.editingFeedbackContent;
+    this.editingFeedbackIndex = null;
+    this.editingFeedbackContent = '';
+    this.storyService.saveStory(this.story);
+  }
+
+  cancelFeedbackEdit() {
+    this.editingFeedbackIndex = null;
+    this.editingFeedbackContent = '';
   }
 
   generateChapter() {
