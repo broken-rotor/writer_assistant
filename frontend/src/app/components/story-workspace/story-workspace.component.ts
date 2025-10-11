@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -38,7 +38,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private storyService: StoryService,
-    private generationService: GenerationService
+    private generationService: GenerationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -131,6 +132,32 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   get enabledRaters() {
     return this.ratersArray.filter(r => r.enabled);
+  }
+
+  get feedbackRequestsArray() {
+    if (!this.story) {
+      console.log('No story available');
+      return [];
+    }
+    const requests = Array.from(this.story.chapterCreation.feedbackRequests.entries()).map(([id, request]) => ({
+      id,
+      ...request
+    }));
+    console.log('feedbackRequestsArray getter called, returning:', requests);
+    return requests;
+  }
+
+  // Type-safe helper methods for template
+  isCharacterFeedback(feedback: any): boolean {
+    return feedback && 'actions' in feedback;
+  }
+
+  isRaterFeedback(feedback: any): boolean {
+    return feedback && 'opinion' in feedback;
+  }
+
+  getFeedbackName(feedback: any): string {
+    return feedback.characterName || feedback.raterName || 'Unknown';
   }
 
   // Characters tab methods
@@ -428,14 +455,18 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
               characterName: response.characterName,
               actions: response.feedback.actions,
               dialog: response.feedback.dialog,
-              physicalSensations: response.feedback.sensations,
+              physicalSensations: response.feedback.physicalSensations,
               emotions: response.feedback.emotions,
-              internalMonologue: response.feedback.thoughts
+              internalMonologue: response.feedback.internalMonologue
             };
             this.story.chapterCreation.feedbackRequests.set(characterId, {
               feedback: characterFeedback,
               status: 'ready'
             });
+            console.log('Character feedback stored:', characterFeedback);
+            console.log('Total feedback requests:', this.feedbackRequestsArray.length);
+            // Manually trigger change detection
+            this.cdr.detectChanges();
           }
           this.generatingFeedback.delete(characterId);
         },
@@ -466,12 +497,16 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
             const raterFeedback: any = {
               raterName: response.raterName,
               opinion: response.feedback.opinion,
-              suggestions: response.feedback.suggestions.map((s: any) => s.suggestion)
+              suggestions: response.feedback.suggestions
             };
             this.story.chapterCreation.feedbackRequests.set(raterId, {
               feedback: raterFeedback,
               status: 'ready'
             });
+            console.log('Rater feedback stored:', raterFeedback);
+            console.log('Total feedback requests:', this.feedbackRequestsArray.length);
+            // Manually trigger change detection
+            this.cdr.detectChanges();
           }
           this.generatingFeedback.delete(raterId);
         },

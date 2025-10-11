@@ -286,9 +286,9 @@ export interface CharacterFeedbackResponse {
   feedback: {
     actions: string[];
     dialog: string[];
-    sensations: string[];
+    physicalSensations: string[];
     emotions: string[];
-    thoughts: string[];
+    internalMonologue: string[];
   };
 }
 

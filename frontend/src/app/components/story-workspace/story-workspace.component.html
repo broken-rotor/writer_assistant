@@ -345,8 +345,75 @@
           <!-- Feedback Display -->
           <div class="feedback-display-panel">
             <h3>Agent Feedback</h3>
-            <p class="hint">Click an agent to request feedback. Results will appear here.</p>
-            <!-- TODO: Display actual feedback when implemented -->
+
+            <!-- Debug Info -->
+            <div style="background: #ffeb3b; padding: 10px; margin-bottom: 10px; font-size: 12px;">
+              DEBUG: feedbackRequestsArray.length = {{ feedbackRequestsArray.length }}
+              <pre>{{ feedbackRequestsArray | json }}</pre>
+            </div>
+
+            <div *ngIf="feedbackRequestsArray.length === 0">
+              <p class="hint">Click an agent to request feedback. Results will appear here.</p>
+            </div>
+
+            <div *ngFor="let feedbackRequest of feedbackRequestsArray" class="feedback-result">
+              <div class="feedback-header">
+                <h4>{{ getFeedbackName(feedbackRequest.feedback) }}</h4>
+              </div>
+
+              <!-- Character Feedback -->
+              <div *ngIf="isCharacterFeedback(feedbackRequest.feedback)" class="character-feedback">
+                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).actions?.length > 0">
+                  <strong>Actions:</strong>
+                  <ul>
+                    <li *ngFor="let action of $any(feedbackRequest.feedback).actions">{{ action }}</li>
+                  </ul>
+                </div>
+
+                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).dialog?.length > 0">
+                  <strong>Dialog:</strong>
+                  <ul>
+                    <li *ngFor="let line of $any(feedbackRequest.feedback).dialog">"{{ line }}"</li>
+                  </ul>
+                </div>
+
+                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).physicalSensations?.length > 0">
+                  <strong>Physical Sensations:</strong>
+                  <ul>
+                    <li *ngFor="let sensation of $any(feedbackRequest.feedback).physicalSensations">{{ sensation }}</li>
+                  </ul>
+                </div>
+
+                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).emotions?.length > 0">
+                  <strong>Emotions:</strong>
+                  <ul>
+                    <li *ngFor="let emotion of $any(feedbackRequest.feedback).emotions">{{ emotion }}</li>
+                  </ul>
+                </div>
+
+                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).internalMonologue?.length > 0">
+                  <strong>Internal Monologue:</strong>
+                  <ul>
+                    <li *ngFor="let thought of $any(feedbackRequest.feedback).internalMonologue">{{ thought }}</li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Rater Feedback -->
+              <div *ngIf="isRaterFeedback(feedbackRequest.feedback)" class="rater-feedback">
+                <div class="feedback-section">
+                  <strong>Opinion:</strong>
+                  <p>{{ $any(feedbackRequest.feedback).opinion }}</p>
+                </div>
+
+                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).suggestions?.length > 0">
+                  <strong>Suggestions:</strong>
+                  <ul>
+                    <li *ngFor="let suggestion of $any(feedbackRequest.feedback).suggestions">{{ suggestion }}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
