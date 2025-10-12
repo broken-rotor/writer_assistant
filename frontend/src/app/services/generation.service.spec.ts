@@ -208,7 +208,10 @@ describe('GenerationService', () => {
     it('should build request with chapter text and user request', (done) => {
       const mockStory = createMockStory();
       const mockResponse = {
-        modifiedChapterText: 'Modified chapter text'
+        modifiedChapter: 'Modified chapter text',
+        modifiedChapterText: 'Modified chapter text',
+        wordCount: 30,
+        changesSummary: 'Made it exciting'
       };
 
       apiServiceSpy.modifyChapter.and.returnValue(of(mockResponse));

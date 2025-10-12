@@ -167,7 +167,10 @@ describe('ApiService', () => {
       };
 
       const mockResponse = {
-        modifiedChapterText: 'The hero burst into the dark dungeon...'
+        modifiedChapter: 'The hero burst into the dark dungeon...',
+        modifiedChapterText: 'The hero burst into the dark dungeon...',
+        wordCount: 50,
+        changesSummary: 'Made the chapter more exciting'
       };
 
       service.modifyChapter(request).subscribe(response => {

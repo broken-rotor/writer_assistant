@@ -36,6 +36,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   editingFeedbackIndex: number | null = null; // Track which feedback item is being edited
   editingFeedbackContent: string = ''; // Store the edited content temporarily
   changeRequest: string = ''; // User's request for chapter changes
+  editingChapterId: string | null = null; // Track which chapter is being edited (null = creating new)
+  chapterTitle: string = ''; // Title for the chapter being created/edited
 
   private destroy$ = new Subject<void>();
 
@@ -378,6 +380,12 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Set the editing chapter ID so we know we're editing, not creating
+    this.editingChapterId = chapterId;
+
+    // Load chapter title
+    this.chapterTitle = chapter.title;
+
     // Load chapter data into chapter creation state
     this.story.chapterCreation = {
       plotPoint: chapter.plotPoint || '',
@@ -709,21 +717,48 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   acceptChapter() {
     if (!this.story || !this.story.chapterCreation.generatedChapter) return;
 
-    const newChapter: any = {
-      id: this.generateId(),
-      number: this.story.story.chapters.length + 1,
-      title: `Chapter ${this.story.story.chapters.length + 1}`,
-      content: this.story.chapterCreation.generatedChapter.text,
-      plotPoint: this.story.chapterCreation.plotPoint,
-      incorporatedFeedback: [...this.story.chapterCreation.incorporatedFeedback],
-      metadata: {
-        created: new Date(),
-        lastModified: new Date(),
-        wordCount: this.story.chapterCreation.generatedChapter.text.split(/\s+/).length
-      }
-    };
+    // Use custom title if provided, otherwise generate default
+    const finalTitle = this.chapterTitle.trim() ||
+                       (this.editingChapterId
+                         ? (this.story.story.chapters.find(c => c.id === this.editingChapterId)?.title || `Chapter ${this.story.story.chapters.length + 1}`)
+                         : `Chapter ${this.story.story.chapters.length + 1}`);
 
-    this.story.story.chapters.push(newChapter);
+    if (this.editingChapterId) {
+      // Update existing chapter
+      const chapterIndex = this.story.story.chapters.findIndex(c => c.id === this.editingChapterId);
+      if (chapterIndex !== -1) {
+        const existingChapter = this.story.story.chapters[chapterIndex];
+        this.story.story.chapters[chapterIndex] = {
+          ...existingChapter,
+          title: finalTitle,
+          content: this.story.chapterCreation.generatedChapter.text,
+          plotPoint: this.story.chapterCreation.plotPoint,
+          incorporatedFeedback: [...this.story.chapterCreation.incorporatedFeedback],
+          metadata: {
+            ...existingChapter.metadata,
+            lastModified: new Date(),
+            wordCount: this.story.chapterCreation.generatedChapter.text.split(/\s+/).length
+          }
+        };
+      }
+    } else {
+      // Create new chapter
+      const newChapter: any = {
+        id: this.generateId(),
+        number: this.story.story.chapters.length + 1,
+        title: finalTitle,
+        content: this.story.chapterCreation.generatedChapter.text,
+        plotPoint: this.story.chapterCreation.plotPoint,
+        incorporatedFeedback: [...this.story.chapterCreation.incorporatedFeedback],
+        metadata: {
+          created: new Date(),
+          lastModified: new Date(),
+          wordCount: this.story.chapterCreation.generatedChapter.text.split(/\s+/).length
+        }
+      };
+
+      this.story.story.chapters.push(newChapter);
+    }
 
     // Reset chapter creation state
     this.story.chapterCreation = {
@@ -734,9 +769,13 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       editorReview: undefined
     };
 
+    // Clear editing chapter ID and title
+    this.editingChapterId = null;
+    this.chapterTitle = '';
+
     this.storyService.saveStory(this.story);
 
-    // Switch to story tab to see new chapter
+    // Switch to story tab to see chapter
     this.selectTab('story');
   }
 
