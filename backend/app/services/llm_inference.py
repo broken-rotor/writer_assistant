@@ -328,8 +328,8 @@ def add_llm_args(parser: argparse.ArgumentParser):
     llm_group.add_argument(
         '--n-ctx',
         type=int,
-        default=4096,
-        help='Context window size (default: 4096)'
+        default=32768,
+        help='Context window size (default: 32768)'
     )
 
     llm_group.add_argument(
