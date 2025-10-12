@@ -96,8 +96,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Local args
+BACKEND_LOCAL_ARGS=''
+if [ -f .backend-local-args.sh ]; then
+	BACKEND_LOCAL_ARGS=$(cat .backend-local-args.sh)
+fi
+
 # Start backend in background
-./venv/Scripts/python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+./venv/Scripts/python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 ${BACKEND_LOCAL_ARGS} > backend.log 2>&1 &
 BACKEND_PID=$!
 echo "Backend server starting on http://localhost:8000 (PID: $BACKEND_PID)"
 

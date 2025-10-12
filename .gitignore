@@ -233,3 +233,6 @@ marimo/_lsp/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local args
+.backend-local-args.sh
