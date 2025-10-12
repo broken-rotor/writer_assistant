@@ -1,6 +1,97 @@
 import pytest
+from unittest.mock import Mock, MagicMock, patch
 from fastapi.testclient import TestClient
 from app.main import app
+from app.services.llm_inference import LLMInference
+import json
+
+
+@pytest.fixture(autouse=True)
+def mock_llm():
+    """Mock the LLM for all tests"""
+    mock_llm_instance = MagicMock(spec=LLMInference)
+
+    # Mock generate method with intelligent responses
+    def generate_side_effect(prompt, **kwargs):
+        # Character feedback - return JSON
+        if "embodying" in prompt.lower() or "character" in prompt.lower() and "actions" in prompt:
+            return json.dumps({
+                "actions": ["Takes a deep breath", "Looks around carefully", "Steps forward"],
+                "dialog": ["This changes everything", "I need to think", "What now?"],
+                "physicalSensations": ["Heart racing", "Palms sweating", "Adrenaline pumping"],
+                "emotions": ["Anxious", "Determined", "Cautious"],
+                "internalMonologue": ["I can do this", "Stay focused", "One step at a time"]
+            })
+
+        # Rater feedback - return JSON
+        elif "rater" in prompt.lower() or ("opinion" in prompt and "suggestions" in prompt):
+            return json.dumps({
+                "opinion": "This plot point is engaging and moves the story forward effectively.",
+                "suggestions": [
+                    "Add more sensory details",
+                    "Heighten emotional stakes",
+                    "Connect to story arc",
+                    "Improve pacing"
+                ]
+            })
+
+        # Editor review - return JSON
+        elif "editor" in prompt.lower() or "review" in prompt.lower():
+            return json.dumps({
+                "suggestions": [
+                    {"issue": "Opening needs work", "suggestion": "Add sensory details", "priority": "high"},
+                    {"issue": "Dialogue feels flat", "suggestion": "Make voices distinct", "priority": "medium"},
+                    {"issue": "Pacing issues", "suggestion": "Tighten middle section", "priority": "medium"},
+                    {"issue": "Weak transitions", "suggestion": "Add scene breaks", "priority": "low"}
+                ]
+            })
+
+        # Character details - return JSON
+        elif "character details" in prompt.lower() or "character concept" in prompt.lower():
+            return json.dumps({
+                "name": "Alex Morgan",
+                "sex": "Female",
+                "gender": "Female",
+                "sexualPreference": "Bisexual",
+                "age": 34,
+                "physicalAppearance": "Tall and athletic with dark hair and piercing eyes",
+                "usualClothing": "Practical jeans and leather jacket",
+                "personality": "Independent, analytical, determined with hidden warmth",
+                "motivations": "Seeking truth and justice while proving herself",
+                "fears": "Failure, vulnerability, letting others down",
+                "relationships": "Struggles with trust but loyal to those who earn it"
+            })
+
+        # Chapter generation or modification
+        elif "chapter" in prompt.lower() or "write" in prompt.lower():
+            return """The rain fell hard on the city streets as Detective Chen examined the scene. Every detail mattered now.
+
+She knelt beside the evidence, her trained eye catching what others had missed. The implications were staggering - this case was about to break wide open.
+
+"We need to move fast," she said, her voice steady despite the adrenaline. The pieces were finally coming together, but time was running out."""
+
+        # Flesh out
+        elif "expand" in prompt.lower() or "flesh out" in prompt.lower():
+            text_to_expand = prompt.split("Text to expand:")[-1].strip() if "Text to expand:" in prompt else "the situation"
+            return f"""{text_to_expand}
+
+The atmosphere was thick with tension as the moment unfolded. Every sensory detail heightened the experience - the distant sound of traffic, the smell of rain on pavement, the cool metal of the detective's badge against her chest.
+
+What had seemed simple moments ago now revealed layers of complexity. The characters involved each brought their own perspectives, their own histories that colored how they perceived and reacted to events."""
+
+        # Default
+        else:
+            return "This is a generated response from the LLM for testing purposes."
+
+    mock_llm_instance.generate.side_effect = generate_side_effect
+
+    # Mock chat_completion if needed
+    mock_llm_instance.chat_completion.return_value = "Chat response for testing"
+
+    # Patch get_llm to return our mock
+    with patch('app.services.llm_inference.get_llm', return_value=mock_llm_instance):
+        with patch('app.api.v1.endpoints.ai_generation.get_llm', return_value=mock_llm_instance):
+            yield mock_llm_instance
 
 
 @pytest.fixture

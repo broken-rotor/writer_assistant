@@ -1,7 +1,30 @@
+import sys
+import argparse
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.core.config import settings
+from app.services.llm_inference import initialize_llm, LLMInferenceConfig, get_llm, add_llm_args
+
+logger = logging.getLogger(__name__)
+
+# Parse command line arguments for LLM configuration
+parser = argparse.ArgumentParser(description="Writer Assistant API Server")
+add_llm_args(parser)
+
+# Parse only known args to avoid conflicts with uvicorn args
+args, unknown = parser.parse_known_args()
+
+# Initialize LLM if model path is provided
+if args.model_path:
+    try:
+        config = LLMInferenceConfig.from_args(args)
+        initialize_llm(config)
+        logger.info(f"LLM initialized successfully with model: {args.model_path}")
+    except Exception as e:
+        logger.error(f"Failed to initialize LLM: {e}")
+        logger.warning("Server will start but LLM functionality will not be available")
 
 app = FastAPI(
     title="Writer Assistant API",
@@ -22,8 +45,18 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
-    return {"message": "Writer Assistant API", "version": "1.0.0"}
+    llm = get_llm()
+    llm_status = "available" if llm else "not initialized"
+    return {
+        "message": "Writer Assistant API",
+        "version": "1.0.0",
+        "llm_status": llm_status
+    }
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    llm = get_llm()
+    return {
+        "status": "healthy",
+        "llm_available": llm is not None
+    }

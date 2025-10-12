@@ -1,0 +1,348 @@
+"""
+Tests for LLM Inference module.
+Note: These tests don't require an actual model file - they test configuration and error handling.
+"""
+import pytest
+from unittest.mock import Mock, patch, MagicMock
+from pathlib import Path
+import argparse
+
+from app.services.llm_inference import (
+    LLMInferenceConfig,
+    LLMInference,
+    initialize_llm,
+    get_llm,
+    add_llm_args,
+    LLAMA_CPP_AVAILABLE
+)
+
+
+class TestLLMInferenceConfig:
+    """Test LLM configuration"""
+
+    def test_config_defaults(self):
+        """Test default configuration values"""
+        config = LLMInferenceConfig(model_path="/path/to/model.gguf")
+
+        assert config.model_path == "/path/to/model.gguf"
+        assert config.n_ctx == 4096
+        assert config.n_gpu_layers == -1
+        assert config.n_threads is None
+        assert config.temperature == 0.7
+        assert config.top_p == 0.95
+        assert config.top_k == 40
+        assert config.max_tokens == 2048
+        assert config.repeat_penalty == 1.1
+        assert config.verbose is False
+
+    def test_config_custom_values(self):
+        """Test custom configuration values"""
+        config = LLMInferenceConfig(
+            model_path="/custom/path.gguf",
+            n_ctx=8192,
+            n_gpu_layers=32,
+            n_threads=8,
+            temperature=0.9,
+            top_p=0.9,
+            top_k=50,
+            max_tokens=1024,
+            repeat_penalty=1.2,
+            verbose=True
+        )
+
+        assert config.model_path == "/custom/path.gguf"
+        assert config.n_ctx == 8192
+        assert config.n_gpu_layers == 32
+        assert config.n_threads == 8
+        assert config.temperature == 0.9
+        assert config.top_p == 0.9
+        assert config.top_k == 50
+        assert config.max_tokens == 1024
+        assert config.repeat_penalty == 1.2
+        assert config.verbose is True
+
+    def test_config_from_args(self):
+        """Test creating config from argparse namespace"""
+        args = argparse.Namespace(
+            model_path="/test/model.gguf",
+            n_ctx=2048,
+            n_gpu_layers=0,
+            temperature=0.8
+        )
+
+        config = LLMInferenceConfig.from_args(args)
+
+        assert config.model_path == "/test/model.gguf"
+        assert config.n_ctx == 2048
+        assert config.n_gpu_layers == 0
+        assert config.temperature == 0.8
+        # Defaults for missing args
+        assert config.top_p == 0.95
+        assert config.max_tokens == 2048
+
+    def test_config_from_args_minimal(self):
+        """Test config from args with only model_path"""
+        args = argparse.Namespace(model_path="/test/model.gguf")
+
+        config = LLMInferenceConfig.from_args(args)
+
+        assert config.model_path == "/test/model.gguf"
+        # All other values should be defaults
+        assert config.n_ctx == 4096
+        assert config.temperature == 0.7
+
+
+class TestLLMInferenceInitialization:
+    """Test LLM inference initialization and error handling"""
+
+    @pytest.mark.skipif(LLAMA_CPP_AVAILABLE, reason="Test requires llama-cpp-python to be unavailable")
+    def test_import_error_when_llama_cpp_unavailable(self):
+        """Test that ImportError is raised when llama-cpp-python is not available"""
+        with patch('app.services.llm_inference.LLAMA_CPP_AVAILABLE', False):
+            config = LLMInferenceConfig(model_path="/test/model.gguf")
+
+            with pytest.raises(ImportError, match="llama-cpp-python is not installed"):
+                LLMInference(config)
+
+    def test_file_not_found_error(self):
+        """Test that FileNotFoundError is raised for non-existent model"""
+        if not LLAMA_CPP_AVAILABLE:
+            pytest.skip("Requires llama-cpp-python to be installed")
+
+        config = LLMInferenceConfig(model_path="/nonexistent/model.gguf")
+
+        with pytest.raises(FileNotFoundError, match="Model file not found"):
+            LLMInference(config)
+
+    @patch('app.services.llm_inference.Llama')
+    @patch('pathlib.Path.exists')
+    def test_successful_initialization(self, mock_exists, mock_llama):
+        """Test successful model initialization with mocked llama.cpp"""
+        if not LLAMA_CPP_AVAILABLE:
+            pytest.skip("Requires llama-cpp-python to be installed")
+
+        mock_exists.return_value = True
+        mock_model = MagicMock()
+        mock_llama.return_value = mock_model
+
+        config = LLMInferenceConfig(
+            model_path="/test/model.gguf",
+            n_ctx=2048,
+            n_gpu_layers=0
+        )
+
+        llm = LLMInference(config)
+
+        # Verify Llama was called with correct parameters
+        mock_llama.assert_called_once()
+        call_kwargs = mock_llama.call_args[1]
+        assert 'model_path' in call_kwargs
+        assert call_kwargs['n_ctx'] == 2048
+        assert call_kwargs['n_gpu_layers'] == 0
+
+        assert llm.model is not None
+
+
+class TestLLMInferenceGeneration:
+    """Test text generation functionality"""
+
+    @patch('app.services.llm_inference.Llama')
+    @patch('pathlib.Path.exists')
+    def test_generate_basic(self, mock_exists, mock_llama):
+        """Test basic text generation"""
+        if not LLAMA_CPP_AVAILABLE:
+            pytest.skip("Requires llama-cpp-python to be installed")
+
+        mock_exists.return_value = True
+        mock_model = MagicMock()
+        mock_model.return_value = {
+            'choices': [{'text': 'Generated response'}]
+        }
+        mock_llama.return_value = mock_model
+
+        config = LLMInferenceConfig(model_path="/test/model.gguf")
+        llm = LLMInference(config)
+
+        response = llm.generate("Test prompt")
+
+        assert response == "Generated response"
+        mock_model.assert_called_once()
+
+    @patch('app.services.llm_inference.Llama')
+    @patch('pathlib.Path.exists')
+    def test_generate_with_custom_parameters(self, mock_exists, mock_llama):
+        """Test generation with custom parameters"""
+        if not LLAMA_CPP_AVAILABLE:
+            pytest.skip("Requires llama-cpp-python to be installed")
+
+        mock_exists.return_value = True
+        mock_model = MagicMock()
+        mock_model.return_value = {
+            'choices': [{'text': 'Custom response'}]
+        }
+        mock_llama.return_value = mock_model
+
+        config = LLMInferenceConfig(model_path="/test/model.gguf")
+        llm = LLMInference(config)
+
+        response = llm.generate(
+            "Test prompt",
+            max_tokens=100,
+            temperature=0.9,
+            top_p=0.8
+        )
+
+        assert response == "Custom response"
+
+        # Verify custom parameters were passed
+        call_kwargs = mock_model.call_args[1]
+        assert call_kwargs['max_tokens'] == 100
+        assert call_kwargs['temperature'] == 0.9
+        assert call_kwargs['top_p'] == 0.8
+
+    @patch('app.services.llm_inference.Llama')
+    @patch('pathlib.Path.exists')
+    def test_chat_completion(self, mock_exists, mock_llama):
+        """Test chat completion"""
+        if not LLAMA_CPP_AVAILABLE:
+            pytest.skip("Requires llama-cpp-python to be installed")
+
+        mock_exists.return_value = True
+        mock_model = MagicMock()
+        mock_model.create_chat_completion.return_value = {
+            'choices': [{'message': {'content': 'Chat response'}}]
+        }
+        mock_llama.return_value = mock_model
+
+        config = LLMInferenceConfig(model_path="/test/model.gguf")
+        llm = LLMInference(config)
+
+        messages = [
+            {"role": "user", "content": "Hello"}
+        ]
+        response = llm.chat_completion(messages)
+
+        assert response == "Chat response"
+        mock_model.create_chat_completion.assert_called_once()
+
+
+class TestSingletonPattern:
+    """Test global singleton instance management"""
+
+    def test_initialize_llm(self):
+        """Test initializing global LLM instance"""
+        with patch('app.services.llm_inference.LLMInference') as mock_llm_class:
+            mock_instance = MagicMock()
+            mock_llm_class.return_value = mock_instance
+
+            config = LLMInferenceConfig(model_path="/test/model.gguf")
+            instance = initialize_llm(config)
+
+            assert instance == mock_instance
+
+    def test_get_llm_when_not_initialized(self):
+        """Test getting LLM when not initialized returns None"""
+        # Clear any existing instance
+        import app.services.llm_inference as llm_module
+        llm_module._llm_instance = None
+
+        instance = get_llm()
+        assert instance is None
+
+    def test_get_llm_after_initialization(self):
+        """Test getting LLM after initialization"""
+        with patch('app.services.llm_inference.LLMInference') as mock_llm_class:
+            mock_instance = MagicMock()
+            mock_llm_class.return_value = mock_instance
+
+            config = LLMInferenceConfig(model_path="/test/model.gguf")
+            initialize_llm(config)
+
+            instance = get_llm()
+            assert instance == mock_instance
+
+
+class TestCommandLineArguments:
+    """Test command line argument parsing"""
+
+    def test_add_llm_args(self):
+        """Test adding LLM arguments to argument parser"""
+        parser = argparse.ArgumentParser()
+        add_llm_args(parser)
+
+        # Parse with all arguments
+        args = parser.parse_args([
+            '--model-path', '/test/model.gguf',
+            '--n-ctx', '8192',
+            '--n-gpu-layers', '32',
+            '--temperature', '0.9',
+            '--max-tokens', '1024',
+            '--verbose'
+        ])
+
+        assert args.model_path == '/test/model.gguf'
+        assert args.n_ctx == 8192
+        assert args.n_gpu_layers == 32
+        assert args.temperature == 0.9
+        assert args.max_tokens == 1024
+        assert args.verbose is True
+
+    def test_add_llm_args_defaults(self):
+        """Test LLM argument defaults"""
+        parser = argparse.ArgumentParser()
+        add_llm_args(parser)
+
+        # Parse without arguments (only model-path is required in actual use)
+        args = parser.parse_args([])
+
+        # Check defaults
+        assert args.n_ctx == 4096
+        assert args.n_gpu_layers == -1
+        assert args.temperature == 0.7
+        assert args.top_p == 0.95
+        assert args.top_k == 40
+        assert args.max_tokens == 2048
+        assert args.repeat_penalty == 1.1
+        assert args.verbose is False
+
+
+class TestErrorHandling:
+    """Test error handling in various scenarios"""
+
+    @patch('app.services.llm_inference.Llama')
+    @patch('pathlib.Path.exists')
+    def test_generation_error_handling(self, mock_exists, mock_llama):
+        """Test error handling during generation"""
+        if not LLAMA_CPP_AVAILABLE:
+            pytest.skip("Requires llama-cpp-python to be installed")
+
+        mock_exists.return_value = True
+        mock_model = MagicMock()
+        mock_model.side_effect = Exception("Generation error")
+        mock_llama.return_value = mock_model
+
+        config = LLMInferenceConfig(model_path="/test/model.gguf")
+        llm = LLMInference(config)
+
+        with pytest.raises(RuntimeError, match="Generation failed"):
+            llm.generate("Test prompt")
+
+    @patch('app.services.llm_inference.Llama')
+    @patch('pathlib.Path.exists')
+    def test_chat_completion_error_handling(self, mock_exists, mock_llama):
+        """Test error handling during chat completion"""
+        if not LLAMA_CPP_AVAILABLE:
+            pytest.skip("Requires llama-cpp-python to be installed")
+
+        mock_exists.return_value = True
+        mock_model = MagicMock()
+        mock_model.create_chat_completion.side_effect = Exception("Chat error")
+        mock_llama.return_value = mock_model
+
+        config = LLMInferenceConfig(model_path="/test/model.gguf")
+        llm = LLMInference(config)
+
+        messages = [{"role": "user", "content": "Hello"}]
+
+        with pytest.raises(RuntimeError, match="Chat completion failed"):
+            llm.chat_completion(messages)
