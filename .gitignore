@@ -235,4 +235,4 @@ yarn-debug.log*
 yarn-error.log*
 
 # Local args
-.backend-local-args.sh
+.env

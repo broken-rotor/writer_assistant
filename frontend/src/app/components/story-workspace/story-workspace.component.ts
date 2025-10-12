@@ -2,15 +2,17 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, finalize } from 'rxjs';
 import { Story } from '../../models/story.model';
 import { StoryService } from '../../services/story.service';
 import { GenerationService } from '../../services/generation.service';
+import { LoadingService } from '../../services/loading.service';
+import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -45,6 +47,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private storyService: StoryService,
     private generationService: GenerationService,
+    private loadingService: LoadingService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -100,12 +103,16 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.loadingService.show('Fleshing out worldbuilding...', 'flesh-worldbuilding');
+
     this.generationService.fleshOut(
       this.story,
       this.story.general.worldbuilding,
       'worldbuilding expansion'
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loadingService.hide())
+    ).subscribe({
         next: (response) => {
           if (this.story) {
             this.story.general.worldbuilding = response.fleshedOutText;
@@ -246,12 +253,16 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.loadingService.show('Generating character details...', 'generate-character');
+
     this.generationService.generateCharacterDetails(
       this.story,
       this.editingCharacter.basicBio,
       this.activeCharacters
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loadingService.hide())
+    ).subscribe({
         next: (response) => {
           // Populate the editing character with generated details
           this.editingCharacter.name = response.name;
@@ -292,12 +303,16 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.loadingService.show('Regenerating character relationships...', 'regenerate-relationships');
+
     this.generationService.regenerateRelationships(
       this.story,
       this.editingCharacter,
       otherCharacters
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loadingService.hide())
+    ).subscribe({
         next: (response) => {
           // Only update the relationships field
           if (this.editingCharacter) {
@@ -429,12 +444,16 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.loadingService.show('Fleshing out plot point...', 'flesh-plotpoint');
+
     this.generationService.fleshOut(
       this.story,
       this.story.chapterCreation.plotPoint,
       'plot point expansion'
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loadingService.hide())
+    ).subscribe({
         next: (response) => {
           if (this.story) {
             this.story.chapterCreation.plotPoint = response.fleshedOutText;
@@ -458,12 +477,19 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.selectedAgentId = characterId;
     this.generatingFeedback.add(characterId);
 
+    this.loadingService.show(`Getting feedback from ${character.name}...`, 'character-feedback');
+
     this.generationService.requestCharacterFeedback(
       this.story,
       character,
       this.story.chapterCreation.plotPoint
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.generatingFeedback.delete(characterId);
+        this.loadingService.hide();
+      })
+    ).subscribe({
         next: (response) => {
           if (this.story) {
             const characterFeedback: any = {
@@ -481,12 +507,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
             // Manually trigger change detection
             this.cdr.detectChanges();
           }
-          this.generatingFeedback.delete(characterId);
         },
         error: (err) => {
           console.error('Error requesting character feedback:', err);
           alert('Failed to get character feedback');
-          this.generatingFeedback.delete(characterId);
         }
       });
   }
@@ -501,12 +525,19 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.selectedAgentId = raterId;
     this.generatingFeedback.add(raterId);
 
+    this.loadingService.show(`Getting feedback from ${rater.name}...`, 'rater-feedback');
+
     this.generationService.requestRaterFeedback(
       this.story,
       rater,
       this.story.chapterCreation.plotPoint
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.generatingFeedback.delete(raterId);
+        this.loadingService.hide();
+      })
+    ).subscribe({
         next: (response) => {
           if (this.story) {
             const raterFeedback: any = {
@@ -521,12 +552,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
             // Manually trigger change detection
             this.cdr.detectChanges();
           }
-          this.generatingFeedback.delete(raterId);
         },
         error: (err) => {
           console.error('Error requesting rater feedback:', err);
           alert('Failed to get rater feedback');
-          this.generatingFeedback.delete(raterId);
         }
       });
   }
@@ -574,10 +603,16 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     if (!this.story) return;
 
     this.generatingChapter = true;
+    this.loadingService.show('Generating chapter...', 'generate-chapter');
 
     this.generationService.generateChapter(this.story)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.generatingChapter = false;
+          this.loadingService.hide();
+        })
+      ).subscribe({
         next: (response) => {
           if (this.story) {
             this.story.chapterCreation.generatedChapter = {
@@ -587,12 +622,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
             };
             this.storyService.saveStory(this.story);
           }
-          this.generatingChapter = false;
         },
         error: (err) => {
           console.error('Error generating chapter:', err);
           alert('Failed to generate chapter');
-          this.generatingChapter = false;
         }
       });
   }
@@ -609,13 +642,19 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     }
 
     this.generatingChapter = true;
+    this.loadingService.show('Modifying chapter...', 'modify-chapter');
 
     this.generationService.modifyChapter(
       this.story,
       this.story.chapterCreation.generatedChapter.text,
       this.changeRequest
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.generatingChapter = false;
+        this.loadingService.hide();
+      })
+    ).subscribe({
         next: (response: any) => {
           if (this.story && this.story.chapterCreation.generatedChapter) {
             // The backend returns 'modifiedChapter', not 'modifiedChapterText'
@@ -625,12 +664,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
             // Manually trigger change detection
             this.cdr.detectChanges();
           }
-          this.generatingChapter = false;
         },
         error: (err) => {
           console.error('Error modifying chapter:', err);
           alert('Failed to modify chapter');
-          this.generatingChapter = false;
         }
       });
   }
@@ -642,12 +679,18 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     }
 
     this.generatingReview = true;
+    this.loadingService.show('Requesting editor review...', 'editor-review');
 
     this.generationService.requestEditorReview(
       this.story,
       this.story.chapterCreation.generatedChapter.text
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.generatingReview = false;
+        this.loadingService.hide();
+      })
+    ).subscribe({
         next: (response) => {
           if (this.story) {
             this.story.chapterCreation.editorReview = {
@@ -655,12 +698,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
               userSelections: response.suggestions.map(() => false)
             };
           }
-          this.generatingReview = false;
         },
         error: (err) => {
           console.error('Error requesting editor review:', err);
           alert('Failed to get editor review');
-          this.generatingReview = false;
         }
       });
   }
@@ -688,13 +729,19 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     const modificationRequest = `Apply the following editor suggestions:\n\n${suggestionsText}`;
 
     this.generatingChapter = true;
+    this.loadingService.show('Applying editor suggestions...', 'apply-suggestions');
 
     this.generationService.modifyChapter(
       this.story,
       this.story.chapterCreation.generatedChapter.text,
       modificationRequest
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.generatingChapter = false;
+        this.loadingService.hide();
+      })
+    ).subscribe({
         next: (response: any) => {
           if (this.story && this.story.chapterCreation.generatedChapter) {
             // The backend returns 'modifiedChapter', not 'modifiedChapterText'
@@ -704,12 +751,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
             // Manually trigger change detection
             this.cdr.detectChanges();
           }
-          this.generatingChapter = false;
         },
         error: (err) => {
           console.error('Error applying editor suggestions:', err);
           alert('Failed to apply editor suggestions');
-          this.generatingChapter = false;
         }
       });
   }

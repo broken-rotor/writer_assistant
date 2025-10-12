@@ -5,16 +5,15 @@ Note: These tests don't require an actual model file - they test configuration a
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
-import argparse
 
 from app.services.llm_inference import (
     LLMInferenceConfig,
     LLMInference,
     initialize_llm,
     get_llm,
-    add_llm_args,
     LLAMA_CPP_AVAILABLE
 )
+from app.core.config import Settings
 
 
 class TestLLMInferenceConfig:
@@ -61,35 +60,78 @@ class TestLLMInferenceConfig:
         assert config.repeat_penalty == 1.2
         assert config.verbose is True
 
-    def test_config_from_args(self):
-        """Test creating config from argparse namespace"""
-        args = argparse.Namespace(
-            model_path="/test/model.gguf",
-            n_ctx=2048,
-            n_gpu_layers=0,
-            temperature=0.8
-        )
+    def test_config_from_settings(self):
+        """Test creating config from Settings object"""
+        mock_settings = Mock(spec=Settings)
+        mock_settings.MODEL_PATH = '/test/model.gguf'
+        mock_settings.LLM_N_CTX = 2048
+        mock_settings.LLM_N_GPU_LAYERS = 0
+        mock_settings.LLM_N_THREADS = None
+        mock_settings.LLM_TEMPERATURE = 0.8
+        mock_settings.LLM_TOP_P = 0.95
+        mock_settings.LLM_TOP_K = 40
+        mock_settings.LLM_MAX_TOKENS = 2048
+        mock_settings.LLM_REPEAT_PENALTY = 1.1
+        mock_settings.LLM_VERBOSE = False
 
-        config = LLMInferenceConfig.from_args(args)
+        config = LLMInferenceConfig.from_settings(mock_settings)
 
+        assert config is not None
         assert config.model_path == "/test/model.gguf"
         assert config.n_ctx == 2048
         assert config.n_gpu_layers == 0
         assert config.temperature == 0.8
-        # Defaults for missing args
         assert config.top_p == 0.95
         assert config.max_tokens == 2048
 
-    def test_config_from_args_minimal(self):
-        """Test config from args with only model_path"""
-        args = argparse.Namespace(model_path="/test/model.gguf")
+    def test_config_from_settings_minimal(self):
+        """Test config from settings with only MODEL_PATH"""
+        mock_settings = Mock(spec=Settings)
+        mock_settings.MODEL_PATH = '/test/model.gguf'
+        mock_settings.LLM_N_CTX = 4096
+        mock_settings.LLM_N_GPU_LAYERS = -1
+        mock_settings.LLM_N_THREADS = None
+        mock_settings.LLM_TEMPERATURE = 0.7
+        mock_settings.LLM_TOP_P = 0.95
+        mock_settings.LLM_TOP_K = 40
+        mock_settings.LLM_MAX_TOKENS = 2048
+        mock_settings.LLM_REPEAT_PENALTY = 1.1
+        mock_settings.LLM_VERBOSE = False
 
-        config = LLMInferenceConfig.from_args(args)
+        config = LLMInferenceConfig.from_settings(mock_settings)
 
+        assert config is not None
         assert config.model_path == "/test/model.gguf"
-        # All other values should be defaults
+        # All other values should be defaults from settings
         assert config.n_ctx == 4096
         assert config.temperature == 0.7
+
+    def test_config_from_settings_no_model_path(self):
+        """Test config from settings returns None when MODEL_PATH not set"""
+        mock_settings = Mock(spec=Settings)
+        mock_settings.MODEL_PATH = None
+
+        config = LLMInferenceConfig.from_settings(mock_settings)
+
+        assert config is None
+
+    def test_config_from_settings_with_verbose(self):
+        """Test LLM_VERBOSE from settings"""
+        mock_settings = Mock(spec=Settings)
+        mock_settings.MODEL_PATH = '/test/model.gguf'
+        mock_settings.LLM_N_CTX = 4096
+        mock_settings.LLM_N_GPU_LAYERS = -1
+        mock_settings.LLM_N_THREADS = None
+        mock_settings.LLM_TEMPERATURE = 0.7
+        mock_settings.LLM_TOP_P = 0.95
+        mock_settings.LLM_TOP_K = 40
+        mock_settings.LLM_MAX_TOKENS = 2048
+        mock_settings.LLM_REPEAT_PENALTY = 1.1
+        mock_settings.LLM_VERBOSE = True
+
+        config = LLMInferenceConfig.from_settings(mock_settings)
+
+        assert config.verbose is True
 
 
 class TestLLMInferenceInitialization:
@@ -260,50 +302,6 @@ class TestSingletonPattern:
 
             instance = get_llm()
             assert instance == mock_instance
-
-
-class TestCommandLineArguments:
-    """Test command line argument parsing"""
-
-    def test_add_llm_args(self):
-        """Test adding LLM arguments to argument parser"""
-        parser = argparse.ArgumentParser()
-        add_llm_args(parser)
-
-        # Parse with all arguments
-        args = parser.parse_args([
-            '--model-path', '/test/model.gguf',
-            '--n-ctx', '8192',
-            '--n-gpu-layers', '32',
-            '--temperature', '0.9',
-            '--max-tokens', '1024',
-            '--verbose'
-        ])
-
-        assert args.model_path == '/test/model.gguf'
-        assert args.n_ctx == 8192
-        assert args.n_gpu_layers == 32
-        assert args.temperature == 0.9
-        assert args.max_tokens == 1024
-        assert args.verbose is True
-
-    def test_add_llm_args_defaults(self):
-        """Test LLM argument defaults"""
-        parser = argparse.ArgumentParser()
-        add_llm_args(parser)
-
-        # Parse without arguments (only model-path is required in actual use)
-        args = parser.parse_args([])
-
-        # Check defaults
-        assert args.n_ctx == 4096
-        assert args.n_gpu_layers == -1
-        assert args.temperature == 0.7
-        assert args.top_p == 0.95
-        assert args.top_k == 40
-        assert args.max_tokens == 2048
-        assert args.repeat_penalty == 1.1
-        assert args.verbose is False
 
 
 class TestErrorHandling:

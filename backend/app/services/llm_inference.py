@@ -5,7 +5,6 @@ Provides a simple interface for generating text with local models.
 import logging
 from typing import Optional, Dict, Any, List
 from pathlib import Path
-import argparse
 
 try:
     from llama_cpp import Llama
@@ -60,19 +59,30 @@ class LLMInferenceConfig:
         self.verbose = verbose
 
     @classmethod
-    def from_args(cls, args: argparse.Namespace) -> "LLMInferenceConfig":
-        """Create config from command line arguments"""
+    def from_settings(cls, settings) -> Optional["LLMInferenceConfig"]:
+        """
+        Create config from Settings object.
+
+        Args:
+            settings: Settings object from app.core.config
+
+        Returns:
+            LLMInferenceConfig if MODEL_PATH is set, None otherwise
+        """
+        if not settings.MODEL_PATH:
+            return None
+
         return cls(
-            model_path=args.model_path,
-            n_ctx=getattr(args, 'n_ctx', 4096),
-            n_gpu_layers=getattr(args, 'n_gpu_layers', -1),
-            n_threads=getattr(args, 'n_threads', None),
-            temperature=getattr(args, 'temperature', 0.7),
-            top_p=getattr(args, 'top_p', 0.95),
-            top_k=getattr(args, 'top_k', 40),
-            max_tokens=getattr(args, 'max_tokens', 2048),
-            repeat_penalty=getattr(args, 'repeat_penalty', 1.1),
-            verbose=getattr(args, 'verbose', False)
+            model_path=settings.MODEL_PATH,
+            n_ctx=settings.LLM_N_CTX,
+            n_gpu_layers=settings.LLM_N_GPU_LAYERS,
+            n_threads=settings.LLM_N_THREADS,
+            temperature=settings.LLM_TEMPERATURE,
+            top_p=settings.LLM_TOP_P,
+            top_k=settings.LLM_TOP_K,
+            max_tokens=settings.LLM_MAX_TOKENS,
+            repeat_penalty=settings.LLM_REPEAT_PENALTY,
+            verbose=settings.LLM_VERBOSE
         )
 
 
@@ -307,82 +317,3 @@ def get_llm() -> Optional[LLMInference]:
         LLMInference instance if initialized, None otherwise
     """
     return _llm_instance
-
-
-def add_llm_args(parser: argparse.ArgumentParser):
-    """
-    Add LLM-related command line arguments to an argument parser.
-
-    Args:
-        parser: ArgumentParser to add arguments to
-    """
-    llm_group = parser.add_argument_group('LLM Configuration')
-
-    llm_group.add_argument(
-        '--model-path',
-        type=str,
-        required=False,
-        help='Path to the GGUF model file'
-    )
-
-    llm_group.add_argument(
-        '--n-ctx',
-        type=int,
-        default=32768,
-        help='Context window size (default: 32768)'
-    )
-
-    llm_group.add_argument(
-        '--n-gpu-layers',
-        type=int,
-        default=-1,
-        help='Number of layers to offload to GPU (-1 for all, 0 for CPU only)'
-    )
-
-    llm_group.add_argument(
-        '--n-threads',
-        type=int,
-        default=None,
-        help='Number of CPU threads (default: auto)'
-    )
-
-    llm_group.add_argument(
-        '--temperature',
-        type=float,
-        default=0.7,
-        help='Sampling temperature (default: 0.7)'
-    )
-
-    llm_group.add_argument(
-        '--top-p',
-        type=float,
-        default=0.95,
-        help='Nucleus sampling top-p (default: 0.95)'
-    )
-
-    llm_group.add_argument(
-        '--top-k',
-        type=int,
-        default=40,
-        help='Top-k sampling (default: 40)'
-    )
-
-    llm_group.add_argument(
-        '--max-tokens',
-        type=int,
-        default=2048,
-        help='Maximum tokens to generate (default: 2048)'
-    )
-
-    llm_group.add_argument(
-        '--repeat-penalty',
-        type=float,
-        default=1.1,
-        help='Repetition penalty (default: 1.1)'
-    )
-
-    llm_group.add_argument(
-        '--verbose',
-        action='store_true',
-        help='Enable verbose logging for model'
-    )
