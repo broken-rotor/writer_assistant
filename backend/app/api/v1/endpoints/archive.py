@@ -285,6 +285,7 @@ class RAGStatusResponse(BaseModel):
     """Response model for RAG status check."""
     archive_enabled: bool = Field(..., description="Whether archive is enabled")
     llm_enabled: bool = Field(..., description="Whether LLM is configured")
+    llm_loading: bool = Field(..., description="Whether LLM is currently loading")
     rag_enabled: bool = Field(..., description="Whether RAG is fully enabled")
     message: str = Field(..., description="Status message")
 
@@ -297,6 +298,9 @@ async def get_rag_status():
     Returns status of both archive and LLM components.
     """
     try:
+        # Import here to access global state
+        from app.main import llm_loading
+
         archive_service = get_archive_service()
         rag_service = get_rag_service()
 
@@ -304,7 +308,9 @@ async def get_rag_status():
         llm_enabled = rag_service.llm is not None
         rag_enabled = rag_service.is_enabled()
 
-        if rag_enabled:
+        if llm_loading:
+            message = "LLM is currently loading. Please wait a moment and try again."
+        elif rag_enabled:
             message = "RAG feature is fully enabled and ready to use."
         elif not archive_enabled:
             message = "Archive is not enabled. Please configure ARCHIVE_DB_PATH."
@@ -316,6 +322,7 @@ async def get_rag_status():
         return RAGStatusResponse(
             archive_enabled=archive_enabled,
             llm_enabled=llm_enabled,
+            llm_loading=llm_loading,
             rag_enabled=rag_enabled,
             message=message
         )

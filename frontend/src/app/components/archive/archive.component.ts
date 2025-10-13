@@ -194,12 +194,18 @@ export class ArchiveComponent implements OnInit, OnDestroy {
       this.archiveService.getRagStatus().subscribe({
         next: (status) => {
           this.ragStatus = status;
+
+          // If LLM is loading, poll again after a delay
+          if (status.llm_loading) {
+            setTimeout(() => this.loadRagStatus(), 2000);
+          }
         },
         error: (err) => {
           console.error('Failed to load RAG status:', err);
           this.ragStatus = {
             archive_enabled: false,
             llm_enabled: false,
+            llm_loading: false,
             rag_enabled: false,
             message: 'Could not check RAG status'
           };
@@ -298,6 +304,10 @@ export class ArchiveComponent implements OnInit, OnDestroy {
 
   isRagEnabled(): boolean {
     return this.ragStatus?.rag_enabled || false;
+  }
+
+  isLlmLoading(): boolean {
+    return this.ragStatus?.llm_loading || false;
   }
 
   getRagStatusMessage(): string {

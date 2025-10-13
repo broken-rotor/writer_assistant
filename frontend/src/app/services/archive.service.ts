@@ -58,6 +58,7 @@ export interface RAGResponse {
 export interface RAGStatusResponse {
   archive_enabled: boolean;
   llm_enabled: boolean;
+  llm_loading: boolean;
   rag_enabled: boolean;
   message: string;
 }

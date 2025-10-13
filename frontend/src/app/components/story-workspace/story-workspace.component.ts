@@ -958,7 +958,12 @@ Provide actionable insights and creative suggestions to enhance this plot point.
       error: (err) => {
         console.error('Research query failed:', err);
         if (err.status === 503) {
-          this.researchError = 'RAG feature is not available. Please ensure both archive and LLM are configured. See RAG_FEATURE.md for setup instructions.';
+          const errorMessage = err.error?.detail || '';
+          if (errorMessage.includes('loading')) {
+            this.researchError = 'The AI model is still loading. Please wait a moment and try again.';
+          } else {
+            this.researchError = 'RAG feature is not available. Please ensure both archive and LLM are configured. See RAG_FEATURE.md for setup instructions.';
+          }
         } else {
           this.researchError = 'Failed to research plot point. Please try again.';
         }
@@ -1024,7 +1029,12 @@ Provide actionable insights and creative suggestions to enhance this plot point.
         this.researchFollowUpInput = userQuestion; // Restore input
 
         if (err.status === 503) {
-          this.researchError = 'RAG feature is not available.';
+          const errorMessage = err.error?.detail || '';
+          if (errorMessage.includes('loading')) {
+            this.researchError = 'The AI model is still loading. Please wait a moment and try again.';
+          } else {
+            this.researchError = 'RAG feature is not available.';
+          }
         } else {
           this.researchError = 'Failed to process follow-up question. Please try again.';
         }
