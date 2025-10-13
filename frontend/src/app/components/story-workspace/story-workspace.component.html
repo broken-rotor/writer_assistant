@@ -528,57 +528,120 @@
   <div class="research-sidebar" *ngIf="showResearchSidebar" [class.show]="showResearchSidebar">
     <div class="sidebar-header">
       <h3>📚 Archive Research</h3>
-      <button class="close-button" (click)="closeResearchSidebar()" title="Close">✕</button>
+      <div class="header-actions">
+        <button class="icon-button-header" (click)="clearResearchChat()" *ngIf="researchChatHistory.length > 0" title="Clear conversation">🗑️</button>
+        <button class="close-button" (click)="closeResearchSidebar()" title="Close">✕</button>
+      </div>
     </div>
 
     <div class="sidebar-content">
-      <!-- Loading State -->
-      <div class="research-loading" *ngIf="researchLoading">
+      <!-- Initial Loading State -->
+      <div class="research-loading" *ngIf="researchLoading && researchChatHistory.length === 0">
         <div class="spinner"></div>
         <p>Researching your story archive...</p>
       </div>
 
-      <!-- Error State -->
-      <div class="research-error" *ngIf="researchError && !researchLoading">
+      <!-- Error State (when no conversation yet) -->
+      <div class="research-error" *ngIf="researchError && researchChatHistory.length === 0">
         <span class="error-icon">⚠️</span>
         <p>{{ researchError }}</p>
       </div>
 
-      <!-- Research Results -->
-      <div class="research-results" *ngIf="researchData && !researchLoading">
-        <!-- AI Insights -->
-        <div class="research-insights">
-          <h4>💡 Insights & Suggestions</h4>
-          <div class="insights-content">
-            <p [innerHTML]="researchData.answer | newlineToBr"></p>
-          </div>
-        </div>
+      <!-- Chat History -->
+      <div class="research-chat-history" *ngIf="researchChatHistory.length > 0">
+        <div *ngFor="let message of researchChatHistory; let i = index"
+             class="chat-message"
+             [ngClass]="'chat-message-' + message.role">
 
-        <!-- Source References -->
-        <div class="research-sources" *ngIf="researchData.sources && researchData.sources.length > 0">
-          <h4>📖 Sources ({{ researchData.total_sources }})</h4>
-          <div class="sources-list">
-            <div class="source-item" *ngFor="let source of researchData.sources">
-              <div class="source-header">
-                <span class="source-file">{{ getSourceFileName(source) }}</span>
-                <span class="similarity-badge" [ngClass]="getSimilarityClass(source.similarity_score)">
-                  {{ getSimilarityLabel(source.similarity_score) }} ({{ source.similarity_score | number:'1.2-2' }})
-                </span>
+          <!-- User Message -->
+          <div *ngIf="message.role === 'user'" class="message-bubble user-bubble">
+            <div class="message-label">You asked:</div>
+            <div class="message-text">{{ message.content }}</div>
+          </div>
+
+          <!-- Assistant Message -->
+          <div *ngIf="message.role === 'assistant'" class="message-bubble assistant-bubble">
+            <div class="message-label">Research Assistant:</div>
+            <div class="message-text" [innerHTML]="message.content | newlineToBr"></div>
+
+            <!-- Sources for this response -->
+            <div class="message-sources" *ngIf="message.sources && message.sources.length > 0">
+              <div class="sources-toggle" (click)="message.showSources = !message.showSources">
+                <span>📖 {{ message.sources.length }} sources</span>
+                <span class="toggle-icon">{{ message.showSources ? '▼' : '▶' }}</span>
               </div>
-              <div class="source-excerpt">
-                {{ getSourceExcerpt(source) }}
+              <div class="sources-list" *ngIf="message.showSources">
+                <div class="source-item-compact" *ngFor="let source of message.sources">
+                  <span class="source-file-compact">{{ getSourceFileName(source) }}</span>
+                  <span class="similarity-badge-compact" [ngClass]="getSimilarityClass(source.similarity_score)">
+                    {{ source.similarity_score | number:'1.2-2' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Help Text -->
-        <div class="research-help">
-          <p class="hint">
-            <strong>Tip:</strong> Use these insights to enhance your plot point or incorporate them into character feedback and chapter generation.
-          </p>
+        <!-- Typing Indicator -->
+        <div class="chat-message chat-message-assistant" *ngIf="researchLoading">
+          <div class="message-bubble assistant-bubble typing-bubble">
+            <div class="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error in conversation -->
+        <div class="inline-error" *ngIf="researchError && researchChatHistory.length > 0">
+          <span class="error-icon">⚠️</span>
+          <span>{{ researchError }}</span>
         </div>
       </div>
+
+      <!-- Latest Sources Panel (expanded view) -->
+      <div class="research-sources-panel" *ngIf="researchData && researchData.sources && researchData.sources.length > 0">
+        <h4>📖 Latest Sources</h4>
+        <div class="sources-list-detailed">
+          <div class="source-item" *ngFor="let source of researchData.sources">
+            <div class="source-header">
+              <span class="source-file">{{ getSourceFileName(source) }}</span>
+              <span class="similarity-badge" [ngClass]="getSimilarityClass(source.similarity_score)">
+                {{ getSimilarityLabel(source.similarity_score) }} ({{ source.similarity_score | number:'1.2-2' }})
+              </span>
+            </div>
+            <div class="source-excerpt">
+              {{ getSourceExcerpt(source) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Help Text -->
+      <div class="research-help" *ngIf="researchChatHistory.length > 0">
+        <p class="hint">
+          <strong>💡 Tip:</strong> Ask follow-up questions to explore specific aspects, request examples, or dig deeper into any insight.
+        </p>
+      </div>
+    </div>
+
+    <!-- Chat Input (Fixed at bottom) -->
+    <div class="research-input-container" *ngIf="researchChatHistory.length > 0">
+      <textarea
+        class="research-input"
+        [(ngModel)]="researchFollowUpInput"
+        (keypress)="onResearchKeyPress($event)"
+        placeholder="Ask a follow-up question..."
+        rows="2"
+        [disabled]="researchLoading"></textarea>
+      <button
+        class="send-button"
+        (click)="sendResearchFollowUp()"
+        [disabled]="!researchFollowUpInput.trim() || researchLoading">
+        <span *ngIf="!researchLoading">Send</span>
+        <span *ngIf="researchLoading">⏳</span>
+      </button>
     </div>
   </div>
 </div>

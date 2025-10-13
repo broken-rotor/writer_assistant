@@ -11,6 +11,13 @@ import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.comp
 import { ArchiveService, RAGResponse } from '../../services/archive.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
 
+interface ResearchChatMessage {
+  role: string;
+  content: string;
+  sources?: any[];
+  showSources?: boolean;
+}
+
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
@@ -48,6 +55,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   researchLoading = false;
   researchError: string | null = null;
   researchData: RAGResponse | null = null;
+  researchChatHistory: ResearchChatMessage[] = [];
+  researchFollowUpInput = '';
 
   private destroy$ = new Subject<void>();
 
@@ -899,6 +908,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.researchLoading = true;
     this.researchError = null;
     this.researchData = null;
+    this.researchChatHistory = [];
+    this.researchFollowUpInput = '';
 
     // Create a detailed research query
     const researchQuery = `Based on my story archive, provide relevant ideas, themes, plot elements, character archetypes, or writing patterns related to this plot point: "${this.story.chapterCreation.plotPoint}".
@@ -910,6 +921,13 @@ Help me understand:
 4. Writing style or techniques I've used in similar situations
 
 Provide actionable insights and creative suggestions to enhance this plot point.`;
+
+    // Add user message to chat history
+    this.researchChatHistory.push({
+      role: 'user',
+      content: researchQuery,
+      showSources: false
+    });
 
     this.archiveService.ragQuery(
       researchQuery,
@@ -925,7 +943,17 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     ).subscribe({
       next: (response) => {
         this.researchData = response;
+
+        // Add assistant response to chat history
+        this.researchChatHistory.push({
+          role: 'assistant',
+          content: response.answer,
+          sources: response.sources,
+          showSources: false
+        });
+
         this.cdr.detectChanges();
+        this.scrollChatToBottom();
       },
       error: (err) => {
         console.error('Research query failed:', err);
@@ -939,10 +967,104 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     });
   }
 
+  sendResearchFollowUp() {
+    if (!this.researchFollowUpInput.trim() || this.researchLoading) {
+      return;
+    }
+
+    const userQuestion = this.researchFollowUpInput.trim();
+    this.researchFollowUpInput = '';
+    this.researchLoading = true;
+    this.researchError = null;
+
+    // Add user message to chat history
+    this.researchChatHistory.push({
+      role: 'user',
+      content: userQuestion,
+      showSources: false
+    });
+
+    // Build message array for chat API
+    const messages = this.researchChatHistory.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
+    this.archiveService.ragChat(
+      messages,
+      5, // Fewer chunks for follow-ups
+      1000, // Shorter responses for follow-ups
+      0.5 // Slightly more creative for conversation
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.researchLoading = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
+      next: (response) => {
+        // Add assistant response to chat history
+        this.researchChatHistory.push({
+          role: 'assistant',
+          content: response.answer,
+          sources: response.sources,
+          showSources: false
+        });
+
+        // Update research data to show latest sources
+        this.researchData = response;
+
+        this.cdr.detectChanges();
+        this.scrollChatToBottom();
+      },
+      error: (err) => {
+        console.error('Follow-up query failed:', err);
+        // Remove the user message that failed
+        this.researchChatHistory.pop();
+        this.researchFollowUpInput = userQuestion; // Restore input
+
+        if (err.status === 503) {
+          this.researchError = 'RAG feature is not available.';
+        } else {
+          this.researchError = 'Failed to process follow-up question. Please try again.';
+        }
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  onResearchKeyPress(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendResearchFollowUp();
+    }
+  }
+
+  clearResearchChat() {
+    if (!confirm('Clear the entire research conversation?')) {
+      return;
+    }
+    this.researchChatHistory = [];
+    this.researchData = null;
+    this.researchError = null;
+    this.researchFollowUpInput = '';
+  }
+
   closeResearchSidebar() {
     this.showResearchSidebar = false;
     this.researchData = null;
     this.researchError = null;
+    this.researchChatHistory = [];
+    this.researchFollowUpInput = '';
+  }
+
+  private scrollChatToBottom() {
+    setTimeout(() => {
+      const chatContainer = document.querySelector('.research-chat-history');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }, 100);
   }
 
   getSourceFileName(source: any): string {
