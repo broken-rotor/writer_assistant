@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
+from chromadb.utils import embedding_functions
 from bs4 import BeautifulSoup
 import markdown
 
@@ -183,6 +184,12 @@ class StoryArchiveIngester:
         self.collection_name = collection_name
         self.processor = StoryDocumentProcessor()
 
+        # Initialize embedding function - using all-mpnet-base-v2 for better quality
+        logger.info("Initializing embedding model: all-mpnet-base-v2")
+        self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="all-mpnet-base-v2"
+        )
+
         # Initialize ChromaDB client
         self.client = chromadb.PersistentClient(
             path=db_path,
@@ -192,14 +199,19 @@ class StoryArchiveIngester:
             )
         )
 
-        # Get or create collection
+        # Get or create collection with custom embedding function
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
-            metadata={"description": "Story archive for semantic search"}
+            embedding_function=self.embedding_function,
+            metadata={
+                "description": "Story archive for semantic search",
+                "embedding_model": "all-mpnet-base-v2"
+            }
         )
 
         logger.info(f"Initialized ChromaDB at {db_path}")
         logger.info(f"Using collection: {collection_name}")
+        logger.info(f"Embedding model: all-mpnet-base-v2 (768 dimensions)")
 
     def find_story_files(self, directories: List[str], recursive: bool = True) -> List[Path]:
         """
@@ -336,7 +348,11 @@ class StoryArchiveIngester:
             self.client.delete_collection(self.collection_name)
             self.collection = self.client.get_or_create_collection(
                 name=self.collection_name,
-                metadata={"description": "Story archive for semantic search"}
+                embedding_function=self.embedding_function,
+                metadata={
+                    "description": "Story archive for semantic search",
+                    "embedding_model": "all-mpnet-base-v2"
+                }
             )
             logger.info("Collection reset successfully")
         except Exception as e:

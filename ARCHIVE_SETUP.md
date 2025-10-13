@@ -265,10 +265,19 @@ If you need to re-ingest files:
 ### How It Works
 
 1. **Ingestion**: Story files are split into overlapping chunks (~1000 characters)
-2. **Embedding**: ChromaDB automatically creates vector embeddings for each chunk
-3. **Storage**: Chunks and metadata are stored in the vector database
-4. **Search**: Queries are converted to vectors and matched against stored chunks
+2. **Embedding**: Text is converted to 768-dimensional vectors using the `all-mpnet-base-v2` model
+3. **Storage**: Chunks, embeddings, and metadata are stored in the vector database
+4. **Search**: Queries are converted to vectors using the same model and matched against stored chunks
 5. **Retrieval**: Most similar chunks are returned with their source files
+
+### Embedding Model
+
+The archive uses **all-mpnet-base-v2**, a high-quality sentence transformer model:
+- **Dimensions**: 768 (vs 384 for the smaller default model)
+- **Quality**: Superior semantic understanding compared to lightweight models
+- **Size**: ~420MB (downloaded automatically on first use)
+- **Performance**: Excellent for semantic search across creative writing
+- **Language**: Primarily English with good understanding of literary language
 
 ### Chunk Configuration
 

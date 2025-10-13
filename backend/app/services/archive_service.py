@@ -10,6 +10,7 @@ from pathlib import Path
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
+from chromadb.utils import embedding_functions
 
 from app.core.config import settings
 
@@ -70,6 +71,7 @@ class ArchiveService:
         self._client = None
         self._collection = None
         self._enabled = self.db_path is not None
+        self._embedding_function = None
 
     def is_enabled(self) -> bool:
         """Check if the archive service is enabled."""
@@ -95,12 +97,25 @@ class ArchiveService:
                 logger.error(f"Failed to initialize ChromaDB client: {e}")
                 raise
 
+        if self._embedding_function is None:
+            try:
+                # Initialize embedding function to match ingestion model
+                logger.info("Initializing embedding model: all-mpnet-base-v2")
+                self._embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+                    model_name="all-mpnet-base-v2"
+                )
+            except Exception as e:
+                logger.error(f"Failed to initialize embedding function: {e}")
+                raise
+
         if self._collection is None:
             try:
                 self._collection = self._client.get_collection(
-                    name=self.collection_name
+                    name=self.collection_name,
+                    embedding_function=self._embedding_function
                 )
                 logger.info(f"Loaded collection: {self.collection_name}")
+                logger.info(f"Using embedding model: all-mpnet-base-v2 (768 dimensions)")
             except Exception as e:
                 logger.error(f"Failed to load collection '{self.collection_name}': {e}")
                 raise
