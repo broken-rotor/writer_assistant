@@ -94,10 +94,16 @@ What had seemed simple moments ago now revealed layers of complexity. The charac
 
     mock_llm_instance.chat_completion.side_effect = chat_completion_side_effect
 
-    # Patch get_llm to return our mock
+    # Patch get_llm to return our mock in all endpoint modules
     with patch('app.services.llm_inference.get_llm', return_value=mock_llm_instance):
-        with patch('app.api.v1.endpoints.ai_generation.get_llm', return_value=mock_llm_instance):
-            yield mock_llm_instance
+        with patch('app.api.v1.endpoints.character_feedback.get_llm', return_value=mock_llm_instance):
+            with patch('app.api.v1.endpoints.rater_feedback.get_llm', return_value=mock_llm_instance):
+                with patch('app.api.v1.endpoints.generate_chapter.get_llm', return_value=mock_llm_instance):
+                    with patch('app.api.v1.endpoints.modify_chapter.get_llm', return_value=mock_llm_instance):
+                        with patch('app.api.v1.endpoints.editor_review.get_llm', return_value=mock_llm_instance):
+                            with patch('app.api.v1.endpoints.flesh_out.get_llm', return_value=mock_llm_instance):
+                                with patch('app.api.v1.endpoints.generate_character_details.get_llm', return_value=mock_llm_instance):
+                                    yield mock_llm_instance
 
 
 @pytest.fixture
