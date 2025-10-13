@@ -39,6 +39,7 @@ export interface ArchiveStats {
 export interface RAGChatMessage {
   role: string;
   content: string;
+  sources?: RAGSource[];  // Sources for assistant messages
 }
 
 export interface RAGSource {

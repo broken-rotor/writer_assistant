@@ -44,6 +44,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
   isChatProcessing: boolean = false;
   chatError: string | null = null;
   currentChatSources: any[] = [];
+  selectedMessageIndex: number | null = null;
 
   private subscriptions: Subscription[] = [];
 
@@ -226,6 +227,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
       this.chatMessages = [];
       this.chatError = null;
       this.currentChatSources = [];
+      this.selectedMessageIndex = null;
     }
   }
 
@@ -251,13 +253,17 @@ export class ArchiveComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.archiveService.ragChat(this.chatMessages).subscribe({
         next: (response) => {
-          // Add assistant response to chat
+          // Add assistant response to chat with sources
           const assistantMessage: RAGChatMessage = {
             role: 'assistant',
-            content: response.answer
+            content: response.answer,
+            sources: response.sources
           };
 
           this.chatMessages.push(assistantMessage);
+
+          // Auto-select the latest assistant message
+          this.selectedMessageIndex = this.chatMessages.length - 1;
           this.currentChatSources = response.sources;
           this.isChatProcessing = false;
 
@@ -300,6 +306,43 @@ export class ArchiveComponent implements OnInit, OnDestroy {
     this.chatError = null;
     this.currentChatSources = [];
     this.chatInput = '';
+    this.selectedMessageIndex = null;
+  }
+
+  selectMessage(index: number): void {
+    const message = this.chatMessages[index];
+    if (message.role === 'assistant' && message.sources) {
+      this.selectedMessageIndex = index;
+      this.currentChatSources = message.sources;
+    }
+  }
+
+  isMessageSelected(index: number): boolean {
+    return this.selectedMessageIndex === index;
+  }
+
+  // Convert markdown to HTML (simple implementation)
+  parseMarkdown(text: string): string {
+    if (!text) return '';
+
+    let html = text;
+
+    // Bold: **text** or __text__
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+    // Italic: *text* or _text_
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+    // Lists: lines starting with - or *
+    html = html.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+
+    return html;
   }
 
   isRagEnabled(): boolean {

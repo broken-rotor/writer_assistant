@@ -116,87 +116,104 @@
       <span>{{ chatError }}</span>
     </div>
 
-    <!-- Chat Container -->
+    <!-- Chat Container with Sidebar -->
     <div class="chat-container" *ngIf="isRagEnabled()">
-      <!-- Chat Messages -->
-      <div class="chat-messages">
-        <div class="chat-welcome" *ngIf="chatMessages.length === 0">
-          <h3>Ask Questions About Your Stories</h3>
-          <p>Use natural language to query your story archive. Examples:</p>
-          <ul class="example-queries">
-            <li>"What themes appear most frequently in my stories?"</li>
-            <li>"Tell me about the character development in story X"</li>
-            <li>"What are the main conflicts in my fantasy stories?"</li>
-            <li>"Summarize the plot of story Y"</li>
-          </ul>
-        </div>
-
-        <div class="message" *ngFor="let message of chatMessages" [ngClass]="'message-' + message.role">
-          <div class="message-avatar">
-            <span *ngIf="message.role === 'user'">👤</span>
-            <span *ngIf="message.role === 'assistant'">🤖</span>
+      <div class="chat-main">
+        <!-- Chat Messages -->
+        <div class="chat-messages">
+          <div class="chat-welcome" *ngIf="chatMessages.length === 0">
+            <h3>Ask Questions About Your Stories</h3>
+            <p>Use natural language to query your story archive. Examples:</p>
+            <ul class="example-queries">
+              <li>"What themes appear most frequently in my stories?"</li>
+              <li>"Tell me about the character development in story X"</li>
+              <li>"What are the main conflicts in my fantasy stories?"</li>
+              <li>"Summarize the plot of story Y"</li>
+            </ul>
           </div>
-          <div class="message-content">
-            <div class="message-text">{{ message.content }}</div>
-          </div>
-        </div>
 
-        <!-- Processing Indicator -->
-        <div class="message message-assistant" *ngIf="isChatProcessing">
-          <div class="message-avatar">🤖</div>
-          <div class="message-content">
-            <div class="typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
+          <div
+            class="message"
+            *ngFor="let message of chatMessages; let i = index"
+            [ngClass]="{
+              'message-user': message.role === 'user',
+              'message-assistant': message.role === 'assistant',
+              'message-selected': isMessageSelected(i)
+            }"
+            (click)="selectMessage(i)"
+            [style.cursor]="message.role === 'assistant' && message.sources ? 'pointer' : 'default'"
+          >
+            <div class="message-avatar">
+              <span *ngIf="message.role === 'user'">👤</span>
+              <span *ngIf="message.role === 'assistant'">🤖</span>
             </div>
+            <div class="message-content">
+              <div class="message-text" [innerHTML]="parseMarkdown(message.content)"></div>
+            </div>
+          </div>
+
+          <!-- Processing Indicator -->
+          <div class="message message-assistant" *ngIf="isChatProcessing">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+              <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-container">
+          <textarea
+            class="chat-input"
+            placeholder="Ask a question about your stories..."
+            [(ngModel)]="chatInput"
+            (keypress)="onChatKeyPress($event)"
+            [disabled]="isChatProcessing"
+            rows="2"
+          ></textarea>
+          <div class="chat-actions">
+            <button
+              class="btn-secondary btn-sm"
+              (click)="clearChat()"
+              *ngIf="chatMessages.length > 0"
+              [disabled]="isChatProcessing"
+            >
+              Clear Chat
+            </button>
+            <button
+              class="btn-primary"
+              (click)="sendChatMessage()"
+              [disabled]="!chatInput.trim() || isChatProcessing"
+            >
+              <span *ngIf="!isChatProcessing">Send</span>
+              <span *ngIf="isChatProcessing">Processing...</span>
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Chat Sources -->
-      <div class="chat-sources" *ngIf="currentChatSources.length > 0">
-        <h4>📚 Sources Used:</h4>
-        <div class="source-list">
+      <!-- Sources Sidebar -->
+      <div class="chat-sidebar" *ngIf="chatMessages.length > 0">
+        <div class="sidebar-header">
+          <h4>📚 Sources</h4>
+          <p class="sidebar-hint" *ngIf="currentChatSources.length === 0">
+            Click on a response to view its sources
+          </p>
+        </div>
+        <div class="source-list" *ngIf="currentChatSources.length > 0">
           <div class="source-item" *ngFor="let source of currentChatSources">
             <div class="source-header">
               <span class="source-file">{{ source.file_name }}</span>
               <span class="source-score" [ngClass]="getSimilarityBadgeClass(source.similarity_score)">
-                {{ source.similarity_score }}
+                {{ (source.similarity_score * 100).toFixed(0) }}%
               </span>
             </div>
             <div class="source-text">{{ getHighlightedText(source.matching_section, 200) }}</div>
           </div>
-        </div>
-      </div>
-
-      <!-- Chat Input -->
-      <div class="chat-input-container">
-        <textarea
-          class="chat-input"
-          placeholder="Ask a question about your stories..."
-          [(ngModel)]="chatInput"
-          (keypress)="onChatKeyPress($event)"
-          [disabled]="isChatProcessing"
-          rows="2"
-        ></textarea>
-        <div class="chat-actions">
-          <button
-            class="btn-secondary btn-sm"
-            (click)="clearChat()"
-            *ngIf="chatMessages.length > 0"
-            [disabled]="isChatProcessing"
-          >
-            Clear Chat
-          </button>
-          <button
-            class="btn-primary"
-            (click)="sendChatMessage()"
-            [disabled]="!chatInput.trim() || isChatProcessing"
-          >
-            <span *ngIf="!isChatProcessing">Send</span>
-            <span *ngIf="isChatProcessing">Processing...</span>
-          </button>
         </div>
       </div>
     </div>

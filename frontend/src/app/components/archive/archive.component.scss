@@ -518,8 +518,15 @@
     background: white;
     overflow: hidden;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     height: 600px;
+  }
+
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
 
   .chat-messages {
@@ -570,6 +577,7 @@
     display: flex;
     gap: 0.75rem;
     max-width: 85%;
+    transition: all 0.2s;
 
     &.message-user {
       align-self: flex-end;
@@ -590,6 +598,20 @@
         color: #333;
         border-radius: 12px 12px 12px 0;
       }
+
+      &:hover {
+        .message-content {
+          background: #e9ecef;
+        }
+      }
+
+      &.message-selected {
+        .message-content {
+          background: #d3e3fd;
+          border: 2px solid #007bff;
+          box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+        }
+      }
     }
 
     .message-avatar {
@@ -609,8 +631,25 @@
     }
 
     .message-text {
-      white-space: pre-wrap;
       line-height: 1.5;
+
+      // Markdown formatting styles
+      strong {
+        font-weight: 600;
+      }
+
+      em {
+        font-style: italic;
+      }
+
+      ul {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+
+        li {
+          margin: 0.25rem 0;
+        }
+      }
     }
   }
 
@@ -647,23 +686,42 @@
     }
   }
 
-  .chat-sources {
-    padding: 1rem 1.5rem;
+  // Sources Sidebar
+  .chat-sidebar {
+    width: 320px;
+    border-left: 1px solid #e0e0e0;
     background: #f8f9fa;
-    border-top: 1px solid #e0e0e0;
-    max-height: 200px;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 
-    h4 {
-      margin: 0 0 0.75rem 0;
-      color: #333;
-      font-size: 0.9rem;
+    .sidebar-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #e0e0e0;
+      background: white;
+
+      h4 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .sidebar-hint {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #888;
+        font-style: italic;
+      }
     }
 
     .source-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
 
     .source-item {
@@ -672,16 +730,26 @@
       border-radius: 6px;
       border: 1px solid #e0e0e0;
       font-size: 0.85rem;
+      transition: box-shadow 0.2s;
+
+      &:hover {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      }
 
       .source-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 0.5rem;
+        gap: 0.5rem;
 
         .source-file {
           font-weight: 500;
           color: #333;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .source-score {
@@ -689,12 +757,14 @@
           border-radius: 8px;
           font-size: 0.75rem;
           font-weight: 500;
+          flex-shrink: 0;
         }
       }
 
       .source-text {
         color: #666;
         line-height: 1.4;
+        font-size: 0.8rem;
       }
     }
   }
