@@ -32,7 +32,8 @@ This document explains the differences between `test_integration.py` (the old sc
 **Prerequisites:**
 ```bash
 # Backend must be running
-python backend/simple_main.py
+cd backend && source venv/bin/activate  # or venv\Scripts\activate on Windows
+uvicorn app.main:app --reload
 
 # Frontend dev server must be running
 cd frontend && ng serve
@@ -183,7 +184,7 @@ main.js             | main     | 1.00 MB
 **Example workflow:**
 ```bash
 # Start services
-python backend/simple_main.py &
+cd backend && source venv/bin/activate && uvicorn app.main:app --reload &
 cd frontend && ng serve &
 
 # Wait for services to start

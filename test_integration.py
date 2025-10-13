@@ -182,8 +182,8 @@ def main():
         print("3. API Docs: http://localhost:8000 (visit in browser)")
     else:
         print("Some tests failed. Please check the services are running:")
-        print("1. Backend: python backend/simple_main.py")
-        print("2. Frontend: cd frontend/writer-assistant-ui && npm start")
+        print("1. Backend: cd backend && source venv/bin/activate && uvicorn app.main:app --reload")
+        print("2. Frontend: cd frontend && ng serve")
 
 if __name__ == "__main__":
     main()

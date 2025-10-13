@@ -145,7 +145,7 @@ git push
 ✓ Production build created
 
 # 2. Start services locally
-python backend/simple_main.py &
+cd backend && source venv/bin/activate && uvicorn app.main:app --reload &
 cd frontend && ng serve &
 
 # 3. Run integration tests
@@ -311,7 +311,7 @@ test-and-build.bat
 
 ```bash
 # Start services first
-python backend/simple_main.py &
+cd backend && source venv/bin/activate && uvicorn app.main:app --reload &
 cd frontend && ng serve &
 
 # Then run integration tests
