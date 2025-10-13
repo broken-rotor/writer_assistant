@@ -14,10 +14,6 @@ Writer Assistant is a multi-agent AI system for collaborative storytelling that 
 - **Storage**: Browser local storage for all story data, memory, and configuration
 - **Architecture**: Multi-agent system with hierarchical memory management and client-side persistence
 
-## Development Commands
-
-Since this is a requirements-only repository (no implementation yet), there are no build, test, or lint commands available. The project consists entirely of specification documents.
-
 ## Project Architecture
 
 ### Multi-Agent System Structure
@@ -28,29 +24,6 @@ The system employs five types of specialized agents:
 2. **Character Sub-Agents**: Maintain individual character perspectives, memories, and authentic subjective experiences
 3. **Rater Agents**: Multiple critics providing specialized feedback (Character Consistency, Narrative Flow, Literary Quality, Genre-Specific)
 4. **Editor Agent**: Final quality gate ensuring consistency, tone coherence, and narrative flow
-
-### Two-Phase Development Process
-
-**Phase 1: Outline Development**
-- User provides story concept → Writer creates outline → Rater feedback → User review → Iterative refinement until approval
-
-**Phase 2: Chapter Development**
-- Writer generates chapters → Character agents contribute perspectives → Rater review → User review → Editor final check → Iterative refinement
-
-### Memory Architecture
-
-- **Hierarchical Memory Structure**: Working memory, episodic memory, semantic memory
-- **Agent-Specific Memory**: Individual perspectives and subjective experiences (feature: memory subjectivity allows conflicting character interpretations)
-- **Memory Synchronization**: Coordination protocols for shared story elements
-- **Omniscient Writer Access**: Writer agent has complete access to all character memories and internal states
-
-### LangGraph Workflow Coordination
-
-- **State Persistence**: Maintain workflow state across user sessions
-- **Dynamic Routing**: Workflow paths determined by story needs and agent feedback
-- **Parallel Processing**: Character agents and rater agents can execute simultaneously
-- **Sequential Review Stages**: Raters → User → Editor in defined sequence
-- **Error Recovery**: Graceful handling of agent failures and system interruptions
 
 ## Key Requirements Files
 
@@ -88,3 +61,7 @@ The system employs five types of specialized agents:
 - Memory efficiency: < 4KB context per agent per chapter
 - Consistency scores: > 85% character consistency across story
 - User satisfaction: > 4.0/5.0 rating on generated content
+
+## Development environment
+
+The backend python code always runs on the virtual environment.

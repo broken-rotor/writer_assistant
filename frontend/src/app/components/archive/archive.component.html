@@ -1,0 +1,187 @@
+<div class="archive">
+  <header class="archive-header">
+    <h2>Story Archive</h2>
+    <p class="archive-description">
+      Search through your archived stories using semantic search
+    </p>
+  </header>
+
+  <!-- Archive Stats -->
+  <div class="archive-stats" *ngIf="stats">
+    <div class="stat-item">
+      <span class="stat-icon">📚</span>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.total_files }}</span>
+        <span class="stat-label">Files</span>
+      </div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-icon">📄</span>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.total_chunks }}</span>
+        <span class="stat-label">Sections</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div class="error-message" *ngIf="error && !isSearching">
+    <span class="error-icon">⚠️</span>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Search Section -->
+  <div class="search-section">
+    <div class="search-box">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search for themes, characters, scenes, or any topic..."
+        [(ngModel)]="searchQuery"
+        (keypress)="onSearchKeyPress($event)"
+        [disabled]="isSearching"
+      />
+      <button
+        class="btn-primary search-btn"
+        (click)="onSearch()"
+        [disabled]="!searchQuery.trim() || isSearching"
+      >
+        <span class="icon" *ngIf="!isSearching">🔍</span>
+        <span *ngIf="isSearching">Searching...</span>
+        <span *ngIf="!isSearching">Search</span>
+      </button>
+      <button
+        class="btn-secondary"
+        (click)="clearSearch()"
+        *ngIf="hasSearched"
+      >
+        Clear
+      </button>
+    </div>
+
+    <!-- Advanced Options -->
+    <div class="advanced-options">
+      <button class="btn-link" (click)="toggleAdvancedOptions()">
+        <span *ngIf="!showAdvancedOptions">▶ Advanced Options</span>
+        <span *ngIf="showAdvancedOptions">▼ Advanced Options</span>
+      </button>
+
+      <div class="options-panel" *ngIf="showAdvancedOptions">
+        <div class="option-group">
+          <label for="maxResults">Maximum Results:</label>
+          <input
+            type="number"
+            id="maxResults"
+            [(ngModel)]="maxResults"
+            min="1"
+            max="50"
+            class="option-input"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Results -->
+  <div class="results-section" *ngIf="hasSearched && !isSearching">
+    <div class="results-header">
+      <h3>Search Results</h3>
+      <span class="results-count" *ngIf="searchResults.length > 0">
+        {{ searchResults.length }} result{{ searchResults.length !== 1 ? 's' : '' }} found
+      </span>
+    </div>
+
+    <div class="results-list" *ngIf="searchResults.length > 0">
+      <div class="result-item" *ngFor="let result of searchResults">
+        <div class="result-header">
+          <div class="result-title">
+            <span class="file-icon">📖</span>
+            <span class="file-name">{{ result.file_name }}</span>
+          </div>
+          <div class="result-meta">
+            <span
+              class="similarity-badge"
+              [ngClass]="getSimilarityBadgeClass(result.similarity_score)"
+              [title]="'Similarity score: ' + result.similarity_score"
+            >
+              {{ getSimilarityLabel(result.similarity_score) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="result-content">
+          <p class="matching-section">
+            {{ getHighlightedText(result.matching_section, 400) }}
+          </p>
+        </div>
+
+        <div class="result-footer">
+          <span class="result-path" [title]="result.file_path">
+            📁 {{ result.file_path }}
+          </span>
+          <button
+            class="btn-secondary btn-sm"
+            (click)="viewFileContent(result)"
+          >
+            View Full File
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-results" *ngIf="searchResults.length === 0 && !error">
+      <div class="no-results-icon">🔍</div>
+      <p>No results found for "{{ searchQuery }}"</p>
+      <p class="no-results-hint">Try different keywords or broader search terms.</p>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="loading-section" *ngIf="isSearching">
+    <div class="spinner"></div>
+    <p>Searching archive...</p>
+  </div>
+
+  <!-- File Content Viewer -->
+  <div class="content-viewer" id="content-viewer" *ngIf="selectedFile && fileContent">
+    <div class="content-header">
+      <h3>{{ selectedFile.file_name }}</h3>
+      <button class="btn-close" (click)="closeFileContent()" title="Close">✕</button>
+    </div>
+    <div class="content-path">
+      <span class="icon">📁</span>
+      {{ selectedFile.file_path }}
+    </div>
+    <div class="content-body">
+      <pre class="content-text">{{ fileContent }}</pre>
+    </div>
+  </div>
+
+  <!-- Loading Content Spinner -->
+  <div class="loading-section" *ngIf="isLoadingContent">
+    <div class="spinner"></div>
+    <p>Loading file content...</p>
+  </div>
+
+  <!-- Help Section -->
+  <div class="help-section" *ngIf="!hasSearched">
+    <h3>How to use Archive Search</h3>
+    <ul class="help-list">
+      <li>
+        <strong>Semantic Search:</strong> Search using natural language queries like
+        "stories about redemption" or "scenes with dramatic confrontation"
+      </li>
+      <li>
+        <strong>Relevance:</strong> Results are ranked by semantic similarity, not just
+        keyword matching
+      </li>
+      <li>
+        <strong>Context:</strong> Each result shows the relevant section of text along
+        with its location in the file
+      </li>
+      <li>
+        <strong>Full Access:</strong> Click "View Full File" to see the complete story
+      </li>
+    </ul>
+  </div>
+</div>

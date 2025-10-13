@@ -1,0 +1,84 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+
+export interface SearchResult {
+  file_path: string;
+  file_name: string;
+  matching_section: string;
+  chunk_index: number;
+  similarity_score: number;
+  char_start: number;
+  char_end: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  results: SearchResult[];
+  total_results: number;
+}
+
+export interface FileInfo {
+  file_path: string;
+  file_name: string;
+}
+
+export interface FileListResponse {
+  files: FileInfo[];
+  total_files: number;
+}
+
+export interface ArchiveStats {
+  total_chunks: number;
+  total_files: number;
+  collection_name: string;
+  db_path: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ArchiveService {
+  private apiUrl = `${environment.apiUrl}/archive`;
+
+  constructor(private http: HttpClient) {}
+
+  /**
+   * Search the story archive using semantic search
+   */
+  search(query: string, maxResults: number = 10, filterFileName?: string): Observable<SearchResponse> {
+    const body = {
+      query: query,
+      max_results: maxResults,
+      filter_file_name: filterFileName
+    };
+
+    return this.http.post<SearchResponse>(`${this.apiUrl}/search`, body);
+  }
+
+  /**
+   * Get a list of all files in the archive
+   */
+  listFiles(): Observable<FileListResponse> {
+    return this.http.get<FileListResponse>(`${this.apiUrl}/files`);
+  }
+
+  /**
+   * Get the full content of a specific file
+   */
+  getFileContent(filePath: string): Observable<{ file_path: string; content: string }> {
+    const params = new HttpParams().set('file_path', filePath);
+    return this.http.get<{ file_path: string; content: string }>(
+      `${this.apiUrl}/files/content`,
+      { params }
+    );
+  }
+
+  /**
+   * Get archive statistics
+   */
+  getStats(): Observable<ArchiveStats> {
+    return this.http.get<ArchiveStats>(`${this.apiUrl}/stats`);
+  }
+}

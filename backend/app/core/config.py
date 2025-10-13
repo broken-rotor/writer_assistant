@@ -18,6 +18,16 @@ class Settings(BaseSettings):
     # Database settings (using JSON files for MVP)
     DATA_DIR: str = "data"
 
+    # Archive settings (ChromaDB) - Optional feature
+    ARCHIVE_DB_PATH: Optional[str] = Field(
+        default=None,
+        description="Path to ChromaDB vector database for story archive (None = disabled)"
+    )
+    ARCHIVE_COLLECTION_NAME: str = Field(
+        default="story_archive",
+        description="ChromaDB collection name for story archive"
+    )
+
     # Agent settings (legacy - may be deprecated)
     MAX_CONTEXT_LENGTH: int = 4000
     DEFAULT_TEMPERATURE: float = 0.7
