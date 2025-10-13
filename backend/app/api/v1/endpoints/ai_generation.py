@@ -72,7 +72,7 @@ async def character_feedback(request: CharacterFeedbackRequest):
     try:
         character_name = request.character.name or "Character"
 
-        prompt = f"""{request.systemPrompts.mainPrefix}
+        system_prompt = f"""{request.systemPrompts.mainPrefix}
 
 You are embodying {character_name}, a character with the following traits:
 - Bio: {request.character.basicBio}
@@ -80,7 +80,9 @@ You are embodying {character_name}, a character with the following traits:
 - Motivations: {request.character.motivations}
 - Fears: {request.character.fears}
 
-Context:
+{request.systemPrompts.mainSuffix}"""
+
+        user_message = f"""Context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 - Current situation: {request.plotPoint}
@@ -92,11 +94,14 @@ Respond in JSON format with exactly these keys:
   "physicalSensations": ["3-5 physical sensations {character_name} experiences"],
   "emotions": ["3-5 emotions {character_name} feels"],
   "internalMonologue": ["3-5 thoughts in {character_name}'s mind"]
-}}
+}}"""
 
-{request.systemPrompts.mainSuffix}"""
+        messages = [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_message.strip()}
+        ]
 
-        response_text = llm.generate(prompt, max_tokens=800, temperature=0.8)
+        response_text = llm.chat_completion(messages, max_tokens=800, temperature=0.8)
         parsed = parse_json_response(response_text)
 
         if parsed and all(k in parsed for k in ['actions', 'dialog', 'physicalSensations', 'emotions', 'internalMonologue']):
@@ -126,11 +131,13 @@ async def rater_feedback(request: RaterFeedbackRequest):
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        prompt = f"""{request.systemPrompts.mainPrefix}
+        system_prompt = f"""{request.systemPrompts.mainPrefix}
 
 {request.raterPrompt}
 
-Evaluate this plot point:
+{request.systemPrompts.mainSuffix}"""
+
+        user_message = f"""Evaluate this plot point:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 - Plot point: {request.plotPoint}
@@ -139,11 +146,14 @@ Provide feedback in JSON format:
 {{
   "opinion": "Your overall opinion (2-3 sentences)",
   "suggestions": ["4-6 specific suggestions for improvement"]
-}}
+}}"""
 
-{request.systemPrompts.mainSuffix}"""
+        messages = [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_message.strip()}
+        ]
 
-        response_text = llm.generate(prompt, max_tokens=600, temperature=0.7)
+        response_text = llm.chat_completion(messages, max_tokens=600, temperature=0.7)
         parsed = parse_json_response(response_text)
 
         if parsed and 'opinion' in parsed and 'suggestions' in parsed:
@@ -182,10 +192,12 @@ async def generate_chapter(request: GenerateChapterRequest):
             feedback_items = [f"- {f.content}" for f in request.incorporatedFeedback[:5]]
             feedback_context = "Incorporated feedback:\n" + "\n".join(feedback_items)
 
-        prompt = f"""{request.systemPrompts.mainPrefix}
+        system_prompt = f"""{request.systemPrompts.mainPrefix}
 {request.systemPrompts.assistantPrompt or ''}
 
-Write a chapter for this story:
+{request.systemPrompts.mainSuffix}"""
+
+        user_message = f"""Write a chapter for this story:
 
 World: {request.worldbuilding}
 Story: {request.storySummary}
@@ -197,11 +209,14 @@ Plot point for this chapter: {request.plotPoint}
 
 {feedback_context}
 
-Write an engaging chapter (800-1500 words) that brings this plot point to life with vivid prose, authentic dialogue, and character development.
+Write an engaging chapter (800-1500 words) that brings this plot point to life with vivid prose, authentic dialogue, and character development."""
 
-{request.systemPrompts.mainSuffix}"""
+        messages = [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_message.strip()}
+        ]
 
-        response_text = llm.generate(prompt, max_tokens=2000, temperature=0.8)
+        response_text = llm.chat_completion(messages, max_tokens=2000, temperature=0.8)
         word_count = len(response_text.split())
 
         return GenerateChapterResponse(
@@ -226,12 +241,14 @@ async def modify_chapter(request: ModifyChapterRequest):
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        prompt = f"""{request.systemPrompts.mainPrefix}
+        system_prompt = f"""{request.systemPrompts.mainPrefix}
 {request.systemPrompts.assistantPrompt or ''}
 
 You are editing a chapter from a story.
 
-Story context:
+{request.systemPrompts.mainSuffix}"""
+
+        user_message = f"""Story context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 
@@ -240,11 +257,14 @@ Current chapter:
 
 User's modification request: {request.userRequest}
 
-Rewrite the chapter incorporating the requested changes while maintaining consistency with the story.
+Rewrite the chapter incorporating the requested changes while maintaining consistency with the story."""
 
-{request.systemPrompts.mainSuffix}"""
+        messages = [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_message.strip()}
+        ]
 
-        response_text = llm.generate(prompt, max_tokens=2500, temperature=0.7)
+        response_text = llm.chat_completion(messages, max_tokens=2500, temperature=0.7)
         word_count = len(response_text.split())
 
         return ModifyChapterResponse(
@@ -265,12 +285,14 @@ async def editor_review(request: EditorReviewRequest):
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        prompt = f"""{request.systemPrompts.mainPrefix}
+        system_prompt = f"""{request.systemPrompts.mainPrefix}
 {request.systemPrompts.editorPrompt or 'You are an expert editor.'}
 
-Review this chapter and provide specific suggestions for improvement.
+Review chapters and provide specific suggestions for improvement.
 
-Story context:
+{request.systemPrompts.mainSuffix}"""
+
+        user_message = f"""Story context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 
@@ -282,11 +304,14 @@ Provide 4-6 suggestions in JSON format:
   "suggestions": [
     {{"issue": "brief issue description", "suggestion": "specific improvement suggestion", "priority": "high|medium|low"}}
   ]
-}}
+}}"""
 
-{request.systemPrompts.mainSuffix}"""
+        messages = [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_message.strip()}
+        ]
 
-        response_text = llm.generate(prompt, max_tokens=800, temperature=0.6)
+        response_text = llm.chat_completion(messages, max_tokens=800, temperature=0.6)
         parsed = parse_json_response(response_text)
 
         suggestions = []
@@ -331,22 +356,27 @@ async def flesh_out(request: FleshOutRequest):
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        prompt = f"""{request.systemPrompts.mainPrefix}
+        system_prompt = f"""{request.systemPrompts.mainPrefix}
 
-Expand and flesh out the following text with rich detail.
+Expand and flesh out brief text with rich detail, adding depth, sensory details, and narrative richness.
 
-Story context:
+{request.systemPrompts.mainSuffix}"""
+
+        user_message = f"""Story context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 - Context type: {request.context}
 
 Text to expand: {request.textToFleshOut}
 
-Provide a detailed, atmospheric expansion (200-400 words) that adds depth, sensory details, and narrative richness.
+Provide a detailed, atmospheric expansion (200-400 words)."""
 
-{request.systemPrompts.mainSuffix}"""
+        messages = [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_message.strip()}
+        ]
 
-        response_text = llm.generate(prompt, max_tokens=600, temperature=0.8)
+        response_text = llm.chat_completion(messages, max_tokens=600, temperature=0.8)
 
         return FleshOutResponse(
             fleshedOutText=response_text.strip(),
@@ -370,11 +400,13 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
             for c in request.existingCharacters[:3]
         ])
 
-        prompt = f"""{request.systemPrompts.mainPrefix}
+        system_prompt = f"""{request.systemPrompts.mainPrefix}
 
-Create a detailed character for this story:
+Create detailed characters for stories with rich personalities and backgrounds.
 
-Story context:
+{request.systemPrompts.mainSuffix}"""
+
+        user_message = f"""Story context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 
@@ -396,11 +428,14 @@ Generate complete character details in JSON format:
   "motivations": "what drives them",
   "fears": "what they fear",
   "relationships": "how they relate to others"
-}}
+}}"""
 
-{request.systemPrompts.mainSuffix}"""
+        messages = [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_message.strip()}
+        ]
 
-        response_text = llm.generate(prompt, max_tokens=1000, temperature=0.7)
+        response_text = llm.chat_completion(messages, max_tokens=1000, temperature=0.7)
         parsed = parse_json_response(response_text)
 
         if parsed and 'name' in parsed:
