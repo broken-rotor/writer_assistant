@@ -2,7 +2,11 @@
 
 ## TL;DR
 
-The Story Archive feature is **optional** and **disabled by default**. Here's how to enable it:
+The Story Archive feature is **optional** and **disabled by default**. It provides two modes:
+- **Search Mode**: Semantic search through your archived stories
+- **Chat Mode (RAG)**: AI-powered Q&A about your stories (requires LLM configuration)
+
+Here's how to enable it:
 
 ### Enable Archive Feature
 
@@ -29,6 +33,28 @@ The Story Archive feature is **optional** and **disabled by default**. Here's ho
    ```
 
 5. **Use the Archive tab** in the frontend!
+
+### Enable RAG/Chat Mode (Optional)
+
+To enable AI-powered Q&A about your stories:
+
+1. **Install LLM library**:
+   ```bash
+   pip install llama-cpp-python
+   ```
+
+2. **Download a model** (GGUF format):
+   - Recommended: Mistral 7B Instruct or Llama 3.2 3B
+   - Place in `backend/models/` directory
+
+3. **Configure LLM in `.env`**:
+   ```bash
+   MODEL_PATH=./models/your-model.gguf
+   ```
+
+4. **Restart backend** and use the **Chat (RAG)** tab!
+
+For detailed RAG setup and usage, see [RAG_FEATURE.md](RAG_FEATURE.md).
 
 ## Without Configuration
 

@@ -36,6 +36,32 @@ export interface ArchiveStats {
   db_path: string;
 }
 
+export interface RAGChatMessage {
+  role: string;
+  content: string;
+}
+
+export interface RAGSource {
+  file_path: string;
+  file_name: string;
+  matching_section: string;
+  similarity_score: number;
+}
+
+export interface RAGResponse {
+  query: string;
+  answer: string;
+  sources: RAGSource[];
+  total_sources: number;
+}
+
+export interface RAGStatusResponse {
+  archive_enabled: boolean;
+  llm_enabled: boolean;
+  rag_enabled: boolean;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -80,5 +106,54 @@ export class ArchiveService {
    */
   getStats(): Observable<ArchiveStats> {
     return this.http.get<ArchiveStats>(`${this.apiUrl}/stats`);
+  }
+
+  /**
+   * Check RAG (Retrieval-Augmented Generation) status
+   */
+  getRagStatus(): Observable<RAGStatusResponse> {
+    return this.http.get<RAGStatusResponse>(`${this.apiUrl}/rag/status`);
+  }
+
+  /**
+   * Ask a question using RAG (single-turn query)
+   */
+  ragQuery(
+    question: string,
+    nContextChunks: number = 5,
+    maxTokens: number = 1024,
+    temperature: number = 0.3,
+    filterFileName?: string
+  ): Observable<RAGResponse> {
+    const body = {
+      question: question,
+      n_context_chunks: nContextChunks,
+      max_tokens: maxTokens,
+      temperature: temperature,
+      filter_file_name: filterFileName
+    };
+
+    return this.http.post<RAGResponse>(`${this.apiUrl}/rag/query`, body);
+  }
+
+  /**
+   * Chat with RAG context (multi-turn conversation)
+   */
+  ragChat(
+    messages: RAGChatMessage[],
+    nContextChunks: number = 5,
+    maxTokens: number = 1024,
+    temperature: number = 0.4,
+    filterFileName?: string
+  ): Observable<RAGResponse> {
+    const body = {
+      messages: messages,
+      n_context_chunks: nContextChunks,
+      max_tokens: maxTokens,
+      temperature: temperature,
+      filter_file_name: filterFileName
+    };
+
+    return this.http.post<RAGResponse>(`${this.apiUrl}/rag/chat`, body);
   }
 }

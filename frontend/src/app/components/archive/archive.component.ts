@@ -2,7 +2,15 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { ArchiveService, SearchResult, FileInfo, ArchiveStats } from '../../services/archive.service';
+import {
+  ArchiveService,
+  SearchResult,
+  FileInfo,
+  ArchiveStats,
+  RAGChatMessage,
+  RAGResponse,
+  RAGStatusResponse
+} from '../../services/archive.service';
 
 @Component({
   selector: 'app-archive',
@@ -12,6 +20,7 @@ import { ArchiveService, SearchResult, FileInfo, ArchiveStats } from '../../serv
   styleUrl: './archive.component.scss'
 })
 export class ArchiveComponent implements OnInit, OnDestroy {
+  // Search mode properties
   searchQuery: string = '';
   searchResults: SearchResult[] = [];
   isSearching: boolean = false;
@@ -27,12 +36,22 @@ export class ArchiveComponent implements OnInit, OnDestroy {
   maxResults: number = 10;
   showAdvancedOptions: boolean = false;
 
+  // RAG/Chat mode properties
+  mode: 'search' | 'chat' = 'search';
+  ragStatus: RAGStatusResponse | null = null;
+  chatMessages: RAGChatMessage[] = [];
+  chatInput: string = '';
+  isChatProcessing: boolean = false;
+  chatError: string | null = null;
+  currentChatSources: any[] = [];
+
   private subscriptions: Subscription[] = [];
 
   constructor(private archiveService: ArchiveService) {}
 
   ngOnInit(): void {
     this.loadStats();
+    this.loadRagStatus();
   }
 
   ngOnDestroy(): void {
@@ -164,5 +183,124 @@ export class ArchiveComponent implements OnInit, OnDestroy {
     if (score >= 0.8) return 'High Match';
     if (score >= 0.6) return 'Medium Match';
     return 'Low Match';
+  }
+
+  // ============================================================================
+  // RAG/Chat Mode Methods
+  // ============================================================================
+
+  loadRagStatus(): void {
+    this.subscriptions.push(
+      this.archiveService.getRagStatus().subscribe({
+        next: (status) => {
+          this.ragStatus = status;
+        },
+        error: (err) => {
+          console.error('Failed to load RAG status:', err);
+          this.ragStatus = {
+            archive_enabled: false,
+            llm_enabled: false,
+            rag_enabled: false,
+            message: 'Could not check RAG status'
+          };
+        }
+      })
+    );
+  }
+
+  switchMode(newMode: 'search' | 'chat'): void {
+    this.mode = newMode;
+    if (newMode === 'chat') {
+      // Clear search results when switching to chat
+      this.hasSearched = false;
+      this.searchResults = [];
+      this.error = null;
+    } else {
+      // Clear chat when switching to search
+      this.chatMessages = [];
+      this.chatError = null;
+      this.currentChatSources = [];
+    }
+  }
+
+  sendChatMessage(): void {
+    if (!this.chatInput.trim() || this.isChatProcessing) {
+      return;
+    }
+
+    // Add user message to chat
+    const userMessage: RAGChatMessage = {
+      role: 'user',
+      content: this.chatInput.trim()
+    };
+
+    this.chatMessages.push(userMessage);
+    this.chatError = null;
+    this.isChatProcessing = true;
+
+    const currentInput = this.chatInput;
+    this.chatInput = '';
+
+    // Send to RAG service
+    this.subscriptions.push(
+      this.archiveService.ragChat(this.chatMessages).subscribe({
+        next: (response) => {
+          // Add assistant response to chat
+          const assistantMessage: RAGChatMessage = {
+            role: 'assistant',
+            content: response.answer
+          };
+
+          this.chatMessages.push(assistantMessage);
+          this.currentChatSources = response.sources;
+          this.isChatProcessing = false;
+
+          // Scroll to bottom of chat
+          setTimeout(() => {
+            const chatContainer = document.querySelector('.chat-messages');
+            if (chatContainer) {
+              chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+          }, 100);
+        },
+        error: (err) => {
+          console.error('Chat failed:', err);
+
+          // Remove user message on error
+          this.chatMessages.pop();
+          this.chatInput = currentInput;
+
+          if (err.status === 503) {
+            this.chatError = err.error?.detail || 'RAG feature is not available. Please ensure both archive and LLM are configured.';
+          } else {
+            this.chatError = 'Failed to process your question. Please try again.';
+          }
+
+          this.isChatProcessing = false;
+        }
+      })
+    );
+  }
+
+  onChatKeyPress(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendChatMessage();
+    }
+  }
+
+  clearChat(): void {
+    this.chatMessages = [];
+    this.chatError = null;
+    this.currentChatSources = [];
+    this.chatInput = '';
+  }
+
+  isRagEnabled(): boolean {
+    return this.ragStatus?.rag_enabled || false;
+  }
+
+  getRagStatusMessage(): string {
+    return this.ragStatus?.message || 'Checking RAG status...';
   }
 }

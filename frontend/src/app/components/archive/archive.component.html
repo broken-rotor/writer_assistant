@@ -2,8 +2,28 @@
   <header class="archive-header">
     <h2>Story Archive</h2>
     <p class="archive-description">
-      Search through your archived stories using semantic search
+      Search through your archived stories using semantic search or ask questions with AI
     </p>
+
+    <!-- Mode Switcher -->
+    <div class="mode-switcher">
+      <button
+        class="mode-btn"
+        [class.active]="mode === 'search'"
+        (click)="switchMode('search')"
+      >
+        🔍 Search
+      </button>
+      <button
+        class="mode-btn"
+        [class.active]="mode === 'chat'"
+        (click)="switchMode('chat')"
+        [disabled]="!isRagEnabled()"
+        [title]="!isRagEnabled() ? getRagStatusMessage() : 'Ask questions about your stories'"
+      >
+        💬 Chat (RAG)
+      </button>
+    </div>
   </header>
 
   <!-- Archive Stats -->
@@ -31,7 +51,7 @@
   </div>
 
   <!-- Search Section -->
-  <div class="search-section">
+  <div class="search-section" *ngIf="mode === 'search'">
     <div class="search-box">
       <input
         type="text"
@@ -82,8 +102,108 @@
     </div>
   </div>
 
+  <!-- Chat Section -->
+  <div class="chat-section" *ngIf="mode === 'chat'">
+    <!-- RAG Status Message -->
+    <div class="info-message" *ngIf="!isRagEnabled()">
+      <span class="info-icon">ℹ️</span>
+      <span>{{ getRagStatusMessage() }}</span>
+    </div>
+
+    <!-- Chat Error Message -->
+    <div class="error-message" *ngIf="chatError && !isChatProcessing">
+      <span class="error-icon">⚠️</span>
+      <span>{{ chatError }}</span>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container" *ngIf="isRagEnabled()">
+      <!-- Chat Messages -->
+      <div class="chat-messages">
+        <div class="chat-welcome" *ngIf="chatMessages.length === 0">
+          <h3>Ask Questions About Your Stories</h3>
+          <p>Use natural language to query your story archive. Examples:</p>
+          <ul class="example-queries">
+            <li>"What themes appear most frequently in my stories?"</li>
+            <li>"Tell me about the character development in story X"</li>
+            <li>"What are the main conflicts in my fantasy stories?"</li>
+            <li>"Summarize the plot of story Y"</li>
+          </ul>
+        </div>
+
+        <div class="message" *ngFor="let message of chatMessages" [ngClass]="'message-' + message.role">
+          <div class="message-avatar">
+            <span *ngIf="message.role === 'user'">👤</span>
+            <span *ngIf="message.role === 'assistant'">🤖</span>
+          </div>
+          <div class="message-content">
+            <div class="message-text">{{ message.content }}</div>
+          </div>
+        </div>
+
+        <!-- Processing Indicator -->
+        <div class="message message-assistant" *ngIf="isChatProcessing">
+          <div class="message-avatar">🤖</div>
+          <div class="message-content">
+            <div class="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Sources -->
+      <div class="chat-sources" *ngIf="currentChatSources.length > 0">
+        <h4>📚 Sources Used:</h4>
+        <div class="source-list">
+          <div class="source-item" *ngFor="let source of currentChatSources">
+            <div class="source-header">
+              <span class="source-file">{{ source.file_name }}</span>
+              <span class="source-score" [ngClass]="getSimilarityBadgeClass(source.similarity_score)">
+                {{ source.similarity_score }}
+              </span>
+            </div>
+            <div class="source-text">{{ getHighlightedText(source.matching_section, 200) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="chat-input-container">
+        <textarea
+          class="chat-input"
+          placeholder="Ask a question about your stories..."
+          [(ngModel)]="chatInput"
+          (keypress)="onChatKeyPress($event)"
+          [disabled]="isChatProcessing"
+          rows="2"
+        ></textarea>
+        <div class="chat-actions">
+          <button
+            class="btn-secondary btn-sm"
+            (click)="clearChat()"
+            *ngIf="chatMessages.length > 0"
+            [disabled]="isChatProcessing"
+          >
+            Clear Chat
+          </button>
+          <button
+            class="btn-primary"
+            (click)="sendChatMessage()"
+            [disabled]="!chatInput.trim() || isChatProcessing"
+          >
+            <span *ngIf="!isChatProcessing">Send</span>
+            <span *ngIf="isChatProcessing">Processing...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Search Results -->
-  <div class="results-section" *ngIf="hasSearched && !isSearching">
+  <div class="results-section" *ngIf="mode === 'search' && hasSearched && !isSearching">
     <div class="results-header">
       <h3>Search Results</h3>
       <span class="results-count" *ngIf="searchResults.length > 0">
@@ -137,7 +257,7 @@
   </div>
 
   <!-- Loading Spinner -->
-  <div class="loading-section" *ngIf="isSearching">
+  <div class="loading-section" *ngIf="mode === 'search' && isSearching">
     <div class="spinner"></div>
     <p>Searching archive...</p>
   </div>
@@ -164,7 +284,7 @@
   </div>
 
   <!-- Help Section -->
-  <div class="help-section" *ngIf="!hasSearched">
+  <div class="help-section" *ngIf="mode === 'search' && !hasSearched">
     <h3>How to use Archive Search</h3>
     <ul class="help-list">
       <li>
@@ -181,6 +301,28 @@
       </li>
       <li>
         <strong>Full Access:</strong> Click "View Full File" to see the complete story
+      </li>
+    </ul>
+  </div>
+
+  <!-- Chat Help Section -->
+  <div class="help-section" *ngIf="mode === 'chat' && chatMessages.length === 0 && isRagEnabled()">
+    <h3>About RAG (Retrieval-Augmented Generation)</h3>
+    <ul class="help-list">
+      <li>
+        <strong>Natural Questions:</strong> Ask questions in plain English about your stories
+      </li>
+      <li>
+        <strong>Context-Aware:</strong> The AI retrieves relevant sections from your archive
+        before answering
+      </li>
+      <li>
+        <strong>Multi-Turn:</strong> Continue the conversation - the AI remembers previous
+        questions and answers
+      </li>
+      <li>
+        <strong>Source Transparency:</strong> See exactly which story sections were used
+        to generate each answer
       </li>
     </ul>
   </div>

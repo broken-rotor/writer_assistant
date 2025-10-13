@@ -1,7 +1,8 @@
 """
 Archive API endpoints for Writer Assistant.
 
-Provides endpoints for searching and retrieving archived stories.
+Provides endpoints for searching and retrieving archived stories,
+plus RAG-based question answering.
 """
 
 from fastapi import APIRouter, HTTPException, Query
@@ -10,6 +11,7 @@ from typing import List, Optional, Dict, Any
 import logging
 
 from app.services.archive_service import get_archive_service
+from app.services.rag_service import get_rag_service, ChatMessage
 
 logger = logging.getLogger(__name__)
 
@@ -233,3 +235,229 @@ async def get_archive_stats():
     except Exception as e:
         logger.error(f"Failed to get archive stats: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+
+
+# ============================================================================
+# RAG (Retrieval-Augmented Generation) Endpoints
+# ============================================================================
+
+class RAGQueryRequest(BaseModel):
+    """Request model for RAG query."""
+    question: str = Field(..., description="Question to answer", min_length=1)
+    n_context_chunks: int = Field(5, description="Number of context chunks to retrieve", ge=1, le=20)
+    max_tokens: Optional[int] = Field(1024, description="Maximum tokens for answer", ge=50, le=4096)
+    temperature: Optional[float] = Field(0.3, description="Sampling temperature", ge=0.0, le=1.0)
+    filter_file_name: Optional[str] = Field(None, description="Optional file name filter")
+
+
+class RAGChatMessageModel(BaseModel):
+    """Model for a chat message."""
+    role: str = Field(..., description="Message role (user or assistant)")
+    content: str = Field(..., description="Message content", min_length=1)
+
+
+class RAGChatRequest(BaseModel):
+    """Request model for RAG chat."""
+    messages: List[RAGChatMessageModel] = Field(..., description="Chat history including current question")
+    n_context_chunks: int = Field(5, description="Number of context chunks to retrieve", ge=1, le=20)
+    max_tokens: Optional[int] = Field(1024, description="Maximum tokens for answer", ge=50, le=4096)
+    temperature: Optional[float] = Field(0.4, description="Sampling temperature", ge=0.0, le=1.0)
+    filter_file_name: Optional[str] = Field(None, description="Optional file name filter")
+
+
+class RAGSource(BaseModel):
+    """Model for a RAG source/context chunk."""
+    file_path: str = Field(..., description="Path to source file")
+    file_name: str = Field(..., description="Name of source file")
+    matching_section: str = Field(..., description="Relevant text section")
+    similarity_score: float = Field(..., description="Similarity score")
+
+
+class RAGResponse(BaseModel):
+    """Response model for RAG queries."""
+    query: str = Field(..., description="The question that was asked")
+    answer: str = Field(..., description="Generated answer")
+    sources: List[RAGSource] = Field(..., description="Source chunks used for context")
+    total_sources: int = Field(..., description="Total number of sources used")
+
+
+class RAGStatusResponse(BaseModel):
+    """Response model for RAG status check."""
+    archive_enabled: bool = Field(..., description="Whether archive is enabled")
+    llm_enabled: bool = Field(..., description="Whether LLM is configured")
+    rag_enabled: bool = Field(..., description="Whether RAG is fully enabled")
+    message: str = Field(..., description="Status message")
+
+
+@router.get("/rag/status", response_model=RAGStatusResponse)
+async def get_rag_status():
+    """
+    Check if RAG (Retrieval-Augmented Generation) feature is enabled.
+
+    Returns status of both archive and LLM components.
+    """
+    try:
+        archive_service = get_archive_service()
+        rag_service = get_rag_service()
+
+        archive_enabled = archive_service.is_enabled()
+        llm_enabled = rag_service.llm is not None
+        rag_enabled = rag_service.is_enabled()
+
+        if rag_enabled:
+            message = "RAG feature is fully enabled and ready to use."
+        elif not archive_enabled:
+            message = "Archive is not enabled. Please configure ARCHIVE_DB_PATH."
+        elif not llm_enabled:
+            message = "LLM is not configured. Please set MODEL_PATH in your environment."
+        else:
+            message = "RAG feature is not available."
+
+        return RAGStatusResponse(
+            archive_enabled=archive_enabled,
+            llm_enabled=llm_enabled,
+            rag_enabled=rag_enabled,
+            message=message
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to check RAG status: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to check RAG status: {str(e)}")
+
+
+@router.post("/rag/query", response_model=RAGResponse)
+async def rag_query(request: RAGQueryRequest):
+    """
+    Answer a question using RAG (Retrieval-Augmented Generation).
+
+    Retrieves relevant story sections and uses an LLM to generate an answer
+    based on the retrieved context.
+    """
+    try:
+        rag_service = get_rag_service()
+
+        # Check if RAG is enabled
+        if not rag_service.is_enabled():
+            archive_enabled = rag_service.archive_service.is_enabled()
+            llm_enabled = rag_service.llm is not None
+
+            if not archive_enabled:
+                detail = "Archive feature is not enabled. Please configure ARCHIVE_DB_PATH."
+            elif not llm_enabled:
+                detail = "LLM is not configured. Please set MODEL_PATH in your environment."
+            else:
+                detail = "RAG feature is not available."
+
+            raise HTTPException(status_code=503, detail=detail)
+
+        # Build filter if provided
+        filter_metadata = None
+        if request.filter_file_name:
+            filter_metadata = {'file_name': request.filter_file_name}
+
+        # Perform RAG query
+        result = rag_service.query(
+            question=request.question,
+            n_context_chunks=request.n_context_chunks,
+            max_tokens=request.max_tokens,
+            temperature=request.temperature,
+            filter_metadata=filter_metadata
+        )
+
+        # Convert to response model
+        sources = [
+            RAGSource(
+                file_path=source.file_path,
+                file_name=source.file_name,
+                matching_section=source.chunk_text,
+                similarity_score=source.similarity_score
+            )
+            for source in result.sources
+        ]
+
+        return RAGResponse(
+            query=result.query,
+            answer=result.answer,
+            sources=sources,
+            total_sources=len(sources)
+        )
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"RAG query failed: {e}")
+        raise HTTPException(status_code=500, detail=f"RAG query failed: {str(e)}")
+
+
+@router.post("/rag/chat", response_model=RAGResponse)
+async def rag_chat(request: RAGChatRequest):
+    """
+    Conduct a multi-turn chat conversation with RAG context.
+
+    Maintains conversation history while retrieving relevant context
+    for each user question.
+    """
+    try:
+        rag_service = get_rag_service()
+
+        # Check if RAG is enabled
+        if not rag_service.is_enabled():
+            archive_enabled = rag_service.archive_service.is_enabled()
+            llm_enabled = rag_service.llm is not None
+
+            if not archive_enabled:
+                detail = "Archive feature is not enabled. Please configure ARCHIVE_DB_PATH."
+            elif not llm_enabled:
+                detail = "LLM is not configured. Please set MODEL_PATH in your environment."
+            else:
+                detail = "RAG feature is not available."
+
+            raise HTTPException(status_code=503, detail=detail)
+
+        # Convert Pydantic models to ChatMessage objects
+        messages = [
+            ChatMessage(role=msg.role, content=msg.content)
+            for msg in request.messages
+        ]
+
+        # Build filter if provided
+        filter_metadata = None
+        if request.filter_file_name:
+            filter_metadata = {'file_name': request.filter_file_name}
+
+        # Perform RAG chat
+        result = rag_service.chat(
+            messages=messages,
+            n_context_chunks=request.n_context_chunks,
+            max_tokens=request.max_tokens,
+            temperature=request.temperature,
+            filter_metadata=filter_metadata
+        )
+
+        # Convert to response model
+        sources = [
+            RAGSource(
+                file_path=source.file_path,
+                file_name=source.file_name,
+                matching_section=source.chunk_text,
+                similarity_score=source.similarity_score
+            )
+            for source in result.sources
+        ]
+
+        return RAGResponse(
+            query=result.query,
+            answer=result.answer,
+            sources=sources,
+            total_sources=len(sources)
+        )
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"RAG chat failed: {e}")
+        raise HTTPException(status_code=500, detail=f"RAG chat failed: {str(e)}")
