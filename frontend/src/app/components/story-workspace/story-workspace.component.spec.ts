@@ -236,6 +236,141 @@ describe('StoryWorkspaceComponent', () => {
     });
   });
 
+  describe('File Upload', () => {
+    beforeEach(() => {
+      const mockStory = createMockStory('test-id', 'Test Story');
+      storyServiceSpy.getStory.and.returnValue(mockStory);
+      storyServiceSpy.saveStory.and.returnValue(true);
+      fixture.detectChanges();
+    });
+
+    it('should load file content into prefix field', (done) => {
+      const fileContent = 'Test prefix content from file';
+      const blob = new Blob([fileContent], { type: 'text/plain' });
+      const file = new File([blob], 'test.txt', { type: 'text/plain' });
+
+      const event = {
+        target: {
+          files: [file],
+          value: 'test.txt'
+        }
+      } as any;
+
+      component.loadFileContent(event, 'prefix');
+
+      // Wait for FileReader to complete
+      setTimeout(() => {
+        expect(component.story!.general.systemPrompts.mainPrefix).toBe(fileContent);
+        expect(storyServiceSpy.saveStory).toHaveBeenCalled();
+        done();
+      }, 100);
+    });
+
+    it('should load file content into suffix field', (done) => {
+      const fileContent = 'Test suffix content from file';
+      const blob = new Blob([fileContent], { type: 'text/plain' });
+      const file = new File([blob], 'test.md', { type: 'text/markdown' });
+
+      const event = {
+        target: {
+          files: [file],
+          value: 'test.md'
+        }
+      } as any;
+
+      component.loadFileContent(event, 'suffix');
+
+      // Wait for FileReader to complete
+      setTimeout(() => {
+        expect(component.story!.general.systemPrompts.mainSuffix).toBe(fileContent);
+        expect(storyServiceSpy.saveStory).toHaveBeenCalled();
+        done();
+      }, 100);
+    });
+
+    it('should reject invalid file types', () => {
+      spyOn(window, 'alert');
+      const blob = new Blob(['content'], { type: 'application/pdf' });
+      const file = new File([blob], 'test.pdf', { type: 'application/pdf' });
+
+      const event = {
+        target: {
+          files: [file],
+          value: 'test.pdf'
+        }
+      } as any;
+
+      component.loadFileContent(event, 'prefix');
+
+      expect(window.alert).toHaveBeenCalledWith('Invalid file type. Please upload a .txt or .md file.');
+      expect(event.target.value).toBe('');
+    });
+
+    it('should reject files larger than 1MB', () => {
+      spyOn(window, 'alert');
+      // Create a string that's definitely larger than 1MB (1048576 bytes)
+      const largeContent = 'x'.repeat(1048577); // 1048577 bytes > 1MB
+      const blob = new Blob([largeContent], { type: 'text/plain' });
+
+      // Create a mock file with size property set explicitly
+      const mockFile = new File([blob], 'large.txt', { type: 'text/plain' });
+
+      // Override the size property to ensure it's > 1MB
+      Object.defineProperty(mockFile, 'size', { value: 1048577, writable: false });
+
+      const event = {
+        target: {
+          files: [mockFile],
+          value: 'large.txt'
+        }
+      } as any;
+
+      component.loadFileContent(event, 'prefix');
+
+      expect(window.alert).toHaveBeenCalledWith(jasmine.stringContaining('File is too large'));
+      expect(event.target.value).toBe('');
+    });
+
+    it('should handle file read errors', (done) => {
+      spyOn(window, 'alert');
+      spyOn(console, 'error');
+
+      const blob = new Blob(['content'], { type: 'text/plain' });
+      const file = new File([blob], 'test.txt', { type: 'text/plain' });
+
+      const event = {
+        target: {
+          files: [file],
+          value: 'test.txt'
+        }
+      } as any;
+
+      // Mock FileReader to simulate error
+      const originalFileReader = window.FileReader;
+      (window as any).FileReader = class {
+        readAsText() {
+          setTimeout(() => {
+            if (this.onerror) {
+              this.onerror({} as any);
+            }
+          }, 0);
+        }
+        onload: any;
+        onerror: any;
+        error = new Error('Read failed');
+      };
+
+      component.loadFileContent(event, 'prefix');
+
+      setTimeout(() => {
+        expect(window.alert).toHaveBeenCalledWith('Failed to read file. Please try again.');
+        expect(console.error).toHaveBeenCalled();
+        window.FileReader = originalFileReader;
+        done();
+      }, 100);
+    });
+  });
+
   describe('Helper Methods', () => {
     beforeEach(() => {
       const mockStory = createMockStory('test-id', 'Test Story');

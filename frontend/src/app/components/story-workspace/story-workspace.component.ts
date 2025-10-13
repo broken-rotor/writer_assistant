@@ -97,6 +97,57 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   // General tab methods
+  loadFileContent(event: Event, target: 'prefix' | 'suffix') {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    const file = input.files[0];
+
+    // Validate file type
+    const allowedExtensions = ['.txt', '.md'];
+    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!allowedExtensions.includes(fileExtension)) {
+      alert(`Invalid file type. Please upload a ${allowedExtensions.join(' or ')} file.`);
+      input.value = ''; // Reset input
+      return;
+    }
+
+    // Validate file size (1MB = 1048576 bytes)
+    const maxSize = 1048576;
+    if (file.size > maxSize) {
+      alert(`File is too large. Maximum size is 1MB (${(file.size / 1048576).toFixed(2)}MB provided).`);
+      input.value = ''; // Reset input
+      return;
+    }
+
+    // Read file content
+    const reader = new FileReader();
+
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const content = e.target?.result as string;
+      if (this.story && content) {
+        if (target === 'prefix') {
+          this.story.general.systemPrompts.mainPrefix = content;
+        } else {
+          this.story.general.systemPrompts.mainSuffix = content;
+        }
+        this.storyService.saveStory(this.story);
+      }
+    };
+
+    reader.onerror = () => {
+      alert('Failed to read file. Please try again.');
+      console.error('FileReader error:', reader.error);
+    };
+
+    reader.readAsText(file);
+
+    // Reset input so the same file can be loaded again if needed
+    input.value = '';
+  }
+
   aiFleshOutWorldbuilding() {
     if (!this.story || !this.story.general.worldbuilding) {
       alert('Please enter worldbuilding text first');

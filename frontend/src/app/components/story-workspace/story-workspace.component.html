@@ -33,11 +33,19 @@
       <div class="form-section">
         <label for="main-prefix">Main System Prompt Prefix (optional)</label>
         <textarea id="main-prefix" [(ngModel)]="story.general.systemPrompts.mainPrefix" placeholder="Text added before every agent prompt" rows="3"></textarea>
+        <div class="file-upload-section">
+          <input type="file" #prefixFileInput accept=".txt,.md" (change)="loadFileContent($event, 'prefix')" style="display: none">
+          <button class="secondary-button" (click)="prefixFileInput.click()">Load from File (.txt, .md)</button>
+        </div>
       </div>
 
       <div class="form-section">
         <label for="main-suffix">Main System Prompt Suffix (optional)</label>
         <textarea id="main-suffix" [(ngModel)]="story.general.systemPrompts.mainSuffix" placeholder="Text added after every agent prompt" rows="3"></textarea>
+        <div class="file-upload-section">
+          <input type="file" #suffixFileInput accept=".txt,.md" (change)="loadFileContent($event, 'suffix')" style="display: none">
+          <button class="secondary-button" (click)="suffixFileInput.click()">Load from File (.txt, .md)</button>
+        </div>
       </div>
 
       <div class="form-section">

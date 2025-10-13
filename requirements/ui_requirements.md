@@ -50,8 +50,23 @@ interface SystemPromptConfig {
     // Final prompt = mainPrefix + agentPrompt + mainSuffix
     example: "[prefix] [agent specific prompt] [suffix]";
   };
+
+  fileUploadActions: {
+    loadFromFile(target: 'prefix' | 'suffix', file: File): void;  // Load content from local file
+    acceptedFormats: ['.txt', '.md'];  // Supported file types
+    maxFileSize: 1048576;  // 1MB limit
+  };
 }
 ```
+
+**File Upload Features**:
+- Users can upload local text files to populate prefix/suffix fields
+- Browser-side file reading using FileReader API
+- No server upload required - completely client-side operation
+- File content loaded directly into text field (replaces existing content)
+- Supports `.txt` and `.md` file formats
+- Maximum file size: 1MB
+- File validation performed before loading
 
 ### Worldbuilding Section
 ```typescript
@@ -90,11 +105,13 @@ interface WorldbuildingComponent {
 │ ┌─────────────────────────────────────────────┐ │
 │ │ [Text added before every agent prompt]      │ │
 │ └─────────────────────────────────────────────┘ │
+│ [Load from File (.txt, .md)]                   │
 │                                                 │
 │ Main System Prompt Suffix (optional)           │
 │ ┌─────────────────────────────────────────────┐ │
 │ │ [Text added after every agent prompt]       │ │
 │ └─────────────────────────────────────────────┘ │
+│ [Load from File (.txt, .md)]                   │
 │                                                 │
 │ Writer Assistant System Prompt                 │
 │ ┌─────────────────────────────────────────────┐ │
