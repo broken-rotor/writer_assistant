@@ -10,13 +10,9 @@ class Settings(BaseSettings):
 
     # API settings
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "Writer Assistant"
 
     # Development settings
     DEBUG: bool = True
-
-    # Database settings (using JSON files for MVP)
-    DATA_DIR: str = "data"
 
     # Archive settings (ChromaDB) - Optional feature
     ARCHIVE_DB_PATH: Optional[str] = Field(
@@ -27,14 +23,6 @@ class Settings(BaseSettings):
         default="story_archive",
         description="ChromaDB collection name for story archive"
     )
-
-    # Agent settings (legacy - may be deprecated)
-    MAX_CONTEXT_LENGTH: int = 4000
-    DEFAULT_TEMPERATURE: float = 0.7
-
-    # Security settings
-    SECRET_KEY: str = "dev-secret-key-change-in-production"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # LLM Configuration
     MODEL_PATH: Optional[str] = Field(

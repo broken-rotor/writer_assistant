@@ -5,6 +5,7 @@ Provides semantic search functionality over archived stories using ChromaDB.
 """
 
 import logging
+import os.path
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
@@ -70,7 +71,7 @@ class ArchiveService:
         self.collection_name = collection_name or settings.ARCHIVE_COLLECTION_NAME
         self._client = None
         self._collection = None
-        self._enabled = self.db_path is not None
+        self._enabled = self.db_path is not None and os.path.exists(self.db_path)
         self._embedding_function = None
 
     def is_enabled(self) -> bool:
