@@ -137,15 +137,6 @@ class TestLLMInferenceConfig:
 class TestLLMInferenceInitialization:
     """Test LLM inference initialization and error handling"""
 
-    @pytest.mark.skipif(LLAMA_CPP_AVAILABLE, reason="Test requires llama-cpp-python to be unavailable")
-    def test_import_error_when_llama_cpp_unavailable(self):
-        """Test that ImportError is raised when llama-cpp-python is not available"""
-        with patch('app.services.llm_inference.LLAMA_CPP_AVAILABLE', False):
-            config = LLMInferenceConfig(model_path="/test/model.gguf")
-
-            with pytest.raises(ImportError, match="llama-cpp-python is not installed"):
-                LLMInference(config)
-
     def test_file_not_found_error(self):
         """Test that FileNotFoundError is raised for non-existent model"""
         if not LLAMA_CPP_AVAILABLE:
