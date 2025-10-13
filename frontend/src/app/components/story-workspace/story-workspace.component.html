@@ -287,11 +287,6 @@
     <div *ngIf="activeTab === 'chapter-creation'" class="tab-pane chapter-creation-tab">
       <h2>Chapter Creation</h2>
 
-      <!-- Chapter Title -->
-      <div class="section chapter-title-section">
-        <h3>Chapter Title</h3>
-        <input type="text" [(ngModel)]="chapterTitle" placeholder="Enter chapter title (optional - will auto-generate if empty)">
-      </div>
 
       <!-- Plot Point -->
       <div class="section plot-point-section">
@@ -473,8 +468,10 @@
 
       <!-- Generated Chapter -->
       <div class="section generated-chapter-section" *ngIf="story.chapterCreation.generatedChapter">
-        <h3>Generated Chapter</h3>
-        <textarea [(ngModel)]="story.chapterCreation.generatedChapter.text" rows="20"></textarea>
+        <div class="chapter-title-input">
+          <input type="text" [(ngModel)]="chapterTitle" placeholder="Chapter Title (optional - will auto-generate if empty)">
+        </div>
+        <textarea [(ngModel)]="story.chapterCreation.generatedChapter.text" rows="35"></textarea>
 
         <div class="prompt-changes-section">
           <h4>Prompt Writer for Changes</h4>

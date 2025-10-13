@@ -550,12 +550,50 @@ button {
     margin-left: auto;
     margin-right: auto;
 
-    textarea {
+    .chapter-title-input {
+      margin-bottom: 16px;
+
+      input[type="text"] {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        box-sizing: border-box;
+        transition: all 0.2s;
+
+        &:focus {
+          outline: none;
+          border-color: #2196F3;
+          box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        &::placeholder {
+          color: #999;
+          font-weight: 400;
+        }
+      }
+    }
+
+    > textarea {
       width: 100% !important;
-      min-height: 400px;
+      min-height: 600px;
       font-family: 'Georgia', serif;
       line-height: 1.8;
+      font-size: 15px;
       box-sizing: border-box;
+      padding: 20px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      transition: all 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: #2196F3;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+      }
     }
 
     .prompt-changes-section {
