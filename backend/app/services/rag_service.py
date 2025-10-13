@@ -6,11 +6,13 @@ natural language queries over archived stories.
 """
 
 import logging
+import re
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
 from app.services.archive_service import ArchiveService, ArchiveSearchResult
 from app.services.llm_inference import LLMInference, get_llm
+from app.services.query_analyzer import QueryAnalyzer, QueryAnalysis
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +55,7 @@ class RAGService:
         """
         self.archive_service = archive_service
         self._llm = llm
+        self.query_analyzer = QueryAnalyzer()
 
     @property
     def llm(self) -> Optional[LLMInference]:
@@ -189,22 +192,84 @@ class RAGService:
 
             latest_question = user_messages[-1].content
 
-            # Step 1: Retrieve relevant context
-            logger.info(f"Retrieving context for chat question: {latest_question}")
-            search_results = self.archive_service.search(
+            # Step 1: Analyze the query to determine retrieval strategy
+            previous_msg_dicts = [{"role": m.role, "content": m.content} for m in messages[:-1]]
+            query_analysis = self.query_analyzer.analyze(
                 query=latest_question,
-                n_results=n_context_chunks,
-                filter_metadata=filter_metadata
+                previous_messages=previous_msg_dicts
             )
 
-            # Step 2: Build context
-            context = self._build_context(search_results) if search_results else ""
+            logger.info(
+                f"Query analysis: needs_full_doc={query_analysis.needs_full_document}, "
+                f"sources={query_analysis.specified_sources}"
+            )
 
-            # Step 3: Build chat messages with context
+            # Step 2: Retrieve context based on analysis
+            search_results = []
+            full_documents = []
+
+            # Remove source tags from query for cleaner search
+            clean_query = re.sub(r'source:\S+\s*', '', latest_question).strip()
+
+            if query_analysis.specified_sources:
+                # User specified sources - retrieve those full documents
+                for source_name in query_analysis.specified_sources:
+                    file_path = self.archive_service.find_file_by_name(source_name)
+                    if file_path:
+                        content = self.archive_service.get_file_content(file_path)
+                        if content:
+                            full_documents.append({
+                                'file_name': source_name,
+                                'file_path': file_path,
+                                'content': content
+                            })
+                            logger.info(f"Retrieved full document: {source_name}")
+                    else:
+                        logger.warning(f"Source not found: {source_name}")
+
+            elif query_analysis.needs_full_document:
+                # Query indicates need for full documents - retrieve chunks first, then full docs
+                logger.info(f"Retrieving full documents based on query indicators: {query_analysis.detail_indicators}")
+                search_results = self.archive_service.search(
+                    query=clean_query,
+                    n_results=n_context_chunks,
+                    filter_metadata=filter_metadata
+                )
+
+                # Get full documents for the top matching files
+                seen_files = set()
+                for result in search_results[:3]:  # Get full docs for top 3 results
+                    if result.file_path not in seen_files:
+                        content = self.archive_service.get_file_content(result.file_path)
+                        if content:
+                            full_documents.append({
+                                'file_name': result.file_name,
+                                'file_path': result.file_path,
+                                'content': content
+                            })
+                            seen_files.add(result.file_path)
+                            logger.info(f"Retrieved full document: {result.file_name}")
+
+            else:
+                # Standard chunk-based retrieval
+                logger.info("Using standard chunk-based retrieval")
+                search_results = self.archive_service.search(
+                    query=clean_query,
+                    n_results=n_context_chunks,
+                    filter_metadata=filter_metadata
+                )
+
+            # Step 3: Build context from chunks and/or full documents
+            context = self._build_enhanced_context(search_results, full_documents)
+
+            # Step 4: Build chat messages with context
             chat_messages = self._build_chat_messages(messages, context)
 
-            # Step 4: Generate response using chat completion
-            logger.info(f"Generating chat response with {len(search_results)} context chunks")
+            # Step 5: Generate response using chat completion
+            logger.info(
+                f"Generating chat response with {len(search_results)} chunks, "
+                f"{len(full_documents)} full documents"
+            )
             answer = self.llm.chat_completion(
                 messages=chat_messages,
                 max_tokens=max_tokens or 1024,
@@ -239,6 +304,53 @@ class RAGService:
             )
 
         return "\n".join(context_parts)
+
+    def _build_enhanced_context(
+        self,
+        search_results: List[ArchiveSearchResult],
+        full_documents: List[Dict[str, str]]
+    ) -> str:
+        """
+        Build context from both search result chunks and full documents.
+
+        Args:
+            search_results: List of chunk-based search results
+            full_documents: List of full document dicts with 'file_name', 'file_path', 'content'
+
+        Returns:
+            Formatted context string
+        """
+        context_parts = []
+
+        # Add full documents first (if any)
+        if full_documents:
+            context_parts.append("=== FULL DOCUMENTS ===\n")
+            for i, doc in enumerate(full_documents, 1):
+                # Truncate very long documents to avoid context overflow
+                content = doc['content']
+                max_doc_length = 8000  # Characters per document
+                if len(content) > max_doc_length:
+                    # Keep beginning and end, truncate middle
+                    keep_length = max_doc_length // 2
+                    content = (
+                        content[:keep_length] +
+                        "\n\n[... middle content truncated for brevity ...]\n\n" +
+                        content[-keep_length:]
+                    )
+
+                context_parts.append(
+                    f"[Document {i}: {doc['file_name']}]\n{content}\n"
+                )
+
+        # Add relevant chunks (if any and not redundant with full docs)
+        if search_results and not full_documents:
+            context_parts.append("=== RELEVANT EXCERPTS ===\n")
+            for i, result in enumerate(search_results, 1):
+                context_parts.append(
+                    f"[Excerpt {i} from {result.file_name}]\n{result.chunk_text}\n"
+                )
+
+        return "\n".join(context_parts) if context_parts else ""
 
     def _build_rag_prompt(self, question: str, context: str) -> str:
         """

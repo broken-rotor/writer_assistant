@@ -218,6 +218,40 @@ class ArchiveService:
             logger.error(f"Failed to get file list: {e}")
             raise
 
+    def find_file_by_name(self, file_name: str) -> Optional[str]:
+        """
+        Find a file path by matching file name (exact or partial).
+
+        Args:
+            file_name: File name or pattern to search for
+
+        Returns:
+            Full file path if found, None otherwise
+        """
+        self._ensure_initialized()
+
+        try:
+            files = self.get_file_list()
+
+            # Try exact match first
+            for file_info in files:
+                if file_info['file_name'] == file_name:
+                    return file_info['file_path']
+
+            # Try partial match (case-insensitive)
+            file_name_lower = file_name.lower()
+            for file_info in files:
+                if file_name_lower in file_info['file_name'].lower():
+                    logger.info(f"Partial match: '{file_name}' -> '{file_info['file_name']}'")
+                    return file_info['file_path']
+
+            logger.warning(f"No file found matching: {file_name}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Failed to find file by name: {e}")
+            raise
+
     def get_file_content(self, file_path: str) -> Optional[str]:
         """
         Retrieve the full content of a file from the archive.
