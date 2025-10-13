@@ -8,11 +8,13 @@ import { StoryService } from '../../services/story.service';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
+import { ArchiveService, RAGResponse } from '../../services/archive.service';
+import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
 
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -41,6 +43,12 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   editingChapterId: string | null = null; // Track which chapter is being edited (null = creating new)
   chapterTitle: string = ''; // Title for the chapter being created/edited
 
+  // Research Archive state
+  showResearchSidebar = false;
+  researchLoading = false;
+  researchError: string | null = null;
+  researchData: RAGResponse | null = null;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -48,7 +56,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     private storyService: StoryService,
     private generationService: GenerationService,
     private loadingService: LoadingService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private archiveService: ArchiveService
   ) {}
 
   ngOnInit() {
@@ -877,5 +886,83 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   private generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+
+  // Research Archive methods
+  researchPlotPoint() {
+    if (!this.story || !this.story.chapterCreation.plotPoint) {
+      alert('Please enter a plot point first');
+      return;
+    }
+
+    this.showResearchSidebar = true;
+    this.researchLoading = true;
+    this.researchError = null;
+    this.researchData = null;
+
+    // Create a detailed research query
+    const researchQuery = `Based on my story archive, provide relevant ideas, themes, plot elements, character archetypes, or writing patterns related to this plot point: "${this.story.chapterCreation.plotPoint}".
+
+Help me understand:
+1. Similar plot developments or scenes from my previous stories
+2. Character interactions or dynamics that could inform this scene
+3. Thematic elements that might be relevant
+4. Writing style or techniques I've used in similar situations
+
+Provide actionable insights and creative suggestions to enhance this plot point.`;
+
+    this.archiveService.ragQuery(
+      researchQuery,
+      8, // More context chunks for better coverage
+      1500, // Longer response for detailed insights
+      0.4 // Slightly higher temperature for creativity
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.researchLoading = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
+      next: (response) => {
+        this.researchData = response;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Research query failed:', err);
+        if (err.status === 503) {
+          this.researchError = 'RAG feature is not available. Please ensure both archive and LLM are configured. See RAG_FEATURE.md for setup instructions.';
+        } else {
+          this.researchError = 'Failed to research plot point. Please try again.';
+        }
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  closeResearchSidebar() {
+    this.showResearchSidebar = false;
+    this.researchData = null;
+    this.researchError = null;
+  }
+
+  getSourceFileName(source: any): string {
+    return source.file_name || 'Unknown';
+  }
+
+  getSourceExcerpt(source: any): string {
+    const text = source.matching_section || '';
+    return text.length > 150 ? text.substring(0, 150) + '...' : text;
+  }
+
+  getSimilarityLabel(score: number): string {
+    if (score >= 0.8) return 'High';
+    if (score >= 0.6) return 'Medium';
+    return 'Low';
+  }
+
+  getSimilarityClass(score: number): string {
+    if (score >= 0.8) return 'high';
+    if (score >= 0.6) return 'medium';
+    return 'low';
   }
 }

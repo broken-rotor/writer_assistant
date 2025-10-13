@@ -299,6 +299,7 @@
         <textarea [(ngModel)]="story.chapterCreation.plotPoint" placeholder="Sarah discovers a hidden letter in the..." rows="4"></textarea>
         <div class="button-group">
           <button class="secondary-button" (click)="aiFleshOutPlotPoint()">AI Flesh Out</button>
+          <button class="secondary-button" (click)="researchPlotPoint()" title="Research similar content from story archive">📚 Research Archive</button>
           <button class="secondary-button">Reset</button>
         </div>
       </div>
@@ -519,6 +520,64 @@
         </div>
 
         <button class="primary-button large" (click)="acceptChapter()">Accept Chapter - Add to Story</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Research Archive Sidebar -->
+  <div class="research-sidebar" *ngIf="showResearchSidebar" [class.show]="showResearchSidebar">
+    <div class="sidebar-header">
+      <h3>📚 Archive Research</h3>
+      <button class="close-button" (click)="closeResearchSidebar()" title="Close">✕</button>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- Loading State -->
+      <div class="research-loading" *ngIf="researchLoading">
+        <div class="spinner"></div>
+        <p>Researching your story archive...</p>
+      </div>
+
+      <!-- Error State -->
+      <div class="research-error" *ngIf="researchError && !researchLoading">
+        <span class="error-icon">⚠️</span>
+        <p>{{ researchError }}</p>
+      </div>
+
+      <!-- Research Results -->
+      <div class="research-results" *ngIf="researchData && !researchLoading">
+        <!-- AI Insights -->
+        <div class="research-insights">
+          <h4>💡 Insights & Suggestions</h4>
+          <div class="insights-content">
+            <p [innerHTML]="researchData.answer | newlineToBr"></p>
+          </div>
+        </div>
+
+        <!-- Source References -->
+        <div class="research-sources" *ngIf="researchData.sources && researchData.sources.length > 0">
+          <h4>📖 Sources ({{ researchData.total_sources }})</h4>
+          <div class="sources-list">
+            <div class="source-item" *ngFor="let source of researchData.sources">
+              <div class="source-header">
+                <span class="source-file">{{ getSourceFileName(source) }}</span>
+                <span class="similarity-badge" [ngClass]="getSimilarityClass(source.similarity_score)">
+                  {{ getSimilarityLabel(source.similarity_score) }} ({{ source.similarity_score | number:'1.2-2' }})
+                </span>
+              </div>
+              <div class="source-excerpt">
+                {{ getSourceExcerpt(source) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Help Text -->
+        <div class="research-help">
+          <p class="hint">
+            <strong>Tip:</strong> Use these insights to enhance your plot point or incorporate them into character feedback and chapter generation.
+          </p>
+        </div>
       </div>
     </div>
   </div>
