@@ -16,23 +16,15 @@ from pathlib import Path
 from typing import List, Dict, Any
 import hashlib
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 from chromadb.utils import embedding_functions
 from bs4 import BeautifulSoup
 import markdown
 
-# Try to import app settings, fallback to defaults if not available
-try:
-    from app.core.config import settings as app_settings
-    DEFAULT_DB_PATH = app_settings.ARCHIVE_DB_PATH
-    DEFAULT_COLLECTION = app_settings.ARCHIVE_COLLECTION_NAME
-except ImportError:
-    DEFAULT_DB_PATH = "./chroma_db"
-    DEFAULT_COLLECTION = "story_archive"
+# Default configuration values
+DEFAULT_DB_PATH = "./chroma_db"
+DEFAULT_COLLECTION = "story_archive"
 
 # Configure logging
 logging.basicConfig(
