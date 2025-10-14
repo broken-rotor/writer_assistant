@@ -54,6 +54,7 @@ export interface RAGResponse {
   answer: string;
   sources: RAGSource[];
   total_sources: number;
+  info_message?: string;  // Informational message about retrieval status
 }
 
 export interface RAGStatusResponse {

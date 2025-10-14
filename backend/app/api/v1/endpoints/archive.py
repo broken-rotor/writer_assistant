@@ -279,6 +279,7 @@ class RAGResponse(BaseModel):
     answer: str = Field(..., description="Generated answer")
     sources: List[RAGSource] = Field(..., description="Source chunks used for context")
     total_sources: int = Field(..., description="Total number of sources used")
+    info_message: Optional[str] = Field(None, description="Informational message about retrieval status (not included in future prompts)")
 
 
 class RAGStatusResponse(BaseModel):
@@ -386,7 +387,8 @@ async def rag_query(request: RAGQueryRequest):
             query=result.query,
             answer=result.answer,
             sources=sources,
-            total_sources=len(sources)
+            total_sources=len(sources),
+            info_message=result.info_message
         )
 
     except HTTPException:
@@ -458,7 +460,8 @@ async def rag_chat(request: RAGChatRequest):
             query=result.query,
             answer=result.answer,
             sources=sources,
-            total_sources=len(sources)
+            total_sources=len(sources),
+            info_message=result.info_message
         )
 
     except HTTPException:

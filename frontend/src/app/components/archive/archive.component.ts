@@ -43,6 +43,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
   chatInput: string = '';
   isChatProcessing: boolean = false;
   chatError: string | null = null;
+  chatInfoMessage: string | null = null;
   currentChatSources: any[] = [];
   selectedMessageIndex: number | null = null;
 
@@ -226,6 +227,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
       // Clear chat when switching to search
       this.chatMessages = [];
       this.chatError = null;
+      this.chatInfoMessage = null;
       this.currentChatSources = [];
       this.selectedMessageIndex = null;
     }
@@ -267,6 +269,17 @@ export class ArchiveComponent implements OnInit, OnDestroy {
           this.currentChatSources = response.sources;
           this.isChatProcessing = false;
 
+          // Display info message if present (document retrieval warnings/errors)
+          if (response.info_message) {
+            this.chatInfoMessage = response.info_message;
+            // Auto-clear info message after 10 seconds
+            setTimeout(() => {
+              this.chatInfoMessage = null;
+            }, 10000);
+          } else {
+            this.chatInfoMessage = null;
+          }
+
           // Scroll to bottom of chat
           setTimeout(() => {
             const chatContainer = document.querySelector('.chat-messages');
@@ -304,6 +317,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
   clearChat(): void {
     this.chatMessages = [];
     this.chatError = null;
+    this.chatInfoMessage = null;
     this.currentChatSources = [];
     this.chatInput = '';
     this.selectedMessageIndex = null;

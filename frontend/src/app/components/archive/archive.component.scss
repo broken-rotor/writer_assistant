@@ -508,6 +508,13 @@
   .info-icon {
     font-size: 1.25rem;
   }
+
+  // Warning variant for document retrieval issues
+  &.warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+  }
 }
 
 // Chat Section

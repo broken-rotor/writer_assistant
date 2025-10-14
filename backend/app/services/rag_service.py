@@ -31,6 +31,7 @@ class RAGResponse:
     answer: str
     sources: List[ArchiveSearchResult]
     context_used: str
+    info_message: Optional[str] = None  # Informational message for user (not included in future prompts)
 
 
 class RAGService:
@@ -207,6 +208,7 @@ class RAGService:
             # Step 2: Retrieve context based on analysis
             search_results = []
             full_documents = []
+            retrieval_warnings = []  # Track warnings about failed retrievals
 
             # Remove source tags from query for cleaner search
             clean_query = re.sub(r'source:\S+\s*', '', latest_question).strip()
@@ -224,8 +226,14 @@ class RAGService:
                                 'content': content
                             })
                             logger.info(f"Retrieved full document: {source_name}")
+                        else:
+                            # Document found but content couldn't be read
+                            logger.warning(f"Could not read content for: {source_name}")
+                            retrieval_warnings.append(f"Document '{source_name}' was found but could not be read from the archive.")
                     else:
+                        # Document not found in archive
                         logger.warning(f"Source not found: {source_name}")
+                        retrieval_warnings.append(f"Document '{source_name}' was not found in the archive.")
 
             elif query_analysis.needs_full_document:
                 # Query indicates need for full documents - retrieve chunks first, then full docs
@@ -249,6 +257,9 @@ class RAGService:
                             })
                             seen_files.add(result.file_path)
                             logger.info(f"Retrieved full document: {result.file_name}")
+                        else:
+                            logger.warning(f"Could not read content for: {result.file_name}")
+                            retrieval_warnings.append(f"Document '{result.file_name}' could not be read from the archive.")
 
             else:
                 # Standard chunk-based retrieval
@@ -259,13 +270,38 @@ class RAGService:
                     filter_metadata=filter_metadata
                 )
 
-            # Step 3: Build context from chunks and/or full documents
+            # Step 3: Check if we should proceed with generation
+            # If user explicitly requested sources but none were successfully retrieved, don't generate
+            if query_analysis.specified_sources and not full_documents:
+                info_msg = " ".join(retrieval_warnings) if retrieval_warnings else \
+                    "Could not retrieve the requested document(s)."
+                logger.warning(f"Skipping generation - no requested documents available: {info_msg}")
+                return RAGResponse(
+                    query=latest_question,
+                    answer="I was unable to retrieve the requested document(s) from the archive. "
+                           "Please check that the document name is correct and has been indexed.",
+                    sources=[],
+                    context_used="",
+                    info_message=info_msg
+                )
+
+            # Check if we have any context at all
+            if not search_results and not full_documents:
+                return RAGResponse(
+                    query=latest_question,
+                    answer="I couldn't find any relevant information in the archive to answer your question.",
+                    sources=[],
+                    context_used="",
+                    info_message="No relevant content was found in the archive."
+                )
+
+            # Step 4: Build context from chunks and/or full documents
             context = self._build_enhanced_context(search_results, full_documents)
 
-            # Step 4: Build chat messages with context
+            # Step 5: Build chat messages with context
             chat_messages = self._build_chat_messages(messages, context)
 
-            # Step 5: Generate response using chat completion
+            # Step 6: Generate response using chat completion
             logger.info(
                 f"Generating chat response with {len(search_results)} chunks, "
                 f"{len(full_documents)} full documents"
@@ -276,11 +312,17 @@ class RAGService:
                 temperature=temperature if temperature is not None else 0.4
             )
 
+            # Build info message if there were partial failures
+            info_msg = None
+            if retrieval_warnings:
+                info_msg = " ".join(retrieval_warnings) + " The response is based on other available context."
+
             return RAGResponse(
                 query=latest_question,
                 answer=answer,
                 sources=search_results,
-                context_used=context
+                context_used=context,
+                info_message=info_msg
             )
 
         except Exception as e:

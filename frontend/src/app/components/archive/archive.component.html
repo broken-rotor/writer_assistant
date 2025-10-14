@@ -116,6 +116,12 @@
       <span>{{ chatError }}</span>
     </div>
 
+    <!-- Chat Info Message (for document retrieval warnings) -->
+    <div class="info-message warning" *ngIf="chatInfoMessage">
+      <span class="info-icon">⚠️</span>
+      <span>{{ chatInfoMessage }}</span>
+    </div>
+
     <!-- Chat Container with Sidebar -->
     <div class="chat-container" *ngIf="isRagEnabled()">
       <div class="chat-main">
