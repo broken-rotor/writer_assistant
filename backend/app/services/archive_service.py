@@ -212,6 +212,7 @@ class ArchiveService:
 
             file_list = sorted(files_dict.values(), key=lambda x: x['file_name'])
             logger.info(f"Retrieved {len(file_list)} unique files from archive")
+            logger.debug(f"Files: {[f['file_name'] for f in file_list]}")
             return file_list
 
         except Exception as e:
@@ -242,10 +243,12 @@ class ArchiveService:
             file_name_lower = file_name.lower()
             for file_info in files:
                 if file_name_lower in file_info['file_name'].lower():
-                    logger.info(f"Partial match: '{file_name}' -> '{file_info['file_name']}'")
+                    logger.debug(f"Partial match: '{file_name}' -> '{file_info['file_name']}'")
+                    logger.info("Found file by partial name match")
                     return file_info['file_path']
 
-            logger.warning(f"No file found matching: {file_name}")
+            logger.debug(f"No file found matching: {file_name}")
+            logger.warning("No file found matching requested name")
             return None
 
         except Exception as e:
@@ -272,7 +275,8 @@ class ArchiveService:
             )
 
             if not results or not results['documents']:
-                logger.warning(f"No content found for file: {file_path}")
+                logger.debug(f"No content found for file: {file_path}")
+                logger.warning("No content found for requested file")
                 return None
 
             # Sort chunks by chunk_index
@@ -290,7 +294,8 @@ class ArchiveService:
             # Note: This is an approximation since overlapping chunks may cause duplication
             content = ' '.join([chunk['text'] for chunk in chunks])
 
-            logger.info(f"Retrieved content for {file_path} ({len(chunks)} chunks)")
+            logger.debug(f"Retrieved content for {file_path} ({len(chunks)} chunks)")
+            logger.info(f"Retrieved file content ({len(chunks)} chunks)")
             return content
 
         except Exception as e:

@@ -200,10 +200,11 @@ class RAGService:
                 previous_messages=previous_msg_dicts
             )
 
-            logger.info(
+            logger.debug(
                 f"Query analysis: needs_full_doc={query_analysis.needs_full_document}, "
                 f"sources={query_analysis.specified_sources}"
             )
+            logger.info("Analyzing query for retrieval strategy")
 
             # Step 2: Retrieve context based on analysis
             search_results = []
@@ -225,19 +226,23 @@ class RAGService:
                                 'file_path': file_path,
                                 'content': content
                             })
-                            logger.info(f"Retrieved full document: {source_name}")
+                            logger.debug(f"Retrieved full document: {source_name}")
+                            logger.info("Retrieved requested full document")
                         else:
                             # Document found but content couldn't be read
-                            logger.warning(f"Could not read content for: {source_name}")
+                            logger.debug(f"Could not read content for: {source_name}")
+                            logger.warning("Could not read content for requested document")
                             retrieval_warnings.append(f"Document '{source_name}' was found but could not be read from the archive.")
                     else:
                         # Document not found in archive
-                        logger.warning(f"Source not found: {source_name}")
+                        logger.debug(f"Source not found: {source_name}")
+                        logger.warning("Requested document not found in archive")
                         retrieval_warnings.append(f"Document '{source_name}' was not found in the archive.")
 
             elif query_analysis.needs_full_document:
                 # Query indicates need for full documents - retrieve chunks first, then full docs
-                logger.info(f"Retrieving full documents based on query indicators: {query_analysis.detail_indicators}")
+                logger.debug(f"Retrieving full documents based on query indicators: {query_analysis.detail_indicators}")
+                logger.info("Retrieving full documents based on query indicators")
                 search_results = self.archive_service.search(
                     query=clean_query,
                     n_results=n_context_chunks,
@@ -256,9 +261,11 @@ class RAGService:
                                 'content': content
                             })
                             seen_files.add(result.file_path)
-                            logger.info(f"Retrieved full document: {result.file_name}")
+                            logger.debug(f"Retrieved full document: {result.file_name}")
+                            logger.info("Retrieved full document")
                         else:
-                            logger.warning(f"Could not read content for: {result.file_name}")
+                            logger.debug(f"Could not read content for: {result.file_name}")
+                            logger.warning("Could not read content for document")
                             retrieval_warnings.append(f"Document '{result.file_name}' could not be read from the archive.")
 
             else:
