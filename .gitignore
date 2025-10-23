@@ -216,7 +216,6 @@ marimo/_lsp/
 
 # Node modules and dependency files
 /frontend/node_modules/
-/frontend/package-lock.json
 /frontend/yarn.lock
 
 # Environment files
