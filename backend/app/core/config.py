@@ -78,4 +78,114 @@ class Settings(BaseSettings):
         description="Enable verbose logging for model"
     )
 
+    # Context Management Configuration
+    CONTEXT_MAX_TOKENS: int = Field(
+        default=32000,
+        ge=1000,
+        le=100000,
+        description="Maximum context window size for context management"
+    )
+    CONTEXT_BUFFER_TOKENS: int = Field(
+        default=2000,
+        ge=100,
+        le=10000,
+        description="Reserved tokens for generation buffer"
+    )
+    
+    # Layer Token Allocation Ratios (must sum to <= 1.0)
+    CONTEXT_LAYER_A_RATIO: float = Field(
+        default=0.0625,
+        ge=0.0,
+        le=1.0,
+        description="System instructions layer ratio (1-2k tokens)"
+    )
+    CONTEXT_LAYER_B_RATIO: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Immediate instructions layer ratio (included in Layer A)"
+    )
+    CONTEXT_LAYER_C_RATIO: float = Field(
+        default=0.4375,
+        ge=0.0,
+        le=1.0,
+        description="Recent story segment layer ratio (10-15k tokens)"
+    )
+    CONTEXT_LAYER_D_RATIO: float = Field(
+        default=0.15625,
+        ge=0.0,
+        le=1.0,
+        description="Character/scene data layer ratio (2-5k tokens)"
+    )
+    CONTEXT_LAYER_E_RATIO: float = Field(
+        default=0.34375,
+        ge=0.0,
+        le=1.0,
+        description="Plot/world summary layer ratio (5-10k tokens)"
+    )
+    
+    # Context Management Performance Settings
+    CONTEXT_SUMMARIZATION_THRESHOLD: int = Field(
+        default=25000,
+        ge=1000,
+        le=100000,
+        description="Token threshold for triggering summarization"
+    )
+    CONTEXT_ASSEMBLY_TIMEOUT: int = Field(
+        default=100,
+        ge=10,
+        le=10000,
+        description="Maximum context assembly time in milliseconds"
+    )
+    
+    # Context Management Feature Toggles
+    CONTEXT_ENABLE_RAG: bool = Field(
+        default=True,
+        description="Enable RAG-based content retrieval"
+    )
+    CONTEXT_ENABLE_MONITORING: bool = Field(
+        default=True,
+        description="Enable context management analytics and monitoring"
+    )
+    CONTEXT_ENABLE_CACHING: bool = Field(
+        default=True,
+        description="Enable context assembly result caching"
+    )
+    
+    # Context Optimization Settings
+    CONTEXT_MIN_PRIORITY_THRESHOLD: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description="Minimum priority threshold for content inclusion"
+    )
+    CONTEXT_OVERFLOW_STRATEGY: str = Field(
+        default="reallocate",
+        description="Strategy for handling token overflow (reject, truncate, borrow, reallocate)"
+    )
+    CONTEXT_ALLOCATION_MODE: str = Field(
+        default="dynamic",
+        description="Token allocation mode (static, dynamic, adaptive)"
+    )
+
+    def validate_layer_ratios(self) -> 'Settings':
+        """Validate that layer ratios sum to <= 1.0"""
+        total_ratio = (
+            self.CONTEXT_LAYER_A_RATIO +
+            self.CONTEXT_LAYER_B_RATIO +
+            self.CONTEXT_LAYER_C_RATIO +
+            self.CONTEXT_LAYER_D_RATIO +
+            self.CONTEXT_LAYER_E_RATIO
+        )
+        if total_ratio > 1.0:
+            raise ValueError(
+                f"Context layer ratios sum to {total_ratio:.4f}, which exceeds 1.0. "
+                f"Total allocation cannot exceed 100% of available tokens."
+            )
+        return self
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validate_layer_ratios()
+
 settings = Settings()
