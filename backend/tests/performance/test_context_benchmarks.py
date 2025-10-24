@@ -153,7 +153,7 @@ class TestContextPerformanceBenchmarks:
                     )
                     
                     start_time = time.perf_counter()
-                    result = allocator.allocate(request)
+                    result = allocator.allocate_tokens(request)
                     end_time = time.perf_counter()
                     
                     times.append(end_time - start_time)
@@ -196,18 +196,24 @@ class TestContextPerformanceBenchmarks:
         
         def process_scenario(scenario):
             """Process a single scenario and return timing."""
-            with patch.object(context_manager, 'process_context') as mock_process:
-                mock_process.return_value = {
-                    'processed_items': scenario.context_items,
-                    'total_tokens': len(scenario.context_items) * 300,
-                    'processing_time': 0.05
-                }
-                
-                start_time = time.perf_counter()
-                result = context_manager.process_context(scenario.context_items)
-                end_time = time.perf_counter()
-                
-                return end_time - start_time, result
+            start_time = time.perf_counter()
+            
+            # Use real API calls
+            analysis = context_manager.analyze_context(scenario.context_items)
+            optimized_items, metadata = context_manager.optimize_context(
+                scenario.context_items, 
+                target_tokens=self.settings.CONTEXT_MAX_TOKENS
+            )
+            
+            end_time = time.perf_counter()
+            
+            result = {
+                'processed_items': optimized_items,
+                'total_tokens': analysis.total_tokens,
+                'processing_time': end_time - start_time
+            }
+            
+            return end_time - start_time, result
         
         # Test sequential processing
         sequential_start = time.perf_counter()
@@ -275,14 +281,18 @@ class TestContextPerformanceBenchmarks:
                 # Measure memory before processing
                 memory_before = process.memory_info().rss / 1024 / 1024
                 
-                with patch.object(context_manager, 'process_context') as mock_process:
-                    mock_process.return_value = {
-                        'processed_items': scenario.context_items,
-                        'total_tokens': 25000,
-                        'processing_time': 0.1
-                    }
-                    
-                    result = context_manager.process_context(scenario.context_items)
+                # Use real API calls for memory testing
+                analysis = context_manager.analyze_context(scenario.context_items)
+                optimized_items, metadata = context_manager.optimize_context(
+                    scenario.context_items, 
+                    target_tokens=self.settings.CONTEXT_MAX_TOKENS
+                )
+                
+                result = {
+                    'processed_items': optimized_items,
+                    'total_tokens': analysis.total_tokens,
+                    'processing_time': 0.1
+                }
                 
                 # Measure memory after processing
                 memory_after = process.memory_info().rss / 1024 / 1024
@@ -338,14 +348,18 @@ class TestContextPerformanceBenchmarks:
                 batch_start = time.perf_counter()
                 
                 for scenario in batch:
-                    with patch.object(context_manager, 'process_context') as mock_process:
-                        mock_process.return_value = {
-                            'processed_items': scenario.context_items,
-                            'total_tokens': len(scenario.context_items) * 250,
-                            'processing_time': 0.03
-                        }
-                        
-                        result = context_manager.process_context(scenario.context_items)
+                    # Use real API calls for throughput testing
+                    analysis = context_manager.analyze_context(scenario.context_items)
+                    optimized_items, metadata = context_manager.optimize_context(
+                        scenario.context_items, 
+                        target_tokens=self.settings.CONTEXT_MAX_TOKENS
+                    )
+                    
+                    result = {
+                        'processed_items': optimized_items,
+                        'total_tokens': analysis.total_tokens,
+                        'processing_time': 0.03
+                    }
                 
                 batch_end = time.perf_counter()
                 batch_time = batch_end - batch_start
@@ -392,21 +406,25 @@ class TestContextPerformanceBenchmarks:
                 
                 # Benchmark processing time
                 times = []
-                for _ in range(10):  # 10 runs per size
-                    with patch.object(context_manager, 'process_context') as mock_process:
-                        # Simulate processing time that scales with size
-                        processing_time = 0.01 + (size * 0.0005)  # Base + linear scaling
-                        mock_process.return_value = {
-                            'processed_items': context_items,
-                            'total_tokens': size * 200,
-                            'processing_time': processing_time
-                        }
-                        
-                        start_time = time.perf_counter()
-                        result = context_manager.process_context(context_items)
-                        end_time = time.perf_counter()
-                        
-                        times.append(end_time - start_time)
+                for _ in range(5):  # 5 runs per size (reduced for real API calls)
+                    start_time = time.perf_counter()
+                    
+                    # Use real API calls for scalability testing
+                    analysis = context_manager.analyze_context(context_items)
+                    optimized_items, metadata = context_manager.optimize_context(
+                        context_items, 
+                        target_tokens=self.settings.CONTEXT_MAX_TOKENS
+                    )
+                    
+                    end_time = time.perf_counter()
+                    
+                    result = {
+                        'processed_items': optimized_items,
+                        'total_tokens': analysis.total_tokens,
+                        'processing_time': end_time - start_time
+                    }
+                    
+                    times.append(end_time - start_time)
                 
                 performance_by_size[size] = {
                     'mean_time': statistics.mean(times),
