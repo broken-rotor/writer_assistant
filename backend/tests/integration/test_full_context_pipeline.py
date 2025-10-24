@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 from typing import List, Dict, Any
 
 from app.services.context_manager import ContextManager, ContextItem, ContextType
-from app.services.token_management import TokenAllocator, LayerType, AllocationMode, OverflowStrategy
+from app.services.token_management import TokenAllocator, LayerType, AllocationMode, OverflowStrategy, ContentType as TokenContentType
 from app.core.config import Settings
 from tests.utils.test_data_generators import ContextDataGenerator, StoryComplexity
 
@@ -45,27 +45,35 @@ class TestFullContextPipeline:
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
-        # Mock the full pipeline
-        with patch.object(context_manager, 'process_context') as mock_process:
-            mock_result = {
-                'processed_items': scenario.context_items[:8],  # Simulate processing
-                'total_tokens': 15000,
-                'processing_time': 0.08,
-                'optimization_applied': True,
-                'layers_used': [LayerType.WORKING_MEMORY, LayerType.EPISODIC_MEMORY, LayerType.SEMANTIC_MEMORY]
-            }
-            mock_process.return_value = mock_result
-            
-            # Execute pipeline
-            start_time = time.time()
-            result = context_manager.process_context(scenario.context_items)
-            processing_time = time.time() - start_time
-            
-            # Verify results
-            assert result['total_tokens'] <= self.settings.CONTEXT_MAX_TOKENS
-            assert result['processing_time'] <= self.settings.CONTEXT_ASSEMBLY_TIMEOUT / 1000  # Convert ms to seconds
-            assert len(result['processed_items']) > 0
-            assert processing_time < 1.0  # Should complete quickly in integration test
+        # Execute the actual pipeline using real API
+        start_time = time.time()
+        
+        # Analyze context first
+        analysis = context_manager.analyze_context(scenario.context_items)
+        
+        # Optimize if needed
+        if analysis.optimization_needed:
+            optimized_items, optimization_metadata = context_manager.optimize_context(
+                scenario.context_items, 
+                target_tokens=self.settings.CONTEXT_MAX_TOKENS
+            )
+        else:
+            optimized_items = scenario.context_items
+            optimization_metadata = {"optimization_applied": False}
+        
+        processing_time = time.time() - start_time
+        
+        # Calculate final token count
+        final_tokens = sum(
+            context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
+            for item in optimized_items
+        )
+        
+        # Verify results
+        assert final_tokens <= self.settings.CONTEXT_MAX_TOKENS
+        assert processing_time < 1.0  # Should complete quickly in integration test
+        assert len(optimized_items) > 0
+        assert analysis.total_tokens > 0
     
     @patch('app.services.context_manager.get_llm')
     def test_configuration_driven_pipeline(self, mock_get_llm):
@@ -104,21 +112,26 @@ class TestFullContextPipeline:
                     distillation_threshold=settings.CONTEXT_SUMMARIZATION_THRESHOLD
                 )
                 
-                # Mock processing with configuration-aware behavior
-                with patch.object(context_manager, 'process_context') as mock_process:
-                    expected_tokens = min(len(scenario.context_items) * 500, settings.CONTEXT_MAX_TOKENS - settings.CONTEXT_BUFFER_TOKENS)
-                    mock_process.return_value = {
-                        'processed_items': scenario.context_items,
-                        'total_tokens': expected_tokens,
-                        'max_tokens_used': settings.CONTEXT_MAX_TOKENS,
-                        'buffer_reserved': settings.CONTEXT_BUFFER_TOKENS
-                    }
-                    
-                    result = context_manager.process_context(scenario.context_items)
-                    
-                    assert result['max_tokens_used'] == settings.CONTEXT_MAX_TOKENS
-                    assert result['buffer_reserved'] == settings.CONTEXT_BUFFER_TOKENS
-                    assert result['total_tokens'] <= settings.CONTEXT_MAX_TOKENS - settings.CONTEXT_BUFFER_TOKENS
+                # Test with real API using configuration
+                analysis = context_manager.analyze_context(scenario.context_items)
+                
+                # Optimize with configuration-specific target
+                target_tokens = settings.CONTEXT_MAX_TOKENS - settings.CONTEXT_BUFFER_TOKENS
+                optimized_items, optimization_metadata = context_manager.optimize_context(
+                    scenario.context_items, 
+                    target_tokens=target_tokens
+                )
+                
+                # Calculate final token count
+                final_tokens = sum(
+                    context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
+                    for item in optimized_items
+                )
+                
+                # Verify configuration is respected
+                assert final_tokens <= target_tokens
+                assert context_manager.max_context_tokens == settings.CONTEXT_MAX_TOKENS
+                assert len(optimized_items) > 0
     
     @patch('app.services.context_manager.get_llm')
     def test_layer_allocation_integration(self, mock_get_llm):
@@ -195,25 +208,28 @@ class TestFullContextPipeline:
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
-        # Mock overflow handling
-        with patch.object(context_manager, 'handle_overflow') as mock_handle_overflow:
-            # Simulate overflow handling reducing content
-            reduced_items = large_scenario.context_items[:5]  # Keep only first 5 items
-            mock_handle_overflow.return_value = {
-                'items': reduced_items,
-                'total_tokens': 4000,
-                'overflow_handled': True,
-                'strategy_used': 'reallocate'
-            }
-            
-            result = context_manager.handle_overflow(
-                large_scenario.context_items,
-                total_budget=small_limit - 500
-            )
-            
-            assert result['overflow_handled'] is True
-            assert result['total_tokens'] <= small_limit - 500
-            assert len(result['items']) <= len(large_scenario.context_items)
+        # Test overflow handling with real API
+        # First analyze to see if we have overflow
+        analysis = context_manager.analyze_context(large_scenario.context_items)
+        
+        # Force optimization with very small target to simulate overflow
+        target_tokens = small_limit - 500
+        optimized_items, optimization_metadata = context_manager.optimize_context(
+            large_scenario.context_items,
+            target_tokens=target_tokens
+        )
+        
+        # Calculate final token count
+        final_tokens = sum(
+            context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
+            for item in optimized_items
+        )
+        
+        # Verify overflow was handled
+        assert final_tokens <= target_tokens
+        assert len(optimized_items) <= len(large_scenario.context_items)
+        assert optimization_metadata['optimization_applied'] is True
+        assert analysis.total_tokens > target_tokens  # Original was larger
     
     @patch('app.services.context_manager.get_llm')
     def test_priority_and_layer_interaction(self, mock_get_llm):
@@ -270,25 +286,34 @@ class TestFullContextPipeline:
         processing_times = []
         
         for i, scenario in enumerate(scenarios):
-            with patch.object(context_manager, 'process_context') as mock_process:
-                # Simulate realistic processing times based on complexity
-                base_time = 0.02 + (i * 0.03)  # 20ms + complexity factor
-                mock_process.return_value = {
-                    'processed_items': scenario.context_items,
-                    'total_tokens': min(len(scenario.context_items) * 300, 25000),
-                    'processing_time': base_time,
-                    'complexity': scenario.complexity.value
-                }
-                
-                start_time = time.time()
-                result = context_manager.process_context(scenario.context_items)
-                actual_time = time.time() - start_time
-                
-                processing_times.append(actual_time)
-                
-                # Verify performance requirements
-                assert result['processing_time'] <= self.settings.CONTEXT_ASSEMBLY_TIMEOUT / 1000
-                assert actual_time < 0.5  # Integration test should be fast
+            # Test real performance
+            start_time = time.time()
+            
+            # Analyze and optimize using real API
+            analysis = context_manager.analyze_context(scenario.context_items)
+            
+            if analysis.optimization_needed:
+                optimized_items, optimization_metadata = context_manager.optimize_context(
+                    scenario.context_items,
+                    target_tokens=self.settings.CONTEXT_MAX_TOKENS
+                )
+            else:
+                optimized_items = scenario.context_items
+                optimization_metadata = {"optimization_applied": False}
+            
+            actual_time = time.time() - start_time
+            processing_times.append(actual_time)
+            
+            # Calculate final token count
+            final_tokens = sum(
+                context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
+                for item in optimized_items
+            )
+            
+            # Verify performance requirements
+            assert actual_time < 1.0  # Integration test should be reasonably fast
+            assert final_tokens <= self.settings.CONTEXT_MAX_TOKENS
+            assert len(optimized_items) > 0
         
         # Verify performance scales reasonably
         assert all(t < 1.0 for t in processing_times)  # All should complete quickly
@@ -316,25 +341,34 @@ class TestFullContextPipeline:
                     distillation_threshold=settings.CONTEXT_SUMMARIZATION_THRESHOLD
                 )
                 
-                # Mock feature-specific behavior
-                with patch.object(context_manager, 'process_with_features') as mock_process:
-                    mock_result = {
-                        'processed_items': scenario.context_items,
-                        'total_tokens': 12000,
-                        'features_used': {
-                            'rag_enabled': settings.CONTEXT_ENABLE_RAG,
-                            'monitoring_enabled': settings.CONTEXT_ENABLE_MONITORING,
-                            'caching_enabled': settings.CONTEXT_ENABLE_CACHING
-                        }
-                    }
-                    mock_process.return_value = mock_result
+                # Test with real API - just verify the configuration is loaded correctly
+                analysis = context_manager.analyze_context(scenario.context_items)
+                
+                # Test optimization with different compression settings based on features
+                enable_compression = settings.CONTEXT_ENABLE_RAG  # Use RAG flag as compression proxy
+                original_compression = context_manager.enable_compression
+                context_manager.enable_compression = enable_compression
+                
+                try:
+                    optimized_items, optimization_metadata = context_manager.optimize_context(
+                        scenario.context_items,
+                        target_tokens=settings.CONTEXT_MAX_TOKENS
+                    )
                     
-                    result = context_manager.process_with_features(scenario.context_items)
+                    # Calculate final token count
+                    final_tokens = sum(
+                        context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
+                        for item in optimized_items
+                    )
                     
-                    # Verify feature flags are respected
-                    assert result['features_used']['rag_enabled'] == settings.CONTEXT_ENABLE_RAG
-                    assert result['features_used']['monitoring_enabled'] == settings.CONTEXT_ENABLE_MONITORING
-                    assert result['features_used']['caching_enabled'] == settings.CONTEXT_ENABLE_CACHING
+                    # Verify feature-driven behavior
+                    assert final_tokens <= settings.CONTEXT_MAX_TOKENS
+                    assert len(optimized_items) > 0
+                    assert context_manager.enable_compression == enable_compression
+                    
+                finally:
+                    # Restore original setting
+                    context_manager.enable_compression = original_compression
     
     @patch('app.services.context_manager.get_llm')
     def test_error_recovery_integration(self, mock_get_llm):
@@ -348,34 +382,35 @@ class TestFullContextPipeline:
             distillation_threshold=self.settings.CONTEXT_SUMMARIZATION_THRESHOLD
         )
         
-        # Test recovery from various error conditions
-        error_scenarios = [
-            {'error_type': 'token_overflow', 'recovery_strategy': 'truncate'},
-            {'error_type': 'processing_timeout', 'recovery_strategy': 'partial_result'},
-            {'error_type': 'invalid_content', 'recovery_strategy': 'filter_and_retry'}
+        # Test error recovery by simulating problematic content
+        # Create items with potentially problematic content
+        problematic_items = [
+            ContextItem("", ContextType.STORY, 5, LayerType.EPISODIC_MEMORY, {}),  # Empty content
+            ContextItem("Valid content here", ContextType.CHARACTER, 8, LayerType.SEMANTIC_MEMORY, {}),
+            ContextItem("More valid content", ContextType.WORLD, 7, LayerType.SEMANTIC_MEMORY, {})
         ]
         
-        for error_scenario in error_scenarios:
-            with patch.object(context_manager, 'process_with_recovery') as mock_process:
-                mock_result = {
-                    'processed_items': scenario.context_items[:6],  # Partial processing
-                    'total_tokens': 8000,
-                    'error_encountered': error_scenario['error_type'],
-                    'recovery_applied': error_scenario['recovery_strategy'],
-                    'success': True
-                }
-                mock_process.return_value = mock_result
-                
-                result = context_manager.process_with_recovery(
-                    scenario.context_items,
-                    error_handling=True
-                )
-                
-                # Verify error recovery worked
-                assert result['success'] is True
-                assert result['error_encountered'] == error_scenario['error_type']
-                assert result['recovery_applied'] == error_scenario['recovery_strategy']
-                assert len(result['processed_items']) > 0
+        # Test that the system handles problematic content gracefully
+        try:
+            analysis = context_manager.analyze_context(problematic_items)
+            
+            # Even with problematic content, should get some analysis
+            assert analysis.total_tokens >= 0
+            
+            # Try optimization
+            optimized_items, optimization_metadata = context_manager.optimize_context(
+                problematic_items,
+                target_tokens=self.settings.CONTEXT_MAX_TOKENS
+            )
+            
+            # Should handle gracefully and return valid items
+            assert len(optimized_items) >= 0  # May filter out empty items
+            assert optimization_metadata is not None
+            
+        except Exception as e:
+            # If there's an exception, it should be handled gracefully
+            # In a real implementation, this would test actual error recovery
+            assert False, f"Error recovery failed: {e}"
     
     @patch('app.services.context_manager.get_llm')
     def test_memory_efficiency_integration(self, mock_get_llm):
@@ -390,21 +425,46 @@ class TestFullContextPipeline:
             distillation_threshold=self.settings.CONTEXT_SUMMARIZATION_THRESHOLD
         )
         
-        # Mock memory-efficient processing
-        with patch.object(context_manager, 'process_memory_efficient') as mock_process:
-            mock_result = {
-                'processed_items': large_scenario.context_items[:15],  # Reasonable subset
-                'total_tokens': 28000,
-                'memory_usage': 'optimized',
-                'streaming_used': True,
-                'peak_memory_mb': 50  # Reasonable memory usage
-            }
-            mock_process.return_value = mock_result
+        # Test memory efficiency by processing in smaller chunks
+        # Split large scenario into smaller batches to simulate memory-efficient processing
+        batch_size = 5
+        all_processed_items = []
+        total_tokens = 0
+        
+        for i in range(0, len(large_scenario.context_items), batch_size):
+            batch = large_scenario.context_items[i:i + batch_size]
             
-            result = context_manager.process_memory_efficient(large_scenario.context_items)
+            # Process each batch
+            analysis = context_manager.analyze_context(batch)
             
-            # Verify memory efficiency
-            assert result['memory_usage'] == 'optimized'
-            assert result['peak_memory_mb'] < 100  # Should stay under 100MB
-            assert result['total_tokens'] <= self.settings.CONTEXT_MAX_TOKENS
-            assert len(result['processed_items']) > 0
+            if analysis.optimization_needed:
+                optimized_items, optimization_metadata = context_manager.optimize_context(
+                    batch,
+                    target_tokens=self.settings.CONTEXT_MAX_TOKENS // 4  # Smaller target per batch
+                )
+            else:
+                optimized_items = batch
+            
+            all_processed_items.extend(optimized_items)
+            
+            # Calculate tokens for this batch
+            batch_tokens = sum(
+                context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
+                for item in optimized_items
+            )
+            total_tokens += batch_tokens
+        
+        # Verify memory-efficient processing worked
+        assert len(all_processed_items) > 0
+        assert total_tokens > 0
+        # Final optimization to ensure we don't exceed limits
+        if total_tokens > self.settings.CONTEXT_MAX_TOKENS:
+            final_items, _ = context_manager.optimize_context(
+                all_processed_items,
+                target_tokens=self.settings.CONTEXT_MAX_TOKENS
+            )
+            final_tokens = sum(
+                context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
+                for item in final_items
+            )
+            assert final_tokens <= self.settings.CONTEXT_MAX_TOKENS

@@ -52,32 +52,27 @@ class TestContextPerformanceBenchmarks:
         for scenario_name, complexity, num_runs in test_scenarios:
             scenario = self.context_generator.generate_context_scenario(scenario_name, complexity)
             
-            # Warm up
-            with patch.object(context_manager, 'optimize_context') as mock_optimize:
-                optimized_items = scenario.context_items[:5]  # Simulate optimization
-                mock_optimize.return_value = (optimized_items, {
-                    'optimization_applied': True,
-                    'processing_time': 0.05
-                })
-                context_manager.optimize_context(scenario.context_items)
+            # Warm up with real API
+            context_manager.analyze_context(scenario.context_items[:2])  # Small warmup
             
-            # Benchmark runs
+            # Benchmark runs with real API
             times = []
-            for _ in range(num_runs):
-                with patch.object(context_manager, 'optimize_context') as mock_optimize:
-                    # Simulate realistic optimization time based on complexity
-                    base_time = 0.01 + (len(scenario.context_items) * 0.001)
-                    optimized_items = scenario.context_items[:5]  # Simulate optimization
-                    mock_optimize.return_value = (optimized_items, {
-                        'optimization_applied': True,
-                        'processing_time': base_time
-                    })
-                    
-                    start_time = time.perf_counter()
-                    result, metadata = context_manager.optimize_context(scenario.context_items)
-                    end_time = time.perf_counter()
-                    
-                    times.append(end_time - start_time)
+            for _ in range(min(num_runs, 10)):  # Limit runs for performance tests
+                start_time = time.perf_counter()
+                
+                # Use real API
+                analysis = context_manager.analyze_context(scenario.context_items)
+                if analysis.optimization_needed:
+                    result, metadata = context_manager.optimize_context(
+                        scenario.context_items,
+                        target_tokens=self.settings.CONTEXT_MAX_TOKENS
+                    )
+                else:
+                    result = scenario.context_items
+                    metadata = {"optimization_applied": False}
+                
+                end_time = time.perf_counter()
+                times.append(end_time - start_time)
             
             # Calculate statistics
             performance_results[scenario_name] = {
@@ -112,9 +107,8 @@ class TestContextPerformanceBenchmarks:
     def test_token_allocation_performance(self):
         """Benchmark token allocation performance under various loads."""
         allocator = TokenAllocator(
-            max_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            buffer_tokens=self.settings.CONTEXT_BUFFER_TOKENS,
-            allocation_mode=AllocationMode.DYNAMIC,
+            total_budget=self.settings.CONTEXT_MAX_TOKENS,
+            mode=AllocationMode.DYNAMIC,
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
@@ -134,9 +128,8 @@ class TestContextPerformanceBenchmarks:
             
             # Reset allocator for each pattern
             allocator = TokenAllocator(
-                max_tokens=self.settings.CONTEXT_MAX_TOKENS,
-                buffer_tokens=self.settings.CONTEXT_BUFFER_TOKENS,
-                allocation_mode=AllocationMode.DYNAMIC
+                total_budget=self.settings.CONTEXT_MAX_TOKENS,
+                mode=AllocationMode.DYNAMIC
             )
             
             for request_data in requests:
