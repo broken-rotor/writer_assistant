@@ -8,10 +8,16 @@ operations, token allocation performance, and system throughput under load.
 import pytest
 import time
 import statistics
+import os
 from unittest.mock import Mock, patch
 from typing import List, Dict, Any, Tuple
 import concurrent.futures
 import threading
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 from app.services.context_manager import ContextManager, ContextItem, ContextType
 from app.services.token_management import TokenAllocator, LayerType, AllocationMode, OverflowStrategy
@@ -254,8 +260,8 @@ class TestContextPerformanceBenchmarks:
     @pytest.mark.performance
     def test_memory_usage_under_load(self):
         """Test memory usage patterns under various load conditions."""
-        import psutil
-        import os
+        if psutil is None:
+            pytest.skip("psutil not available for memory monitoring")
         
         process = psutil.Process(os.getpid())
         
