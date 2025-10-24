@@ -238,25 +238,20 @@ class TestFullContextPipeline:
             distillation_threshold=6000
         )
         
-        # Test priority filtering with layer awareness
-        with patch.object(context_manager, 'filter_by_priority_and_layer') as mock_filter:
-            # Simulate filtering that considers both priority and layer importance
+        # Test optimization with priority and layer awareness
+        with patch.object(context_manager, 'optimize_context') as mock_optimize:
+            # Simulate optimization that considers both priority and layer importance
             filtered_items = [item for item in mixed_items if item.priority >= 6]
-            mock_filter.return_value = filtered_items
+            mock_optimize.return_value = (filtered_items, {"optimization_applied": True})
             
-            result = context_manager.filter_by_priority_and_layer(
+            result, metadata = context_manager.optimize_context(
                 mixed_items,
-                min_priority=6,
-                layer_priorities={
-                    LayerType.WORKING_MEMORY: 1.0,
-                    LayerType.EPISODIC_MEMORY: 0.9,
-                    LayerType.SEMANTIC_MEMORY: 0.8,
-                    LayerType.LONG_TERM_MEMORY: 0.6
-                }
+                target_tokens=5000
             )
             
             assert len(result) == 4  # Items with priority >= 6
             assert all(item.priority >= 6 for item in result)
+            assert metadata["optimization_applied"] == True
     
     @patch('app.services.context_manager.get_llm')
     def test_performance_under_realistic_load(self, mock_get_llm):

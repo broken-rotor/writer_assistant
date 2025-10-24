@@ -53,30 +53,28 @@ class TestContextPerformanceBenchmarks:
             scenario = self.context_generator.generate_context_scenario(scenario_name, complexity)
             
             # Warm up
-            with patch.object(context_manager, 'assemble_context') as mock_assemble:
-                mock_assemble.return_value = {
-                    'assembled_context': "Test context",
-                    'total_tokens': len(scenario.context_items) * 200,
-                    'assembly_time': 0.05,
-                    'items_included': len(scenario.context_items)
-                }
-                context_manager.assemble_context(scenario.context_items)
+            with patch.object(context_manager, 'optimize_context') as mock_optimize:
+                optimized_items = scenario.context_items[:5]  # Simulate optimization
+                mock_optimize.return_value = (optimized_items, {
+                    'optimization_applied': True,
+                    'processing_time': 0.05
+                })
+                context_manager.optimize_context(scenario.context_items)
             
             # Benchmark runs
             times = []
             for _ in range(num_runs):
-                with patch.object(context_manager, 'assemble_context') as mock_assemble:
-                    # Simulate realistic assembly time based on complexity
+                with patch.object(context_manager, 'optimize_context') as mock_optimize:
+                    # Simulate realistic optimization time based on complexity
                     base_time = 0.01 + (len(scenario.context_items) * 0.001)
-                    mock_assemble.return_value = {
-                        'assembled_context': "Test context",
-                        'total_tokens': len(scenario.context_items) * 200,
-                        'assembly_time': base_time,
-                        'items_included': len(scenario.context_items)
-                    }
+                    optimized_items = scenario.context_items[:5]  # Simulate optimization
+                    mock_optimize.return_value = (optimized_items, {
+                        'optimization_applied': True,
+                        'processing_time': base_time
+                    })
                     
                     start_time = time.perf_counter()
-                    result = context_manager.assemble_context(scenario.context_items)
+                    result, metadata = context_manager.optimize_context(scenario.context_items)
                     end_time = time.perf_counter()
                     
                     times.append(end_time - start_time)
