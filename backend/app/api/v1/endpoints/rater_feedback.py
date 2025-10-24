@@ -8,6 +8,7 @@ from app.models.generation_models import (
     RaterFeedback
 )
 from app.services.llm_inference import get_llm
+from app.services.context_optimization import get_context_optimization_service
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
 import logging
 
@@ -24,13 +25,39 @@ async def rater_feedback(request: RaterFeedbackRequest):
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        system_prompt = f"""{request.systemPrompts.mainPrefix}
+        # Get context optimization service
+        context_service = get_context_optimization_service()
+        
+        # Optimize context transparently
+        try:
+            optimized_context = context_service.optimize_rater_feedback_context(
+                system_prompts=request.systemPrompts,
+                rater_prompt=request.raterPrompt,
+                worldbuilding=request.worldbuilding,
+                story_summary=request.storySummary,
+                plot_point=request.plotPoint
+            )
+            
+            system_prompt = optimized_context.system_prompt
+            user_message = optimized_context.user_message
+            
+            # Log context optimization results
+            if optimized_context.optimization_applied:
+                logger.info(f"Rater feedback context optimization applied: {optimized_context.total_tokens} tokens, "
+                           f"compression ratio: {optimized_context.compression_ratio:.2f}")
+            else:
+                logger.debug(f"No rater feedback context optimization needed: {optimized_context.total_tokens} tokens")
+                
+        except Exception as e:
+            logger.warning(f"Rater feedback context optimization failed, using fallback: {str(e)}")
+            # Fallback to original context building
+            system_prompt = f"""{request.systemPrompts.mainPrefix}
 
 {request.raterPrompt}
 
 {request.systemPrompts.mainSuffix}"""
 
-        user_message = f"""Evaluate this plot point:
+            user_message = f"""Evaluate this plot point:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 - Plot point: {request.plotPoint}
