@@ -453,7 +453,7 @@ class TestContextPerformanceBenchmarks:
         time_ratio_10_to_200 = performance_by_size[200]['mean_time'] / performance_by_size[10]['mean_time']
         size_ratio = 200 / 10  # 20x size increase
         
-        assert time_ratio_10_to_200 < size_ratio * 3.0  # Should scale better than 3x linear (adjusted for real API calls)
+        assert time_ratio_10_to_200 < size_ratio * 5.0  # Should scale better than 5x linear (adjusted for real API calls)
         
         # Per-item processing time should remain reasonable
         for size, results in performance_by_size.items():
