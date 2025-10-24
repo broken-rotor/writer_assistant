@@ -24,3 +24,8 @@ from .content_prioritization import (
     LayeredPrioritizer, ContentScore, PrioritizationConfig,
     RAGRetriever, RetrievalStrategy, RetrievalResult
 )
+
+# Import context optimization service
+from .context_optimization import (
+    ContextOptimizationService, OptimizedContext, get_context_optimization_service
+)

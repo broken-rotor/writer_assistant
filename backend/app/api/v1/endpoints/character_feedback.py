@@ -8,6 +8,7 @@ from app.models.generation_models import (
     CharacterFeedback
 )
 from app.services.llm_inference import get_llm
+from app.services.context_optimization import get_context_optimization_service
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
 import logging
 
@@ -25,8 +26,34 @@ async def character_feedback(request: CharacterFeedbackRequest):
 
     try:
         character_name = request.character.name or "Character"
-
-        system_prompt = f"""{request.systemPrompts.mainPrefix}
+        
+        # Get context optimization service
+        context_service = get_context_optimization_service()
+        
+        # Optimize context transparently
+        try:
+            optimized_context = context_service.optimize_character_feedback_context(
+                system_prompts=request.systemPrompts,
+                worldbuilding=request.worldbuilding,
+                story_summary=request.storySummary,
+                character=request.character,
+                plot_point=request.plotPoint
+            )
+            
+            system_prompt = optimized_context.system_prompt
+            user_message = optimized_context.user_message
+            
+            # Log context optimization results
+            if optimized_context.optimization_applied:
+                logger.info(f"Character feedback context optimization applied: {optimized_context.total_tokens} tokens, "
+                           f"compression ratio: {optimized_context.compression_ratio:.2f}")
+            else:
+                logger.debug(f"No character feedback context optimization needed: {optimized_context.total_tokens} tokens")
+                
+        except Exception as e:
+            logger.warning(f"Character feedback context optimization failed, using fallback: {str(e)}")
+            # Fallback to original context building
+            system_prompt = f"""{request.systemPrompts.mainPrefix}
 
 You are embodying {character_name}, a character with the following traits:
 - Bio: {request.character.basicBio}
@@ -36,7 +63,7 @@ You are embodying {character_name}, a character with the following traits:
 
 {request.systemPrompts.mainSuffix}"""
 
-        user_message = f"""Context:
+            user_message = f"""Context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 - Current situation: {request.plotPoint}

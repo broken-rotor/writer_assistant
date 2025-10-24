@@ -8,6 +8,7 @@ from app.models.generation_models import (
     EditorSuggestion
 )
 from app.services.llm_inference import get_llm
+from app.services.context_optimization import get_context_optimization_service
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
 import logging
 
@@ -24,14 +25,39 @@ async def editor_review(request: EditorReviewRequest):
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        system_prompt = f"""{request.systemPrompts.mainPrefix}
+        # Get context optimization service
+        context_service = get_context_optimization_service()
+        
+        # Optimize context transparently
+        try:
+            optimized_context = context_service.optimize_editor_review_context(
+                system_prompts=request.systemPrompts,
+                worldbuilding=request.worldbuilding,
+                story_summary=request.storySummary,
+                chapter_to_review=request.chapterToReview
+            )
+            
+            system_prompt = optimized_context.system_prompt
+            user_message = optimized_context.user_message
+            
+            # Log context optimization results
+            if optimized_context.optimization_applied:
+                logger.info(f"Editor review context optimization applied: {optimized_context.total_tokens} tokens, "
+                           f"compression ratio: {optimized_context.compression_ratio:.2f}")
+            else:
+                logger.debug(f"No editor review context optimization needed: {optimized_context.total_tokens} tokens")
+                
+        except Exception as e:
+            logger.warning(f"Editor review context optimization failed, using fallback: {str(e)}")
+            # Fallback to original context building
+            system_prompt = f"""{request.systemPrompts.mainPrefix}
 {request.systemPrompts.editorPrompt or 'You are an expert editor.'}
 
 Review chapters and provide specific suggestions for improvement.
 
 {request.systemPrompts.mainSuffix}"""
 
-        user_message = f"""Story context:
+            user_message = f"""Story context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 
