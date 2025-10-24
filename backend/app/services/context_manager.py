@@ -134,8 +134,8 @@ class ContextManager:
             # Count tokens in content
             token_count = self.token_counter.count_tokens(
                 item.content, 
-                TokenContentType.TEXT
-            ).total_tokens
+                TokenContentType.UNKNOWN
+            ).token_count
             total_tokens += token_count
             
             # Group by type
@@ -201,8 +201,8 @@ class ContextManager:
         for item in sorted_items:
             item_tokens = self.token_counter.count_tokens(
                 item.content, 
-                TokenContentType.TEXT
-            ).total_tokens
+                TokenContentType.UNKNOWN
+            ).token_count
             
             # Always include highest priority items (priority >= 9)
             if item.priority >= 9:
@@ -221,8 +221,8 @@ class ContextManager:
                         compressed_content = self._compress_content(item.content, item.context_type)
                         compressed_tokens = self.token_counter.count_tokens(
                             compressed_content, 
-                            TokenContentType.TEXT
-                        ).total_tokens
+                            TokenContentType.UNKNOWN
+                        ).token_count
                         
                         if current_tokens + compressed_tokens <= target_tokens:
                             compressed_item = ContextItem(

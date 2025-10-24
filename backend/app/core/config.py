@@ -78,4 +78,116 @@ class Settings(BaseSettings):
         description="Enable verbose logging for model"
     )
 
+    # Context Management Configuration
+    CONTEXT_MAX_TOKENS: int = Field(
+        default=32000,
+        ge=1000,
+        le=100000,
+        description="Maximum context window size for context management"
+    )
+    CONTEXT_BUFFER_TOKENS: int = Field(
+        default=2000,
+        ge=100,
+        le=10000,
+        description="Reserved tokens for generation buffer"
+    )
+    
+    # Layer Token Allocation Limits (absolute token numbers)
+    CONTEXT_LAYER_A_TOKENS: int = Field(
+        default=2000,
+        ge=100,
+        le=10000,
+        description="System instructions layer tokens (1-2k tokens)"
+    )
+    CONTEXT_LAYER_B_TOKENS: int = Field(
+        default=0,
+        ge=0,
+        le=5000,
+        description="Immediate instructions layer tokens (included in Layer A)"
+    )
+    CONTEXT_LAYER_C_TOKENS: int = Field(
+        default=13000,
+        ge=1000,
+        le=25000,
+        description="Recent story segment layer tokens (10-15k tokens)"
+    )
+    CONTEXT_LAYER_D_TOKENS: int = Field(
+        default=5000,
+        ge=500,
+        le=10000,
+        description="Character/scene data layer tokens (2-5k tokens)"
+    )
+    CONTEXT_LAYER_E_TOKENS: int = Field(
+        default=10000,
+        ge=1000,
+        le=20000,
+        description="Plot/world summary layer tokens (5-10k tokens)"
+    )
+    
+    # Context Management Performance Settings
+    CONTEXT_SUMMARIZATION_THRESHOLD: int = Field(
+        default=25000,
+        ge=1000,
+        le=100000,
+        description="Token threshold for triggering summarization"
+    )
+    CONTEXT_ASSEMBLY_TIMEOUT: int = Field(
+        default=100,
+        ge=10,
+        le=10000,
+        description="Maximum context assembly time in milliseconds"
+    )
+    
+    # Context Management Feature Toggles
+    CONTEXT_ENABLE_RAG: bool = Field(
+        default=True,
+        description="Enable RAG-based content retrieval"
+    )
+    CONTEXT_ENABLE_MONITORING: bool = Field(
+        default=True,
+        description="Enable context management analytics and monitoring"
+    )
+    CONTEXT_ENABLE_CACHING: bool = Field(
+        default=True,
+        description="Enable context assembly result caching"
+    )
+    
+    # Context Optimization Settings
+    CONTEXT_MIN_PRIORITY_THRESHOLD: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description="Minimum priority threshold for content inclusion"
+    )
+    CONTEXT_OVERFLOW_STRATEGY: str = Field(
+        default="reallocate",
+        description="Strategy for handling token overflow (reject, truncate, borrow, reallocate)"
+    )
+    CONTEXT_ALLOCATION_MODE: str = Field(
+        default="dynamic",
+        description="Token allocation mode (static, dynamic, adaptive)"
+    )
+
+    def validate_layer_tokens(self) -> 'Settings':
+        """Validate that layer token allocations don't exceed max tokens"""
+        total_layer_tokens = (
+            self.CONTEXT_LAYER_A_TOKENS +
+            self.CONTEXT_LAYER_B_TOKENS +
+            self.CONTEXT_LAYER_C_TOKENS +
+            self.CONTEXT_LAYER_D_TOKENS +
+            self.CONTEXT_LAYER_E_TOKENS
+        )
+        available_tokens = self.CONTEXT_MAX_TOKENS - self.CONTEXT_BUFFER_TOKENS
+        
+        if total_layer_tokens > available_tokens:
+            raise ValueError(
+                f"Context layer tokens sum to {total_layer_tokens}, which exceeds available tokens ({available_tokens}). "
+                f"Total layer allocation cannot exceed max tokens minus buffer."
+            )
+        return self
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validate_layer_tokens()
+
 settings = Settings()
