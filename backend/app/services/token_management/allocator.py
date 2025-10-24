@@ -1,7 +1,7 @@
 """
 Token Allocator for Hierarchical Context Manager
 
-Manages token budget allocation and enforcement across the A-E layer hierarchy
+Manages token budget allocation and enforcement across the hierarchical memory layers (WRI-14)
 with support for dynamic reallocation, overflow detection, and real-time tracking.
 """
 
@@ -74,7 +74,7 @@ class TokenAllocator:
     """
     Advanced token allocator with hierarchical budget management.
     
-    This class manages token allocation across the A-E layer hierarchy,
+    This class manages token allocation across the hierarchical memory layers (WRI-14),
     providing budget enforcement, overflow detection, and dynamic reallocation
     capabilities for the Writer Assistant's multi-agent storytelling system.
     """

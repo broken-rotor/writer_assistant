@@ -14,12 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 class LayerType(Enum):
-    """Hierarchical layers for context management."""
-    A_STORY = "A_story"           # Story-level context (highest level)
-    B_CHAPTER = "B_chapter"       # Chapter-level context
-    C_SCENE = "C_scene"           # Scene-level context
-    D_CHARACTER = "D_character"   # Character-level context
-    E_DIALOGUE = "E_dialogue"     # Dialogue-level context (lowest level)
+    """Hierarchical memory layers for context management (WRI-14 compliant)."""
+    WORKING_MEMORY = "working_memory"           # Active context (highest priority)
+    EPISODIC_MEMORY = "episodic_memory"         # Key events and plot points
+    SEMANTIC_MEMORY = "semantic_memory"         # Facts, traits, world rules
+    LONG_TERM_MEMORY = "long_term_memory"       # Complete story archive
+    AGENT_SPECIFIC_MEMORY = "agent_specific_memory"  # Per-agent subjective memories
 
 
 @dataclass
@@ -75,59 +75,59 @@ class LayerHierarchy:
         self._build_hierarchy_relationships()
     
     def _create_default_layer_configs(self) -> Dict[LayerType, LayerConfig]:
-        """Create default layer configurations based on storytelling requirements."""
+        """Create default layer configurations based on WRI-14 hierarchical memory management."""
         configs = {
-            LayerType.A_STORY: LayerConfig(
-                layer_type=LayerType.A_STORY,
-                min_tokens=500,
+            LayerType.WORKING_MEMORY: LayerConfig(
+                layer_type=LayerType.WORKING_MEMORY,
+                min_tokens=1000,  # ~2-4K per agent as per requirements
+                max_tokens=4000,
+                default_tokens=2000,
+                priority=5,  # Highest priority - active context
+                description="Active context: last 2-3 chapters + current chapter context"
+            ),
+            LayerType.EPISODIC_MEMORY: LayerConfig(
+                layer_type=LayerType.EPISODIC_MEMORY,
+                min_tokens=800,
                 max_tokens=2000,
-                default_tokens=1000,
-                priority=5,
-                description="Story-level context including theme, genre, overall narrative arc"
-            ),
-            LayerType.B_CHAPTER: LayerConfig(
-                layer_type=LayerType.B_CHAPTER,
-                min_tokens=300,
-                max_tokens=1500,
-                default_tokens=800,
+                default_tokens=1200,
                 priority=4,
-                description="Chapter-level context including chapter goals, major events, transitions"
+                description="Key events, character developments, plot points per story arc"
             ),
-            LayerType.C_SCENE: LayerConfig(
-                layer_type=LayerType.C_SCENE,
-                min_tokens=200,
-                max_tokens=1000,
-                default_tokens=600,
+            LayerType.SEMANTIC_MEMORY: LayerConfig(
+                layer_type=LayerType.SEMANTIC_MEMORY,
+                min_tokens=600,
+                max_tokens=1500,
+                default_tokens=1000,
                 priority=3,
-                description="Scene-level context including setting, atmosphere, immediate goals"
+                description="Character traits, world rules, established facts (persistent knowledge)"
             ),
-            LayerType.D_CHARACTER: LayerConfig(
-                layer_type=LayerType.D_CHARACTER,
-                min_tokens=150,
+            LayerType.AGENT_SPECIFIC_MEMORY: LayerConfig(
+                layer_type=LayerType.AGENT_SPECIFIC_MEMORY,
+                min_tokens=400,
+                max_tokens=1200,
+                default_tokens=800,
+                priority=2,
+                description="Per-agent subjective memories and personality-filtered interpretations"
+            ),
+            LayerType.LONG_TERM_MEMORY: LayerConfig(
+                layer_type=LayerType.LONG_TERM_MEMORY,
+                min_tokens=200,
                 max_tokens=800,
                 default_tokens=400,
-                priority=2,
-                description="Character-level context including personality, memories, relationships"
-            ),
-            LayerType.E_DIALOGUE: LayerConfig(
-                layer_type=LayerType.E_DIALOGUE,
-                min_tokens=50,
-                max_tokens=400,
-                default_tokens=200,
-                priority=1,
-                description="Dialogue-level context including speech patterns, immediate conversation"
+                priority=1,  # Lowest priority - archival
+                description="Complete story history with compression (archival storage)"
             )
         }
         return configs
     
     def _build_hierarchy_relationships(self):
-        """Build parent-child relationships between layers."""
-        # Define hierarchy: A -> B -> C -> D -> E
+        """Build parent-child relationships between memory layers."""
+        # Define memory hierarchy: Working -> Episodic -> Semantic -> Agent-Specific -> Long-term
         relationships = [
-            (LayerType.A_STORY, LayerType.B_CHAPTER),
-            (LayerType.B_CHAPTER, LayerType.C_SCENE),
-            (LayerType.C_SCENE, LayerType.D_CHARACTER),
-            (LayerType.D_CHARACTER, LayerType.E_DIALOGUE)
+            (LayerType.WORKING_MEMORY, LayerType.EPISODIC_MEMORY),
+            (LayerType.EPISODIC_MEMORY, LayerType.SEMANTIC_MEMORY),
+            (LayerType.SEMANTIC_MEMORY, LayerType.AGENT_SPECIFIC_MEMORY),
+            (LayerType.AGENT_SPECIFIC_MEMORY, LayerType.LONG_TERM_MEMORY)
         ]
         
         for parent, child in relationships:

@@ -317,37 +317,37 @@ class TestLayerHierarchy:
         assert len(configs) == 5  # A, B, C, D, E layers
         
         # Check that all layer types are present
-        expected_layers = {LayerType.A_STORY, LayerType.B_CHAPTER, LayerType.C_SCENE, 
-                          LayerType.D_CHARACTER, LayerType.E_DIALOGUE}
+        expected_layers = {LayerType.WORKING_MEMORY, LayerType.EPISODIC_MEMORY, LayerType.SEMANTIC_MEMORY, 
+                          LayerType.AGENT_SPECIFIC_MEMORY, LayerType.LONG_TERM_MEMORY}
         assert set(configs.keys()) == expected_layers
     
     def test_layer_relationships(self, hierarchy):
         """Test parent-child relationships."""
         # A -> B -> C -> D -> E hierarchy
-        assert hierarchy.get_parent_layer(LayerType.B_CHAPTER) == LayerType.A_STORY
-        assert hierarchy.get_parent_layer(LayerType.C_SCENE) == LayerType.B_CHAPTER
-        assert hierarchy.get_parent_layer(LayerType.D_CHARACTER) == LayerType.C_SCENE
-        assert hierarchy.get_parent_layer(LayerType.E_DIALOGUE) == LayerType.D_CHARACTER
-        assert hierarchy.get_parent_layer(LayerType.A_STORY) is None
+        assert hierarchy.get_parent_layer(LayerType.EPISODIC_MEMORY) == LayerType.WORKING_MEMORY
+        assert hierarchy.get_parent_layer(LayerType.SEMANTIC_MEMORY) == LayerType.EPISODIC_MEMORY
+        assert hierarchy.get_parent_layer(LayerType.AGENT_SPECIFIC_MEMORY) == LayerType.SEMANTIC_MEMORY
+        assert hierarchy.get_parent_layer(LayerType.LONG_TERM_MEMORY) == LayerType.AGENT_SPECIFIC_MEMORY
+        assert hierarchy.get_parent_layer(LayerType.WORKING_MEMORY) is None
     
     def test_child_relationships(self, hierarchy):
         """Test child relationships."""
-        children_a = hierarchy.get_child_layers(LayerType.A_STORY)
-        assert LayerType.B_CHAPTER in children_a
+        children_a = hierarchy.get_child_layers(LayerType.WORKING_MEMORY)
+        assert LayerType.EPISODIC_MEMORY in children_a
         
-        children_e = hierarchy.get_child_layers(LayerType.E_DIALOGUE)
+        children_e = hierarchy.get_child_layers(LayerType.LONG_TERM_MEMORY)
         assert len(children_e) == 0  # Leaf node
     
     def test_ancestor_layers(self, hierarchy):
         """Test getting ancestor layers."""
-        ancestors = hierarchy.get_ancestor_layers(LayerType.E_DIALOGUE)
-        expected = [LayerType.D_CHARACTER, LayerType.C_SCENE, LayerType.B_CHAPTER, LayerType.A_STORY]
+        ancestors = hierarchy.get_ancestor_layers(LayerType.LONG_TERM_MEMORY)
+        expected = [LayerType.AGENT_SPECIFIC_MEMORY, LayerType.SEMANTIC_MEMORY, LayerType.EPISODIC_MEMORY, LayerType.WORKING_MEMORY]
         assert ancestors == expected
     
     def test_descendant_layers(self, hierarchy):
         """Test getting descendant layers."""
-        descendants = hierarchy.get_descendant_layers(LayerType.A_STORY)
-        expected = [LayerType.B_CHAPTER, LayerType.C_SCENE, LayerType.D_CHARACTER, LayerType.E_DIALOGUE]
+        descendants = hierarchy.get_descendant_layers(LayerType.WORKING_MEMORY)
+        expected = [LayerType.EPISODIC_MEMORY, LayerType.SEMANTIC_MEMORY, LayerType.AGENT_SPECIFIC_MEMORY, LayerType.LONG_TERM_MEMORY]
         assert descendants == expected
     
     def test_layers_by_priority(self, hierarchy):
@@ -358,9 +358,9 @@ class TestLayerHierarchy:
         # Should be in reverse order
         assert layers_desc == list(reversed(layers_asc))
         
-        # A_STORY should have highest priority (5)
-        assert layers_desc[0] == LayerType.A_STORY
-        assert layers_asc[-1] == LayerType.A_STORY
+        # WORKING_MEMORY should have highest priority (5)
+        assert layers_desc[0] == LayerType.WORKING_MEMORY
+        assert layers_asc[-1] == LayerType.WORKING_MEMORY
     
     def test_budget_calculations(self, hierarchy):
         """Test budget calculation methods."""
@@ -374,11 +374,11 @@ class TestLayerHierarchy:
     def test_validate_layer_allocation_valid(self, hierarchy):
         """Test validation of valid layer allocation."""
         allocations = {
-            LayerType.A_STORY: 1000,
-            LayerType.B_CHAPTER: 800,
-            LayerType.C_SCENE: 600,
-            LayerType.D_CHARACTER: 400,
-            LayerType.E_DIALOGUE: 200
+            LayerType.WORKING_MEMORY: 1000,
+            LayerType.EPISODIC_MEMORY: 800,
+            LayerType.SEMANTIC_MEMORY: 600,
+            LayerType.AGENT_SPECIFIC_MEMORY: 400,
+            LayerType.LONG_TERM_MEMORY: 200
         }
         
         validation = hierarchy.validate_layer_allocation(allocations)
@@ -388,11 +388,11 @@ class TestLayerHierarchy:
     def test_validate_layer_allocation_below_minimum(self, hierarchy):
         """Test validation with allocation below minimum."""
         allocations = {
-            LayerType.A_STORY: 100,  # Below minimum of 500
-            LayerType.B_CHAPTER: 800,
-            LayerType.C_SCENE: 600,
-            LayerType.D_CHARACTER: 400,
-            LayerType.E_DIALOGUE: 200
+            LayerType.WORKING_MEMORY: 500,  # Below minimum of 1000
+            LayerType.EPISODIC_MEMORY: 1200,
+            LayerType.SEMANTIC_MEMORY: 1000,
+            LayerType.AGENT_SPECIFIC_MEMORY: 800,
+            LayerType.LONG_TERM_MEMORY: 400
         }
         
         validation = hierarchy.validate_layer_allocation(allocations)
@@ -437,17 +437,17 @@ class TestLayerHierarchy:
     def test_get_layer_path(self, hierarchy):
         """Test getting path between layers."""
         # Test path from child to parent
-        path = hierarchy.get_layer_path(LayerType.E_DIALOGUE, LayerType.A_STORY)
-        expected = [LayerType.E_DIALOGUE, LayerType.D_CHARACTER, LayerType.C_SCENE, LayerType.B_CHAPTER, LayerType.A_STORY]
+        path = hierarchy.get_layer_path(LayerType.LONG_TERM_MEMORY, LayerType.WORKING_MEMORY)
+        expected = [LayerType.LONG_TERM_MEMORY, LayerType.AGENT_SPECIFIC_MEMORY, LayerType.SEMANTIC_MEMORY, LayerType.EPISODIC_MEMORY, LayerType.WORKING_MEMORY]
         assert path == expected
         
         # Test path from parent to child
-        path = hierarchy.get_layer_path(LayerType.A_STORY, LayerType.E_DIALOGUE)
-        expected = [LayerType.A_STORY, LayerType.B_CHAPTER, LayerType.C_SCENE, LayerType.D_CHARACTER, LayerType.E_DIALOGUE]
+        path = hierarchy.get_layer_path(LayerType.WORKING_MEMORY, LayerType.LONG_TERM_MEMORY)
+        expected = [LayerType.WORKING_MEMORY, LayerType.EPISODIC_MEMORY, LayerType.SEMANTIC_MEMORY, LayerType.AGENT_SPECIFIC_MEMORY, LayerType.LONG_TERM_MEMORY]
         assert path == expected
         
         # Test path to same layer (should return path through parent)
-        path = hierarchy.get_layer_path(LayerType.B_CHAPTER, LayerType.B_CHAPTER)
+        path = hierarchy.get_layer_path(LayerType.EPISODIC_MEMORY, LayerType.EPISODIC_MEMORY)
         # The implementation goes through the parent, so it's not None
         assert path is not None
     
@@ -470,11 +470,11 @@ class TestTokenAllocator:
         """Create a mock hierarchy for testing."""
         hierarchy = Mock(spec=LayerHierarchy)
         hierarchy.suggest_balanced_allocation.return_value = {
-            LayerType.A_STORY: 1000,
-            LayerType.B_CHAPTER: 800,
-            LayerType.C_SCENE: 600,
-            LayerType.D_CHARACTER: 400,
-            LayerType.E_DIALOGUE: 200
+            LayerType.WORKING_MEMORY: 2000,
+            LayerType.EPISODIC_MEMORY: 1200,
+            LayerType.SEMANTIC_MEMORY: 1000,
+            LayerType.AGENT_SPECIFIC_MEMORY: 800,
+            LayerType.LONG_TERM_MEMORY: 400
         }
         # Mock the get_layer_config method
         def mock_get_layer_config(layer_type):
@@ -521,7 +521,7 @@ class TestTokenAllocator:
     def test_allocate_tokens_direct_success(self, allocator):
         """Test successful direct token allocation."""
         request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=500
         )
         
@@ -543,7 +543,7 @@ class TestTokenAllocator:
         
         # Request more tokens than available in the layer
         request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=2000  # More than layer allocation
         )
         
@@ -563,7 +563,7 @@ class TestTokenAllocator:
         )
         
         request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=2000,
             can_be_truncated=True
         )
@@ -585,14 +585,14 @@ class TestTokenAllocator:
         
         # First, use up most tokens in A_STORY layer
         initial_request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=900
         )
         allocator.allocate_tokens(initial_request)
         
         # Now request more than remaining in A_STORY
         borrow_request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=200
         )
         
@@ -606,35 +606,35 @@ class TestTokenAllocator:
         """Test releasing tokens back to layer."""
         # First allocate some tokens
         request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=500
         )
         allocator.allocate_tokens(request)
         
         # Then release them
-        success = allocator.release_tokens(LayerType.A_STORY, 300)
+        success = allocator.release_tokens(LayerType.WORKING_MEMORY, 300)
         assert success is True
         
         # Check that allocation was updated
-        allocation = allocator.get_layer_allocation(LayerType.A_STORY)
+        allocation = allocator.get_layer_allocation(LayerType.WORKING_MEMORY)
         assert allocation.used_tokens == 200  # 500 - 300
     
     def test_release_tokens_insufficient(self, allocator):
         """Test releasing more tokens than in use."""
-        success = allocator.release_tokens(LayerType.A_STORY, 1000)
+        success = allocator.release_tokens(LayerType.WORKING_MEMORY, 1000)
         assert success is False
     
     def test_reserve_tokens(self, allocator):
         """Test reserving tokens for future use."""
-        success = allocator.reserve_tokens(LayerType.A_STORY, 300)
+        success = allocator.reserve_tokens(LayerType.WORKING_MEMORY, 300)
         assert success is True
         
-        allocation = allocator.get_layer_allocation(LayerType.A_STORY)
+        allocation = allocator.get_layer_allocation(LayerType.WORKING_MEMORY)
         assert allocation.reserved_tokens == 300
     
     def test_reserve_tokens_insufficient(self, allocator):
         """Test reserving more tokens than available."""
-        success = allocator.reserve_tokens(LayerType.A_STORY, 2000)
+        success = allocator.reserve_tokens(LayerType.WORKING_MEMORY, 2000)
         assert success is False
     
     def test_get_overall_utilization(self):
@@ -652,7 +652,7 @@ class TestTokenAllocator:
         
         # Allocate some tokens
         request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=1500  # 50% of total budget
         )
         allocator.allocate_tokens(request)
@@ -683,7 +683,7 @@ class TestTokenAllocator:
         
         # Make some requests
         request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=500
         )
         allocator.allocate_tokens(request)
@@ -696,7 +696,7 @@ class TestTokenAllocator:
         """Test resetting allocations."""
         # Make some allocations first
         request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=500
         )
         allocator.allocate_tokens(request)
@@ -743,14 +743,14 @@ class TestTokenAllocator:
         
         # Use up most tokens in A_STORY layer
         initial_request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=900
         )
         allocator.allocate_tokens(initial_request)
         
         # Request more than remaining
         overflow_request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=300
         )
         
@@ -767,7 +767,7 @@ class TestTokenAllocator:
         )
         
         request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=2000,
             can_be_truncated=False
         )
@@ -790,14 +790,14 @@ class TestTokenAllocator:
         
         # Use up most tokens in A_STORY layer
         initial_request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=900
         )
         allocator.allocate_tokens(initial_request)
         
         # Request more than remaining
         overflow_request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=200
         )
         
@@ -822,7 +822,7 @@ class TestIntegration:
         
         # Test story-level allocation
         story_request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=800,
             content_preview="Once upon a time in a magical kingdom..."
         )
@@ -832,7 +832,7 @@ class TestIntegration:
         
         # Test character-level allocation
         char_request = AllocationRequest(
-            layer_type=LayerType.D_CHARACTER,
+            layer_type=LayerType.AGENT_SPECIFIC_MEMORY,
             requested_tokens=300,
             content_preview="John is a brave knight with a mysterious past."
         )
@@ -842,7 +842,7 @@ class TestIntegration:
         
         # Test dialogue allocation
         dialogue_request = AllocationRequest(
-            layer_type=LayerType.E_DIALOGUE,
+            layer_type=LayerType.LONG_TERM_MEMORY,
             requested_tokens=150,
             content_preview='"Hello there," she said with a warm smile.'
         )
@@ -905,9 +905,9 @@ class TestIntegration:
         
         # Exhaust most of the story layer budget
         story_requests = [
-            AllocationRequest(LayerType.A_STORY, 400),
-            AllocationRequest(LayerType.A_STORY, 400),
-            AllocationRequest(LayerType.A_STORY, 400)
+            AllocationRequest(LayerType.WORKING_MEMORY, 400),
+            AllocationRequest(LayerType.WORKING_MEMORY, 400),
+            AllocationRequest(LayerType.WORKING_MEMORY, 400)
         ]
         
         for request in story_requests:
@@ -916,7 +916,7 @@ class TestIntegration:
         
         # Now request more than remaining in story layer
         overflow_request = AllocationRequest(
-            layer_type=LayerType.A_STORY,
+            layer_type=LayerType.WORKING_MEMORY,
             requested_tokens=300
         )
         
