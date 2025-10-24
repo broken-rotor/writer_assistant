@@ -138,7 +138,7 @@ class TestContextPerformanceBenchmarks:
                 priority = request_data[2] if len(request_data) > 2 else 5
                 
                 # Mock allocation request
-                with patch.object(allocator, 'allocate') as mock_allocate:
+                with patch.object(allocator, 'allocate_tokens') as mock_allocate:
                     mock_result = Mock()
                     mock_result.success = True
                     mock_result.granted_tokens = min(tokens, 2000)  # Cap allocation
