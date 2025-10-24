@@ -33,7 +33,7 @@ class ContentLength(Enum):
 
 
 @dataclass
-class TestStoryData:
+class StoryTestData:
     """Container for generated test story data."""
     title: str
     genre: str
@@ -46,7 +46,7 @@ class TestStoryData:
 
 
 @dataclass
-class TestContextScenario:
+class ContextTestScenario:
     """Container for test context management scenarios."""
     name: str
     description: str
@@ -80,7 +80,7 @@ class StoryDataGenerator:
         if seed is not None:
             random.seed(seed)
     
-    def generate_story(self, complexity: StoryComplexity = StoryComplexity.MODERATE) -> TestStoryData:
+    def generate_story(self, complexity: StoryComplexity = StoryComplexity.MODERATE) -> StoryTestData:
         """Generate a complete test story based on complexity level."""
         genre = random.choice(self.GENRES)
         title = self._generate_title(genre)
@@ -102,7 +102,7 @@ class StoryDataGenerator:
         # Calculate total tokens (rough estimate)
         total_tokens = self._estimate_tokens(plot_outline, chapters, world_building, characters)
         
-        return TestStoryData(
+        return StoryTestData(
             title=title,
             genre=genre,
             characters=characters,
@@ -287,7 +287,7 @@ class ContextDataGenerator:
         if seed is not None:
             random.seed(seed)
     
-    def generate_context_scenario(self, name: str, complexity: StoryComplexity) -> TestContextScenario:
+    def generate_context_scenario(self, name: str, complexity: StoryComplexity) -> ContextTestScenario:
         """Generate a complete context management test scenario."""
         story_gen = StoryDataGenerator(seed=42)  # Use fixed seed for consistency
         story_data = story_gen.generate_story(complexity)
@@ -343,7 +343,7 @@ class ContextDataGenerator:
         total_expected = sum(expected_usage.values())
         should_overflow = total_expected > 30000  # Assuming 32k limit with 2k buffer
         
-        return TestContextScenario(
+        return ContextTestScenario(
             name=name,
             description=f"Test scenario with {complexity.value} story complexity",
             context_items=context_items,
@@ -410,7 +410,7 @@ class TokenTestDataGenerator:
 
 
 # Convenience functions for quick test data generation
-def generate_test_story_content(complexity: StoryComplexity = StoryComplexity.MODERATE) -> TestStoryData:
+def generate_test_story_content(complexity: StoryComplexity = StoryComplexity.MODERATE) -> StoryTestData:
     """Quick function to generate test story content."""
     generator = StoryDataGenerator()
     return generator.generate_story(complexity)
