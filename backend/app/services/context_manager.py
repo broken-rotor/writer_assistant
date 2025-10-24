@@ -134,8 +134,8 @@ class ContextManager:
             # Count tokens in content
             token_count = self.token_counter.count_tokens(
                 item.content, 
-                TokenContentType.TEXT
-            ).total_tokens
+                TokenContentType.UNKNOWN
+            ).token_count
             total_tokens += token_count
             
             # Group by type

@@ -256,11 +256,10 @@ class TestContextManager:
         custom_env = {
             'CONTEXT_MAX_TOKENS': '16000',
             'CONTEXT_BUFFER_TOKENS': '2000',
-            'CONTEXT_LAYER_A_RATIO': '0.1',
-            'CONTEXT_LAYER_B_RATIO': '0.0',
-            'CONTEXT_LAYER_C_RATIO': '0.4',
-            'CONTEXT_LAYER_D_RATIO': '0.2',
-            'CONTEXT_LAYER_E_RATIO': '0.3',
+            'CONTEXT_LAYER_A_TOKENS': '1600',
+            'CONTEXT_LAYER_C_TOKENS': '6400',
+            'CONTEXT_LAYER_D_TOKENS': '3200',
+            'CONTEXT_LAYER_E_TOKENS': '2800',
             'CONTEXT_SUMMARIZATION_THRESHOLD': '12000',
             'CONTEXT_ENABLE_RAG': 'false',
             'CONTEXT_ENABLE_MONITORING': 'true'
