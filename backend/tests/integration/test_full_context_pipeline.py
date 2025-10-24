@@ -199,7 +199,8 @@ class TestFullContextPipeline:
         small_limit = 5000
         context_manager = ContextManager(
             max_context_tokens=small_limit,
-            distillation_threshold=small_limit - 1000
+            distillation_threshold=100,  # Very low threshold to ensure optimization is triggered
+            enable_compression=True
         )
         
         allocator = TokenAllocator(
