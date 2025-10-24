@@ -10,3 +10,11 @@ from .token_management import (
     TokenAllocator, AllocationMode, OverflowStrategy, AllocationRequest, AllocationResult,
     LayerType, LayerConfig, LayerAllocation, LayerHierarchy
 )
+
+# Import context distillation system
+from .context_distillation import (
+    ContextDistiller, DistillationConfig, DistillationResult,
+    SummarizationStrategy, PlotSummaryStrategy, CharacterDevelopmentStrategy,
+    DialogueSummaryStrategy, EventSequenceStrategy, EmotionalMomentStrategy,
+    WorldBuildingStrategy
+)
