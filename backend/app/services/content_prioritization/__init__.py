@@ -12,15 +12,16 @@ Components:
 Part of WRI-16: Build Content Prioritization and RAG Retrieval System
 """
 
-from .layered_prioritizer import LayeredPrioritizer, ContentScore, PrioritizationConfig
-from .rag_retriever import RAGRetriever, RetrievalStrategy, RetrievalResult
+from .layered_prioritizer import LayeredPrioritizer, ContentScore, PrioritizationConfig, AgentType
+from .rag_retriever import RAGRetriever, RetrievalStrategy, RetrievalResult, RetrievalMode
 
 __all__ = [
     'LayeredPrioritizer',
     'ContentScore', 
     'PrioritizationConfig',
+    'AgentType',
     'RAGRetriever',
     'RetrievalStrategy',
-    'RetrievalResult'
+    'RetrievalResult',
+    'RetrievalMode'
 ]
-

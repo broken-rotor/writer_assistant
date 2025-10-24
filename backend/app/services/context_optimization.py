@@ -79,10 +79,7 @@ class ContextOptimizationService:
             )
         )
         
-        self.rag_retriever = RAGRetriever(
-            strategy=RetrievalStrategy.HYBRID,
-            max_results=5
-        )
+        self.rag_retriever = RAGRetriever()
         
         logger.info(f"ContextOptimizationService initialized: max_tokens={max_context_tokens}, threshold={optimization_threshold}")
     
