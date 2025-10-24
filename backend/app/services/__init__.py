@@ -18,3 +18,9 @@ from .context_distillation import (
     DialogueSummaryStrategy, EventSequenceStrategy, EmotionalMomentStrategy,
     WorldBuildingStrategy
 )
+
+# Import context manager system
+from .context_manager import (
+    ContextManager, ContextType, ContextItem, ContextAnalysis,
+    ContextOptimizationResult
+)
