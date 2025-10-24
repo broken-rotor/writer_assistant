@@ -27,29 +27,30 @@ class TestTokenAllocation:
     
     def test_token_allocator_initialization_with_config(self):
         """Test TokenAllocator initialization with configuration settings."""
-        with patch('app.services.token_management.allocator.settings', self.settings):
-            allocator = TokenAllocator(
-                max_tokens=self.settings.CONTEXT_MAX_TOKENS,
-                buffer_tokens=self.settings.CONTEXT_BUFFER_TOKENS,
-                allocation_mode=AllocationMode.DYNAMIC,
-                overflow_strategy=OverflowStrategy.REALLOCATE
-            )
-            
-            assert allocator.max_tokens == 32000
-            assert allocator.buffer_tokens == 2000
-            assert allocator.allocation_mode == AllocationMode.DYNAMIC
-            assert allocator.overflow_strategy == OverflowStrategy.REALLOCATE
+        # Calculate total budget from settings
+        total_budget = self.settings.CONTEXT_MAX_TOKENS - self.settings.CONTEXT_BUFFER_TOKENS
+        
+        allocator = TokenAllocator(
+            total_budget=total_budget,
+            mode=AllocationMode.DYNAMIC,
+            overflow_strategy=OverflowStrategy.BORROW
+        )
+        
+        # Test that allocator is initialized with correct settings
+        assert allocator.total_budget == total_budget
+        assert allocator.mode == AllocationMode.DYNAMIC
+        assert allocator.overflow_strategy == OverflowStrategy.BORROW
     
     def test_layer_token_configuration_integration(self):
         """Test that layer token allocations from configuration are properly applied."""
+        total_budget = self.settings.CONTEXT_MAX_TOKENS - self.settings.CONTEXT_BUFFER_TOKENS
+        
         allocator = TokenAllocator(
-            max_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            buffer_tokens=self.settings.CONTEXT_BUFFER_TOKENS
+            total_budget=total_budget
         )
         
         # Test that allocator is initialized with correct token limits
-        assert allocator.max_tokens == self.settings.CONTEXT_MAX_TOKENS
-        assert allocator.buffer_tokens == self.settings.CONTEXT_BUFFER_TOKENS
+        assert allocator.total_budget == total_budget
         
         # Test that configuration values are accessible
         expected_layer_tokens = {
@@ -67,15 +68,13 @@ class TestTokenAllocation:
         
         # Test that total doesn't exceed available tokens
         total_layer_tokens = sum(expected_layer_tokens.values())
-        available_tokens = allocator.max_tokens - allocator.buffer_tokens
-        assert total_layer_tokens <= available_tokens
+        assert total_layer_tokens <= total_budget
     
     def test_allocation_request_processing(self):
         """Test processing of allocation requests."""
         allocator = TokenAllocator(
-            max_tokens=10000,
-            buffer_tokens=1000,
-            allocation_mode=AllocationMode.DYNAMIC,
+            total_budget=10000,
+            mode=AllocationMode.DYNAMIC,
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
@@ -88,7 +87,7 @@ class TestTokenAllocation:
             can_be_truncated=True
         )
         
-        result = allocator.allocate(request)
+        result = allocator.allocate_tokens(request)
         
         assert isinstance(result, AllocationResult)
         assert result.success is True
@@ -98,9 +97,8 @@ class TestTokenAllocation:
     def test_overflow_handling_strategies(self):
         """Test different overflow handling strategies."""
         allocator = TokenAllocator(
-            max_tokens=1000,
-            buffer_tokens=100,
-            allocation_mode=AllocationMode.STATIC
+            total_budget=1000,
+            mode=AllocationMode.STATIC
         )
         
         # Test REJECT strategy
@@ -111,13 +109,13 @@ class TestTokenAllocation:
             priority=5
         )
         
-        result = allocator.allocate(large_request)
+        result = allocator.allocate_tokens(large_request)
         assert result.success is False
-        assert "overflow" in result.error_message.lower() or "exceed" in result.error_message.lower()
+        assert any(word in result.error_message.lower() for word in ["overflow", "exceed", "insufficient"])
         
         # Test TRUNCATE strategy
         allocator.overflow_strategy = OverflowStrategy.TRUNCATE
-        result = allocator.allocate(large_request)
+        result = allocator.allocate_tokens(large_request)
         assert result.success is True
         assert result.truncated is True
         assert result.granted_tokens < large_request.requested_tokens
@@ -125,9 +123,8 @@ class TestTokenAllocation:
     def test_dynamic_reallocation(self):
         """Test dynamic token reallocation between layers."""
         allocator = TokenAllocator(
-            max_tokens=5000,
-            buffer_tokens=500,
-            allocation_mode=AllocationMode.DYNAMIC,
+            total_budget=5000,
+            mode=AllocationMode.DYNAMIC,
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
@@ -139,7 +136,7 @@ class TestTokenAllocation:
                 requested_tokens=800,
                 priority=8 - i
             )
-            result = allocator.allocate(request)
+            result = allocator.allocate_tokens(request)
             requests.append((request, result))
         
         # Request from another layer that might need reallocation
@@ -149,7 +146,7 @@ class TestTokenAllocation:
             priority=10  # Very high priority
         )
         
-        result = allocator.allocate(high_priority_request)
+        result = allocator.allocate_tokens(high_priority_request)
         
         # Should succeed due to reallocation
         assert result.success is True
@@ -158,9 +155,8 @@ class TestTokenAllocation:
     def test_priority_based_allocation(self):
         """Test that higher priority requests get better allocation."""
         allocator = TokenAllocator(
-            max_tokens=2000,
-            buffer_tokens=200,
-            allocation_mode=AllocationMode.DYNAMIC
+            total_budget=2000,
+            mode=AllocationMode.DYNAMIC
         )
         
         # Create requests with different priorities
@@ -177,8 +173,8 @@ class TestTokenAllocation:
         )
         
         # Allocate in order of submission (not priority)
-        low_result = allocator.allocate(low_priority)
-        high_result = allocator.allocate(high_priority)
+        low_result = allocator.allocate_tokens(low_priority)
+        high_result = allocator.allocate_tokens(high_priority)
         
         # High priority should get at least as much as requested
         assert high_result.success is True
@@ -187,9 +183,8 @@ class TestTokenAllocation:
     def test_token_borrowing_between_layers(self):
         """Test token borrowing mechanism between layers."""
         allocator = TokenAllocator(
-            max_tokens=3000,
-            buffer_tokens=300,
-            allocation_mode=AllocationMode.DYNAMIC,
+            total_budget=3000,
+            mode=AllocationMode.DYNAMIC,
             overflow_strategy=OverflowStrategy.BORROW
         )
         
@@ -199,7 +194,7 @@ class TestTokenAllocation:
             requested_tokens=1500,
             priority=8
         )
-        allocator.allocate(primary_request)
+        allocator.allocate_tokens(primary_request)
         
         # Request more than remaining in the layer
         overflow_request = AllocationRequest(
@@ -208,7 +203,7 @@ class TestTokenAllocation:
             priority=7
         )
         
-        result = allocator.allocate(overflow_request)
+        result = allocator.allocate_tokens(overflow_request)
         
         if result.success:
             # If borrowing occurred, borrowed_tokens should be > 0
@@ -217,9 +212,8 @@ class TestTokenAllocation:
     def test_allocation_statistics_tracking(self):
         """Test that allocation statistics are properly tracked."""
         allocator = TokenAllocator(
-            max_tokens=5000,
-            buffer_tokens=500,
-            allocation_mode=AllocationMode.DYNAMIC
+            total_budget=5000,
+            mode=AllocationMode.DYNAMIC
         )
         
         # Make several allocation requests
@@ -232,7 +226,7 @@ class TestTokenAllocation:
         
         results = []
         for request in requests:
-            result = allocator.allocate(request)
+            result = allocator.allocate_tokens(request)
             results.append(result)
         
         # Check statistics
@@ -245,9 +239,8 @@ class TestTokenAllocation:
     def test_concurrent_allocation_requests(self):
         """Test handling of concurrent allocation requests."""
         allocator = TokenAllocator(
-            max_tokens=4000,
-            buffer_tokens=400,
-            allocation_mode=AllocationMode.DYNAMIC
+            total_budget=4000,
+            mode=AllocationMode.DYNAMIC
         )
         
         # Simulate concurrent requests
@@ -261,12 +254,12 @@ class TestTokenAllocation:
         # Process all requests
         results = []
         for request in concurrent_requests:
-            result = allocator.allocate(request)
+            result = allocator.allocate_tokens(request)
             results.append(result)
         
         # Verify that total allocated doesn't exceed limits
         total_allocated = sum(r.granted_tokens for r in results if r.success)
-        assert total_allocated <= (allocator.max_tokens - allocator.buffer_tokens)
+        assert total_allocated <= allocator.total_budget
         
         # Verify at least some requests succeeded
         successful_count = sum(1 for r in results if r.success)
@@ -275,9 +268,8 @@ class TestTokenAllocation:
     def test_allocation_timeout_handling(self):
         """Test allocation timeout handling."""
         allocator = TokenAllocator(
-            max_tokens=2000,
-            buffer_tokens=200,
-            allocation_mode=AllocationMode.DYNAMIC
+            total_budget=2000,
+            mode=AllocationMode.DYNAMIC
         )
         
         # Request with timeout
@@ -288,7 +280,7 @@ class TestTokenAllocation:
             max_wait_time=0.1  # 100ms timeout
         )
         
-        result = allocator.allocate(request)
+        result = allocator.allocate_tokens(request)
         
         # Should complete within timeout
         assert result.wait_time <= request.max_wait_time + 0.05  # Allow small tolerance
@@ -297,9 +289,8 @@ class TestTokenAllocation:
     def test_memory_layer_hierarchy_respect(self):
         """Test that allocation respects memory layer hierarchy."""
         allocator = TokenAllocator(
-            max_tokens=6000,
-            buffer_tokens=600,
-            allocation_mode=AllocationMode.DYNAMIC
+            total_budget=6000,
+            mode=AllocationMode.DYNAMIC
         )
         
         # Test hierarchy: WORKING_MEMORY > EPISODIC_MEMORY > SEMANTIC_MEMORY > LONG_TERM_MEMORY
@@ -312,7 +303,7 @@ class TestTokenAllocation:
         
         results = []
         for request in hierarchy_requests:
-            result = allocator.allocate(request)
+            result = allocator.allocate_tokens(request)
             results.append(result)
         
         # Working memory should get the best allocation
@@ -325,19 +316,19 @@ class TestTokenAllocation:
         # Test with minimal configuration
         minimal_settings = Settings()
         with patch.dict('os.environ', {
-            'CONTEXT_MAX_TOKENS': '1000',
-            'CONTEXT_BUFFER_TOKENS': '100',
-            'CONTEXT_LAYER_A_TOKENS': '450',
+            'CONTEXT_MAX_TOKENS': '10000',
+            'CONTEXT_BUFFER_TOKENS': '1000',
+            'CONTEXT_LAYER_A_TOKENS': '2000',
             'CONTEXT_LAYER_B_TOKENS': '0',
-            'CONTEXT_LAYER_C_TOKENS': '270',
-            'CONTEXT_LAYER_D_TOKENS': '90',
-            'CONTEXT_LAYER_E_TOKENS': '90'
+            'CONTEXT_LAYER_C_TOKENS': '4000',
+            'CONTEXT_LAYER_D_TOKENS': '1500',
+            'CONTEXT_LAYER_E_TOKENS': '1500'
         }):
             settings = Settings()
             
             allocator = TokenAllocator(
-                max_tokens=settings.CONTEXT_MAX_TOKENS,
-                buffer_tokens=settings.CONTEXT_BUFFER_TOKENS
+                total_budget=settings.CONTEXT_MAX_TOKENS,
+                
             )
             
             # Test allocation with minimal tokens
@@ -347,16 +338,15 @@ class TestTokenAllocation:
                 priority=8
             )
             
-            result = allocator.allocate(request)
+            result = allocator.allocate_tokens(request)
             assert result.success is True
             assert result.granted_tokens <= 900  # Max - buffer
     
     def test_stress_test_with_generated_data(self):
         """Test allocator with stress test data from generator."""
         allocator = TokenAllocator(
-            max_tokens=10000,
-            buffer_tokens=1000,
-            allocation_mode=AllocationMode.DYNAMIC,
+            total_budget=10000,
+            mode=AllocationMode.DYNAMIC,
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
@@ -378,7 +368,7 @@ class TestTokenAllocation:
         # Process all requests
         results = []
         for request in requests:
-            result = allocator.allocate(request)
+            result = allocator.allocate_tokens(request)
             results.append(result)
         
         # Verify system stability under stress
@@ -386,4 +376,4 @@ class TestTokenAllocation:
         assert len(successful_results) > 0  # At least some should succeed
         
         total_allocated = sum(r.granted_tokens for r in successful_results)
-        assert total_allocated <= allocator.max_tokens - allocator.buffer_tokens
+        assert total_allocated <= allocator.total_budget

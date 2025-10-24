@@ -40,9 +40,8 @@ class TestFullContextPipeline:
         
         # Initialize token allocator
         allocator = TokenAllocator(
-            max_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            buffer_tokens=self.settings.CONTEXT_BUFFER_TOKENS,
-            allocation_mode=AllocationMode.DYNAMIC,
+            total_budget=self.settings.CONTEXT_MAX_TOKENS,
+            mode=AllocationMode.DYNAMIC,
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
@@ -78,10 +77,10 @@ class TestFullContextPipeline:
             {
                 'CONTEXT_MAX_TOKENS': '8000',
                 'CONTEXT_BUFFER_TOKENS': '800',
-                'CONTEXT_LAYER_A_TOKENS': '1440',
-                'CONTEXT_LAYER_C_TOKENS': '3600',
-                'CONTEXT_LAYER_D_TOKENS': '1440',
-                'CONTEXT_LAYER_E_TOKENS': '720',
+                'CONTEXT_LAYER_A_TOKENS': '1200',
+                'CONTEXT_LAYER_C_TOKENS': '3000',
+                'CONTEXT_LAYER_D_TOKENS': '1500',
+                'CONTEXT_LAYER_E_TOKENS': '1500',
                 'CONTEXT_ENABLE_RAG': 'false'
             },
             {
@@ -134,9 +133,8 @@ class TestFullContextPipeline:
         )
         
         allocator = TokenAllocator(
-            max_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            buffer_tokens=self.settings.CONTEXT_BUFFER_TOKENS,
-            allocation_mode=AllocationMode.DYNAMIC
+            total_budget=self.settings.CONTEXT_MAX_TOKENS,
+            mode=AllocationMode.DYNAMIC
         )
         
         # Group context items by layer type
@@ -154,7 +152,7 @@ class TestFullContextPipeline:
             estimated_tokens = sum(len(item.content) // 4 for item in items)  # Rough estimate
             
             # Mock allocation for this layer
-            with patch.object(allocator, 'allocate') as mock_allocate:
+            with patch.object(allocator, 'allocate_tokens') as mock_allocate:
                 mock_result = Mock()
                 mock_result.success = True
                 mock_result.granted_tokens = min(estimated_tokens, 5000)  # Cap at 5k per layer
@@ -168,7 +166,7 @@ class TestFullContextPipeline:
                     priority=8
                 )
                 
-                result = allocator.allocate(request)
+                result = allocator.allocate_tokens(request)
                 allocation_results[layer_type] = result
                 total_allocated += result.granted_tokens
         
@@ -192,9 +190,8 @@ class TestFullContextPipeline:
         )
         
         allocator = TokenAllocator(
-            max_tokens=small_limit,
-            buffer_tokens=500,
-            allocation_mode=AllocationMode.DYNAMIC,
+            total_budget=small_limit,
+            mode=AllocationMode.DYNAMIC,
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
@@ -211,7 +208,7 @@ class TestFullContextPipeline:
             
             result = context_manager.handle_overflow(
                 large_scenario.context_items,
-                max_tokens=small_limit - 500
+                total_budget=small_limit - 500
             )
             
             assert result['overflow_handled'] is True
