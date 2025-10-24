@@ -401,3 +401,7 @@ class LayerHierarchy:
                 "layers_by_priority": [layer.value for layer in self.get_layers_by_priority()]
             }
         }
+    
+    def get_default_priorities(self) -> Dict[LayerType, int]:
+        """Get the default priority mapping for all layers."""
+        return {layer_type: config.priority for layer_type, config in self._layer_configs.items()}

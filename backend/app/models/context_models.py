@@ -56,7 +56,7 @@ class ContextManageRequest(BaseModel):
     context_items: List[ContextItemRequest] = Field(..., min_items=1, description="List of context items to manage")
     target_tokens: Optional[int] = Field(default=None, gt=0, le=16000, description="Target token count for optimization")
     enable_compression: bool = Field(default=True, description="Whether to enable context compression")
-    optimization_mode: str = Field(default="balanced", regex="^(aggressive|balanced|conservative)$", description="Optimization strategy")
+    optimization_mode: str = Field(default="balanced", pattern="^(aggressive|balanced|conservative)$", description="Optimization strategy")
     preserve_types: List[ContextTypeEnum] = Field(default=[], description="Context types to preserve from compression")
     
     @validator('context_items')

@@ -27,6 +27,7 @@ from app.services.context_distillation import (
     ContextDistiller, DistillationConfig, DistillationResult,
     DistillationTrigger
 )
+from app.services.llm_inference import get_llm
 
 logger = logging.getLogger(__name__)
 
@@ -106,17 +107,26 @@ class ContextManager:
         
         # Initialize services
         self.token_counter = TokenCounter()
-        self.token_allocator = TokenAllocator()
         self.layer_hierarchy = LayerHierarchy()
+        self.token_allocator = TokenAllocator(
+            total_budget=max_context_tokens,
+            hierarchy=self.layer_hierarchy,
+            token_counter=self.token_counter
+        )
+        
+        # Initialize LLM service (optional for testing)
+        self.llm_service = get_llm()
         
         # Initialize context distiller with configuration
         distillation_config = DistillationConfig(
-            max_tokens_per_layer=2000,
-            compression_ratio=0.3,
-            preserve_recent_content=True,
             layer_priorities=self.layer_hierarchy.get_default_priorities()
         )
-        self.context_distiller = ContextDistiller(distillation_config)
+        self.context_distiller = ContextDistiller(
+            token_counter=self.token_counter,
+            token_allocator=self.token_allocator,
+            llm_service=self.llm_service,
+            config=distillation_config
+        )
         
         logger.info(f"ContextManager initialized with max_tokens={max_context_tokens}")
     
