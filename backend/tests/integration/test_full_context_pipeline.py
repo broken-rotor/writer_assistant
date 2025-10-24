@@ -78,19 +78,19 @@ class TestFullContextPipeline:
             {
                 'CONTEXT_MAX_TOKENS': '8000',
                 'CONTEXT_BUFFER_TOKENS': '800',
-                'CONTEXT_LAYER_A_RATIO': '0.2',
-                'CONTEXT_LAYER_C_RATIO': '0.5',
-                'CONTEXT_LAYER_D_RATIO': '0.2',
-                'CONTEXT_LAYER_E_RATIO': '0.1',
+                'CONTEXT_LAYER_A_TOKENS': '1440',
+                'CONTEXT_LAYER_C_TOKENS': '3600',
+                'CONTEXT_LAYER_D_TOKENS': '1440',
+                'CONTEXT_LAYER_E_TOKENS': '720',
                 'CONTEXT_ENABLE_RAG': 'false'
             },
             {
                 'CONTEXT_MAX_TOKENS': '16000',
                 'CONTEXT_BUFFER_TOKENS': '1600',
-                'CONTEXT_LAYER_A_RATIO': '0.1',
-                'CONTEXT_LAYER_C_RATIO': '0.6',
-                'CONTEXT_LAYER_D_RATIO': '0.15',
-                'CONTEXT_LAYER_E_RATIO': '0.15',
+                'CONTEXT_LAYER_A_TOKENS': '1440',
+                'CONTEXT_LAYER_C_TOKENS': '8640',
+                'CONTEXT_LAYER_D_TOKENS': '2160',
+                'CONTEXT_LAYER_E_TOKENS': '2160',
                 'CONTEXT_ENABLE_RAG': 'true'
             }
         ]

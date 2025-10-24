@@ -24,12 +24,12 @@ class TestContextManagementConfig:
         assert settings.CONTEXT_MAX_TOKENS == 32000
         assert settings.CONTEXT_BUFFER_TOKENS == 2000
         
-        # Test layer ratios
-        assert settings.CONTEXT_LAYER_A_RATIO == 0.0625
-        assert settings.CONTEXT_LAYER_B_RATIO == 0.0
-        assert settings.CONTEXT_LAYER_C_RATIO == 0.4375
-        assert settings.CONTEXT_LAYER_D_RATIO == 0.15625
-        assert settings.CONTEXT_LAYER_E_RATIO == 0.34375
+        # Test layer token allocations
+        assert settings.CONTEXT_LAYER_A_TOKENS == 2000
+        assert settings.CONTEXT_LAYER_B_TOKENS == 0
+        assert settings.CONTEXT_LAYER_C_TOKENS == 13000
+        assert settings.CONTEXT_LAYER_D_TOKENS == 5000
+        assert settings.CONTEXT_LAYER_E_TOKENS == 10000
         
         # Test performance settings
         assert settings.CONTEXT_SUMMARIZATION_THRESHOLD == 25000
@@ -45,44 +45,57 @@ class TestContextManagementConfig:
         assert settings.CONTEXT_OVERFLOW_STRATEGY == "reallocate"
         assert settings.CONTEXT_ALLOCATION_MODE == "dynamic"
     
-    def test_layer_ratios_sum_validation(self):
-        """Test that layer ratios are validated to sum <= 1.0."""
-        # Test valid ratios (sum = 1.0)
+    def test_layer_tokens_sum_validation(self):
+        """Test that layer token allocations don't exceed available tokens."""
+        # Test valid token allocations (within limits)
         with patch.dict(os.environ, {
-            'CONTEXT_LAYER_A_RATIO': '0.2',
-            'CONTEXT_LAYER_B_RATIO': '0.1',
-            'CONTEXT_LAYER_C_RATIO': '0.3',
-            'CONTEXT_LAYER_D_RATIO': '0.2',
-            'CONTEXT_LAYER_E_RATIO': '0.2'
+            'CONTEXT_MAX_TOKENS': '32000',
+            'CONTEXT_BUFFER_TOKENS': '2000',
+            'CONTEXT_LAYER_A_TOKENS': '2000',
+            'CONTEXT_LAYER_B_TOKENS': '1000',
+            'CONTEXT_LAYER_C_TOKENS': '10000',
+            'CONTEXT_LAYER_D_TOKENS': '8000',
+            'CONTEXT_LAYER_E_TOKENS': '9000'
         }):
             settings = Settings()
-            assert settings.CONTEXT_LAYER_A_RATIO == 0.2
+            assert settings.CONTEXT_LAYER_A_TOKENS == 2000
         
-        # Test invalid ratios (sum > 1.0)
+        # Test invalid token allocations (exceed available tokens)
         with patch.dict(os.environ, {
-            'CONTEXT_LAYER_A_RATIO': '0.5',
-            'CONTEXT_LAYER_B_RATIO': '0.3',
-            'CONTEXT_LAYER_C_RATIO': '0.4',
-            'CONTEXT_LAYER_D_RATIO': '0.2',
-            'CONTEXT_LAYER_E_RATIO': '0.2'
+            'CONTEXT_MAX_TOKENS': '10000',
+            'CONTEXT_BUFFER_TOKENS': '1000',
+            'CONTEXT_LAYER_A_TOKENS': '3000',
+            'CONTEXT_LAYER_B_TOKENS': '2000',
+            'CONTEXT_LAYER_C_TOKENS': '3000',
+            'CONTEXT_LAYER_D_TOKENS': '2000',
+            'CONTEXT_LAYER_E_TOKENS': '2000'
         }):
-            with pytest.raises(ValueError, match="Context layer ratios sum to .* which exceeds 1.0"):
+            with pytest.raises(ValueError, match="Context layer tokens sum to .* which exceeds available tokens"):
                 Settings()
     
     def test_context_max_tokens_validation(self):
         """Test CONTEXT_MAX_TOKENS validation."""
-        # Test valid values
-        with patch.dict(os.environ, {'CONTEXT_MAX_TOKENS': '16000'}):
+        # Test valid values with compatible layer tokens
+        with patch.dict(os.environ, {
+            'CONTEXT_MAX_TOKENS': '50000',
+            'CONTEXT_BUFFER_TOKENS': '2000'
+        }):
             settings = Settings()
-            assert settings.CONTEXT_MAX_TOKENS == 16000
+            assert settings.CONTEXT_MAX_TOKENS == 50000
         
-        # Test minimum boundary
-        with patch.dict(os.environ, {'CONTEXT_MAX_TOKENS': '1000'}):
+        # Test minimum boundary with minimal layer tokens
+        with patch.dict(os.environ, {
+            'CONTEXT_MAX_TOKENS': '35000',
+            'CONTEXT_BUFFER_TOKENS': '2000'
+        }):
             settings = Settings()
-            assert settings.CONTEXT_MAX_TOKENS == 1000
+            assert settings.CONTEXT_MAX_TOKENS == 35000
         
         # Test maximum boundary
-        with patch.dict(os.environ, {'CONTEXT_MAX_TOKENS': '100000'}):
+        with patch.dict(os.environ, {
+            'CONTEXT_MAX_TOKENS': '100000',
+            'CONTEXT_BUFFER_TOKENS': '2000'
+        }):
             settings = Settings()
             assert settings.CONTEXT_MAX_TOKENS == 100000
         
@@ -98,18 +111,27 @@ class TestContextManagementConfig:
     
     def test_context_buffer_tokens_validation(self):
         """Test CONTEXT_BUFFER_TOKENS validation."""
-        # Test valid values
-        with patch.dict(os.environ, {'CONTEXT_BUFFER_TOKENS': '1500'}):
+        # Test valid values with compatible max tokens
+        with patch.dict(os.environ, {
+            'CONTEXT_MAX_TOKENS': '35000',
+            'CONTEXT_BUFFER_TOKENS': '3000'
+        }):
             settings = Settings()
-            assert settings.CONTEXT_BUFFER_TOKENS == 1500
+            assert settings.CONTEXT_BUFFER_TOKENS == 3000
         
         # Test minimum boundary
-        with patch.dict(os.environ, {'CONTEXT_BUFFER_TOKENS': '100'}):
+        with patch.dict(os.environ, {
+            'CONTEXT_MAX_TOKENS': '35000',
+            'CONTEXT_BUFFER_TOKENS': '100'
+        }):
             settings = Settings()
             assert settings.CONTEXT_BUFFER_TOKENS == 100
         
         # Test maximum boundary
-        with patch.dict(os.environ, {'CONTEXT_BUFFER_TOKENS': '10000'}):
+        with patch.dict(os.environ, {
+            'CONTEXT_MAX_TOKENS': '50000',
+            'CONTEXT_BUFFER_TOKENS': '10000'
+        }):
             settings = Settings()
             assert settings.CONTEXT_BUFFER_TOKENS == 10000
         
@@ -123,30 +145,45 @@ class TestContextManagementConfig:
             with pytest.raises(ValidationError):
                 Settings()
     
-    def test_layer_ratio_validation(self):
-        """Test individual layer ratio validation."""
-        # Test valid ratio
-        with patch.dict(os.environ, {'CONTEXT_LAYER_A_RATIO': '0.5'}):
+    def test_layer_token_validation(self):
+        """Test individual layer token validation."""
+        # Test valid token allocation with adjusted other layers
+        with patch.dict(os.environ, {
+            'CONTEXT_LAYER_A_TOKENS': '3000',
+            'CONTEXT_LAYER_C_TOKENS': '12000',
+            'CONTEXT_LAYER_D_TOKENS': '5000',
+            'CONTEXT_LAYER_E_TOKENS': '10000'
+        }):
             settings = Settings()
-            assert settings.CONTEXT_LAYER_A_RATIO == 0.5
+            assert settings.CONTEXT_LAYER_A_TOKENS == 3000
         
-        # Test minimum boundary (0.0)
-        with patch.dict(os.environ, {'CONTEXT_LAYER_A_RATIO': '0.0'}):
+        # Test minimum boundary
+        with patch.dict(os.environ, {
+            'CONTEXT_LAYER_A_TOKENS': '100',
+            'CONTEXT_LAYER_C_TOKENS': '12900',
+            'CONTEXT_LAYER_D_TOKENS': '5000',
+            'CONTEXT_LAYER_E_TOKENS': '10000'
+        }):
             settings = Settings()
-            assert settings.CONTEXT_LAYER_A_RATIO == 0.0
+            assert settings.CONTEXT_LAYER_A_TOKENS == 100
         
-        # Test maximum boundary (1.0)
-        with patch.dict(os.environ, {'CONTEXT_LAYER_A_RATIO': '1.0'}):
-            with pytest.raises(ValueError):  # This would make total > 1.0
-                Settings()
+        # Test maximum boundary
+        with patch.dict(os.environ, {
+            'CONTEXT_LAYER_A_TOKENS': '10000',
+            'CONTEXT_LAYER_C_TOKENS': '5000',
+            'CONTEXT_LAYER_D_TOKENS': '5000',
+            'CONTEXT_LAYER_E_TOKENS': '10000'
+        }):
+            settings = Settings()
+            assert settings.CONTEXT_LAYER_A_TOKENS == 10000
         
         # Test below minimum
-        with patch.dict(os.environ, {'CONTEXT_LAYER_A_RATIO': '-0.1'}):
+        with patch.dict(os.environ, {'CONTEXT_LAYER_A_TOKENS': '50'}):
             with pytest.raises(ValidationError):
                 Settings()
         
         # Test above maximum
-        with patch.dict(os.environ, {'CONTEXT_LAYER_A_RATIO': '1.5'}):
+        with patch.dict(os.environ, {'CONTEXT_LAYER_A_TOKENS': '15000'}):
             with pytest.raises(ValidationError):
                 Settings()
     
@@ -269,11 +306,11 @@ class TestContextManagementConfig:
         env_vars = {
             'CONTEXT_MAX_TOKENS': '16000',
             'CONTEXT_BUFFER_TOKENS': '1000',
-            'CONTEXT_LAYER_A_RATIO': '0.1',
-            'CONTEXT_LAYER_B_RATIO': '0.05',
-            'CONTEXT_LAYER_C_RATIO': '0.4',
-            'CONTEXT_LAYER_D_RATIO': '0.2',
-            'CONTEXT_LAYER_E_RATIO': '0.25',
+            'CONTEXT_LAYER_A_TOKENS': '1500',
+            'CONTEXT_LAYER_B_TOKENS': '750',
+            'CONTEXT_LAYER_C_TOKENS': '6000',
+            'CONTEXT_LAYER_D_TOKENS': '3000',
+            'CONTEXT_LAYER_E_TOKENS': '3750',
             'CONTEXT_ENABLE_RAG': 'false',
             'CONTEXT_ENABLE_MONITORING': 'false',
             'CONTEXT_OVERFLOW_STRATEGY': 'borrow'
@@ -284,73 +321,79 @@ class TestContextManagementConfig:
             
             assert settings.CONTEXT_MAX_TOKENS == 16000
             assert settings.CONTEXT_BUFFER_TOKENS == 1000
-            assert settings.CONTEXT_LAYER_A_RATIO == 0.1
-            assert settings.CONTEXT_LAYER_B_RATIO == 0.05
-            assert settings.CONTEXT_LAYER_C_RATIO == 0.4
-            assert settings.CONTEXT_LAYER_D_RATIO == 0.2
-            assert settings.CONTEXT_LAYER_E_RATIO == 0.25
+            assert settings.CONTEXT_LAYER_A_TOKENS == 1500
+            assert settings.CONTEXT_LAYER_B_TOKENS == 750
+            assert settings.CONTEXT_LAYER_C_TOKENS == 6000
+            assert settings.CONTEXT_LAYER_D_TOKENS == 3000
+            assert settings.CONTEXT_LAYER_E_TOKENS == 3750
             assert settings.CONTEXT_ENABLE_RAG is False
             assert settings.CONTEXT_ENABLE_MONITORING is False
             assert settings.CONTEXT_OVERFLOW_STRATEGY == 'borrow'
     
-    def test_edge_case_layer_ratios(self):
-        """Test edge cases for layer ratio validation."""
-        # Test all zeros (valid)
+    def test_edge_case_layer_tokens(self):
+        """Test edge cases for layer token validation."""
+        # Test all minimum values (valid)
         with patch.dict(os.environ, {
-            'CONTEXT_LAYER_A_RATIO': '0.0',
-            'CONTEXT_LAYER_B_RATIO': '0.0',
-            'CONTEXT_LAYER_C_RATIO': '0.0',
-            'CONTEXT_LAYER_D_RATIO': '0.0',
-            'CONTEXT_LAYER_E_RATIO': '0.0'
+            'CONTEXT_MAX_TOKENS': '10000',
+            'CONTEXT_BUFFER_TOKENS': '1000',
+            'CONTEXT_LAYER_A_TOKENS': '100',
+            'CONTEXT_LAYER_B_TOKENS': '0',
+            'CONTEXT_LAYER_C_TOKENS': '1000',
+            'CONTEXT_LAYER_D_TOKENS': '500',
+            'CONTEXT_LAYER_E_TOKENS': '1000'
         }):
             settings = Settings()
-            total = (settings.CONTEXT_LAYER_A_RATIO + 
-                    settings.CONTEXT_LAYER_B_RATIO + 
-                    settings.CONTEXT_LAYER_C_RATIO + 
-                    settings.CONTEXT_LAYER_D_RATIO + 
-                    settings.CONTEXT_LAYER_E_RATIO)
-            assert total == 0.0
+            total = (settings.CONTEXT_LAYER_A_TOKENS + 
+                    settings.CONTEXT_LAYER_B_TOKENS + 
+                    settings.CONTEXT_LAYER_C_TOKENS + 
+                    settings.CONTEXT_LAYER_D_TOKENS + 
+                    settings.CONTEXT_LAYER_E_TOKENS)
+            assert total == 2600
+            assert total <= settings.CONTEXT_MAX_TOKENS - settings.CONTEXT_BUFFER_TOKENS
         
-        # Test sum exactly 1.0 (valid)
+        # Test sum exactly at limit (valid)
         with patch.dict(os.environ, {
-            'CONTEXT_LAYER_A_RATIO': '0.2',
-            'CONTEXT_LAYER_B_RATIO': '0.2',
-            'CONTEXT_LAYER_C_RATIO': '0.2',
-            'CONTEXT_LAYER_D_RATIO': '0.2',
-            'CONTEXT_LAYER_E_RATIO': '0.2'
+            'CONTEXT_MAX_TOKENS': '10000',
+            'CONTEXT_BUFFER_TOKENS': '1000',
+            'CONTEXT_LAYER_A_TOKENS': '2000',
+            'CONTEXT_LAYER_B_TOKENS': '1000',
+            'CONTEXT_LAYER_C_TOKENS': '3000',
+            'CONTEXT_LAYER_D_TOKENS': '1500',
+            'CONTEXT_LAYER_E_TOKENS': '1500'
         }):
             settings = Settings()
-            total = (settings.CONTEXT_LAYER_A_RATIO + 
-                    settings.CONTEXT_LAYER_B_RATIO + 
-                    settings.CONTEXT_LAYER_C_RATIO + 
-                    settings.CONTEXT_LAYER_D_RATIO + 
-                    settings.CONTEXT_LAYER_E_RATIO)
-            assert total == 1.0
+            total = (settings.CONTEXT_LAYER_A_TOKENS + 
+                    settings.CONTEXT_LAYER_B_TOKENS + 
+                    settings.CONTEXT_LAYER_C_TOKENS + 
+                    settings.CONTEXT_LAYER_D_TOKENS + 
+                    settings.CONTEXT_LAYER_E_TOKENS)
+            assert total == 9000
+            assert total == settings.CONTEXT_MAX_TOKENS - settings.CONTEXT_BUFFER_TOKENS
         
-        # Test sum slightly over 1.0 (invalid)
+        # Test sum slightly over limit (invalid)
         with patch.dict(os.environ, {
-            'CONTEXT_LAYER_A_RATIO': '0.21',
-            'CONTEXT_LAYER_B_RATIO': '0.2',
-            'CONTEXT_LAYER_C_RATIO': '0.2',
-            'CONTEXT_LAYER_D_RATIO': '0.2',
-            'CONTEXT_LAYER_E_RATIO': '0.2'
+            'CONTEXT_MAX_TOKENS': '10000',
+            'CONTEXT_BUFFER_TOKENS': '1000',
+            'CONTEXT_LAYER_A_TOKENS': '2100',
+            'CONTEXT_LAYER_B_TOKENS': '2000',
+            'CONTEXT_LAYER_C_TOKENS': '2000',
+            'CONTEXT_LAYER_D_TOKENS': '2000',
+            'CONTEXT_LAYER_E_TOKENS': '2000'
         }):
-            with pytest.raises(ValueError, match="Context layer ratios sum to .* which exceeds 1.0"):
+            with pytest.raises(ValueError, match="Context layer tokens sum to .* which exceeds available tokens"):
                 Settings()
     
     def test_configuration_descriptions(self):
         """Test that configuration fields have proper descriptions."""
-        settings = Settings()
-        
-        # Get field info from the model
-        fields = settings.model_fields
+        # Get field info from the model class (not instance)
+        fields = Settings.model_fields
         
         # Test that key fields have descriptions
-        assert 'description' in fields['CONTEXT_MAX_TOKENS']
-        assert 'description' in fields['CONTEXT_LAYER_A_RATIO']
-        assert 'description' in fields['CONTEXT_ENABLE_RAG']
+        assert hasattr(fields['CONTEXT_MAX_TOKENS'], 'description')
+        assert hasattr(fields['CONTEXT_LAYER_A_TOKENS'], 'description')
+        assert hasattr(fields['CONTEXT_ENABLE_RAG'], 'description')
         
         # Test specific descriptions
-        assert "Maximum context window size" in fields['CONTEXT_MAX_TOKENS']['description']
-        assert "System instructions" in fields['CONTEXT_LAYER_A_RATIO']['description']
-        assert "RAG-based" in fields['CONTEXT_ENABLE_RAG']['description']
+        assert "Maximum context window size" in fields['CONTEXT_MAX_TOKENS'].description
+        assert "System instructions" in fields['CONTEXT_LAYER_A_TOKENS'].description
+        assert "RAG-based" in fields['CONTEXT_ENABLE_RAG'].description

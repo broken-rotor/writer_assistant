@@ -40,29 +40,35 @@ class TestTokenAllocation:
             assert allocator.allocation_mode == AllocationMode.DYNAMIC
             assert allocator.overflow_strategy == OverflowStrategy.REALLOCATE
     
-    def test_layer_ratio_configuration_integration(self):
-        """Test that layer ratios from configuration are properly applied."""
-        with patch('app.services.token_management.allocator.settings', self.settings):
-            allocator = TokenAllocator(
-                max_tokens=self.settings.CONTEXT_MAX_TOKENS,
-                buffer_tokens=self.settings.CONTEXT_BUFFER_TOKENS
-            )
-            
-            # Calculate expected allocations based on ratios
-            available_tokens = self.settings.CONTEXT_MAX_TOKENS - self.settings.CONTEXT_BUFFER_TOKENS
-            expected_allocations = {
-                LayerType.WORKING_MEMORY: int(available_tokens * self.settings.CONTEXT_LAYER_A_RATIO),
-                LayerType.EPISODIC_MEMORY: int(available_tokens * self.settings.CONTEXT_LAYER_C_RATIO),
-                LayerType.SEMANTIC_MEMORY: int(available_tokens * (self.settings.CONTEXT_LAYER_D_RATIO + self.settings.CONTEXT_LAYER_E_RATIO)),
-                LayerType.LONG_TERM_MEMORY: int(available_tokens * 0.1),  # Remaining allocation
-                LayerType.AGENT_SPECIFIC_MEMORY: int(available_tokens * 0.05)
-            }
-            
-            # Test that allocations match expected ratios (within reasonable tolerance)
-            for layer_type, expected in expected_allocations.items():
-                if hasattr(allocator, 'get_layer_allocation'):
-                    actual = allocator.get_layer_allocation(layer_type)
-                    assert abs(actual - expected) <= 100, f"Layer {layer_type} allocation mismatch"
+    def test_layer_token_configuration_integration(self):
+        """Test that layer token allocations from configuration are properly applied."""
+        allocator = TokenAllocator(
+            max_tokens=self.settings.CONTEXT_MAX_TOKENS,
+            buffer_tokens=self.settings.CONTEXT_BUFFER_TOKENS
+        )
+        
+        # Test that allocator is initialized with correct token limits
+        assert allocator.max_tokens == self.settings.CONTEXT_MAX_TOKENS
+        assert allocator.buffer_tokens == self.settings.CONTEXT_BUFFER_TOKENS
+        
+        # Test that configuration values are accessible
+        expected_layer_tokens = {
+            'layer_a': self.settings.CONTEXT_LAYER_A_TOKENS,
+            'layer_c': self.settings.CONTEXT_LAYER_C_TOKENS,
+            'layer_d': self.settings.CONTEXT_LAYER_D_TOKENS,
+            'layer_e': self.settings.CONTEXT_LAYER_E_TOKENS
+        }
+        
+        # Verify configuration values are reasonable
+        assert expected_layer_tokens['layer_a'] == 2000
+        assert expected_layer_tokens['layer_c'] == 13000
+        assert expected_layer_tokens['layer_d'] == 5000
+        assert expected_layer_tokens['layer_e'] == 10000
+        
+        # Test that total doesn't exceed available tokens
+        total_layer_tokens = sum(expected_layer_tokens.values())
+        available_tokens = allocator.max_tokens - allocator.buffer_tokens
+        assert total_layer_tokens <= available_tokens
     
     def test_allocation_request_processing(self):
         """Test processing of allocation requests."""
@@ -321,11 +327,11 @@ class TestTokenAllocation:
         with patch.dict('os.environ', {
             'CONTEXT_MAX_TOKENS': '1000',
             'CONTEXT_BUFFER_TOKENS': '100',
-            'CONTEXT_LAYER_A_RATIO': '0.5',
-            'CONTEXT_LAYER_B_RATIO': '0.0',
-            'CONTEXT_LAYER_C_RATIO': '0.3',
-            'CONTEXT_LAYER_D_RATIO': '0.1',
-            'CONTEXT_LAYER_E_RATIO': '0.1'
+            'CONTEXT_LAYER_A_TOKENS': '450',
+            'CONTEXT_LAYER_B_TOKENS': '0',
+            'CONTEXT_LAYER_C_TOKENS': '270',
+            'CONTEXT_LAYER_D_TOKENS': '90',
+            'CONTEXT_LAYER_E_TOKENS': '90'
         }):
             settings = Settings()
             

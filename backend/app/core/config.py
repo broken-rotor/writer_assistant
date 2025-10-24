@@ -92,36 +92,36 @@ class Settings(BaseSettings):
         description="Reserved tokens for generation buffer"
     )
     
-    # Layer Token Allocation Ratios (must sum to <= 1.0)
-    CONTEXT_LAYER_A_RATIO: float = Field(
-        default=0.0625,
-        ge=0.0,
-        le=1.0,
-        description="System instructions layer ratio (1-2k tokens)"
+    # Layer Token Allocation Limits (absolute token numbers)
+    CONTEXT_LAYER_A_TOKENS: int = Field(
+        default=2000,
+        ge=100,
+        le=10000,
+        description="System instructions layer tokens (1-2k tokens)"
     )
-    CONTEXT_LAYER_B_RATIO: float = Field(
-        default=0.0,
-        ge=0.0,
-        le=1.0,
-        description="Immediate instructions layer ratio (included in Layer A)"
+    CONTEXT_LAYER_B_TOKENS: int = Field(
+        default=0,
+        ge=0,
+        le=5000,
+        description="Immediate instructions layer tokens (included in Layer A)"
     )
-    CONTEXT_LAYER_C_RATIO: float = Field(
-        default=0.4375,
-        ge=0.0,
-        le=1.0,
-        description="Recent story segment layer ratio (10-15k tokens)"
+    CONTEXT_LAYER_C_TOKENS: int = Field(
+        default=13000,
+        ge=1000,
+        le=25000,
+        description="Recent story segment layer tokens (10-15k tokens)"
     )
-    CONTEXT_LAYER_D_RATIO: float = Field(
-        default=0.15625,
-        ge=0.0,
-        le=1.0,
-        description="Character/scene data layer ratio (2-5k tokens)"
+    CONTEXT_LAYER_D_TOKENS: int = Field(
+        default=5000,
+        ge=500,
+        le=10000,
+        description="Character/scene data layer tokens (2-5k tokens)"
     )
-    CONTEXT_LAYER_E_RATIO: float = Field(
-        default=0.34375,
-        ge=0.0,
-        le=1.0,
-        description="Plot/world summary layer ratio (5-10k tokens)"
+    CONTEXT_LAYER_E_TOKENS: int = Field(
+        default=10000,
+        ge=1000,
+        le=20000,
+        description="Plot/world summary layer tokens (5-10k tokens)"
     )
     
     # Context Management Performance Settings
@@ -168,24 +168,26 @@ class Settings(BaseSettings):
         description="Token allocation mode (static, dynamic, adaptive)"
     )
 
-    def validate_layer_ratios(self) -> 'Settings':
-        """Validate that layer ratios sum to <= 1.0"""
-        total_ratio = (
-            self.CONTEXT_LAYER_A_RATIO +
-            self.CONTEXT_LAYER_B_RATIO +
-            self.CONTEXT_LAYER_C_RATIO +
-            self.CONTEXT_LAYER_D_RATIO +
-            self.CONTEXT_LAYER_E_RATIO
+    def validate_layer_tokens(self) -> 'Settings':
+        """Validate that layer token allocations don't exceed max tokens"""
+        total_layer_tokens = (
+            self.CONTEXT_LAYER_A_TOKENS +
+            self.CONTEXT_LAYER_B_TOKENS +
+            self.CONTEXT_LAYER_C_TOKENS +
+            self.CONTEXT_LAYER_D_TOKENS +
+            self.CONTEXT_LAYER_E_TOKENS
         )
-        if total_ratio > 1.0:
+        available_tokens = self.CONTEXT_MAX_TOKENS - self.CONTEXT_BUFFER_TOKENS
+        
+        if total_layer_tokens > available_tokens:
             raise ValueError(
-                f"Context layer ratios sum to {total_ratio:.4f}, which exceeds 1.0. "
-                f"Total allocation cannot exceed 100% of available tokens."
+                f"Context layer tokens sum to {total_layer_tokens}, which exceeds available tokens ({available_tokens}). "
+                f"Total layer allocation cannot exceed max tokens minus buffer."
             )
         return self
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.validate_layer_ratios()
+        self.validate_layer_tokens()
 
 settings = Settings()
