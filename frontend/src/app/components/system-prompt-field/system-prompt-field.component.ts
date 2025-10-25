@@ -30,7 +30,7 @@ import {
   TokenValidationStatus,
   TokenValidationUtils 
 } from '../../models/token-validation.model';
-import { TokenCounterData } from '../../models/token-counter.model';
+import { TokenCounterData, TokenCounterDisplayMode } from '../../models/token-counter.model';
 
 /**
  * SystemPromptFieldComponent - A reusable component that combines textarea input 
@@ -100,6 +100,7 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
   // Expose enums and utils to template
   public readonly ValidationStatus = TokenValidationStatus;
   public readonly ValidationUtils = TokenValidationUtils;
+  public readonly DisplayMode = TokenCounterDisplayMode;
 
   constructor(
     private tokenValidationService: TokenValidationService,

@@ -114,7 +114,7 @@ describe('SystemPromptFieldComponent', () => {
     });
 
     it('should handle null value in writeValue', () => {
-      component.writeValue(null);
+      component.writeValue(null as any);
       expect(component.value).toBe('');
     });
 

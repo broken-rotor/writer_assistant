@@ -10,6 +10,10 @@ import { LoadingService } from '../../services/loading.service';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 import { ArchiveService, RAGResponse } from '../../services/archive.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
+import { SystemPromptFieldComponent } from '../system-prompt-field/system-prompt-field.component';
+import { TokenLimitsService, TokenLimitsState } from '../../services/token-limits.service';
+import { TokenValidationService, FieldValidationState } from '../../services/token-validation.service';
+import { TokenValidationResult } from '../../models/token-validation.model';
 
 interface ResearchChatMessage {
   role: string;
@@ -21,7 +25,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -58,6 +62,12 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   researchChatHistory: ResearchChatMessage[] = [];
   researchFollowUpInput = '';
 
+  // Token validation state
+  tokenLimitsState: TokenLimitsState | null = null;
+  fieldValidationResults: FieldValidationState = {};
+  tokenLimitsLoading = false;
+  tokenLimitsError: string | null = null;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -66,7 +76,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     private generationService: GenerationService,
     private loadingService: LoadingService,
     private cdr: ChangeDetectorRef,
-    private archiveService: ArchiveService
+    private archiveService: ArchiveService,
+    private tokenLimitsService: TokenLimitsService,
+    private tokenValidationService: TokenValidationService
   ) {}
 
   ngOnInit() {
@@ -78,6 +90,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           this.loadStory(storyId);
         }
       });
+    
+    // Initialize token limits
+    this.initializeTokenLimits();
   }
 
   ngOnDestroy() {
@@ -104,8 +119,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   selectTab(tab: 'general' | 'characters' | 'raters' | 'story' | 'chapter-creation') {
     this.activeTab = tab;
-    // Auto-save when switching tabs
-    if (this.story) {
+    // Auto-save when switching tabs (only if validation allows)
+    if (this.story && this.canSave()) {
       this.storyService.saveStory(this.story);
     }
   }
@@ -895,6 +910,64 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   private generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+
+  // Token validation methods
+  private initializeTokenLimits() {
+    this.tokenLimitsLoading = true;
+    this.tokenLimitsError = null;
+
+    this.tokenLimitsService.getTokenLimits()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (state) => {
+          this.tokenLimitsState = state;
+          this.tokenLimitsLoading = state.isLoading;
+          this.tokenLimitsError = state.error;
+        },
+        error: (err) => {
+          console.error('Failed to load token limits:', err);
+          this.tokenLimitsError = 'Failed to load token limits. Validation may not work properly.';
+          this.tokenLimitsLoading = false;
+        }
+      });
+  }
+
+  onFieldValidationChange(fieldType: string, result: TokenValidationResult) {
+    this.fieldValidationResults[fieldType] = result;
+  }
+
+  canSave(): boolean {
+    // If token limits are still loading, allow save (graceful degradation)
+    if (this.tokenLimitsLoading) {
+      return true;
+    }
+
+    // If there are no validation results yet, allow save
+    if (Object.keys(this.fieldValidationResults).length === 0) {
+      return true;
+    }
+
+    return this.tokenValidationService.canSave(this.fieldValidationResults);
+  }
+
+  getValidationSummary(): string {
+    if (this.tokenLimitsLoading) {
+      return 'Loading token limits...';
+    }
+
+    if (this.tokenLimitsError) {
+      return 'Token validation unavailable';
+    }
+
+    const results = Object.values(this.fieldValidationResults);
+    const invalidFields = results.filter(r => !r.isValid);
+    
+    if (invalidFields.length === 0) {
+      return 'All fields within token limits';
+    }
+
+    return `${invalidFields.length} field(s) exceed token limits`;
   }
 
   // Research Archive methods

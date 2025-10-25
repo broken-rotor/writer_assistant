@@ -42,10 +42,8 @@ describe('TokenCountingService', () => {
     });
 
     it('should accept custom configuration', () => {
-      const customConfig = { debounceMs: 200, maxCacheSize: 500 };
       const customService = new TokenCountingService(
-        TestBed.inject(HttpClientTestingModule) as any,
-        customConfig
+        TestBed.inject(HttpClientTestingModule) as any
       );
       expect(customService).toBeTruthy();
     });

@@ -41,7 +41,7 @@
     [id]="getTextareaId() + '-counter'">
     <app-token-counter
       [data]="tokenCounterData"
-      [config]="{ displayMode: 'compact', showProgressBar: true }"
+      [config]="{ displayMode: DisplayMode.COMPACT, showProgressBar: true }"
       [loading]="isLoading">
     </app-token-counter>
   </div>
@@ -66,7 +66,7 @@
     <span 
       *ngIf="validationResult?.status === ValidationStatus.INVALID && validationResult?.metadata?.excessTokens" 
       class="system-prompt-field__excess-tokens">
-      ({{ validationResult.metadata.excessTokens }} tokens over limit)
+      ({{ validationResult?.metadata?.excessTokens }} tokens over limit)
     </span>
   </div>
 

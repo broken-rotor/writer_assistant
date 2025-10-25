@@ -34,7 +34,7 @@ describe('TokenValidationService', () => {
     token_count: 500,
     content_type: ContentType.SYSTEM_PROMPT,
     strategy: CountingStrategy.EXACT,
-    overhead_applied: false,
+    overhead_applied: 1.0,
     metadata: {
       strategy: CountingStrategy.EXACT,
       processing_time: 0.1,
