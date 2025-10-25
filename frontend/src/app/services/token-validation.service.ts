@@ -11,6 +11,32 @@ import {
   TokenValidationUtils 
 } from '../models/token-validation.model';
 import { ContentType, CountingStrategy } from '../models/token.model';
+import { TokenCounterStatus } from '../models/token-counter.model';
+
+/**
+ * Token validation thresholds configuration
+ */
+export interface TokenValidationThresholds {
+  /** Warning threshold as percentage (default: 0.7 = 70%) */
+  warningThreshold: number;
+  /** Danger threshold as percentage (default: 0.9 = 90%) */
+  dangerThreshold: number;
+}
+
+/**
+ * Field validation state for form-level validation
+ */
+export interface FieldValidationState {
+  [fieldName: string]: TokenValidationResult;
+}
+
+/**
+ * Default validation thresholds (70%, 90%)
+ */
+export const DEFAULT_VALIDATION_THRESHOLDS: TokenValidationThresholds = {
+  warningThreshold: 0.7,
+  dangerThreshold: 0.9
+};
 
 /**
  * Service for validating token counts against field-specific limits.
@@ -27,6 +53,151 @@ export class TokenValidationService {
     private tokenLimitsService: TokenLimitsService,
     private tokenCountingService: TokenCountingService
   ) {}
+
+  /**
+   * Validate token count against limits with configurable thresholds
+   */
+  validateTokenCount(
+    current: number, 
+    limit: number, 
+    config?: Partial<TokenValidationConfig>
+  ): TokenValidationResult {
+    const validationConfig = { ...DEFAULT_VALIDATION_CONFIG, ...config };
+    const thresholds = {
+      warningThreshold: limit * DEFAULT_VALIDATION_THRESHOLDS.warningThreshold,
+      dangerThreshold: limit * DEFAULT_VALIDATION_THRESHOLDS.dangerThreshold
+    };
+
+    const status = this.calculateStatus(current, limit, DEFAULT_VALIDATION_THRESHOLDS);
+    const percentage = TokenValidationUtils.calculatePercentage(current, limit);
+    const message = this.getValidationMessage(status, current, limit);
+    const isValid = TokenValidationUtils.isValidForSubmission(
+      { status } as TokenValidationResult,
+      validationConfig
+    );
+    const excessTokens = Math.max(0, current - limit);
+
+    return {
+      status,
+      currentTokens: current,
+      maxTokens: limit,
+      warningThreshold: thresholds.warningThreshold,
+      criticalThreshold: thresholds.dangerThreshold,
+      percentage,
+      message,
+      isValid,
+      metadata: {
+        excessTokens: excessTokens > 0 ? excessTokens : undefined,
+        timestamp: new Date()
+      }
+    };
+  }
+
+  /**
+   * Calculate validation status based on token counts and limits
+   */
+  calculateStatus(
+    current: number, 
+    limit: number, 
+    thresholds: TokenValidationThresholds
+  ): TokenValidationStatus {
+    if (current < 0 || limit <= 0) {
+      return TokenValidationStatus.ERROR;
+    }
+
+    if (current > limit) {
+      return TokenValidationStatus.INVALID;
+    }
+
+    const warningThreshold = limit * thresholds.warningThreshold;
+    const dangerThreshold = limit * thresholds.dangerThreshold;
+
+    if (current >= dangerThreshold) {
+      return TokenValidationStatus.CRITICAL;
+    }
+
+    if (current >= warningThreshold) {
+      return TokenValidationStatus.WARNING;
+    }
+
+    return TokenValidationStatus.VALID;
+  }
+
+  /**
+   * Get user-friendly validation message for status
+   */
+  getValidationMessage(
+    status: TokenValidationStatus, 
+    current: number, 
+    limit: number
+  ): string {
+    const percentage = TokenValidationUtils.calculatePercentage(current, limit);
+    const excessTokens = Math.max(0, current - limit);
+    const remainingTokens = Math.max(0, limit - current);
+
+    switch (status) {
+      case TokenValidationStatus.VALID:
+        return `${current}/${limit} tokens (${percentage}%) - ${remainingTokens} tokens remaining`;
+      case TokenValidationStatus.WARNING:
+        return `${current}/${limit} tokens (${percentage}%) - Approaching limit, ${remainingTokens} tokens remaining`;
+      case TokenValidationStatus.CRITICAL:
+        return `${current}/${limit} tokens (${percentage}%) - Near limit, ${remainingTokens} tokens remaining`;
+      case TokenValidationStatus.INVALID:
+        return `${current}/${limit} tokens (${percentage}%) - Exceeded by ${excessTokens} tokens`;
+      case TokenValidationStatus.LOADING:
+        return 'Counting tokens...';
+      case TokenValidationStatus.ERROR:
+        return 'Unable to validate token count';
+      default:
+        return 'Unknown validation status';
+    }
+  }
+
+  /**
+   * Check if form can be saved based on validation results
+   */
+  canSave(validationResults: FieldValidationState): boolean {
+    const results = Object.values(validationResults);
+    
+    // Cannot save if any field is in error or loading state
+    if (results.some(result => 
+      result.status === TokenValidationStatus.ERROR || 
+      result.status === TokenValidationStatus.LOADING
+    )) {
+      return false;
+    }
+
+    // Cannot save if any field exceeds limits (unless explicitly allowed)
+    if (results.some(result => 
+      result.status === TokenValidationStatus.INVALID && !result.isValid
+    )) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Map TokenValidationStatus to TokenCounterStatus
+   */
+  mapToTokenCounterStatus(status: TokenValidationStatus): TokenCounterStatus {
+    switch (status) {
+      case TokenValidationStatus.VALID:
+        return TokenCounterStatus.GOOD;
+      case TokenValidationStatus.WARNING:
+        return TokenCounterStatus.WARNING;
+      case TokenValidationStatus.CRITICAL:
+        return TokenCounterStatus.WARNING;
+      case TokenValidationStatus.INVALID:
+        return TokenCounterStatus.OVER_LIMIT;
+      case TokenValidationStatus.LOADING:
+        return TokenCounterStatus.LOADING;
+      case TokenValidationStatus.ERROR:
+        return TokenCounterStatus.ERROR;
+      default:
+        return TokenCounterStatus.ERROR;
+    }
+  }
 
   /**
    * Validate text against field-specific token limits
