@@ -16,6 +16,7 @@ from ...utils.relevance_calculator import (
 )
 from ..token_management.layers import LayerType, LayerConfig, LayerAllocation
 from ..token_management.token_counter import TokenCounter, ContentType, CountingStrategy
+from ...core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ class LayeredPrioritizer:
     ):
         """Initialize the layered prioritizer."""
         self.config = config or PrioritizationConfig()
-        self.token_counter = token_counter or TokenCounter()
+        self.token_counter = token_counter or TokenCounter(model_path=settings.MODEL_PATH)
         self.relevance_calculator = relevance_calculator or RelevanceCalculator()
         self.logger = logging.getLogger(__name__)
         
@@ -391,4 +392,3 @@ class LayeredPrioritizer:
             'cache_hit_rate': 0.0
         }
         self.logger.info("Cleared performance metrics")
-

@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from app.services.token_management import LayerType, TokenCounter, ContentType as TokenContentType, TokenAllocator
+from app.core.config import settings
 from app.services.context_distillation import ContextDistiller, DistillationConfig
 from app.services.content_prioritization import LayeredPrioritizer, PrioritizationConfig
 from app.services.llm_inference import get_llm
@@ -91,7 +92,7 @@ class ContextManager:
         self.enable_compression = enable_compression
         
         # Initialize components
-        self.token_counter = TokenCounter()
+        self.token_counter = TokenCounter(model_path=settings.MODEL_PATH)
         self.token_allocator = TokenAllocator(total_budget=max_context_tokens)
         self.llm_service = get_llm()
         self.distiller = ContextDistiller(

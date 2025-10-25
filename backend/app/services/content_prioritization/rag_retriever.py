@@ -17,6 +17,7 @@ from ...utils.relevance_calculator import (
     ContentItem, ContentCategory, RelevanceCalculator, RelevanceScore
 )
 from ..token_management.token_counter import TokenCounter, CountingStrategy
+from ...core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class RAGRetriever:
     ):
         """Initialize the RAG retriever."""
         self.relevance_calculator = relevance_calculator or RelevanceCalculator()
-        self.token_counter = token_counter or TokenCounter()
+        self.token_counter = token_counter or TokenCounter(model_path=settings.MODEL_PATH)
         self.embedding_config = embedding_config or EmbeddingConfig()
         self.logger = logging.getLogger(__name__)
         
@@ -540,4 +541,3 @@ class RAGRetriever:
         
         result = self.retrieve(query, content_pool)
         return result.retrieved_items
-
