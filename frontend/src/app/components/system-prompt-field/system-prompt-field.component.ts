@@ -224,6 +224,16 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
         this.handleValidationError(error);
       }
     });
+
+    // Trigger validation for initial value if it exists
+    // This handles the case where writeValue() was called before ngOnInit()
+    if (this.value && this.value.trim()) {
+      console.log('🚀 SystemPromptField: Triggering initial validation', { 
+        value: this.value.substring(0, 50) + '...', 
+        fieldType: this.fieldType 
+      });
+      this.valueChange$.next(this.value);
+    }
   }
 
   /**
