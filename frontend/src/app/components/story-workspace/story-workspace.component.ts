@@ -11,9 +11,16 @@ import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.comp
 import { ArchiveService, RAGResponse } from '../../services/archive.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
 import { SystemPromptFieldComponent } from '../system-prompt-field/system-prompt-field.component';
+import { ToastComponent } from '../toast/toast.component';
 import { TokenLimitsService, TokenLimitsState } from '../../services/token-limits.service';
 import { TokenValidationService, FieldValidationState } from '../../services/token-validation.service';
+import { ToastService } from '../../services/toast.service';
 import { TokenValidationResult } from '../../models/token-validation.model';
+import { 
+  ERROR_MESSAGES, 
+  ErrorContext, 
+  RecoveryAction 
+} from '../../constants/token-limits.constants';
 
 interface ResearchChatMessage {
   role: string;
@@ -25,7 +32,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -67,6 +74,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   fieldValidationResults: FieldValidationState = {};
   tokenLimitsLoading = false;
   tokenLimitsError: string | null = null;
+  tokenLimitsErrorContext: ErrorContext | null = null;
+  tokenLimitsRetryCount = 0;
+  isTokenLimitsRetrying = false;
+  isTokenLimitsFallbackMode = false;
 
   private destroy$ = new Subject<void>();
 
@@ -78,7 +89,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private archiveService: ArchiveService,
     private tokenLimitsService: TokenLimitsService,
-    private tokenValidationService: TokenValidationService
+    private tokenValidationService: TokenValidationService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit() {
@@ -916,6 +928,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   private initializeTokenLimits() {
     this.tokenLimitsLoading = true;
     this.tokenLimitsError = null;
+    this.tokenLimitsErrorContext = null;
+    this.isTokenLimitsFallbackMode = false;
 
     this.tokenLimitsService.getTokenLimits()
       .pipe(takeUntil(this.destroy$))
@@ -924,13 +938,105 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           this.tokenLimitsState = state;
           this.tokenLimitsLoading = state.isLoading;
           this.tokenLimitsError = state.error;
+          this.tokenLimitsErrorContext = state.errorContext || null;
+          this.isTokenLimitsFallbackMode = state.isFallbackMode || false;
+          
+          // Show appropriate notifications
+          if (state.error && state.errorContext) {
+            this.handleTokenLimitsError(state.errorContext);
+          } else if (state.isFallbackMode) {
+            this.toastService.showFallbackMode('Token Limits Service');
+          } else if (!state.isLoading && !state.error) {
+            // Service restored successfully
+            if (this.tokenLimitsRetryCount > 0) {
+              this.toastService.showServiceRestored('Token Limits Service');
+              this.tokenLimitsRetryCount = 0;
+            }
+          }
+          
+          this.cdr.markForCheck();
         },
         error: (err) => {
           console.error('Failed to load token limits:', err);
-          this.tokenLimitsError = 'Failed to load token limits. Validation may not work properly.';
-          this.tokenLimitsLoading = false;
+          this.handleTokenLimitsInitializationError(err);
         }
       });
+  }
+
+  /**
+   * Handle token limits error with recovery actions
+   */
+  private handleTokenLimitsError(errorContext: ErrorContext) {
+    this.toastService.showTokenLimitsError(
+      errorContext.message,
+      errorContext.recoveryActions,
+      () => this.retryTokenLimits(),
+      () => this.useTokenLimitsFallback()
+    );
+  }
+
+  /**
+   * Handle token limits initialization error
+   */
+  private handleTokenLimitsInitializationError(error: any) {
+    this.tokenLimitsLoading = false;
+    this.isTokenLimitsRetrying = false;
+    this.tokenLimitsError = ERROR_MESSAGES.TOKEN_LIMITS_FAILED;
+    this.tokenLimitsRetryCount++;
+    
+    // Use fallback mode to keep app functional
+    this.isTokenLimitsFallbackMode = true;
+    
+    this.toastService.showTokenLimitsError(
+      this.tokenLimitsError,
+      [RecoveryAction.RETRY, RecoveryAction.USE_FALLBACK],
+      () => this.retryTokenLimits(),
+      () => this.useTokenLimitsFallback()
+    );
+    
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Retry token limits loading
+   */
+  retryTokenLimits() {
+    if (this.tokenLimitsLoading || this.isTokenLimitsRetrying) {
+      return;
+    }
+    
+    this.isTokenLimitsRetrying = true;
+    this.tokenLimitsError = null;
+    this.tokenLimitsErrorContext = null;
+    this.cdr.markForCheck();
+    
+    // Retry initialization
+    this.initializeTokenLimits();
+  }
+
+  /**
+   * Use token limits fallback mode
+   */
+  useTokenLimitsFallback() {
+    this.isTokenLimitsFallbackMode = true;
+    this.tokenLimitsError = null;
+    this.tokenLimitsErrorContext = null;
+    this.tokenLimitsLoading = false;
+    this.isTokenLimitsRetrying = false;
+    
+    this.toastService.showInfo(
+      'Using default token limits',
+      'The app will continue to work with estimated token counts'
+    );
+    
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Check if token limits retry is available
+   */
+  canRetryTokenLimits(): boolean {
+    return !!this.tokenLimitsError && !this.tokenLimitsLoading && !this.isTokenLimitsRetrying;
   }
 
   onFieldValidationChange(fieldType: string, result: TokenValidationResult) {
@@ -938,8 +1044,13 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   canSave(): boolean {
-    // If token limits are still loading, allow save (graceful degradation)
-    if (this.tokenLimitsLoading) {
+    // If token limits are still loading or retrying, allow save (graceful degradation)
+    if (this.tokenLimitsLoading || this.isTokenLimitsRetrying) {
+      return true;
+    }
+
+    // If in fallback mode, allow save with warnings
+    if (this.isTokenLimitsFallbackMode) {
       return true;
     }
 
@@ -956,8 +1067,16 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       return 'Loading token limits...';
     }
 
-    if (this.tokenLimitsError) {
+    if (this.isTokenLimitsRetrying) {
+      return 'Retrying token limits...';
+    }
+
+    if (this.tokenLimitsError && !this.isTokenLimitsFallbackMode) {
       return 'Token validation unavailable';
+    }
+
+    if (this.isTokenLimitsFallbackMode) {
+      return 'Using default token limits';
     }
 
     const results = Object.values(this.fieldValidationResults);
