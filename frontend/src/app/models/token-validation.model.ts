@@ -44,6 +44,10 @@ export interface TokenValidationResult {
     fieldType?: string;
     /** Timestamp of validation */
     timestamp?: Date;
+    /** Error context for detailed error information */
+    errorContext?: any;
+    /** Whether validation is operating in fallback mode */
+    isFallbackMode?: boolean;
   };
 }
 

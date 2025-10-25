@@ -48,6 +48,7 @@ export const ERROR_MESSAGES = {
   // Validation errors
   VALIDATION_FAILED: 'Token validation failed. Using fallback validation.',
   LIMITS_UNAVAILABLE: 'Token limits are unavailable. Using default limits.',
+  TOKEN_LIMITS_FAILED: 'Failed to load token limits. Using fallback limits.',
   
   // Recovery messages
   RETRY_AVAILABLE: 'Click retry to attempt loading token limits again.',

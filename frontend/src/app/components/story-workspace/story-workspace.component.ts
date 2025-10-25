@@ -988,7 +988,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.isTokenLimitsFallbackMode = true;
     
     this.toastService.showTokenLimitsError(
-      this.tokenLimitsError,
+      this.tokenLimitsError!,
       [RecoveryAction.RETRY, RecoveryAction.USE_FALLBACK],
       () => this.retryTokenLimits(),
       () => this.useTokenLimitsFallback()
