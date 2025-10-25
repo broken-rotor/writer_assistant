@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Counting Test</title>
+</head>
+<body>
+    <h1>Token Counting Test</h1>
+    <textarea id="textInput" placeholder="Enter text to count tokens..." rows="4" cols="50">Hello world, this is a test message for token counting.</textarea>
+    <br><br>
+    <button onclick="countTokens()">Count Tokens</button>
+    <br><br>
+    <div id="result"></div>
+    <div id="loading" style="display: none;">Counting tokens...</div>
+
+    <script>
+        async function countTokens() {
+            const text = document.getElementById('textInput').value;
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            
+            if (!text.trim()) {
+                resultDiv.innerHTML = 'Please enter some text';
+                return;
+            }
+            
+            loadingDiv.style.display = 'block';
+            resultDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/tokens/count', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        texts: [
+                            {
+                                text: text,
+                                content_type: 'system_prompt'
+                            }
+                        ],
+                        strategy: 'exact',
+                        include_metadata: true
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Response:', data);
+                
+                loadingDiv.style.display = 'none';
+                resultDiv.innerHTML = `
+                    <h3>Token Count Result:</h3>
+                    <p><strong>Token Count:</strong> ${data.results[0].token_count}</p>
+                    <p><strong>Text:</strong> "${data.results[0].text}"</p>
+                    <p><strong>Strategy:</strong> ${data.results[0].strategy}</p>
+                    <p><strong>Content Type:</strong> ${data.results[0].content_type}</p>
+                    <p><strong>Total Tokens:</strong> ${data.summary.total_tokens}</p>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                loadingDiv.style.display = 'none';
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
+

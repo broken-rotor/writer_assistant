@@ -292,17 +292,28 @@ export class TokenCountingService {
    * Make HTTP request to token counting API
    */
   private makeTokenCountRequest(request: TokenCountRequest): Observable<TokenCountResponse> {
+    console.log('🚀 TokenCountingService: Starting token count request', request);
     this.updateLoadingState(true);
 
     return this.http.post<TokenCountResponse>(`${this.baseUrl}/count`, request).pipe(
+      tap(response => {
+        console.log('✅ TokenCountingService: Received successful response', response);
+      }),
       retryWhen(errors =>
         errors.pipe(
+          tap(error => console.log('🔄 TokenCountingService: Retrying after error', error)),
           take(this.config.maxRetries),
           delay(this.config.retryDelayMs)
         )
       ),
-      catchError(this.handleError.bind(this)),
-      finalize(() => this.updateLoadingState(false)),
+      catchError(error => {
+        console.error('❌ TokenCountingService: Request failed', error);
+        return this.handleError(error);
+      }),
+      finalize(() => {
+        console.log('🏁 TokenCountingService: Request completed, updating loading state to false');
+        this.updateLoadingState(false);
+      }),
       shareReplay(1)
     );
   }
@@ -435,11 +446,20 @@ export class TokenCountingService {
       ? currentState.pendingRequests + 1 
       : Math.max(0, currentState.pendingRequests - 1);
 
-    this.loadingState$.next({
+    const newState = {
       isLoading: pendingRequests > 0,
       pendingRequests,
       operation
+    };
+
+    console.log('📊 TokenCountingService: Updating loading state', {
+      isLoading,
+      operation,
+      currentState,
+      newState
     });
+
+    this.loadingState$.next(newState);
   }
 
   /**
