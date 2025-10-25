@@ -28,7 +28,7 @@ router = APIRouter()
 
 def get_token_counter() -> TokenCounter:
     """Dependency to get TokenCounter instance."""
-    return TokenCounter()
+    return TokenCounter(model_path=settings.MODEL_PATH)
 
 
 @router.post(

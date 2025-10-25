@@ -13,6 +13,7 @@ from enum import Enum
 
 from .layers import LayerType, LayerConfig, LayerAllocation, LayerHierarchy
 from .token_counter import TokenCounter, CountingStrategy
+from ...core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,7 @@ class TokenAllocator:
         """
         self.total_budget = total_budget
         self.hierarchy = hierarchy or LayerHierarchy()
-        self.token_counter = token_counter or TokenCounter()
+        self.token_counter = token_counter or TokenCounter(model_path=settings.MODEL_PATH)
         self.mode = mode
         self.overflow_strategy = overflow_strategy
         
