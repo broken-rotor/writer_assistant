@@ -126,7 +126,7 @@ $color-error-text: #616161;
   .token-counter__count {
     font-weight: 600;
     font-size: 14px;
-    color: #333;
+    color: #333 !important; // Force darker color to override parent styles
   }
   
   .token-counter__percentage {
@@ -210,7 +210,7 @@ $color-error-text: #616161;
   }
   
   .token-counter__error-text {
-    color: $color-error-text;
+    color: $color-error-text !important; // Force color to override parent styles
   }
 }
 
@@ -235,7 +235,7 @@ $color-error-text: #616161;
   
   .token-counter__compact-count {
     font-weight: 500;
-    color: #333;
+    color: #333 !important; // Force darker color to override parent styles
   }
   
   .token-counter__compact-status {
@@ -276,7 +276,7 @@ $color-error-text: #616161;
   .token-counter__mobile-count {
     font-weight: 600;
     font-size: 14px;
-    color: #333;
+    color: #333 !important; // Force darker color to override parent styles
   }
   
   .token-counter__mobile-status {
