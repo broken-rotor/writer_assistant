@@ -17,6 +17,7 @@ import {
   GenerateCharacterDetailsRequest,
   GenerateCharacterDetailsResponse
 } from '../models/story.model';
+import { TokenStrategiesResponse } from '../models/token-limits.model';
 
 @Injectable({
   providedIn: 'root'
@@ -59,5 +60,10 @@ export class ApiService {
   // Generate Character Details
   generateCharacterDetails(request: GenerateCharacterDetailsRequest): Observable<GenerateCharacterDetailsResponse> {
     return this.http.post<GenerateCharacterDetailsResponse>(`${this.baseUrl}/generate-character-details`, request);
+  }
+
+  // Token Strategies
+  getTokenStrategies(): Observable<TokenStrategiesResponse> {
+    return this.http.get<TokenStrategiesResponse>(`${this.baseUrl}/tokens/strategies`);
   }
 }
