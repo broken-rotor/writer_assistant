@@ -10,6 +10,25 @@
     </div>
   </div>
 
+  <!-- Token Validation Status -->
+  <div class="validation-status" *ngIf="activeTab === 'general'">
+    <div class="validation-summary" 
+         [class.loading]="tokenLimitsLoading"
+         [class.error]="tokenLimitsError"
+         [class.invalid]="!canSave() && !tokenLimitsLoading">
+      <span class="status-icon">
+        <span *ngIf="tokenLimitsLoading">⏳</span>
+        <span *ngIf="tokenLimitsError">⚠️</span>
+        <span *ngIf="!canSave() && !tokenLimitsLoading && !tokenLimitsError">🚫</span>
+        <span *ngIf="canSave() && !tokenLimitsLoading && !tokenLimitsError">✅</span>
+      </span>
+      <span class="status-text">{{ getValidationSummary() }}</span>
+    </div>
+    <div class="validation-warning" *ngIf="!canSave() && !tokenLimitsLoading">
+      <strong>Warning:</strong> Some fields exceed token limits. Auto-save is disabled until limits are met.
+    </div>
+  </div>
+
   <!-- Tab Navigation -->
   <nav class="tab-nav">
     <button class="tab-button" [class.active]="activeTab === 'general'" (click)="selectTab('general')">General</button>
@@ -31,8 +50,14 @@
       </div>
 
       <div class="form-section">
-        <label for="main-prefix">Main System Prompt Prefix (optional)</label>
-        <textarea id="main-prefix" [(ngModel)]="story.general.systemPrompts.mainPrefix" placeholder="Text added before every agent prompt" rows="3"></textarea>
+        <app-system-prompt-field
+          fieldType="mainPrefix"
+          label="Main System Prompt Prefix (optional)"
+          placeholder="Text added before every agent prompt"
+          [rows]="3"
+          [(ngModel)]="story.general.systemPrompts.mainPrefix"
+          (validationChange)="onFieldValidationChange('mainPrefix', $event)">
+        </app-system-prompt-field>
         <div class="file-upload-section">
           <input type="file" #prefixFileInput accept=".txt,.md" (change)="loadFileContent($event, 'prefix')" style="display: none">
           <button class="secondary-button" (click)="prefixFileInput.click()">Load from File (.txt, .md)</button>
@@ -40,8 +65,14 @@
       </div>
 
       <div class="form-section">
-        <label for="main-suffix">Main System Prompt Suffix (optional)</label>
-        <textarea id="main-suffix" [(ngModel)]="story.general.systemPrompts.mainSuffix" placeholder="Text added after every agent prompt" rows="3"></textarea>
+        <app-system-prompt-field
+          fieldType="mainSuffix"
+          label="Main System Prompt Suffix (optional)"
+          placeholder="Text added after every agent prompt"
+          [rows]="3"
+          [(ngModel)]="story.general.systemPrompts.mainSuffix"
+          (validationChange)="onFieldValidationChange('mainSuffix', $event)">
+        </app-system-prompt-field>
         <div class="file-upload-section">
           <input type="file" #suffixFileInput accept=".txt,.md" (change)="loadFileContent($event, 'suffix')" style="display: none">
           <button class="secondary-button" (click)="suffixFileInput.click()">Load from File (.txt, .md)</button>
@@ -49,13 +80,25 @@
       </div>
 
       <div class="form-section">
-        <label for="assistant-prompt">Writer Assistant System Prompt</label>
-        <textarea id="assistant-prompt" [(ngModel)]="story.general.systemPrompts.assistantPrompt" placeholder="Assistant's system prompt configuration" rows="5"></textarea>
+        <app-system-prompt-field
+          fieldType="assistantPrompt"
+          label="Writer Assistant System Prompt"
+          placeholder="Assistant's system prompt configuration"
+          [rows]="5"
+          [(ngModel)]="story.general.systemPrompts.assistantPrompt"
+          (validationChange)="onFieldValidationChange('assistantPrompt', $event)">
+        </app-system-prompt-field>
       </div>
 
       <div class="form-section">
-        <label for="editor-prompt">Editor System Prompt</label>
-        <textarea id="editor-prompt" [(ngModel)]="story.general.systemPrompts.editorPrompt" placeholder="Editor's system prompt configuration" rows="5"></textarea>
+        <app-system-prompt-field
+          fieldType="editorPrompt"
+          label="Editor System Prompt"
+          placeholder="Editor's system prompt configuration"
+          [rows]="5"
+          [(ngModel)]="story.general.systemPrompts.editorPrompt"
+          (validationChange)="onFieldValidationChange('editorPrompt', $event)">
+        </app-system-prompt-field>
       </div>
 
       <div class="form-section">

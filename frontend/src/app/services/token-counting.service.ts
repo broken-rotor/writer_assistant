@@ -79,10 +79,9 @@ export class TokenCountingService {
   private batchTimer?: any;
 
   constructor(
-    private http: HttpClient,
-    config?: Partial<TokenCountingServiceConfig>
+    private http: HttpClient
   ) {
-    this.config = { ...DEFAULT_TOKEN_COUNTING_CONFIG, ...config };
+    this.config = { ...DEFAULT_TOKEN_COUNTING_CONFIG };
     this.setupDebouncedCounting();
   }
 

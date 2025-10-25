@@ -23,6 +23,51 @@
   }
 }
 
+// Token Validation Status
+.validation-status {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+
+  .validation-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+
+    &.loading {
+      color: #6c757d;
+    }
+
+    &.error {
+      color: #dc3545;
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+    }
+
+    &.invalid {
+      color: #dc3545;
+    }
+
+    .status-icon {
+      font-size: 16px;
+    }
+  }
+
+  .validation-warning {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    color: #856404;
+    font-size: 13px;
+  }
+}
+
 // Tab Navigation
 .tab-nav {
   display: flex;
