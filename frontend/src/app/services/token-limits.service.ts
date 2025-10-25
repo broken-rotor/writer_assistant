@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, BehaviorSubject, of, timer } from 'rxjs';
+import { map, catchError, switchMap, startWith, retry, delay } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { TokenLimits, RecommendedLimits, TokenStrategiesResponse } from '../models/token-limits.model';
 
@@ -24,6 +24,20 @@ export interface FieldTokenLimit {
 }
 
 /**
+ * Token limits state with loading and error information
+ */
+export interface TokenLimitsState {
+  /** Token limits data (null if not loaded) */
+  limits: TokenLimits | null;
+  /** Whether limits are currently being loaded */
+  isLoading: boolean;
+  /** Error message if loading failed */
+  error: string | null;
+  /** Timestamp when limits were last loaded */
+  lastUpdated: number | null;
+}
+
+/**
  * Service for managing token limits for different system prompt field types.
  * 
  * This service provides field-specific token limits based on backend configuration
@@ -35,9 +49,12 @@ export interface FieldTokenLimit {
 export class TokenLimitsService {
   private readonly baseUrl = 'http://localhost:8000/api/v1/tokens';
   
-  // Cache for token limits
+  // Cache for token limits with TTL
   private tokenLimits$ = new BehaviorSubject<TokenLimits | null>(null);
   private isLoading$ = new BehaviorSubject<boolean>(false);
+  private error$ = new BehaviorSubject<string | null>(null);
+  private cacheTimestamp: number | null = null;
+  private readonly cacheTTL: number = 5 * 60 * 1000; // 5 minutes in milliseconds
   
   // Default limits as fallback
   private readonly defaultLimits: RecommendedLimits = {
@@ -52,9 +69,25 @@ export class TokenLimitsService {
   }
 
   /**
+   * Get token limits state with loading and error information
+   */
+  getTokenLimits(): Observable<TokenLimitsState> {
+    this.ensureFreshCache();
+    return this.tokenLimits$.pipe(
+      map(limits => ({
+        limits,
+        isLoading: this.isLoading$.value,
+        error: this.error$.value,
+        lastUpdated: this.cacheTimestamp
+      }))
+    );
+  }
+
+  /**
    * Get token limits for a specific field type
    */
   getFieldLimit(fieldType: SystemPromptFieldType): Observable<FieldTokenLimit> {
+    this.ensureFreshCache();
     return this.tokenLimits$.pipe(
       map(limits => {
         const recommendedLimits = limits?.recommended_limits || this.defaultLimits;
@@ -74,6 +107,7 @@ export class TokenLimitsService {
    * Get all field limits at once
    */
   getAllFieldLimits(): Observable<FieldTokenLimit[]> {
+    this.ensureFreshCache();
     return this.tokenLimits$.pipe(
       map(limits => {
         const recommendedLimits = limits?.recommended_limits || this.defaultLimits;
@@ -117,30 +151,63 @@ export class TokenLimitsService {
   }
 
   /**
+   * Clear the cached token limits and reset to null
+   */
+  clearCache(): void {
+    this.tokenLimits$.next(null);
+    this.cacheTimestamp = null;
+  }
+
+  /**
    * Load token limits from the backend
    */
   private loadTokenLimits(): void {
     this.isLoading$.next(true);
+    this.error$.next(null);
     
     this.http.get<TokenStrategiesResponse>(`${this.baseUrl}/strategies`)
       .pipe(
+        retry({ count: 3, delay: 1000 }), // Retry up to 3 times with 1 second delay
         map(response => response.token_limits),
         catchError(error => {
-          console.warn('Failed to load token limits from backend, using defaults:', error);
+          console.warn('Failed to load token limits from backend after retries, using defaults:', error);
+          this.error$.next('Failed to load token limits from backend, using defaults');
           return of(this.createDefaultTokenLimits());
         })
       )
       .subscribe({
         next: (limits) => {
           this.tokenLimits$.next(limits);
+          this.cacheTimestamp = Date.now();
           this.isLoading$.next(false);
         },
         error: (error) => {
           console.error('Error loading token limits:', error);
+          this.error$.next('Error loading token limits');
           this.tokenLimits$.next(this.createDefaultTokenLimits());
+          this.cacheTimestamp = Date.now();
           this.isLoading$.next(false);
         }
       });
+  }
+
+  /**
+   * Check if the cache is expired
+   */
+  private isCacheExpired(): boolean {
+    if (!this.cacheTimestamp) {
+      return true;
+    }
+    return Date.now() - this.cacheTimestamp > this.cacheTTL;
+  }
+
+  /**
+   * Ensure cache is fresh, reload if expired
+   */
+  private ensureFreshCache(): void {
+    if (this.isCacheExpired() && !this.isLoading$.value) {
+      this.loadTokenLimits();
+    }
   }
 
   /**

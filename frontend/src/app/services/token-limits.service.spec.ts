@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit } from './token-limits.service';
+import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit, TokenLimitsState } from './token-limits.service';
 import { TokenStrategiesResponse, TokenLimits } from '../models/token-limits.model';
 
 describe('TokenLimitsService', () => {
@@ -146,7 +146,7 @@ describe('TokenLimitsService', () => {
       req.flush(mockTokenStrategiesResponse);
 
       service.getAllFieldLimits().subscribe(results => {
-        expect(results).toHaveLength(4);
+        expect(results.length).toBe(4);
         
         const fieldTypes = results.map(r => r.fieldType);
         expect(fieldTypes).toContain('mainPrefix');
@@ -229,6 +229,94 @@ describe('TokenLimitsService', () => {
 
       const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
       refreshReq.error(new ErrorEvent('Network error'));
+    });
+  });
+
+  describe('clearCache', () => {
+    it('should clear cached token limits', () => {
+      // Initial load
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      // Verify limits are loaded
+      setTimeout(() => {
+        expect(service.getCurrentLimits()).toBeTruthy();
+        
+        // Clear cache
+        service.clearCache();
+        
+        // Verify limits are cleared
+        expect(service.getCurrentLimits()).toBeNull();
+      }, 0);
+    });
+  });
+
+  describe('getTokenLimits', () => {
+    it('should return token limits state with loading and error information', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      service.getTokenLimits().subscribe(state => {
+        expect(state.limits).toBeTruthy();
+        expect(state.isLoading).toBe(false);
+        expect(state.error).toBeNull();
+        expect(state.lastUpdated).toBeTruthy();
+        done();
+      });
+    });
+
+    it('should return error state when backend fails', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.error(new ErrorEvent('Network error'));
+
+      setTimeout(() => {
+        service.getTokenLimits().subscribe(state => {
+          expect(state.limits).toBeTruthy(); // Should have default limits
+          expect(state.isLoading).toBe(false);
+          expect(state.error).toBeTruthy();
+          expect(state.lastUpdated).toBeTruthy();
+          done();
+        });
+      }, 100);
+    });
+  });
+
+  describe('TTL caching', () => {
+    beforeEach(() => {
+      // Mock Date.now to control time
+      jasmine.clock().install();
+      jasmine.clock().mockDate(new Date(2023, 0, 1));
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
+    });
+
+    it('should not reload data within TTL period', () => {
+      // Initial load
+      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      initialReq.flush(mockTokenStrategiesResponse);
+
+      // Advance time by 2 minutes (less than 5 minute TTL)
+      jasmine.clock().tick(2 * 60 * 1000);
+
+      // Request data again - should not trigger new HTTP request
+      service.getFieldLimit('mainPrefix').subscribe();
+      httpMock.expectNone('http://localhost:8000/api/v1/tokens/strategies');
+    });
+
+    it('should reload data after TTL expires', () => {
+      // Initial load
+      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      initialReq.flush(mockTokenStrategiesResponse);
+
+      // Advance time by 6 minutes (more than 5 minute TTL)
+      jasmine.clock().tick(6 * 60 * 1000);
+
+      // Request data again - should trigger new HTTP request
+      service.getFieldLimit('mainPrefix').subscribe();
+      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      refreshReq.flush(mockTokenStrategiesResponse);
     });
   });
 
