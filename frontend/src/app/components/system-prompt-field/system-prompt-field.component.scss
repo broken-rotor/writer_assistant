@@ -9,9 +9,10 @@
   &__label {
     font-weight: 600;
     font-size: 0.875rem;
-    color: #1f2937; // Darker color for better contrast (was #374151)
+    color: #1f2937 !important; // Force darker color to override parent styles
     margin-bottom: 0.25rem;
-    display: block;
+    display: block !important; // Ensure label is always visible
+    opacity: 1 !important; // Prevent transparency issues
 
     .system-prompt-field__required {
       color: #dc2626;

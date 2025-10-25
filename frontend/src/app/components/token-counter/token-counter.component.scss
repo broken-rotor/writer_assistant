@@ -131,7 +131,7 @@ $color-error-text: #616161;
   
   .token-counter__percentage {
     font-size: 12px;
-    color: #374151; // Darker color for better contrast (was #666)
+    color: #374151 !important; // Force darker color to override parent styles
   }
   
   .token-counter__status-display {
@@ -172,7 +172,7 @@ $color-error-text: #616161;
     justify-content: space-between;
     margin-top: 4px;
     font-size: 10px;
-    color: #374151; // Darker color for better contrast (was #666)
+    color: #374151 !important; // Force darker color to override parent styles
   }
   
   .token-counter__over-limit-warning {
@@ -192,7 +192,7 @@ $color-error-text: #616161;
     align-items: center;
     gap: 4px;
     font-size: 12px;
-    color: #374151; // Darker color for better contrast (was #666)
+    color: #374151 !important; // Force darker color to override parent styles
   }
   
   .token-counter__loading,
@@ -312,7 +312,7 @@ $color-error-text: #616161;
     justify-content: space-between;
     align-items: center;
     font-size: 11px;
-    color: #374151; // Darker color for better contrast (was #666)
+    color: #374151 !important; // Force darker color to override parent styles
   }
   
   .token-counter__mobile-loading,
