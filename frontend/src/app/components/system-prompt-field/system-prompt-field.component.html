@@ -1,0 +1,91 @@
+<div [class]="getComponentClasses().join(' ')">
+  <!-- Label -->
+  <label 
+    *ngIf="label" 
+    [for]="getTextareaId()" 
+    class="system-prompt-field__label">
+    {{ label }}
+    <span *ngIf="required" class="system-prompt-field__required" aria-label="required">*</span>
+  </label>
+
+  <!-- Textarea Input -->
+  <div class="system-prompt-field__input-container">
+    <textarea
+      [id]="getTextareaId()"
+      [class]="getTextareaClasses().join(' ')"
+      [placeholder]="placeholder"
+      [rows]="rows"
+      [disabled]="disabled"
+      [required]="required"
+      [value]="value"
+      [attr.aria-describedby]="getAriaDescribedBy()"
+      [attr.aria-invalid]="hasError"
+      (input)="onInputChange($event)"
+      (blur)="onBlur()">
+    </textarea>
+
+    <!-- Loading Indicator -->
+    <div 
+      *ngIf="isLoading" 
+      class="system-prompt-field__loading"
+      aria-live="polite">
+      <span class="system-prompt-field__loading-spinner"></span>
+      <span class="system-prompt-field__loading-text">Counting tokens...</span>
+    </div>
+  </div>
+
+  <!-- Token Counter -->
+  <div 
+    *ngIf="shouldShowTokenCounter()" 
+    class="system-prompt-field__counter-container"
+    [id]="getTextareaId() + '-counter'">
+    <app-token-counter
+      [data]="tokenCounterData"
+      [config]="{ displayMode: 'compact', showProgressBar: true }"
+      [loading]="isLoading">
+    </app-token-counter>
+  </div>
+
+  <!-- Validation Message -->
+  <div 
+    *ngIf="shouldShowValidationMessage()" 
+    class="system-prompt-field__validation"
+    [id]="getTextareaId() + '-validation'"
+    [attr.aria-live]="validationResult?.status === ValidationStatus.ERROR ? 'assertive' : 'polite'"
+    role="alert">
+    
+    <span class="system-prompt-field__validation-icon">
+      {{ ValidationUtils.getStatusIcon(validationResult!.status) }}
+    </span>
+    
+    <span class="system-prompt-field__validation-message">
+      {{ validationResult!.message }}
+    </span>
+    
+    <!-- Excess tokens warning for invalid status -->
+    <span 
+      *ngIf="validationResult?.status === ValidationStatus.INVALID && validationResult?.metadata?.excessTokens" 
+      class="system-prompt-field__excess-tokens">
+      ({{ validationResult.metadata.excessTokens }} tokens over limit)
+    </span>
+  </div>
+
+  <!-- Error Message -->
+  <div 
+    *ngIf="hasError && errorMessage" 
+    class="system-prompt-field__error"
+    role="alert"
+    aria-live="assertive">
+    <span class="system-prompt-field__error-icon">⚠️</span>
+    <span class="system-prompt-field__error-message">{{ errorMessage }}</span>
+  </div>
+
+  <!-- Help Text -->
+  <div 
+    *ngIf="!isLoading && !hasError && validationResult?.status === ValidationStatus.VALID" 
+    class="system-prompt-field__help">
+    <small class="system-prompt-field__help-text">
+      Field type: {{ fieldType }} • Updates automatically as you type
+    </small>
+  </div>
+</div>

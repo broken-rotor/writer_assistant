@@ -1,0 +1,323 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit } from './token-limits.service';
+import { TokenStrategiesResponse, TokenLimits } from '../models/token-limits.model';
+
+describe('TokenLimitsService', () => {
+  let service: TokenLimitsService;
+  let httpMock: HttpTestingController;
+
+  const mockTokenStrategiesResponse: TokenStrategiesResponse = {
+    success: true,
+    strategies: {
+      exact: {
+        description: 'Exact token counting',
+        overhead: 1.0,
+        use_case: 'Precise counting'
+      }
+    },
+    content_types: {
+      system_prompt: {
+        description: 'System prompt content',
+        multiplier: 1.0
+      }
+    },
+    token_limits: {
+      llm_context_window: 8192,
+      llm_max_generation: 2048,
+      context_management: {
+        max_context_tokens: 6144,
+        buffer_tokens: 512,
+        layer_limits: {
+          system_instructions: 1024,
+          immediate_instructions: 512,
+          recent_story: 2048,
+          character_scene_data: 1536,
+          plot_world_summary: 1024
+        }
+      },
+      recommended_limits: {
+        system_prompt_prefix: 600,
+        system_prompt_suffix: 400,
+        writing_assistant_prompt: 1200,
+        writing_editor_prompt: 800
+      }
+    },
+    default_strategy: 'exact',
+    batch_limits: {
+      max_texts_per_request: 10,
+      max_text_size_bytes: 1048576
+    }
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [TokenLimitsService]
+    });
+    service = TestBed.inject(TokenLimitsService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  it('should load token limits on initialization', () => {
+    const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+    expect(req.request.method).toBe('GET');
+    req.flush(mockTokenStrategiesResponse);
+  });
+
+  describe('getFieldLimit', () => {
+    it('should return correct limits for mainPrefix field', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      service.getFieldLimit('mainPrefix').subscribe(result => {
+        expect(result.fieldType).toBe('mainPrefix');
+        expect(result.limit).toBe(600);
+        expect(result.warningThreshold).toBe(480); // 80% of 600
+        expect(result.criticalThreshold).toBe(540); // 90% of 600
+        done();
+      });
+    });
+
+    it('should return correct limits for mainSuffix field', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      service.getFieldLimit('mainSuffix').subscribe(result => {
+        expect(result.fieldType).toBe('mainSuffix');
+        expect(result.limit).toBe(400);
+        expect(result.warningThreshold).toBe(320); // 80% of 400
+        expect(result.criticalThreshold).toBe(360); // 90% of 400
+        done();
+      });
+    });
+
+    it('should return correct limits for assistantPrompt field', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      service.getFieldLimit('assistantPrompt').subscribe(result => {
+        expect(result.fieldType).toBe('assistantPrompt');
+        expect(result.limit).toBe(1200);
+        expect(result.warningThreshold).toBe(960); // 80% of 1200
+        expect(result.criticalThreshold).toBe(1080); // 90% of 1200
+        done();
+      });
+    });
+
+    it('should return correct limits for editorPrompt field', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      service.getFieldLimit('editorPrompt').subscribe(result => {
+        expect(result.fieldType).toBe('editorPrompt');
+        expect(result.limit).toBe(800);
+        expect(result.warningThreshold).toBe(640); // 80% of 800
+        expect(result.criticalThreshold).toBe(720); // 90% of 800
+        done();
+      });
+    });
+
+    it('should use default limits when backend fails', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.error(new ErrorEvent('Network error'));
+
+      service.getFieldLimit('mainPrefix').subscribe(result => {
+        expect(result.fieldType).toBe('mainPrefix');
+        expect(result.limit).toBe(500); // Default fallback
+        expect(result.warningThreshold).toBe(400);
+        expect(result.criticalThreshold).toBe(450);
+        done();
+      });
+    });
+  });
+
+  describe('getAllFieldLimits', () => {
+    it('should return limits for all field types', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      service.getAllFieldLimits().subscribe(results => {
+        expect(results).toHaveLength(4);
+        
+        const fieldTypes = results.map(r => r.fieldType);
+        expect(fieldTypes).toContain('mainPrefix');
+        expect(fieldTypes).toContain('mainSuffix');
+        expect(fieldTypes).toContain('assistantPrompt');
+        expect(fieldTypes).toContain('editorPrompt');
+        
+        const mainPrefixResult = results.find(r => r.fieldType === 'mainPrefix');
+        expect(mainPrefixResult?.limit).toBe(600);
+        
+        done();
+      });
+    });
+  });
+
+  describe('getCurrentLimits', () => {
+    it('should return null initially', () => {
+      expect(service.getCurrentLimits()).toBeNull();
+    });
+
+    it('should return loaded limits after successful load', () => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      setTimeout(() => {
+        const limits = service.getCurrentLimits();
+        expect(limits).toBeTruthy();
+        expect(limits?.recommended_limits.system_prompt_prefix).toBe(600);
+      }, 0);
+    });
+  });
+
+  describe('isLoading', () => {
+    it('should emit loading state changes', (done) => {
+      let loadingStates: boolean[] = [];
+      
+      service.isLoading().subscribe(isLoading => {
+        loadingStates.push(isLoading);
+        
+        if (loadingStates.length === 2) {
+          expect(loadingStates[0]).toBe(true); // Initially loading
+          expect(loadingStates[1]).toBe(false); // After load complete
+          done();
+        }
+      });
+
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+    });
+  });
+
+  describe('refreshLimits', () => {
+    it('should reload limits from backend', (done) => {
+      // Initial load
+      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      initialReq.flush(mockTokenStrategiesResponse);
+
+      // Refresh
+      service.refreshLimits().subscribe(limits => {
+        expect(limits).toBeTruthy();
+        expect(limits.recommended_limits.system_prompt_prefix).toBe(600);
+        done();
+      });
+
+      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      refreshReq.flush(mockTokenStrategiesResponse);
+    });
+
+    it('should return default limits when refresh fails', (done) => {
+      // Initial load
+      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      initialReq.flush(mockTokenStrategiesResponse);
+
+      // Refresh with error
+      service.refreshLimits().subscribe(limits => {
+        expect(limits).toBeTruthy();
+        expect(limits.recommended_limits.system_prompt_prefix).toBe(500); // Default
+        done();
+      });
+
+      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      refreshReq.error(new ErrorEvent('Network error'));
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle HTTP errors gracefully', () => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.error(new ErrorEvent('Network error'));
+
+      // Should not throw and should use defaults
+      expect(() => service.getCurrentLimits()).not.toThrow();
+    });
+
+    it('should handle malformed response gracefully', () => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush({ invalid: 'response' });
+
+      // Should not throw and should use defaults
+      expect(() => service.getCurrentLimits()).not.toThrow();
+    });
+  });
+
+  describe('field type mapping', () => {
+    it('should map all field types correctly', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      const fieldTypes: SystemPromptFieldType[] = ['mainPrefix', 'mainSuffix', 'assistantPrompt', 'editorPrompt'];
+      const expectedLimits = [600, 400, 1200, 800];
+
+      let completedCount = 0;
+      fieldTypes.forEach((fieldType, index) => {
+        service.getFieldLimit(fieldType).subscribe(result => {
+          expect(result.limit).toBe(expectedLimits[index]);
+          completedCount++;
+          if (completedCount === fieldTypes.length) {
+            done();
+          }
+        });
+      });
+    });
+
+    it('should return default limit for unknown field type', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      // Cast to bypass TypeScript checking for testing
+      service.getFieldLimit('unknownField' as SystemPromptFieldType).subscribe(result => {
+        expect(result.limit).toBe(500); // Default fallback
+        done();
+      });
+    });
+  });
+
+  describe('threshold calculations', () => {
+    it('should calculate thresholds correctly for various limits', (done) => {
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(mockTokenStrategiesResponse);
+
+      service.getFieldLimit('assistantPrompt').subscribe(result => {
+        expect(result.limit).toBe(1200);
+        expect(result.warningThreshold).toBe(960); // Math.floor(1200 * 0.8)
+        expect(result.criticalThreshold).toBe(1080); // Math.floor(1200 * 0.9)
+        done();
+      });
+    });
+
+    it('should handle edge case of very small limits', (done) => {
+      const smallLimitsResponse = {
+        ...mockTokenStrategiesResponse,
+        token_limits: {
+          ...mockTokenStrategiesResponse.token_limits,
+          recommended_limits: {
+            system_prompt_prefix: 5,
+            system_prompt_suffix: 3,
+            writing_assistant_prompt: 1,
+            writing_editor_prompt: 2
+          }
+        }
+      };
+
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      req.flush(smallLimitsResponse);
+
+      service.getFieldLimit('mainPrefix').subscribe(result => {
+        expect(result.limit).toBe(5);
+        expect(result.warningThreshold).toBe(4); // Math.floor(5 * 0.8)
+        expect(result.criticalThreshold).toBe(4); // Math.floor(5 * 0.9)
+        done();
+      });
+    });
+  });
+});
