@@ -68,11 +68,18 @@ export class TokenCounterComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log('🔄 TokenCounter: ngOnChanges triggered', changes);
+    
     if (changes['config']) {
       this.updateConfiguration();
     }
     
     if (changes['data'] || changes['loading'] || changes['error']) {
+      console.log('📊 TokenCounter: Updating state due to input changes', {
+        data: this.data,
+        loading: this.loading,
+        error: this.error
+      });
       this.updateState();
     }
   }
@@ -92,6 +99,7 @@ export class TokenCounterComponent implements OnInit, OnChanges {
    */
   private updateState(): void {
     const previousStatus = this.state.status;
+    const previousState = { ...this.state };
 
     if (this.loading) {
       this.state = {
@@ -100,6 +108,7 @@ export class TokenCounterComponent implements OnInit, OnChanges {
         isLoading: true,
         errorMessage: undefined
       };
+      console.log('⏳ TokenCounter: Set to loading state');
     } else if (this.error) {
       this.state = {
         ...this.state,
@@ -108,6 +117,7 @@ export class TokenCounterComponent implements OnInit, OnChanges {
         errorMessage: this.error,
         percentage: 0
       };
+      console.log('❌ TokenCounter: Set to error state', this.error);
     } else if (this.data) {
       const warningThreshold = this.data.warningThreshold || (this.data.limit * 0.8);
       const status = TokenCounterUtils.calculateStatus(
@@ -124,6 +134,12 @@ export class TokenCounterComponent implements OnInit, OnChanges {
         errorMessage: undefined,
         warningThreshold
       };
+      console.log('✅ TokenCounter: Set to data state', {
+        status,
+        percentage,
+        tokenCount: this.data.current,
+        limit: this.data.limit
+      });
     } else {
       this.state = {
         status: TokenCounterStatus.ERROR,
@@ -132,10 +148,21 @@ export class TokenCounterComponent implements OnInit, OnChanges {
         errorMessage: 'No data provided',
         warningThreshold: 0
       };
+      console.log('⚠️ TokenCounter: Set to no-data error state');
     }
+
+    console.log('📊 TokenCounter: State updated', {
+      previousState,
+      newState: this.state,
+      statusChanged: previousStatus !== this.state.status
+    });
 
     // Emit status change if it changed
     if (previousStatus !== this.state.status) {
+      console.log('📡 TokenCounter: Emitting status change', {
+        from: previousStatus,
+        to: this.state.status
+      });
       this.statusChange.emit(this.state.status);
     }
   }

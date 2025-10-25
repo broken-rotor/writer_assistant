@@ -208,6 +208,7 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
           return [this.createEmptyValidationResult()];
         }
         
+        console.log('🔄 SystemPromptField: Starting validation', { value: value.substring(0, 50) + '...', fieldType: this.fieldType });
         this.isLoading = true;
         this.hasError = false;
         this.cdr.markForCheck();
@@ -229,6 +230,8 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
    * Handle validation result
    */
   private handleValidationResult(result: TokenValidationResult): void {
+    console.log('✅ SystemPromptField: Received validation result', result);
+    
     this.validationResult = result;
     this.isLoading = false;
     this.isRetrying = false;
@@ -244,6 +247,12 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
       warningThreshold: result.warningThreshold
     };
     
+    console.log('📊 SystemPromptField: Updated state', {
+      isLoading: this.isLoading,
+      hasError: this.hasError,
+      tokenCounterData: this.tokenCounterData
+    });
+    
     // Show toast notification for fallback mode
     if (this.isFallbackMode && !this.hasError) {
       this.toastService.showFallbackMode('Token validation');
@@ -253,6 +262,7 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
     this.validationChange.emit(result);
     this.tokenCountChange.emit(result.currentTokens);
     
+    console.log('🔄 SystemPromptField: Triggering change detection');
     this.cdr.markForCheck();
   }
 
@@ -260,7 +270,7 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
    * Handle validation error
    */
   private handleValidationError(error: any): void {
-    console.error('Validation error:', error);
+    console.error('❌ SystemPromptField: Validation error:', error);
     
     this.isLoading = false;
     this.isRetrying = false;
@@ -277,6 +287,12 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
     this.errorMessage = ERROR_MESSAGES.VALIDATION_FAILED;
     this.isFallbackMode = true;
     
+    console.log('📊 SystemPromptField: Updated error state', {
+      isLoading: this.isLoading,
+      hasError: this.hasError,
+      retryCount: this.retryCount
+    });
+    
     // Show error toast with recovery actions
     this.toastService.showTokenLimitsError(
       this.errorMessage,
@@ -285,6 +301,7 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
       () => this.useFallbackMode()
     );
     
+    console.log('🔄 SystemPromptField: Triggering change detection after error');
     this.cdr.markForCheck();
   }
 

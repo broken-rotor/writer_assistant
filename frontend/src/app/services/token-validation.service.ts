@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, combineLatest, of, timer, throwError } from 'rxjs';
-import { map, catchError, retryWhen, mergeMap } from 'rxjs/operators';
+import { map, catchError, retryWhen, mergeMap, tap } from 'rxjs/operators';
 import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit } from './token-limits.service';
 import { TokenCountingService } from './token-counting.service';
 import { 
@@ -217,6 +217,12 @@ export class TokenValidationService {
     fieldType: SystemPromptFieldType,
     config: Partial<TokenValidationConfig> = {}
   ): Observable<TokenValidationResult> {
+    console.log('🔄 TokenValidationService: Starting field validation', {
+      text: text.substring(0, 50) + '...',
+      fieldType,
+      config
+    });
+    
     const validationConfig = { ...DEFAULT_VALIDATION_CONFIG, ...config };
     
     // Get field limits and count tokens in parallel
