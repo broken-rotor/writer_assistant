@@ -26,11 +26,12 @@
 
     <!-- Loading Indicator -->
     <div 
-      *ngIf="isLoading" 
+      *ngIf="isLoading || isRetrying" 
       class="system-prompt-field__loading"
+      [class.system-prompt-field__loading--retrying]="isRetrying"
       aria-live="polite">
       <span class="system-prompt-field__loading-spinner"></span>
-      <span class="system-prompt-field__loading-text">Counting tokens...</span>
+      <span class="system-prompt-field__loading-text">{{ getStatusMessage() }}</span>
     </div>
   </div>
 
@@ -70,19 +71,52 @@
     </span>
   </div>
 
-  <!-- Error Message -->
+  <!-- Error Message with Recovery Actions -->
   <div 
     *ngIf="hasError && errorMessage" 
     class="system-prompt-field__error"
     role="alert"
     aria-live="assertive">
-    <span class="system-prompt-field__error-icon">⚠️</span>
-    <span class="system-prompt-field__error-message">{{ errorMessage }}</span>
+    <div class="system-prompt-field__error-content">
+      <span class="system-prompt-field__error-icon">⚠️</span>
+      <span class="system-prompt-field__error-message">{{ errorMessage }}</span>
+    </div>
+    
+    <!-- Recovery Actions -->
+    <div class="system-prompt-field__error-actions" *ngIf="canRetry()">
+      <button 
+        type="button"
+        class="system-prompt-field__retry-button"
+        (click)="retryValidation()"
+        [disabled]="isRetrying"
+        aria-label="Retry token validation">
+        <span *ngIf="!isRetrying">🔄 Retry</span>
+        <span *ngIf="isRetrying">⏳ Retrying...</span>
+      </button>
+      
+      <button 
+        type="button"
+        class="system-prompt-field__fallback-button"
+        (click)="useFallbackMode()"
+        aria-label="Use default token limits">
+        📊 Use Defaults
+      </button>
+    </div>
+  </div>
+
+  <!-- Fallback Mode Indicator -->
+  <div 
+    *ngIf="isFallbackMode && !hasError" 
+    class="system-prompt-field__fallback-indicator"
+    role="status"
+    aria-live="polite">
+    <span class="system-prompt-field__fallback-icon">📊</span>
+    <span class="system-prompt-field__fallback-text">Using default token limits</span>
   </div>
 
   <!-- Help Text -->
   <div 
-    *ngIf="!isLoading && !hasError && validationResult?.status === ValidationStatus.VALID" 
+    *ngIf="!isLoading && !hasError && !isFallbackMode && validationResult?.status === ValidationStatus.VALID" 
     class="system-prompt-field__help">
     <small class="system-prompt-field__help-text">
       Field type: {{ fieldType }} • Updates automatically as you type

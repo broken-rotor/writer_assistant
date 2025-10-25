@@ -1,0 +1,43 @@
+<div class="toast-container" [attr.data-position]="'top-right'">
+  <div 
+    *ngFor="let toast of toasts$ | async; trackBy: trackByToastId"
+    [class]="getToastClasses(toast).join(' ')"
+    [attr.data-toast-id]="toast.id"
+    role="alert"
+    [attr.aria-live]="toast.type === ToastType.ERROR ? 'assertive' : 'polite'"
+  >
+    <!-- Toast Header -->
+    <div class="toast__header">
+      <div class="toast__icon">
+        {{ getToastIcon(toast.type) }}
+      </div>
+      <div class="toast__content">
+        <div class="toast__message">{{ toast.message }}</div>
+        <div *ngIf="toast.description" class="toast__description">
+          {{ toast.description }}
+        </div>
+      </div>
+      <button 
+        *ngIf="toast.dismissible"
+        class="toast__close"
+        (click)="dismissToast(toast.id)"
+        aria-label="Dismiss notification"
+        type="button"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Toast Actions -->
+    <div *ngIf="toast.actions && toast.actions.length > 0" class="toast__actions">
+      <button
+        *ngFor="let action of toast.actions"
+        [class]="getActionClasses(action.type).join(' ')"
+        (click)="executeAction(action)"
+        type="button"
+      >
+        {{ action.label }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,9 @@
 <!-- Global Loading Spinner -->
 <app-loading-spinner></app-loading-spinner>
 
+<!-- Toast Notifications -->
+<app-toast></app-toast>
+
 <div class="story-workspace" *ngIf="!loading && !error && story">
   <!-- Header with Story Title and Last Saved -->
   <div class="workspace-header">
@@ -13,19 +16,38 @@
   <!-- Token Validation Status -->
   <div class="validation-status" *ngIf="activeTab === 'general'">
     <div class="validation-summary" 
-         [class.loading]="tokenLimitsLoading"
-         [class.error]="tokenLimitsError"
-         [class.invalid]="!canSave() && !tokenLimitsLoading">
+         [class.loading]="tokenLimitsLoading || isTokenLimitsRetrying"
+         [class.error]="tokenLimitsError && !isTokenLimitsFallbackMode"
+         [class.fallback]="isTokenLimitsFallbackMode"
+         [class.invalid]="!canSave() && !tokenLimitsLoading && !isTokenLimitsRetrying">
       <span class="status-icon">
-        <span *ngIf="tokenLimitsLoading">⏳</span>
-        <span *ngIf="tokenLimitsError">⚠️</span>
-        <span *ngIf="!canSave() && !tokenLimitsLoading && !tokenLimitsError">🚫</span>
-        <span *ngIf="canSave() && !tokenLimitsLoading && !tokenLimitsError">✅</span>
+        <span *ngIf="tokenLimitsLoading || isTokenLimitsRetrying">⏳</span>
+        <span *ngIf="tokenLimitsError && !isTokenLimitsFallbackMode">⚠️</span>
+        <span *ngIf="isTokenLimitsFallbackMode">📊</span>
+        <span *ngIf="!canSave() && !tokenLimitsLoading && !isTokenLimitsRetrying && !tokenLimitsError">🚫</span>
+        <span *ngIf="canSave() && !tokenLimitsLoading && !isTokenLimitsRetrying && !tokenLimitsError && !isTokenLimitsFallbackMode">✅</span>
       </span>
       <span class="status-text">{{ getValidationSummary() }}</span>
+      
+      <!-- Retry Button -->
+      <button 
+        *ngIf="canRetryTokenLimits()"
+        type="button"
+        class="retry-button"
+        (click)="retryTokenLimits()"
+        [disabled]="isTokenLimitsRetrying"
+        aria-label="Retry loading token limits">
+        <span *ngIf="!isTokenLimitsRetrying">🔄 Retry</span>
+        <span *ngIf="isTokenLimitsRetrying">⏳ Retrying...</span>
+      </button>
     </div>
-    <div class="validation-warning" *ngIf="!canSave() && !tokenLimitsLoading">
+    
+    <div class="validation-warning" *ngIf="!canSave() && !tokenLimitsLoading && !isTokenLimitsRetrying">
       <strong>Warning:</strong> Some fields exceed token limits. Auto-save is disabled until limits are met.
+    </div>
+    
+    <div class="validation-fallback" *ngIf="isTokenLimitsFallbackMode">
+      <strong>Info:</strong> Using default token limits. The app remains functional with estimated token counts.
     </div>
   </div>
 

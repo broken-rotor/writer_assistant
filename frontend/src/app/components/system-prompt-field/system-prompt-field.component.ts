@@ -25,12 +25,18 @@ import { debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs/o
 import { TokenCounterComponent } from '../token-counter/token-counter.component';
 import { TokenValidationService } from '../../services/token-validation.service';
 import { SystemPromptFieldType } from '../../services/token-limits.service';
+import { ToastService } from '../../services/toast.service';
 import { 
   TokenValidationResult, 
   TokenValidationStatus,
   TokenValidationUtils 
 } from '../../models/token-validation.model';
 import { TokenCounterData, TokenCounterDisplayMode } from '../../models/token-counter.model';
+import { 
+  ERROR_MESSAGES, 
+  ErrorContext, 
+  RecoveryAction 
+} from '../../constants/token-limits.constants';
 
 /**
  * SystemPromptFieldComponent - A reusable component that combines textarea input 
@@ -86,6 +92,10 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
   public isLoading: boolean = false;
   public hasError: boolean = false;
   public errorMessage: string = '';
+  public errorContext: ErrorContext | null = null;
+  public isFallbackMode: boolean = false;
+  public isRetrying: boolean = false;
+  public retryCount: number = 0;
 
   // Form control integration
   private onChange = (value: string) => {};
@@ -104,6 +114,7 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
 
   constructor(
     private tokenValidationService: TokenValidationService,
+    private toastService: ToastService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -220,8 +231,11 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
   private handleValidationResult(result: TokenValidationResult): void {
     this.validationResult = result;
     this.isLoading = false;
+    this.isRetrying = false;
     this.hasError = result.status === TokenValidationStatus.ERROR;
     this.errorMessage = this.hasError ? result.message : '';
+    this.errorContext = result.metadata?.errorContext || null;
+    this.isFallbackMode = result.metadata?.isFallbackMode || false;
     
     // Update token counter data
     this.tokenCounterData = {
@@ -229,6 +243,11 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
       limit: result.maxTokens,
       warningThreshold: result.warningThreshold
     };
+    
+    // Show toast notification for fallback mode
+    if (this.isFallbackMode && !this.hasError) {
+      this.toastService.showFallbackMode('Token validation');
+    }
     
     // Emit events
     this.validationChange.emit(result);
@@ -244,11 +263,27 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
     console.error('Validation error:', error);
     
     this.isLoading = false;
+    this.isRetrying = false;
     this.hasError = true;
-    this.errorMessage = 'Unable to validate token count';
-    this.validationResult = this.tokenValidationService.createLoadingResult(this.fieldType);
-    this.validationResult.status = TokenValidationStatus.ERROR;
-    this.validationResult.message = this.errorMessage;
+    this.retryCount++;
+    
+    // Create fallback result for better user experience
+    const fallbackResult = this.tokenValidationService.createFallbackResult(
+      this.value,
+      this.fieldType
+    );
+    
+    this.validationResult = fallbackResult;
+    this.errorMessage = ERROR_MESSAGES.VALIDATION_FAILED;
+    this.isFallbackMode = true;
+    
+    // Show error toast with recovery actions
+    this.toastService.showTokenLimitsError(
+      this.errorMessage,
+      [RecoveryAction.RETRY, RecoveryAction.USE_FALLBACK],
+      () => this.retryValidation(),
+      () => this.useFallbackMode()
+    );
     
     this.cdr.markForCheck();
   }
@@ -274,6 +309,72 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
   }
 
   /**
+   * Retry validation manually
+   */
+  retryValidation(): void {
+    if (this.isLoading || this.isRetrying) {
+      return;
+    }
+    
+    this.isRetrying = true;
+    this.hasError = false;
+    this.errorMessage = '';
+    this.errorContext = null;
+    this.isFallbackMode = false;
+    this.cdr.markForCheck();
+    
+    // Trigger validation again
+    this.valueChange$.next(this.value);
+  }
+
+  /**
+   * Use fallback mode explicitly
+   */
+  useFallbackMode(): void {
+    const fallbackResult = this.tokenValidationService.createFallbackResult(
+      this.value,
+      this.fieldType
+    );
+    
+    this.handleValidationResult(fallbackResult);
+    this.toastService.showInfo('Using default token limits', 'Validation will continue with estimated token counts');
+  }
+
+  /**
+   * Check if retry is available
+   */
+  canRetry(): boolean {
+    return this.hasError && !this.isLoading && !this.isRetrying;
+  }
+
+  /**
+   * Get current status message
+   */
+  getStatusMessage(): string {
+    if (this.isLoading) {
+      return ERROR_MESSAGES.COUNTING_TOKENS;
+    }
+    
+    if (this.isRetrying) {
+      return ERROR_MESSAGES.RETRYING;
+    }
+    
+    if (this.isFallbackMode) {
+      return ERROR_MESSAGES.FALLBACK_MODE;
+    }
+    
+    if (this.hasError) {
+      return this.errorMessage;
+    }
+    
+    if (this.validationResult) {
+      return this.validationResult.message;
+    }
+    
+    return '';
+  }
+
+  /**
    * Get CSS classes for the component
    */
   getComponentClasses(): string[] {
@@ -287,8 +388,16 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
       classes.push('system-prompt-field--loading');
     }
     
+    if (this.isRetrying) {
+      classes.push('system-prompt-field--retrying');
+    }
+    
     if (this.hasError) {
       classes.push('system-prompt-field--error');
+    }
+    
+    if (this.isFallbackMode) {
+      classes.push('system-prompt-field--fallback');
     }
     
     if (this.validationResult) {
