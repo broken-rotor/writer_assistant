@@ -5,6 +5,7 @@ import {
   debounceTime,
   distinctUntilChanged,
   switchMap,
+  mergeMap,
   catchError,
   retry,
   retryWhen,
@@ -273,7 +274,7 @@ export class TokenCountingService {
         prev.contentType === curr.contentType && 
         prev.strategy === curr.strategy
       ),
-      switchMap(({ text, contentType, strategy, observer }) => {
+      mergeMap(({ text, contentType, strategy, observer }) => {
         return this.countTokens(text, contentType, strategy).pipe(
           tap(result => {
             observer.next(result);
