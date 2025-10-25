@@ -1,0 +1,198 @@
+<!-- TokenCounter Component Template -->
+<div 
+  [class]="getComponentClasses().join(' ')"
+  [attr.aria-label]="getAriaLabel()"
+  [attr.role]="computedConfig.disabled ? null : 'button'"
+  [attr.tabindex]="computedConfig.disabled ? null : '0'"
+  (click)="onComponentClick($event)"
+  (mouseenter)="onComponentHover($event)"
+  (focus)="onComponentFocus($event)">
+
+  <!-- Detailed Display Mode -->
+  <div *ngIf="shouldShowDetailed()" class="token-counter__detailed">
+    
+    <!-- Loading State -->
+    <div *ngIf="state.isLoading" class="token-counter__loading">
+      <div class="token-counter__spinner" aria-hidden="true"></div>
+      <span class="token-counter__loading-text">Counting tokens...</span>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="state.status === Status.ERROR && !state.isLoading" class="token-counter__error">
+      <span class="token-counter__error-icon" aria-hidden="true">❌</span>
+      <span class="token-counter__error-text">{{ state.errorMessage || 'Error counting tokens' }}</span>
+    </div>
+
+    <!-- Success State -->
+    <div *ngIf="!state.isLoading && state.status !== Status.ERROR" class="token-counter__content">
+      
+      <!-- Header with count and status -->
+      <div class="token-counter__header">
+        <div class="token-counter__count-display">
+          <span class="token-counter__count" *ngIf="computedConfig.showCount">
+            {{ getFormattedCount() }}
+          </span>
+          <span class="token-counter__percentage" *ngIf="computedConfig.showPercentage">
+            ({{ state.percentage }}%)
+          </span>
+        </div>
+        
+        <div class="token-counter__status-display" *ngIf="computedConfig.showStatus">
+          <span class="token-counter__status-icon" [attr.aria-hidden]="true">
+            {{ Utils.getStatusIcon(state.status) }}
+          </span>
+          <span class="token-counter__status-text">
+            {{ Utils.getStatusText(state.status) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div *ngIf="computedConfig.showProgressBar" class="token-counter__progress-container">
+        <div 
+          class="token-counter__progress-bar"
+          role="progressbar"
+          [attr.aria-valuenow]="data?.current || 0"
+          [attr.aria-valuemin]="0"
+          [attr.aria-valuemax]="data?.limit || 100"
+          [attr.aria-valuetext]="getAriaLabel()">
+          <div 
+            class="token-counter__progress-fill"
+            [style.width.%]="getProgressBarWidth()">
+          </div>
+        </div>
+        
+        <!-- Progress bar labels -->
+        <div class="token-counter__progress-labels">
+          <span class="token-counter__progress-label token-counter__progress-label--start">0</span>
+          <span class="token-counter__progress-label token-counter__progress-label--end">
+            {{ Utils.formatTokenCount(data?.limit || 0) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Over limit warning -->
+      <div *ngIf="state.status === Status.OVER_LIMIT" class="token-counter__over-limit-warning">
+        <span class="token-counter__warning-icon" aria-hidden="true">⚠️</span>
+        <span class="token-counter__warning-text">
+          Exceeds limit by {{ Utils.formatTokenCount(getExcessTokens()) }} tokens
+        </span>
+      </div>
+
+      <!-- Token count details -->
+      <div class="token-counter__details">
+        <span class="token-counter__details-icon" aria-hidden="true">📊</span>
+        <span class="token-counter__details-text">
+          {{ data?.current || 0 }} tokens
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compact Display Mode -->
+  <div *ngIf="shouldShowCompact()" class="token-counter__compact">
+    
+    <!-- Loading State -->
+    <span *ngIf="state.isLoading" class="token-counter__compact-loading">
+      <span class="token-counter__spinner token-counter__spinner--small" aria-hidden="true"></span>
+      <span class="sr-only">Loading token count</span>
+    </span>
+
+    <!-- Error State -->
+    <span *ngIf="state.status === Status.ERROR && !state.isLoading" class="token-counter__compact-error">
+      <span aria-hidden="true">❌</span>
+      <span class="sr-only">Error counting tokens</span>
+    </span>
+
+    <!-- Success State -->
+    <span *ngIf="!state.isLoading && state.status !== Status.ERROR" class="token-counter__compact-content">
+      
+      <!-- Count display -->
+      <span class="token-counter__compact-count" *ngIf="computedConfig.showCount">
+        [{{ getFormattedCount() }}]
+      </span>
+      
+      <!-- Status indicator -->
+      <span class="token-counter__compact-status" *ngIf="computedConfig.showStatus">
+        {{ Utils.getStatusIcon(state.status) }}
+      </span>
+      
+      <!-- Over limit indicator -->
+      <span *ngIf="state.status === Status.OVER_LIMIT" class="token-counter__compact-warning">
+        ⚠️
+      </span>
+    </span>
+  </div>
+
+  <!-- Mobile Display Mode -->
+  <div *ngIf="shouldShowMobile()" class="token-counter__mobile">
+    
+    <!-- Loading State -->
+    <div *ngIf="state.isLoading" class="token-counter__mobile-loading">
+      <div class="token-counter__spinner" aria-hidden="true"></div>
+      <span class="token-counter__loading-text">Loading...</span>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="state.status === Status.ERROR && !state.isLoading" class="token-counter__mobile-error">
+      <span class="token-counter__error-icon" aria-hidden="true">❌</span>
+      <span class="token-counter__error-text">Error</span>
+    </div>
+
+    <!-- Success State -->
+    <div *ngIf="!state.isLoading && state.status !== Status.ERROR" class="token-counter__mobile-content">
+      
+      <!-- Top row: Count and status -->
+      <div class="token-counter__mobile-header">
+        <span class="token-counter__mobile-count" *ngIf="computedConfig.showCount">
+          {{ getFormattedCount() }}
+        </span>
+        <span class="token-counter__mobile-status" *ngIf="computedConfig.showStatus">
+          {{ Utils.getStatusIcon(state.status) }} {{ Utils.getStatusText(state.status) }}
+        </span>
+      </div>
+
+      <!-- Progress bar (simplified for mobile) -->
+      <div *ngIf="computedConfig.showProgressBar" class="token-counter__mobile-progress">
+        <div 
+          class="token-counter__progress-bar token-counter__progress-bar--mobile"
+          role="progressbar"
+          [attr.aria-valuenow]="data?.current || 0"
+          [attr.aria-valuemin]="0"
+          [attr.aria-valuemax]="data?.limit || 100"
+          [attr.aria-valuetext]="getAriaLabel()">
+          <div 
+            class="token-counter__progress-fill"
+            [style.width.%]="getProgressBarWidth()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Over limit warning (mobile) -->
+      <div *ngIf="state.status === Status.OVER_LIMIT" class="token-counter__mobile-warning">
+        <span aria-hidden="true">⚠️</span>
+        <span>+{{ Utils.formatTokenCount(getExcessTokens()) }}</span>
+      </div>
+
+      <!-- Additional info -->
+      <div class="token-counter__mobile-info">
+        <span class="token-counter__mobile-percentage" *ngIf="computedConfig.showPercentage">
+          {{ state.percentage }}%
+        </span>
+        <span class="token-counter__mobile-tokens">
+          📊 {{ Utils.formatTokenCount(data?.current || 0) }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen reader only content for additional context -->
+<div class="sr-only" aria-live="polite" aria-atomic="true">
+  <span *ngIf="state.status === Status.OVER_LIMIT">
+    Warning: Token limit exceeded
+  </span>
+  <span *ngIf="state.status === Status.WARNING">
+    Warning: Approaching token limit
+  </span>
+</div>
