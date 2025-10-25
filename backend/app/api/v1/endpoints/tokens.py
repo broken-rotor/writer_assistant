@@ -19,6 +19,7 @@ from app.models.token_models import (
     ErrorResponse
 )
 from app.services.token_management import TokenCounter, ContentType, CountingStrategy
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -269,23 +270,24 @@ async def validate_token_budget(
 @router.get(
     "/strategies",
     response_model=Dict[str, Any],
-    summary="Get available counting strategies",
+    summary="Get available counting strategies and token limits",
     description="""
-    Get information about available token counting strategies and content types.
+    Get information about available token counting strategies, content types, and system token limits.
     
     Returns:
     - Available counting strategies with descriptions
     - Available content types with descriptions
+    - System token limits and context window sizes
     - Default configurations and overhead multipliers
     """,
     tags=["tokens"]
 )
 async def get_strategies() -> Dict[str, Any]:
     """
-    Get available counting strategies and content types.
+    Get available counting strategies, content types, and system token limits.
     
     Returns:
-        Dictionary with available strategies and content types
+        Dictionary with available strategies, content types, and token limits
     """
     try:
         strategies = {
@@ -346,10 +348,34 @@ async def get_strategies() -> Dict[str, Any]:
             }
         }
         
+        # Expose system token limits for frontend use
+        token_limits = {
+            "llm_context_window": settings.LLM_N_CTX,
+            "llm_max_generation": settings.LLM_MAX_TOKENS,
+            "context_management": {
+                "max_context_tokens": settings.CONTEXT_MAX_TOKENS,
+                "buffer_tokens": settings.CONTEXT_BUFFER_TOKENS,
+                "layer_limits": {
+                    "system_instructions": settings.CONTEXT_LAYER_A_TOKENS,
+                    "immediate_instructions": settings.CONTEXT_LAYER_B_TOKENS,
+                    "recent_story": settings.CONTEXT_LAYER_C_TOKENS,
+                    "character_scene_data": settings.CONTEXT_LAYER_D_TOKENS,
+                    "plot_world_summary": settings.CONTEXT_LAYER_E_TOKENS
+                }
+            },
+            "recommended_limits": {
+                "system_prompt_prefix": settings.CONTEXT_LAYER_A_TOKENS // 4,  # ~500 tokens
+                "system_prompt_suffix": settings.CONTEXT_LAYER_A_TOKENS // 4,  # ~500 tokens  
+                "writing_assistant_prompt": settings.CONTEXT_LAYER_A_TOKENS // 2,  # ~1000 tokens
+                "writing_editor_prompt": settings.CONTEXT_LAYER_A_TOKENS // 2   # ~1000 tokens
+            }
+        }
+        
         return {
             "success": True,
             "strategies": strategies,
             "content_types": content_types,
+            "token_limits": token_limits,
             "default_strategy": "exact",
             "batch_limits": {
                 "max_texts_per_request": 50,
