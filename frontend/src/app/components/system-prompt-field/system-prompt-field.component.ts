@@ -119,6 +119,12 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
   ) {}
 
   ngOnInit(): void {
+    console.log('🔧 SystemPromptField ngOnInit:', { 
+      fieldType: this.fieldType, 
+      currentValue: this.value,
+      hasValue: !!this.value,
+      valueLength: this.value?.length || 0
+    });
     this.setupValidation();
   }
 
@@ -130,6 +136,13 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
 
   // ControlValueAccessor implementation
   writeValue(value: string): void {
+    console.log('📝 SystemPromptField writeValue called:', { 
+      fieldType: this.fieldType,
+      newValue: value,
+      hasValue: !!value,
+      valueLength: value?.length || 0,
+      previousValue: this.value
+    });
     this.value = value || '';
     this.valueChange$.next(this.value);
     this.cdr.markForCheck();
@@ -200,11 +213,19 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
    * Setup debounced validation
    */
   private setupValidation(): void {
+    console.log('⚙️ SystemPromptField setupValidation called:', { 
+      fieldType: this.fieldType,
+      currentValue: this.value,
+      hasValue: !!this.value,
+      valueLength: this.value?.length || 0
+    });
+
     this.validationSubscription = this.valueChange$.pipe(
       debounceTime(this.debounceTime),
       distinctUntilChanged(),
       switchMap(value => {
         if (!value.trim()) {
+          console.log('🔄 SystemPromptField: Empty value, creating empty result', { fieldType: this.fieldType });
           return [this.createEmptyValidationResult()];
         }
         
@@ -218,9 +239,17 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
       takeUntil(this.destroy$)
     ).subscribe({
       next: (result) => {
+        console.log('✅ SystemPromptField: Validation subscription received result', { 
+          fieldType: this.fieldType, 
+          result: result 
+        });
         this.handleValidationResult(result);
       },
       error: (error) => {
+        console.error('❌ SystemPromptField: Validation subscription error', { 
+          fieldType: this.fieldType, 
+          error: error 
+        });
         this.handleValidationError(error);
       }
     });
@@ -233,6 +262,12 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
         fieldType: this.fieldType 
       });
       this.valueChange$.next(this.value);
+    } else {
+      console.log('⏭️ SystemPromptField: No initial value to validate', { 
+        fieldType: this.fieldType,
+        value: this.value,
+        hasValue: !!this.value
+      });
     }
   }
 
