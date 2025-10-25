@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, combineLatest, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, combineLatest, of, timer, throwError } from 'rxjs';
+import { map, catchError, retryWhen, mergeMap } from 'rxjs/operators';
 import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit } from './token-limits.service';
 import { TokenCountingService } from './token-counting.service';
 import { 
@@ -12,6 +12,16 @@ import {
 } from '../models/token-validation.model';
 import { ContentType, CountingStrategy } from '../models/token.model';
 import { TokenCounterStatus } from '../models/token-counter.model';
+import { 
+  RETRY_CONFIG, 
+  ERROR_MESSAGES, 
+  ErrorType, 
+  ErrorSeverity, 
+  RecoveryAction,
+  ErrorContext,
+  calculateBackoffDelay,
+  createErrorContext
+} from '../constants/token-limits.constants';
 
 /**
  * Token validation thresholds configuration
@@ -200,7 +210,7 @@ export class TokenValidationService {
   }
 
   /**
-   * Validate text against field-specific token limits
+   * Validate text against field-specific token limits with retry logic
    */
   validateField(
     text: string,
@@ -215,6 +225,23 @@ export class TokenValidationService {
       text,
       ContentType.SYSTEM_PROMPT,
       CountingStrategy.EXACT
+    ).pipe(
+      retryWhen(errors => 
+        errors.pipe(
+          mergeMap((error, index) => {
+            const attempt = index + 1;
+            
+            if (attempt > RETRY_CONFIG.maxRetries) {
+              return throwError(error);
+            }
+            
+            const delay = calculateBackoffDelay(attempt);
+            console.log(`Retrying token counting (attempt ${attempt}/${RETRY_CONFIG.maxRetries}) after ${delay}ms`);
+            
+            return timer(delay);
+          })
+        )
+      )
     );
 
     return combineLatest([fieldLimit$, tokenCount$]).pipe(
@@ -229,13 +256,13 @@ export class TokenValidationService {
       }),
       catchError(error => {
         console.error('Token validation error:', error);
-        return of(this.createErrorResult(fieldType, validationConfig));
+        return of(this.createErrorResultWithContext(fieldType, validationConfig, error));
       })
     );
   }
 
   /**
-   * Validate text with immediate token counting (no debouncing)
+   * Validate text with immediate token counting (no debouncing) and retry logic
    */
   validateFieldImmediate(
     text: string,
@@ -249,6 +276,23 @@ export class TokenValidationService {
       text,
       ContentType.SYSTEM_PROMPT,
       CountingStrategy.EXACT
+    ).pipe(
+      retryWhen(errors => 
+        errors.pipe(
+          mergeMap((error, index) => {
+            const attempt = index + 1;
+            
+            if (attempt > RETRY_CONFIG.maxRetries) {
+              return throwError(error);
+            }
+            
+            const delay = calculateBackoffDelay(attempt);
+            console.log(`Retrying immediate token counting (attempt ${attempt}/${RETRY_CONFIG.maxRetries}) after ${delay}ms`);
+            
+            return timer(delay);
+          })
+        )
+      )
     );
 
     return combineLatest([fieldLimit$, tokenCount$]).pipe(
@@ -263,7 +307,7 @@ export class TokenValidationService {
       }),
       catchError(error => {
         console.error('Token validation error:', error);
-        return of(this.createErrorResult(fieldType, validationConfig));
+        return of(this.createErrorResultWithContext(fieldType, validationConfig, error));
       })
     );
   }
@@ -386,12 +430,127 @@ export class TokenValidationService {
       warningThreshold: 0,
       criticalThreshold: 0,
       percentage: 0,
-      message: DEFAULT_VALIDATION_CONFIG.messages?.loading || 'Counting tokens...',
+      message: DEFAULT_VALIDATION_CONFIG.messages?.loading || ERROR_MESSAGES.COUNTING_TOKENS,
       isValid: false,
       metadata: {
         fieldType,
         timestamp: new Date()
       }
     };
+  }
+
+  /**
+   * Create an enhanced error validation result with context
+   */
+  private createErrorResultWithContext(
+    fieldType: SystemPromptFieldType,
+    config: TokenValidationConfig,
+    error: any
+  ): TokenValidationResult {
+    const errorContext = this.createValidationErrorContext(error);
+    
+    return {
+      status: TokenValidationStatus.ERROR,
+      currentTokens: 0,
+      maxTokens: 0,
+      warningThreshold: 0,
+      criticalThreshold: 0,
+      percentage: 0,
+      message: errorContext.message,
+      isValid: false,
+      metadata: {
+        fieldType,
+        timestamp: new Date(),
+        errorContext
+      }
+    };
+  }
+
+  /**
+   * Create fallback validation result when services are unavailable
+   */
+  createFallbackResult(
+    text: string,
+    fieldType: SystemPromptFieldType,
+    estimatedTokens?: number
+  ): TokenValidationResult {
+    // Use a simple estimation if no token count provided
+    const tokenCount = estimatedTokens ?? Math.ceil(text.length / 4); // Rough estimation
+    const maxTokens = this.getFallbackLimit(fieldType);
+    
+    const status = this.calculateStatus(
+      tokenCount,
+      maxTokens,
+      DEFAULT_VALIDATION_THRESHOLDS
+    );
+    
+    return {
+      status,
+      currentTokens: tokenCount,
+      maxTokens,
+      warningThreshold: Math.floor(maxTokens * 0.7),
+      criticalThreshold: Math.floor(maxTokens * 0.9),
+      percentage: TokenValidationUtils.calculatePercentage(tokenCount, maxTokens),
+      message: `${ERROR_MESSAGES.FALLBACK_MODE} - ${this.getValidationMessage(status, tokenCount, maxTokens)}`,
+      isValid: status !== TokenValidationStatus.INVALID,
+      metadata: {
+        fieldType,
+        timestamp: new Date(),
+        isFallbackMode: true
+      }
+    };
+  }
+
+  /**
+   * Get fallback limit for field type
+   */
+  private getFallbackLimit(fieldType: SystemPromptFieldType): number {
+    const fallbackLimits = {
+      mainPrefix: 500,
+      mainSuffix: 500,
+      assistantPrompt: 1000,
+      editorPrompt: 1000
+    };
+    
+    return fallbackLimits[fieldType] || 500;
+  }
+
+  /**
+   * Create error context for validation errors
+   */
+  private createValidationErrorContext(error: any): ErrorContext {
+    // Check if it's a token counting error
+    if (error?.message?.includes('token')) {
+      return createErrorContext(
+        ErrorType.VALIDATION,
+        ErrorSeverity.MEDIUM,
+        ERROR_MESSAGES.TOKEN_COUNT_FAILED,
+        [RecoveryAction.RETRY, RecoveryAction.USE_FALLBACK],
+        error.message,
+        'TokenValidationService'
+      );
+    }
+    
+    // Check if it's a network error
+    if (error?.message?.includes('network') || error?.message?.includes('connection')) {
+      return createErrorContext(
+        ErrorType.NETWORK,
+        ErrorSeverity.MEDIUM,
+        ERROR_MESSAGES.NETWORK_ERROR,
+        [RecoveryAction.RETRY, RecoveryAction.USE_FALLBACK],
+        error.message,
+        'TokenValidationService'
+      );
+    }
+    
+    // Default error context
+    return createErrorContext(
+      ErrorType.UNKNOWN,
+      ErrorSeverity.MEDIUM,
+      ERROR_MESSAGES.VALIDATION_FAILED,
+      [RecoveryAction.RETRY, RecoveryAction.USE_FALLBACK],
+      error?.message || 'Unknown validation error',
+      'TokenValidationService'
+    );
   }
 }
