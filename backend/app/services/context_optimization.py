@@ -9,6 +9,7 @@ token limits are approached, while maintaining complete API compatibility.
 import logging
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
+from datetime import datetime
 
 from app.services.context_manager import (
     ContextManager, ContextItem, ContextType, ContextAnalysis
@@ -18,7 +19,7 @@ from app.services.content_prioritization import (
     LayeredPrioritizer, RAGRetriever, RetrievalStrategy, RetrievalMode,
     PrioritizationConfig, AgentType
 )
-from app.utils.relevance_calculator import ContentCategory
+from app.utils.relevance_calculator import ContentCategory, ContentItem
 from app.models.generation_models import (
     SystemPrompts, CharacterInfo, ChapterInfo, FeedbackItem
 )
@@ -135,30 +136,45 @@ class ContextOptimizationService:
             # Use RAG retriever to get most relevant characters for this plot point
             try:
                 character_content_items = []
-                for char in characters:
+                current_time = datetime.now()
+                for i, char in enumerate(characters):
                     char_content = f"{char.name}: {char.basicBio} (Personality: {char.personality})"
                     if hasattr(char, 'motivations') and char.motivations:
                         char_content += f" (Motivations: {char.motivations})"
                     if hasattr(char, 'fears') and char.fears:
                         char_content += f" (Fears: {char.fears})"
                     
-                    character_content_items.append({
-                        'content': char_content,
-                        'category': ContentCategory.CHARACTER,
-                        'metadata': {'name': char.name, 'source': 'character_info'}
-                    })
+                    character_content_items.append(ContentItem(
+                        id=f"char_{i}_{char.name}",
+                        content=char_content,
+                        category=ContentCategory.CHARACTER,
+                        created_at=current_time,
+                        last_accessed=current_time,
+                        access_count=1,
+                        character_names={char.name},
+                        metadata={'name': char.name, 'source': 'character_info'}
+                    ))
                 
                 # Use RAG retriever to prioritize characters based on plot point relevance
                 if character_content_items:
+                    # Convert plot_point string to proper context dictionary
+                    context_dict = {
+                        'keywords': plot_point.lower().split(),  # Extract keywords from plot point
+                        'active_characters': [char.name for char in characters],  # All characters are potentially active
+                        'active_locations': [],  # Could be extracted from plot_point if needed
+                        'current_scene_type': 'chapter_generation'
+                    }
+                    
                     prioritized_chars = self.layered_prioritizer.prioritize_content(
                         content_items=character_content_items,
-                        query_context=plot_point,
+                        context=context_dict,
                         agent_type=AgentType.WRITER,
                         token_budget=1000  # Allocate up to 1000 tokens for characters
                     )
                     
                     char_context = "\n".join([
-                        f"- {item['content']}" for item in prioritized_chars[:5]
+                        f"- {content_score.content_item.content}" 
+                        for content_score in prioritized_chars.selected_content[:5]
                     ])
                 else:
                     char_context = "\n".join([
