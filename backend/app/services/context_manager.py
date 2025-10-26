@@ -59,12 +59,14 @@ class ContextAnalysis:
         priority_distribution: Token distribution by priority level
         optimization_needed: Whether optimization is recommended
         compression_ratio: Potential compression ratio if optimized
+        recommendations: List of optimization recommendations
     """
     total_tokens: int
     items_by_type: Dict[ContextType, List[ContextItem]]
     priority_distribution: Dict[int, int]
     optimization_needed: bool
     compression_ratio: float
+    recommendations: List[str]
 
 
 class ContextManager:
@@ -158,13 +160,68 @@ class ContextManager:
         # Estimate compression ratio
         compression_ratio = 0.3 if optimization_needed else 1.0
         
+        # Generate recommendations based on analysis
+        recommendations = self._generate_recommendations(
+            total_tokens, items_by_type, priority_distribution, optimization_needed
+        )
+        
         return ContextAnalysis(
             total_tokens=total_tokens,
             items_by_type=items_by_type,
             priority_distribution=priority_distribution,
             optimization_needed=optimization_needed,
-            compression_ratio=compression_ratio
+            compression_ratio=compression_ratio,
+            recommendations=recommendations
         )
+    
+    def _generate_recommendations(
+        self,
+        total_tokens: int,
+        items_by_type: Dict[ContextType, List[ContextItem]],
+        priority_distribution: Dict[int, int],
+        optimization_needed: bool
+    ) -> List[str]:
+        """
+        Generate optimization recommendations based on context analysis.
+        
+        Args:
+            total_tokens: Total token count
+            items_by_type: Context items grouped by type
+            priority_distribution: Token distribution by priority
+            optimization_needed: Whether optimization is needed
+            
+        Returns:
+            List of recommendation strings
+        """
+        recommendations = []
+        
+        if not optimization_needed:
+            recommendations.append("Context is within optimal size limits")
+            return recommendations
+        
+        # Token-based recommendations
+        if total_tokens > self.max_context_tokens:
+            recommendations.append(f"Context exceeds maximum limit ({total_tokens} > {self.max_context_tokens} tokens)")
+        elif total_tokens > self.distillation_threshold:
+            recommendations.append(f"Context approaching limit, consider optimization ({total_tokens} > {self.distillation_threshold} tokens)")
+        
+        # Type-based recommendations
+        for context_type, items in items_by_type.items():
+            item_count = len(items)
+            if item_count > 10:  # Arbitrary threshold for too many items
+                recommendations.append(f"Consider reducing {context_type.value} items (currently {item_count})")
+        
+        # Priority-based recommendations
+        low_priority_tokens = sum(tokens for priority, tokens in priority_distribution.items() if priority <= 3)
+        if low_priority_tokens > total_tokens * 0.3:  # More than 30% low priority
+            recommendations.append("Consider removing low-priority content to optimize context")
+        
+        # Compression recommendations
+        if optimization_needed:
+            recommendations.append("Apply context compression to reduce token usage")
+            recommendations.append("Prioritize high-importance content during optimization")
+        
+        return recommendations
     
     def optimize_context(
         self, 

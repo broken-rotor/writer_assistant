@@ -79,7 +79,8 @@ class TestContextManager:
                     items_by_type={ContextType.SYSTEM: [], ContextType.STORY: [], ContextType.CHARACTER: []},
                     priority_distribution={10: 500, 8: 2000, 6: 1500, 4: 1000},
                     optimization_needed=True,
-                    compression_ratio=0.7
+                    compression_ratio=0.7,
+                    recommendations=["Context approaching limit, consider optimization (5000 > 4000 tokens)", "Apply context compression to reduce token usage"]
                 )
                 mock_analyze.return_value = mock_analysis
                 
