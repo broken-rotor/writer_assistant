@@ -982,7 +982,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   /**
    * Handle token limits initialization error
    */
-  private handleTokenLimitsInitializationError(error: unknown) {
+  private handleTokenLimitsInitializationError(_error: unknown) {
     this.tokenLimitsLoading = false;
     this.isTokenLimitsRetrying = false;
     this.tokenLimitsError = ERROR_MESSAGES.TOKEN_LIMITS_FAILED;

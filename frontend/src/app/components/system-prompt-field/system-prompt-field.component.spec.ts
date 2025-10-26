@@ -114,7 +114,7 @@ describe('SystemPromptFieldComponent', () => {
     });
 
     it('should handle null value in writeValue', () => {
-      component.writeValue(null as any);
+      component.writeValue(null);
       expect(component.value).toBe('');
     });
 
@@ -123,7 +123,7 @@ describe('SystemPromptFieldComponent', () => {
       component.registerOnChange(mockOnChange);
       
       // Trigger change
-      const event = { target: { value: 'new value' } } as any;
+      const event = { target: { value: 'new value' } } as Event & { target: { value: string } };
       component.onInputChange(event);
       
       expect(mockOnChange).toHaveBeenCalledWith('new value');
@@ -205,7 +205,7 @@ describe('SystemPromptFieldComponent', () => {
       const mockOnChange = jasmine.createSpy('onChange');
       component.registerOnChange(mockOnChange);
       
-      const event = { target: { value: 'New content' } } as any;
+      const event = { target: { value: 'New content' } } as Event & { target: { value: string } };
       component.onInputChange(event);
       
       expect(component.value).toBe('New content');
@@ -216,7 +216,7 @@ describe('SystemPromptFieldComponent', () => {
       const mockOnTouched = jasmine.createSpy('onTouched');
       component.registerOnTouched(mockOnTouched);
       
-      const event = { target: { value: 'Content' } } as any;
+      const event = { target: { value: 'Content' } } as Event & { target: { value: string } };
       component.onInputChange(event);
       
       expect(mockOnTouched).toHaveBeenCalled();
@@ -226,8 +226,8 @@ describe('SystemPromptFieldComponent', () => {
       const mockOnTouched = jasmine.createSpy('onTouched');
       component.registerOnTouched(mockOnTouched);
       
-      const event1 = { target: { value: 'Content 1' } } as any;
-      const event2 = { target: { value: 'Content 2' } } as any;
+      const event1 = { target: { value: 'Content 1' } } as Event & { target: { value: string } };
+      const event2 = { target: { value: 'Content 2' } } as Event & { target: { value: string } };
       
       component.onInputChange(event1);
       component.onInputChange(event2);
