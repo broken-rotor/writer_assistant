@@ -256,23 +256,27 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   // Type-safe helper methods for template
-  isCharacterFeedback(feedback: any): boolean {
-    return feedback && 'actions' in feedback;
+  isCharacterFeedback(feedback: unknown): boolean {
+    return feedback && typeof feedback === 'object' && feedback !== null && 'actions' in feedback;
   }
 
-  isRaterFeedback(feedback: any): boolean {
-    return feedback && 'opinion' in feedback;
+  isRaterFeedback(feedback: unknown): boolean {
+    return feedback && typeof feedback === 'object' && feedback !== null && 'opinion' in feedback;
   }
 
-  getFeedbackName(feedback: any): string {
-    return feedback.characterName || feedback.raterName || 'Unknown';
+  getFeedbackName(feedback: unknown): string {
+    if (feedback && typeof feedback === 'object' && feedback !== null) {
+      const fb = feedback as { characterName?: string; raterName?: string };
+      return fb.characterName || fb.raterName || 'Unknown';
+    }
+    return 'Unknown';
   }
 
   // Characters tab methods
   addCharacter() {
     if (!this.story) return;
 
-    const newCharacter: any = {
+    const newCharacter: Character = {
       id: this.generateId(),
       basicBio: '',
       name: '',
@@ -424,7 +428,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   addRater() {
     if (!this.story) return;
 
-    const newRater: any = {
+    const newRater: Rater = {
       id: this.generateId(),
       name: '',
       systemPrompt: '',
@@ -522,7 +526,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.storyService.saveStory(this.story);
   }
 
-  insertChapterAfter(position: number) {
+  insertChapterAfter(_position: number) {
     // Switch to chapter creation tab
     this.selectTab('chapter-creation');
   }
@@ -586,7 +590,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     ).subscribe({
         next: (response) => {
           if (this.story && this.story.chapterCreation?.feedbackRequests) {
-            const characterFeedback: any = {
+            const characterFeedback: FeedbackItem = {
               characterName: response.characterName,
               actions: response.feedback.actions,
               dialog: response.feedback.dialog,
@@ -634,7 +638,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     ).subscribe({
         next: (response) => {
           if (this.story && this.story.chapterCreation?.feedbackRequests) {
-            const raterFeedback: any = {
+            const raterFeedback: FeedbackItem = {
               raterName: response.raterName,
               opinion: response.feedback.opinion,
               suggestions: response.feedback.suggestions
@@ -751,7 +755,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         this.loadingService.hide();
       })
     ).subscribe({
-        next: (response: any) => {
+        next: (response: { modifiedChapter?: string; modifiedChapterText?: string }) => {
           if (this.story && this.story.chapterCreation?.generatedChapter) {
             // The backend returns 'modifiedChapter', not 'modifiedChapterText'
             this.story.chapterCreation.generatedChapter.text = response.modifiedChapter || response.modifiedChapterText;
@@ -838,7 +842,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         this.loadingService.hide();
       })
     ).subscribe({
-        next: (response: any) => {
+        next: (response: { modifiedChapter?: string; modifiedChapterText?: string }) => {
           if (this.story && this.story.chapterCreation?.generatedChapter) {
             // The backend returns 'modifiedChapter', not 'modifiedChapterText'
             this.story.chapterCreation.generatedChapter.text = response.modifiedChapter || response.modifiedChapterText;
@@ -884,7 +888,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       }
     } else {
       // Create new chapter
-      const newChapter: any = {
+      const newChapter: Chapter = {
         id: this.generateId(),
         number: this.story.story.chapters.length + 1,
         title: finalTitle,
@@ -978,7 +982,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   /**
    * Handle token limits initialization error
    */
-  private handleTokenLimitsInitializationError(error: any) {
+  private handleTokenLimitsInitializationError(error: unknown) {
     this.tokenLimitsLoading = false;
     this.isTokenLimitsRetrying = false;
     this.tokenLimitsError = ERROR_MESSAGES.TOKEN_LIMITS_FAILED;
@@ -1269,11 +1273,11 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     }, 100);
   }
 
-  getSourceFileName(source: any): string {
+  getSourceFileName(source: { file_name?: string }): string {
     return source.file_name || 'Unknown';
   }
 
-  getSourceExcerpt(source: any): string {
+  getSourceExcerpt(source: { matching_section?: string }): string {
     const text = source.matching_section || '';
     return text.length > 150 ? text.substring(0, 150) + '...' : text;
   }
