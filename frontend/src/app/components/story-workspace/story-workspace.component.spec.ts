@@ -347,7 +347,7 @@ describe('StoryWorkspaceComponent', () => {
 
       // Mock FileReader to simulate error
       const originalFileReader = window.FileReader;
-      (window as any).FileReader = class {
+      (window as unknown as { FileReader: typeof FileReader }).FileReader = class {
         readAsText() {
           setTimeout(() => {
             if (this.onerror) {
@@ -355,8 +355,8 @@ describe('StoryWorkspaceComponent', () => {
             }
           }, 0);
         }
-        onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
-        onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
+        onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => unknown) | null = null;
+        onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => unknown) | null = null;
         error = new Error('Read failed');
       };
 

@@ -224,23 +224,23 @@
           </div>
 
           <div class="form-section">
-            <label>Personality</label>
-            <textarea [(ngModel)]="editingCharacter.personality" rows="3"></textarea>
+            <label for="character-personality">Personality</label>
+            <textarea id="character-personality" [(ngModel)]="editingCharacter.personality" rows="3"></textarea>
           </div>
 
           <div class="form-section">
-            <label>Motivations</label>
-            <textarea [(ngModel)]="editingCharacter.motivations" rows="3"></textarea>
+            <label for="character-motivations">Motivations</label>
+            <textarea id="character-motivations" [(ngModel)]="editingCharacter.motivations" rows="3"></textarea>
           </div>
 
           <div class="form-section">
-            <label>Fears</label>
-            <textarea [(ngModel)]="editingCharacter.fears" rows="3"></textarea>
+            <label for="character-fears">Fears</label>
+            <textarea id="character-fears" [(ngModel)]="editingCharacter.fears" rows="3"></textarea>
           </div>
 
           <div class="form-section">
-            <label>Relationships</label>
-            <textarea [(ngModel)]="editingCharacter.relationships" rows="4"></textarea>
+            <label for="character-relationships">Relationships</label>
+            <textarea id="character-relationships" [(ngModel)]="editingCharacter.relationships" rows="4"></textarea>
             <button class="secondary-button" (click)="regenerateRelationships()">Regenerate Relationships</button>
           </div>
 
@@ -289,13 +289,13 @@
           <h3>Rater Configuration</h3>
 
           <div class="form-section">
-            <label>Name</label>
-            <input type="text" [(ngModel)]="editingRater.name" placeholder="e.g., Character Consistency Rater">
+            <label for="rater-name">Name</label>
+            <input type="text" id="rater-name" [(ngModel)]="editingRater.name" placeholder="e.g., Character Consistency Rater">
           </div>
 
           <div class="form-section">
-            <label>System Prompt</label>
-            <textarea [(ngModel)]="editingRater.systemPrompt" placeholder="Evaluate character consistency, check for..." rows="10"></textarea>
+            <label for="rater-system-prompt">System Prompt</label>
+            <textarea id="rater-system-prompt" [(ngModel)]="editingRater.systemPrompt" placeholder="Evaluate character consistency, check for..." rows="10"></textarea>
           </div>
 
           <div class="button-group">
