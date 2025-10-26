@@ -176,7 +176,7 @@ class ContextOptimizationService:
                 content=f"Characters:\n{char_context}",
                 context_type=ContextType.CHARACTER,
                 priority=8,
-                layer_type=LayerType.SHORT_TERM_MEMORY,
+                layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "characters", "count": len(characters)}
             ))
             
