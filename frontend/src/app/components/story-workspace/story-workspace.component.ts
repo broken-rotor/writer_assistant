@@ -666,25 +666,27 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       incorporated: false
     };
 
-    this.story.chapterCreation.incorporatedFeedback.push(feedbackItem);
+    this.story.chapterCreation?.incorporatedFeedback?.push(feedbackItem);
     this.storyService.saveStory(this.story);
   }
 
   removeFeedbackItem(index: number) {
     if (!this.story) return;
-    this.story.chapterCreation.incorporatedFeedback.splice(index, 1);
+    this.story.chapterCreation?.incorporatedFeedback?.splice(index, 1);
     this.storyService.saveStory(this.story);
   }
 
   editFeedbackItem(index: number) {
     if (!this.story) return;
     this.editingFeedbackIndex = index;
-    this.editingFeedbackContent = this.story.chapterCreation.incorporatedFeedback[index].content;
+    this.editingFeedbackContent = this.story.chapterCreation?.incorporatedFeedback?.[index]?.content || '';
   }
 
   saveFeedbackEdit() {
     if (!this.story || this.editingFeedbackIndex === null) return;
-    this.story.chapterCreation.incorporatedFeedback[this.editingFeedbackIndex].content = this.editingFeedbackContent;
+    if (this.story.chapterCreation?.incorporatedFeedback?.[this.editingFeedbackIndex]) {
+      this.story.chapterCreation.incorporatedFeedback[this.editingFeedbackIndex].content = this.editingFeedbackContent;
+    }
     this.editingFeedbackIndex = null;
     this.editingFeedbackContent = '';
     this.storyService.saveStory(this.story);
@@ -710,7 +712,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         })
       ).subscribe({
         next: (response) => {
-          if (this.story) {
+          if (this.story && this.story.chapterCreation) {
             this.story.chapterCreation.generatedChapter = {
               text: response.chapterText,
               status: 'ready',
@@ -727,7 +729,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   promptAssistantForChanges() {
-    if (!this.story || !this.story.chapterCreation.generatedChapter) {
+    if (!this.story || !this.story.chapterCreation?.generatedChapter) {
       alert('Generate a chapter first');
       return;
     }
@@ -742,7 +744,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
     this.generationService.modifyChapter(
       this.story,
-      this.story.chapterCreation.generatedChapter.text,
+      this.story.chapterCreation?.generatedChapter?.text || '',
       this.changeRequest
     ).pipe(
       takeUntil(this.destroy$),
@@ -752,7 +754,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
         next: (response: any) => {
-          if (this.story && this.story.chapterCreation.generatedChapter) {
+          if (this.story && this.story.chapterCreation?.generatedChapter) {
             // The backend returns 'modifiedChapter', not 'modifiedChapterText'
             this.story.chapterCreation.generatedChapter.text = response.modifiedChapter || response.modifiedChapterText;
             this.storyService.saveStory(this.story);
@@ -769,7 +771,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   requestEditorReview() {
-    if (!this.story || !this.story.chapterCreation.generatedChapter) {
+    if (!this.story || !this.story.chapterCreation?.generatedChapter) {
       alert('Generate a chapter first');
       return;
     }
@@ -779,7 +781,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
     this.generationService.requestEditorReview(
       this.story,
-      this.story.chapterCreation.generatedChapter.text
+      this.story.chapterCreation?.generatedChapter?.text || ''
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
@@ -788,7 +790,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
         next: (response) => {
-          if (this.story) {
+          if (this.story && this.story.chapterCreation) {
             this.story.chapterCreation.editorReview = {
               suggestions: response.suggestions,
               userSelections: response.suggestions.map(() => false)
