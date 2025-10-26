@@ -12,7 +12,7 @@ describe('StoryWorkspaceComponent', () => {
   let component: StoryWorkspaceComponent;
   let fixture: ComponentFixture<StoryWorkspaceComponent>;
   let storyServiceSpy: jasmine.SpyObj<StoryService>;
-  let activatedRoute: any;
+  let activatedRoute: Partial<ActivatedRoute>;
 
   beforeEach(async () => {
     const storySpy = jasmine.createSpyObj('StoryService', [
@@ -254,7 +254,7 @@ describe('StoryWorkspaceComponent', () => {
           files: [file],
           value: 'test.txt'
         }
-      } as any;
+      } as Event;
 
       component.loadFileContent(event, 'prefix');
 
@@ -276,7 +276,7 @@ describe('StoryWorkspaceComponent', () => {
           files: [file],
           value: 'test.md'
         }
-      } as any;
+      } as Event;
 
       component.loadFileContent(event, 'suffix');
 
@@ -298,7 +298,7 @@ describe('StoryWorkspaceComponent', () => {
           files: [file],
           value: 'test.pdf'
         }
-      } as any;
+      } as Event;
 
       component.loadFileContent(event, 'prefix');
 
@@ -323,7 +323,7 @@ describe('StoryWorkspaceComponent', () => {
           files: [mockFile],
           value: 'large.txt'
         }
-      } as any;
+      } as Event;
 
       component.loadFileContent(event, 'prefix');
 
@@ -343,7 +343,7 @@ describe('StoryWorkspaceComponent', () => {
           files: [file],
           value: 'test.txt'
         }
-      } as any;
+      } as Event;
 
       // Mock FileReader to simulate error
       const originalFileReader = window.FileReader;
@@ -351,12 +351,12 @@ describe('StoryWorkspaceComponent', () => {
         readAsText() {
           setTimeout(() => {
             if (this.onerror) {
-              this.onerror({} as any);
+              this.onerror({} as Event);
             }
           }, 0);
         }
-        onload: any;
-        onerror: any;
+        onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
+        onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
         error = new Error('Read failed');
       };
 

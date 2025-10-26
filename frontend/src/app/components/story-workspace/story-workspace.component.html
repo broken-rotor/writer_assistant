@@ -633,7 +633,7 @@
 
             <!-- Sources for this response -->
             <div class="message-sources" *ngIf="message.sources && message.sources.length > 0">
-              <div class="sources-toggle" (click)="message.showSources = !message.showSources">
+              <div class="sources-toggle" (click)="message.showSources = !message.showSources" (keyup.enter)="message.showSources = !message.showSources" (keyup.space)="message.showSources = !message.showSources" tabindex="0" role="button" [attr.aria-label]="'Toggle sources visibility'">
                 <span>📖 {{ message.sources.length }} sources</span>
                 <span class="toggle-icon">{{ message.showSources ? '▼' : '▶' }}</span>
               </div>

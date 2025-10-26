@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -25,7 +25,7 @@ import {
 interface ResearchChatMessage {
   role: string;
   content: string;
-  sources?: any[];
+  sources?: unknown[];
   showSources?: boolean;
 }
 
@@ -44,11 +44,11 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   // Characters tab state
   selectedCharacterId: string | null = null;
-  editingCharacter: any = null;
+  editingCharacter: Character | null = null;
 
   // Raters tab state
   selectedRaterId: string | null = null;
-  editingRater: any = null;
+  editingRater: Rater | null = null;
 
   // Chapter Creation tab state
   generatingFeedback = new Set<string>();
@@ -81,17 +81,15 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private route: ActivatedRoute,
-    private storyService: StoryService,
-    private generationService: GenerationService,
-    private loadingService: LoadingService,
-    private cdr: ChangeDetectorRef,
-    private archiveService: ArchiveService,
-    private tokenLimitsService: TokenLimitsService,
-    private tokenValidationService: TokenValidationService,
-    private toastService: ToastService
-  ) {}
+  private route = inject(ActivatedRoute);
+  private storyService = inject(StoryService);
+  private generationService = inject(GenerationService);
+  private loadingService = inject(LoadingService);
+  private cdr = inject(ChangeDetectorRef);
+  private archiveService = inject(ArchiveService);
+  private tokenLimitsService = inject(TokenLimitsService);
+  private tokenValidationService = inject(TokenValidationService);
+  private toastService = inject(ToastService);
 
   ngOnInit() {
     this.route.params
