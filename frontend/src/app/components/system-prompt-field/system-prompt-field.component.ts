@@ -74,28 +74,28 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
   
   // Component inputs
   @Input() fieldType: SystemPromptFieldType = 'mainPrefix';
-  @Input() label: string = '';
-  @Input() placeholder: string = '';
-  @Input() rows: number = 3;
-  @Input() disabled: boolean = false;
-  @Input() required: boolean = false;
-  @Input() debounceTime: number = 500;
+  @Input() label = '';
+  @Input() placeholder = '';
+  @Input() rows = 3;
+  @Input() disabled = false;
+  @Input() required = false;
+  @Input() debounceTime = 500;
 
   // Component outputs
   @Output() validationChange = new EventEmitter<TokenValidationResult>();
   @Output() tokenCountChange = new EventEmitter<number>();
 
   // Internal state
-  public value: string = '';
+  public value = '';
   public validationResult: TokenValidationResult | null = null;
   public tokenCounterData: TokenCounterData | null = null;
-  public isLoading: boolean = false;
-  public hasError: boolean = false;
-  public errorMessage: string = '';
+  public isLoading = false;
+  public hasError = false;
+  public errorMessage = '';
   public errorContext: ErrorContext | null = null;
-  public isFallbackMode: boolean = false;
-  public isRetrying: boolean = false;
-  public retryCount: number = 0;
+  public isFallbackMode = false;
+  public isRetrying = false;
+  public retryCount = 0;
 
   // Form control integration
   private onChange = (value: string) => {};

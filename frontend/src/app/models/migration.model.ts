@@ -36,12 +36,12 @@ export interface MigrationResult {
   newState?: ChapterComposeState;
   errors: string[];
   warnings: string[];
-  migrationLog: Array<{
+  migrationLog: {
     step: string;
     status: 'success' | 'warning' | 'error';
     message: string;
     timestamp: Date;
-  }>;
+  }[];
 }
 
 /**

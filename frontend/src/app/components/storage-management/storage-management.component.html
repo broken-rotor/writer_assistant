@@ -139,5 +139,13 @@
   </div>
 
   <!-- Modal Backdrop -->
-  <div class="modal-backdrop" *ngIf="showCleanupDialog || showExportDialog" (click)="closeCleanupDialog(); closeExportDialog()"></div>
+  <div 
+    class="modal-backdrop" 
+    *ngIf="showCleanupDialog || showExportDialog" 
+    (click)="closeCleanupDialog(); closeExportDialog()"
+    (keyup.escape)="closeCleanupDialog(); closeExportDialog()"
+    tabindex="0"
+    role="button"
+    aria-label="Close dialog">
+  </div>
 </div>

@@ -182,11 +182,11 @@ export interface PhaseTransition {
   fromPhase: 'plotOutline' | 'chapterDetailer' | 'finalEdit';
   toPhase: 'plotOutline' | 'chapterDetailer' | 'finalEdit';
   canTransition: boolean;
-  requirements: Array<{
+  requirements: {
     requirement: string;
     satisfied: boolean;
     description: string;
-  }>;
+  }[];
   transitionData?: {
     // Data to carry forward to the next phase
     outlineItems?: OutlineItem[];
@@ -240,10 +240,10 @@ export interface ChatMessage {
     messageType: 'text' | 'feedback' | 'suggestion' | 'outline_item' | 'review';
     source?: string; // Character name, rater name, or 'user'
     isEdited: boolean;
-    editHistory?: Array<{
+    editHistory?: {
       content: string;
       timestamp: Date;
-    }>;
+    }[];
   };
 }
 
@@ -302,12 +302,12 @@ export interface BranchNavigation {
 export interface PlotOutlinePhase {
   conversation: ConversationThread;
   draftOutline: OutlineItem[];
-  outlineHistory: Array<{
+  outlineHistory: {
     version: number;
     outline: OutlineItem[];
     timestamp: Date;
     source: 'user' | 'ai_generated';
-  }>;
+  }[];
   feedbackIntegration: {
     pendingFeedback: FeedbackItem[];
     integratedFeedback: FeedbackItem[];
@@ -327,13 +327,13 @@ export interface PlotOutlinePhase {
  */
 export interface ChapterDetailerPhase {
   conversation: ConversationThread;
-  chapterDrafts: Array<{
+  chapterDrafts: {
     id: string;
     content: string;
     version: number;
     timestamp: Date;
     incorporatedFeedback: FeedbackItem[];
-  }>;
+  }[];
   sidebarFeedback: {
     characterFeedback: Map<string, CharacterFeedback>;
     raterFeedback: Map<string, RaterFeedback>;
@@ -355,13 +355,13 @@ export interface ChapterDetailerPhase {
  */
 export interface FinalEditPhase {
   conversation: ConversationThread;
-  finalDrafts: Array<{
+  finalDrafts: {
     id: string;
     content: string;
     title: string;
     source: 'phase2_output' | 'user_edited' | 'ai_refined';
     timestamp: Date;
-  }>;
+  }[];
   reviewItems: ReviewItem[];
   selectedDraftId?: string;
   editorSuggestions: EditorSuggestion[];
@@ -416,7 +416,7 @@ export interface ChapterComposeState {
   // Overall Progress Tracking
   progress: {
     overallStatus: 'not_started' | 'in_progress' | 'completed' | 'paused';
-    completedPhases: Array<'plotOutline' | 'chapterDetailer' | 'finalEdit'>;
+    completedPhases: ('plotOutline' | 'chapterDetailer' | 'finalEdit')[];
     currentPhaseProgress: number; // 0-100 percentage
     estimatedTimeRemaining?: number; // minutes
   };
@@ -523,11 +523,11 @@ export interface CharacterFeedbackRequest {
   };
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
+  }[];
   character: {
     name: string;
     basicBio: string;
@@ -553,11 +553,11 @@ export interface RaterFeedbackRequest {
   raterPrompt: string;
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
+  }[];
   plotPoint: string;
 }
 
@@ -569,12 +569,12 @@ export interface GenerateChapterRequest {
   };
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
-  characters: Array<{
+  }[];
+  characters: {
     name: string;
     basicBio: string;
     sex: string;
@@ -587,7 +587,7 @@ export interface GenerateChapterRequest {
     motivations: string;
     fears: string;
     relationships: string;
-  }>;
+  }[];
   plotPoint: string;
   incorporatedFeedback: FeedbackItem[];
 }
@@ -600,11 +600,11 @@ export interface ModifyChapterRequest {
   };
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
+  }[];
   currentChapter: string;
   userRequest: string;
 }
@@ -617,12 +617,12 @@ export interface EditorReviewRequest {
   };
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
-  characters: Array<{
+  }[];
+  characters: {
     name: string;
     basicBio: string;
     sex: string;
@@ -635,7 +635,7 @@ export interface EditorReviewRequest {
     motivations: string;
     fears: string;
     relationships: string;
-  }>;
+  }[];
   chapterToReview: string;
 }
 
@@ -658,11 +658,11 @@ export interface GenerateCharacterDetailsRequest {
   worldbuilding: string;
   storySummary: string;
   basicBio: string;
-  existingCharacters: Array<{
+  existingCharacters: {
     name: string;
     basicBio: string;
     relationships: string;
-  }>;
+  }[];
 }
 
 // API Response types
@@ -681,11 +681,11 @@ export interface RaterFeedbackResponse {
   raterName: string;
   feedback: {
     opinion: string;
-    suggestions: Array<{
+    suggestions: {
       issue: string;
       suggestion: string;
       priority: 'high' | 'medium' | 'low';
-    }>;
+    }[];
   };
 }
 

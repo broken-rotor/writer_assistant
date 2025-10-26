@@ -51,15 +51,15 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   editingRater: any = null;
 
   // Chapter Creation tab state
-  generatingFeedback: Set<string> = new Set();
+  generatingFeedback = new Set<string>();
   generatingChapter = false;
   generatingReview = false;
   selectedAgentId: string | null = null; // Track currently selected agent for feedback display
   editingFeedbackIndex: number | null = null; // Track which feedback item is being edited
-  editingFeedbackContent: string = ''; // Store the edited content temporarily
-  changeRequest: string = ''; // User's request for chapter changes
+  editingFeedbackContent = ''; // Store the edited content temporarily
+  changeRequest = ''; // User's request for chapter changes
   editingChapterId: string | null = null; // Track which chapter is being edited (null = creating new)
-  chapterTitle: string = ''; // Title for the chapter being created/edited
+  chapterTitle = ''; // Title for the chapter being created/edited
 
   // Research Archive state
   showResearchSidebar = false;

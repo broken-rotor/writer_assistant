@@ -149,7 +149,12 @@
             <div *ngFor="let character of activeCharacters"
                  class="list-item"
                  [class.selected]="selectedCharacterId === character.id"
-                 (click)="selectCharacter(character.id)">
+                 (click)="selectCharacter(character.id)"
+                 (keyup.enter)="selectCharacter(character.id)"
+                 (keyup.space)="selectCharacter(character.id)"
+                 tabindex="0"
+                 role="button"
+                 [attr.aria-label]="'Select character ' + (character.name || 'Unnamed')">
               <div class="item-name">{{ character.name || 'Unnamed' }}</div>
               <div class="item-actions">
                 <button class="icon-button" (click)="hideCharacter(character.id); $event.stopPropagation()" title="Hide">👁️</button>
@@ -176,46 +181,46 @@
           <h3>Character Details</h3>
 
           <div class="form-section">
-            <label>Basic Bio (user-provided)</label>
-            <textarea [(ngModel)]="editingCharacter.basicBio" placeholder="A curious journalist who..." rows="4"></textarea>
+            <label for="character-basic-bio">Basic Bio (user-provided)</label>
+            <textarea id="character-basic-bio" [(ngModel)]="editingCharacter.basicBio" placeholder="A curious journalist who..." rows="4"></textarea>
             <button class="secondary-button" (click)="generateCharacterDetails()">Generate from Bio</button>
           </div>
 
           <div class="form-section">
-            <label>Name</label>
-            <input type="text" [(ngModel)]="editingCharacter.name" placeholder="Character name">
+            <label for="character-name">Name</label>
+            <input id="character-name" type="text" [(ngModel)]="editingCharacter.name" placeholder="Character name">
           </div>
 
           <div class="form-row">
             <div class="form-section">
-              <label>Sex</label>
-              <input type="text" [(ngModel)]="editingCharacter.sex" placeholder="Male/Female">
+              <label for="character-sex">Sex</label>
+              <input id="character-sex" type="text" [(ngModel)]="editingCharacter.sex" placeholder="Male/Female">
             </div>
             <div class="form-section">
-              <label>Gender</label>
-              <input type="text" [(ngModel)]="editingCharacter.gender" placeholder="Gender identity">
+              <label for="character-gender">Gender</label>
+              <input id="character-gender" type="text" [(ngModel)]="editingCharacter.gender" placeholder="Gender identity">
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-section">
-              <label>Sexual Preference</label>
-              <input type="text" [(ngModel)]="editingCharacter.sexualPreference">
+              <label for="character-sexual-preference">Sexual Preference</label>
+              <input id="character-sexual-preference" type="text" [(ngModel)]="editingCharacter.sexualPreference">
             </div>
             <div class="form-section">
-              <label>Age</label>
-              <input type="number" [(ngModel)]="editingCharacter.age">
+              <label for="character-age">Age</label>
+              <input id="character-age" type="number" [(ngModel)]="editingCharacter.age">
             </div>
           </div>
 
           <div class="form-section">
-            <label>Physical Appearance</label>
-            <textarea [(ngModel)]="editingCharacter.physicalAppearance" rows="3"></textarea>
+            <label for="character-physical-appearance">Physical Appearance</label>
+            <textarea id="character-physical-appearance" [(ngModel)]="editingCharacter.physicalAppearance" rows="3"></textarea>
           </div>
 
           <div class="form-section">
-            <label>Usual Clothing</label>
-            <textarea [(ngModel)]="editingCharacter.usualClothing" rows="2"></textarea>
+            <label for="character-usual-clothing">Usual Clothing</label>
+            <textarea id="character-usual-clothing" [(ngModel)]="editingCharacter.usualClothing" rows="2"></textarea>
           </div>
 
           <div class="form-section">

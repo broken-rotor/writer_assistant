@@ -39,7 +39,7 @@ export class TokenCounterComponent implements OnInit, OnChanges {
   // Public inputs
   @Input() data: TokenCounterData | null = null;
   @Input() config: Partial<TokenCounterConfig> = {};
-  @Input() loading: boolean = false;
+  @Input() loading = false;
   @Input() error: string | null = null;
 
   // Public outputs

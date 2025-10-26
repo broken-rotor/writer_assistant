@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -15,9 +15,11 @@ import { StoryService } from '../../services/story.service';
 export class StorageManagementComponent implements OnInit, OnDestroy {
   storageQuota: StorageQuota = { used: 0, available: 0, total: 0, percentage: 0 };
   storiesIndex: StoryIndex[] = [];
-  storageStats: { [key: string]: number } = {};
+  storageStats: Record<string, number> = {};
 
   private subscriptions: Subscription[] = [];
+  private localStorageService = inject(LocalStorageService);
+  private storyService = inject(StoryService);
 
   // UI state
   showCleanupDialog = false;
@@ -27,11 +29,6 @@ export class StorageManagementComponent implements OnInit, OnDestroy {
   importFile: File | null = null;
   isImporting = false;
   importResult: { success: number; errors: string[] } | null = null;
-
-  constructor(
-    private localStorageService: LocalStorageService,
-    private storyService: StoryService
-  ) {}
 
   ngOnInit(): void {
     // Subscribe to storage updates
@@ -157,8 +154,8 @@ export class StorageManagementComponent implements OnInit, OnDestroy {
   }
 
   // Import operations
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
+  onFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
     if (file && file.type === 'application/json') {
       this.importFile = file;
     } else {
