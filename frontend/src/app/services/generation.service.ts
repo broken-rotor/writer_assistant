@@ -121,8 +121,8 @@ export class GenerationService {
           fears: c.fears,
           relationships: c.relationships
         })),
-      plotPoint: story.chapterCreation.plotPoint,
-      incorporatedFeedback: story.chapterCreation.incorporatedFeedback
+      plotPoint: story.chapterCreation?.plotPoint || '',
+      incorporatedFeedback: story.chapterCreation?.incorporatedFeedback || []
     };
 
     return this.apiService.generateChapter(request);

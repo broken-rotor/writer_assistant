@@ -356,7 +356,7 @@
       <!-- Plot Point -->
       <div class="section plot-point-section">
         <h3>Plot Point</h3>
-        <textarea [(ngModel)]="story.chapterCreation.plotPoint" placeholder="Sarah discovers a hidden letter in the..." rows="4"></textarea>
+        <textarea [(ngModel)]="story.chapterCreation!.plotPoint" placeholder="Sarah discovers a hidden letter in the..." rows="4"></textarea>
         <div class="button-group">
           <button class="secondary-button" (click)="aiFleshOutPlotPoint()">AI Flesh Out</button>
           <button class="secondary-button" (click)="researchPlotPoint()" title="Research similar content from story archive">📚 Research Archive</button>
@@ -368,7 +368,7 @@
       <div class="section incorporated-feedback-section">
         <h3>Incorporated Feedback</h3>
         <div class="feedback-list">
-          <div *ngFor="let item of story.chapterCreation.incorporatedFeedback; let i = index" class="feedback-item">
+          <div *ngFor="let item of story.chapterCreation?.incorporatedFeedback; let i = index" class="feedback-item">
             <div class="feedback-content" *ngIf="editingFeedbackIndex !== i">
               <strong>{{ item.source }}</strong> ({{ item.type }}): {{ item.content }}
             </div>
@@ -387,7 +387,7 @@
               <button class="icon-button" (click)="removeFeedbackItem(i)" title="Remove">✕</button>
             </div>
           </div>
-          <div *ngIf="story.chapterCreation.incorporatedFeedback.length === 0" class="empty-state">
+          <div *ngIf="(story.chapterCreation?.incorporatedFeedback?.length || 0) === 0" class="empty-state">
             No feedback incorporated yet. Request feedback from characters or raters below.
           </div>
         </div>
@@ -525,18 +525,18 @@
 
       <!-- Chapter Generation -->
       <div class="section chapter-generation-section">
-        <button class="primary-button large" (click)="generateChapter()" [disabled]="generatingChapter || !story.chapterCreation.plotPoint">
+        <button class="primary-button large" (click)="generateChapter()" [disabled]="generatingChapter || !story.chapterCreation?.plotPoint">
           <span *ngIf="!generatingChapter">Generate Chapter</span>
           <span *ngIf="generatingChapter">Generating... ⏳</span>
         </button>
       </div>
 
       <!-- Generated Chapter -->
-      <div class="section generated-chapter-section" *ngIf="story.chapterCreation.generatedChapter">
+      <div class="section generated-chapter-section" *ngIf="story.chapterCreation?.generatedChapter">
         <div class="chapter-title-input">
           <input type="text" [(ngModel)]="chapterTitle" placeholder="Chapter Title (optional - will auto-generate if empty)">
         </div>
-        <textarea [(ngModel)]="story.chapterCreation.generatedChapter.text" rows="35"></textarea>
+        <textarea [(ngModel)]="story.chapterCreation!.generatedChapter!.text" rows="35"></textarea>
 
         <div class="prompt-changes-section">
           <h4>Prompt Writer for Changes</h4>
@@ -555,10 +555,10 @@
         </div>
 
         <!-- Editor Suggestions -->
-        <div class="editor-suggestions" *ngIf="story.chapterCreation.editorReview">
+        <div class="editor-suggestions" *ngIf="story.chapterCreation?.editorReview">
           <h4>Editor Suggestions</h4>
           <div class="suggestions-list">
-            <div *ngFor="let suggestion of story.chapterCreation.editorReview.suggestions; let i = index" class="suggestion-item">
+            <div *ngFor="let suggestion of story.chapterCreation!.editorReview!.suggestions; let i = index" class="suggestion-item">
               <label>
                 <input type="checkbox" [(ngModel)]="suggestion.selected">
                 <div class="suggestion-content">

@@ -48,10 +48,10 @@ export class LocalStorageService {
         ...story,
         characters: Array.from(story.characters.entries()),
         raters: Array.from(story.raters.entries()),
-        chapterCreation: {
+        chapterCreation: story.chapterCreation ? {
           ...story.chapterCreation,
-          feedbackRequests: Array.from(story.chapterCreation.feedbackRequests.entries())
-        }
+          feedbackRequests: Array.from(story.chapterCreation.feedbackRequests?.entries() || [])
+        } : undefined
       };
 
       localStorage.setItem(key, JSON.stringify(serializedStory));
@@ -276,10 +276,10 @@ export class LocalStorageService {
           ...story,
           characters: Array.from(story.characters.entries()),
           raters: Array.from(story.raters.entries()),
-          chapterCreation: {
+          chapterCreation: story.chapterCreation ? {
             ...story.chapterCreation,
-            feedbackRequests: Array.from(story.chapterCreation.feedbackRequests.entries())
-          }
+            feedbackRequests: Array.from(story.chapterCreation.feedbackRequests?.entries() || [])
+          } : undefined
         }
       };
 
@@ -302,10 +302,10 @@ export class LocalStorageService {
           ...story,
           characters: Array.from(story.characters.entries()),
           raters: Array.from(story.raters.entries()),
-          chapterCreation: {
+          chapterCreation: story.chapterCreation ? {
             ...story.chapterCreation,
-            feedbackRequests: Array.from(story.chapterCreation.feedbackRequests.entries())
-          }
+            feedbackRequests: Array.from(story.chapterCreation.feedbackRequests?.entries() || [])
+          } : undefined
         });
       }
     });

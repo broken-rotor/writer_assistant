@@ -244,7 +244,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   get feedbackRequestsArray() {
-    if (!this.story || !this.selectedAgentId) {
+    if (!this.story || !this.selectedAgentId || !this.story.chapterCreation?.feedbackRequests) {
       return [];
     }
     const request = this.story.chapterCreation.feedbackRequests.get(this.selectedAgentId);
@@ -535,7 +535,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   // Chapter Creation tab methods
   aiFleshOutPlotPoint() {
-    if (!this.story || !this.story.chapterCreation.plotPoint) {
+    if (!this.story || !this.story.chapterCreation?.plotPoint) {
       alert('Please enter a plot point first');
       return;
     }
@@ -551,7 +551,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       finalize(() => this.loadingService.hide())
     ).subscribe({
         next: (response) => {
-          if (this.story) {
+          if (this.story && this.story.chapterCreation) {
             this.story.chapterCreation.plotPoint = response.fleshedOutText;
             this.storyService.saveStory(this.story);
           }
@@ -578,7 +578,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.generationService.requestCharacterFeedback(
       this.story,
       character,
-      this.story.chapterCreation.plotPoint
+      this.story.chapterCreation?.plotPoint || ''
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
@@ -587,7 +587,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
         next: (response) => {
-          if (this.story) {
+          if (this.story && this.story.chapterCreation?.feedbackRequests) {
             const characterFeedback: any = {
               characterName: response.characterName,
               actions: response.feedback.actions,
@@ -626,7 +626,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.generationService.requestRaterFeedback(
       this.story,
       rater,
-      this.story.chapterCreation.plotPoint
+      this.story.chapterCreation?.plotPoint || ''
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
@@ -635,7 +635,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
         next: (response) => {
-          if (this.story) {
+          if (this.story && this.story.chapterCreation?.feedbackRequests) {
             const raterFeedback: any = {
               raterName: response.raterName,
               opinion: response.feedback.opinion,
@@ -803,7 +803,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   applyEditorSuggestions(applyAll: boolean) {
-    if (!this.story || !this.story.chapterCreation.generatedChapter || !this.story.chapterCreation.editorReview) {
+    if (!this.story || !this.story.chapterCreation?.generatedChapter || !this.story.chapterCreation?.editorReview) {
       return;
     }
 
@@ -839,7 +839,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
         next: (response: any) => {
-          if (this.story && this.story.chapterCreation.generatedChapter) {
+          if (this.story && this.story.chapterCreation?.generatedChapter) {
             // The backend returns 'modifiedChapter', not 'modifiedChapterText'
             this.story.chapterCreation.generatedChapter.text = response.modifiedChapter || response.modifiedChapterText;
             this.story.chapterCreation.editorReview = undefined; // Clear editor review after applying
@@ -856,7 +856,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   acceptChapter() {
-    if (!this.story || !this.story.chapterCreation.generatedChapter) return;
+    if (!this.story || !this.story.chapterCreation?.generatedChapter) return;
 
     // Use custom title if provided, otherwise generate default
     const finalTitle = this.chapterTitle.trim() ||
@@ -873,8 +873,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           ...existingChapter,
           title: finalTitle,
           content: this.story.chapterCreation.generatedChapter.text,
-          plotPoint: this.story.chapterCreation.plotPoint,
-          incorporatedFeedback: [...this.story.chapterCreation.incorporatedFeedback],
+          plotPoint: this.story.chapterCreation.plotPoint || '',
+          incorporatedFeedback: [...(this.story.chapterCreation.incorporatedFeedback || [])],
           metadata: {
             ...existingChapter.metadata,
             lastModified: new Date(),
@@ -889,8 +889,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         number: this.story.story.chapters.length + 1,
         title: finalTitle,
         content: this.story.chapterCreation.generatedChapter.text,
-        plotPoint: this.story.chapterCreation.plotPoint,
-        incorporatedFeedback: [...this.story.chapterCreation.incorporatedFeedback],
+        plotPoint: this.story.chapterCreation.plotPoint || '',
+        incorporatedFeedback: [...(this.story.chapterCreation.incorporatedFeedback || [])],
         metadata: {
           created: new Date(),
           lastModified: new Date(),
@@ -1091,7 +1091,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   // Research Archive methods
   researchPlotPoint() {
-    if (!this.story || !this.story.chapterCreation.plotPoint) {
+    if (!this.story || !this.story.chapterCreation?.plotPoint) {
       alert('Please enter a plot point first');
       return;
     }
