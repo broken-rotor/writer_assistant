@@ -65,7 +65,7 @@ export class FeedbackService {
     }
 
     // Load feedback from story data
-    const story = this.localStorageService.getStory(storyId);
+    const story = this.localStorageService.loadStory(storyId);
     if (!story) return [];
 
     const feedback = this.extractFeedbackFromStory(story, chapterNumber, phase);
@@ -204,7 +204,7 @@ export class FeedbackService {
     });
 
     // Update story data
-    const story = this.localStorageService.getStory(storyId);
+    const story = this.localStorageService.loadStory(storyId);
     if (story) {
       // Update incorporated feedback in legacy structure
       feedbackIds.forEach(feedbackId => {
@@ -219,7 +219,7 @@ export class FeedbackService {
           
           // Add to incorporated feedback if not already present
           const existingIndex = story.chapterCreation.incorporatedFeedback.findIndex(
-            item => item.source === legacyItem.source && 
+            (item: any) => item.source === legacyItem.source && 
                    item.content === legacyItem.content
           );
           
@@ -455,7 +455,7 @@ export class FeedbackService {
     this.feedbackCache.set(cacheKey, [...existingFeedback, ...feedback]);
 
     // Update story data
-    const story = this.localStorageService.getStory(storyId);
+    const story = this.localStorageService.loadStory(storyId);
     if (story && story.chapterCompose) {
       const phaseData = story.chapterCompose.phases.chapterDetailer;
       phaseData.feedbackIntegration.pendingFeedback.push(...feedback);

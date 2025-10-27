@@ -125,7 +125,7 @@ describe('FeedbackService', () => {
     ]);
 
     const localStorageServiceSpy = jasmine.createSpyObj('LocalStorageService', [
-      'getStory',
+      'loadStory',
       'saveStory'
     ]);
 
@@ -144,7 +144,7 @@ describe('FeedbackService', () => {
     mockLocalStorageService = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
 
     // Set up default mocks
-    mockLocalStorageService.getStory.and.returnValue(mockStory);
+    mockLocalStorageService.loadStory.and.returnValue(mockStory);
     mockGenerationService.requestCharacterFeedback.and.returnValue(of(mockCharacterFeedbackResponse));
     mockGenerationService.requestRaterFeedback.and.returnValue(of(mockRaterFeedbackResponse));
     mockConversationService.sendMessage.and.returnValue({
@@ -181,19 +181,19 @@ describe('FeedbackService', () => {
       const result = service.getAvailableFeedback('test-story-id', 1, 'chapter-detailer');
 
       expect(result).toEqual(mockFeedback);
-      expect(mockLocalStorageService.getStory).not.toHaveBeenCalled();
+      expect(mockLocalStorageService.loadStory).not.toHaveBeenCalled();
     });
 
     it('should load feedback from story if not cached', () => {
       const result = service.getAvailableFeedback('test-story-id', 1, 'chapter-detailer');
 
-      expect(mockLocalStorageService.getStory).toHaveBeenCalledWith('test-story-id');
+      expect(mockLocalStorageService.loadStory).toHaveBeenCalledWith('test-story-id');
       expect(result.length).toBeGreaterThan(0);
       expect(result[0].source).toBe('John Doe');
     });
 
     it('should return empty array if story not found', () => {
-      mockLocalStorageService.getStory.and.returnValue(null);
+      mockLocalStorageService.loadStory.and.returnValue(null);
 
       const result = service.getAvailableFeedback('nonexistent', 1, 'chapter-detailer');
 

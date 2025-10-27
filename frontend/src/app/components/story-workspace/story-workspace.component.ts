@@ -1420,7 +1420,7 @@ Provide actionable insights and creative suggestions to enhance this plot point.
 
   onFeedbackRequested(event: FeedbackRequestEvent): void {
     console.log('Feedback requested:', event);
-    this.toastService.show(`Requesting feedback from ${event.agentName}...`, 'info');
+    this.toastService.showInfo(`Requesting feedback from ${event.agentName}...`);
   }
 
   onAddToChat(event: AddToChatEvent): void {
@@ -1437,12 +1437,11 @@ Provide actionable insights and creative suggestions to enhance this plot point.
       event.userComment
     ).subscribe(success => {
       if (success) {
-        this.toastService.show(
-          `Added ${event.selectedFeedback.length} feedback item(s) to chat`, 
-          'success'
+        this.toastService.showSuccess(
+          `Added ${event.selectedFeedback.length} feedback item(s) to chat`
         );
       } else {
-        this.toastService.show('Failed to add feedback to chat', 'error');
+        this.toastService.showError('Failed to add feedback to chat');
       }
     });
   }

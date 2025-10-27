@@ -398,12 +398,12 @@ describe('FeedbackSidebarComponent', () => {
     const newFeedbackItems = [...mockFeedbackItems, {
       id: 'feedback3',
       source: 'New Source',
-      type: 'emotion',
+      type: 'emotion' as const,
       content: 'New feedback',
       incorporated: false,
-      phase: 'chapter-detailer',
-      priority: 'low',
-      status: 'pending',
+      phase: 'chapter-detailer' as const,
+      priority: 'low' as const,
+      status: 'pending' as const,
       metadata: { created: new Date(), lastModified: new Date() }
     }];
 
