@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { BehaviorSubject } from 'rxjs';
 
 import { WorldbuildingSyncService, WorldbuildingSyncConfig } from './worldbuilding-sync.service';
 import { ConversationService } from './conversation.service';
@@ -273,9 +272,8 @@ describe('WorldbuildingSyncService', () => {
 
   describe('public methods', () => {
     it('should update worldbuilding manually', () => {
-      let emittedValue: string | undefined;
-      service.worldbuildingUpdated$.subscribe(value => {
-        emittedValue = value;
+      service.worldbuildingUpdated$.subscribe(() => {
+        // emittedValue = value;
       });
       
       service.updateWorldbuilding('manual update');

@@ -19,7 +19,7 @@ import {
 import { LocalStorageService } from './local-storage.service';
 import { ApiService } from './api.service';
 
-export type PhaseType = 'plot_outline' | 'chapter_detail' | 'final_edit' | 'worldbuilding';
+export type PhaseType = 'plot_outline' | 'chapter_detail' | 'final_edit';
 
 export interface PhaseValidationResult {
   canAdvance: boolean;
@@ -468,7 +468,7 @@ export class PhaseStateService {
       case 'plot_outline': return 'Draft';
       case 'chapter_detail': return 'Refined';
       case 'final_edit': return 'Approved';
-      case 'worldbuilding': return 'Worldbuilding';
+
       default: return phase;
     }
   }
@@ -481,7 +481,7 @@ export class PhaseStateService {
       case 'plot_outline': return 'Create and refine the plot outline for your chapter';
       case 'chapter_detail': return 'Develop the chapter content with character and rater feedback';
       case 'final_edit': return 'Review and finalize the chapter with editor suggestions';
-      case 'worldbuilding': return 'Build and develop your story world through interactive conversation';
+
       default: return '';
     }
   }
@@ -682,12 +682,13 @@ export class PhaseStateService {
    */
   private getPhaseOutput(phase: PhaseType, chapterComposeState: ChapterComposeState): string {
     switch (phase) {
-      case 'plot_outline':
+      case 'plot_outline': {
         const outlineItems = Array.from(chapterComposeState.phases.plotOutline.outline.items.values());
         return outlineItems
           .sort((a, b) => a.order - b.order)
           .map(item => `${item.title}: ${item.description}`)
           .join('\n\n');
+      }
 
       case 'chapter_detail':
         return chapterComposeState.phases.chapterDetailer.chapterDraft.content || '';
@@ -704,12 +705,11 @@ export class PhaseStateService {
   /**
    * Convert internal phase type to API phase type
    */
-  private convertPhaseTypeToAPI(phase: PhaseType): 'plot_outline' | 'chapter_detail' | 'final_edit' | 'worldbuilding' {
+  private convertPhaseTypeToAPI(phase: PhaseType): 'plot_outline' | 'chapter_detail' | 'final_edit' {
     switch (phase) {
       case 'plot_outline': return 'plot_outline';
       case 'chapter_detail': return 'chapter_detail';
       case 'final_edit': return 'final_edit';
-      case 'worldbuilding': return 'worldbuilding';
       default: return 'plot_outline';
     }
   }

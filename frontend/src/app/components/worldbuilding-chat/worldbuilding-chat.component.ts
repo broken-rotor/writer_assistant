@@ -21,7 +21,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
   @Output() worldbuildingUpdated = new EventEmitter<string>();
   @Output() conversationStarted = new EventEmitter<void>();
-  @Output() error = new EventEmitter<string>();
+  @Output() errorOccurred = new EventEmitter<string>();
 
   // Chat interface configuration
   chatConfig: ChatInterfaceConfig | null = null;
@@ -29,6 +29,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
   // Component state
   isInitialized = false;
   currentWorldbuilding = '';
+  error: string | null = null;
   
   // Services
   private conversationService = inject(ConversationService);
@@ -37,7 +38,8 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (!this.story) {
-      this.error.emit('WorldbuildingChat requires a story input');
+      this.error = 'WorldbuildingChat requires a story input';
+      this.errorOccurred.emit('WorldbuildingChat requires a story input');
       return;
     }
 
@@ -55,7 +57,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
       // Configure chat interface for worldbuilding
       this.chatConfig = {
-        phase: 'worldbuilding',
+        phase: 'plot_outline',
         storyId: this.story.id,
         chapterNumber: 0, // Worldbuilding is not chapter-specific
         enableBranching: true,
@@ -72,7 +74,8 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
     } catch (error) {
       console.error('Failed to initialize WorldbuildingChat:', error);
-      this.error.emit('Failed to initialize worldbuilding chat');
+      this.error = 'Failed to initialize worldbuilding chat';
+      this.errorOccurred.emit('Failed to initialize worldbuilding chat');
     }
   }
 
@@ -113,7 +116,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
     } catch (error) {
       console.error('Error handling message sent:', error);
-      this.error.emit('Failed to process message');
+      this.errorOccurred.emit('Failed to process message');
     }
   }
 
@@ -131,7 +134,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
     } catch (error) {
       console.error('Error handling message action:', error);
-      this.error.emit('Failed to process message action');
+      this.errorOccurred.emit('Failed to process message action');
     }
   }
 
@@ -146,7 +149,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
     } catch (error) {
       console.error('Error handling branch change:', error);
-      this.error.emit('Failed to process branch change');
+      this.errorOccurred.emit('Failed to process branch change');
     }
   }
 
@@ -158,7 +161,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
     } catch (error) {
       console.error('Error handling conversation clear:', error);
-      this.error.emit('Failed to clear conversation');
+      this.errorOccurred.emit('Failed to clear conversation');
     }
   }
 
@@ -176,7 +179,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
       );
     } catch (error) {
       console.error('Failed to sync worldbuilding from conversation:', error);
-      this.error.emit('Failed to sync worldbuilding data');
+      this.errorOccurred.emit('Failed to sync worldbuilding data');
     }
   }
 

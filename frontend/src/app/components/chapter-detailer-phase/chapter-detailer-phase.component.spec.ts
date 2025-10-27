@@ -94,7 +94,7 @@ describe('ChapterDetailerPhaseComponent', () => {
   ];
 
   const mockChapterComposeState: ChapterComposeState = {
-    currentPhase: 'chapter-detailer',
+    currentPhase: 'chapter_detail',
     phases: {
       plotOutline: {
         conversation: {
@@ -105,7 +105,7 @@ describe('ChapterDetailerPhaseComponent', () => {
           metadata: {
             created: new Date(),
             lastModified: new Date(),
-            phase: 'plot-outline'
+            phase: 'plot_outline'
           }
         },
         outline: {
@@ -130,7 +130,7 @@ describe('ChapterDetailerPhaseComponent', () => {
           metadata: {
             created: new Date(),
             lastModified: new Date(),
-            phase: 'chapter-detailer'
+            phase: 'chapter_detail'
           }
         },
         chapterDraft: {
@@ -161,7 +161,7 @@ describe('ChapterDetailerPhaseComponent', () => {
           metadata: {
             created: new Date(),
             lastModified: new Date(),
-            phase: 'final-edit'
+            phase: 'final_edit'
           }
         },
         finalChapter: {
@@ -755,4 +755,3 @@ describe('ChapterDetailerPhaseComponent', () => {
     });
   });
 });
-

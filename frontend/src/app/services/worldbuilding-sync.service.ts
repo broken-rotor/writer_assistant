@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { ConversationService } from './conversation.service';
@@ -46,7 +46,7 @@ export class WorldbuildingSyncService {
    */
   async syncWorldbuildingFromConversation(
     storyId: string, 
-    currentWorldbuilding: string = '',
+    currentWorldbuilding = '',
     config?: Partial<WorldbuildingSyncConfig>
   ): Promise<string> {
     try {
@@ -109,12 +109,11 @@ export class WorldbuildingSyncService {
     // Create a structured summary of worldbuilding elements
     const worldbuildingElements: string[] = [];
 
-    relevantMessages.forEach((message, index) => {
+    relevantMessages.forEach((message) => {
       const messageContent = message.content.trim();
       if (messageContent.length === 0) return;
 
       // Add message with context
-      const messageType = message.type === 'user' ? 'User' : 'Assistant';
       const timestamp = new Date(message.timestamp).toLocaleString();
       
       // For user messages, treat as worldbuilding input
@@ -227,7 +226,7 @@ export class WorldbuildingSyncService {
   /**
    * Get stored worldbuilding sync data
    */
-  getStoredWorldbuildingSync(storyId: string): any {
+  getStoredWorldbuildingSync(storyId: string): unknown {
     try {
       return this.localStorageService.getItem(`worldbuilding_sync_${storyId}`);
     } catch (error) {
@@ -241,7 +240,7 @@ export class WorldbuildingSyncService {
    */
   clearWorldbuildingSync(storyId: string): void {
     try {
-      this.localStorageService.removeItem(`worldbuilding_sync_${storyId}`);
+      localStorage.removeItem(`worldbuilding_sync_${storyId}`);
       this.worldbuildingUpdatedSubject.next('');
     } catch (error) {
       console.error('Failed to clear worldbuilding sync data:', error);

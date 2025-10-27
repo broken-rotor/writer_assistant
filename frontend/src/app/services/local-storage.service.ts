@@ -395,7 +395,7 @@ export class LocalStorageService {
   }
 
   // Cleanup
-  cleanupOldStories(maxAgeInDays: number = 30): number {
+  cleanupOldStories(maxAgeInDays = 30): number {
     const cutoffDate = new Date(Date.now() - maxAgeInDays * 24 * 60 * 60 * 1000);
     const currentList = this.storyListSubject.value;
     let cleanedCount = 0;

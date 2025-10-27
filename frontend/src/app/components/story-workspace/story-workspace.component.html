@@ -136,10 +136,10 @@
         <app-worldbuilding-chat
           [story]="story"
           [disabled]="loading"
-          [processing]="loadingService.isLoading('flesh-worldbuilding')"
+          [processing]="loadingService.isLoading"
           (worldbuildingUpdated)="onWorldbuildingUpdated($event)"
           (conversationStarted)="onWorldbuildingConversationStarted()"
-          (error)="onWorldbuildingError($event)">
+          (errorOccurred)="onWorldbuildingError($event)">
         </app-worldbuilding-chat>
         <div class="button-group">
           <button class="secondary-button" (click)="aiFleshOutWorldbuilding()">AI Flesh Out</button>

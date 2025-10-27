@@ -412,11 +412,11 @@ export interface CharacterFeedbackRequest {
   };
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
+  }[];
   character: {
     name: string;
     basicBio: string;
@@ -442,11 +442,11 @@ export interface RaterFeedbackRequest {
   raterPrompt: string;
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
+  }[];
   plotPoint: string;
 }
 
@@ -458,12 +458,12 @@ export interface GenerateChapterRequest {
   };
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
-  characters: Array<{
+  }[];
+  characters: {
     name: string;
     basicBio: string;
     sex: string;
@@ -476,7 +476,7 @@ export interface GenerateChapterRequest {
     motivations: string;
     fears: string;
     relationships: string;
-  }>;
+  }[];
   plotPoint: string;
   incorporatedFeedback: FeedbackItem[];
 }
@@ -489,11 +489,11 @@ export interface ModifyChapterRequest {
   };
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
+  }[];
   currentChapter: string;
   userRequest: string;
 }
@@ -506,12 +506,12 @@ export interface EditorReviewRequest {
   };
   worldbuilding: string;
   storySummary: string;
-  previousChapters: Array<{
+  previousChapters: {
     number: number;
     title: string;
     content: string;
-  }>;
-  characters: Array<{
+  }[];
+  characters: {
     name: string;
     basicBio: string;
     sex: string;
@@ -524,7 +524,7 @@ export interface EditorReviewRequest {
     motivations: string;
     fears: string;
     relationships: string;
-  }>;
+  }[];
   chapterToReview: string;
 }
 
@@ -547,11 +547,11 @@ export interface GenerateCharacterDetailsRequest {
   worldbuilding: string;
   storySummary: string;
   basicBio: string;
-  existingCharacters: Array<{
+  existingCharacters: {
     name: string;
     basicBio: string;
     relationships: string;
-  }>;
+  }[];
 }
 
 // API Response types
@@ -570,11 +570,11 @@ export interface RaterFeedbackResponse {
   raterName: string;
   feedback: {
     opinion: string;
-    suggestions: Array<{
+    suggestions: {
       issue: string;
       suggestion: string;
       priority: 'high' | 'medium' | 'low';
-    }>;
+    }[];
   };
 }
 
@@ -622,11 +622,11 @@ export interface GenerateCharacterDetailsResponse {
 export interface ApiPhaseContext {
   previous_phase_output?: string;
   phase_specific_instructions?: string;
-  conversation_history?: Array<{
+  conversation_history?: {
     role: 'user' | 'assistant';
     content: string;
     timestamp?: string;
-  }>;
+  }[];
   conversation_branch_id?: string;
 }
 
@@ -664,9 +664,7 @@ export interface LLMChatMessage {
 
 export interface LLMChatComposeContext {
   current_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  story_context: {
-    [key: string]: any;
-  };
+  story_context: Record<string, any>;
   chapter_draft?: string;
   conversation_branch_id?: string;
 }
@@ -688,9 +686,7 @@ export interface LLMChatRequest {
 export interface LLMChatResponse {
   message: LLMChatMessage;
   agent_type: 'writer' | 'character' | 'editor';
-  metadata: {
-    [key: string]: any;
-  };
+  metadata: Record<string, any>;
 }
 
 /**
@@ -700,9 +696,7 @@ export interface PhaseTransitionRequest {
   from_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
   to_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
   phase_output: string;
-  story_context: {
-    [key: string]: any;
-  };
+  story_context: Record<string, any>;
 }
 
 export interface ValidationResult {
@@ -717,7 +711,5 @@ export interface PhaseTransitionResponse {
   overall_score: number;
   validation_results: ValidationResult[];
   recommendations: string[];
-  metadata: {
-    [key: string]: any;
-  };
+  metadata: Record<string, any>;
 }

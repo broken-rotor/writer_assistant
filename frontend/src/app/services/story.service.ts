@@ -327,7 +327,7 @@ export class StoryService {
     return this.localStorageService.getStorageStats();
   }
 
-  cleanupOldStories(maxAgeInDays: number = 30): number {
+  cleanupOldStories(maxAgeInDays = 30): number {
     return this.localStorageService.cleanupOldStories(maxAgeInDays);
   }
 
@@ -344,7 +344,7 @@ export class StoryService {
   // Auto-save functionality
   private autoSaveInterval: any = null;
 
-  startAutoSave(intervalMs: number = 30000): void {
+  startAutoSave(intervalMs = 30000): void {
     if (this.autoSaveInterval) {
       clearInterval(this.autoSaveInterval);
     }

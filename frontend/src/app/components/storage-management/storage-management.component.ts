@@ -15,7 +15,7 @@ import { StoryService } from '../../services/story.service';
 export class StorageManagementComponent implements OnInit, OnDestroy {
   storageQuota: StorageQuota = { used: 0, available: 0, total: 0, percentage: 0 };
   storiesIndex: StoryIndex[] = [];
-  storageStats: { [key: string]: number } = {};
+  storageStats: Record<string, number> = {};
 
   private subscriptions: Subscription[] = [];
 

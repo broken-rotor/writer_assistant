@@ -42,7 +42,7 @@ describe('WorldbuildingChatComponent', () => {
     metadata: {
       created: new Date(),
       lastModified: new Date(),
-      phase: 'worldbuilding'
+      phase: 'plot_outline'
     }
   };
 
@@ -99,7 +99,7 @@ describe('WorldbuildingChatComponent', () => {
     
     component.ngOnInit();
     
-    expect(component.error.emit).toHaveBeenCalledWith('WorldbuildingChat requires a story input');
+    expect(component.errorOccurred.emit).toHaveBeenCalledWith('WorldbuildingChat requires a story input');
   });
 
   it('should initialize component with story', () => {
@@ -109,7 +109,7 @@ describe('WorldbuildingChatComponent', () => {
     
     expect(component.isInitialized).toBe(true);
     expect(component.chatConfig).toBeTruthy();
-    expect(component.chatConfig?.phase).toBe('worldbuilding');
+    expect(component.chatConfig?.phase).toBe('plot_outline');
     expect(component.chatConfig?.storyId).toBe('test-story-id');
     expect(component.chatConfig?.chapterNumber).toBe(0);
     expect(component.currentWorldbuilding).toBe('Initial worldbuilding content');
@@ -121,7 +121,7 @@ describe('WorldbuildingChatComponent', () => {
     fixture.detectChanges();
     
     expect(component.chatConfig).toEqual({
-      phase: 'worldbuilding',
+      phase: 'plot_outline',
       storyId: 'test-story-id',
       chapterNumber: 0,
       enableBranching: true,
@@ -286,7 +286,7 @@ describe('WorldbuildingChatComponent', () => {
     // Wait for promise to reject
     setTimeout(() => {
       expect(console.error).toHaveBeenCalled();
-      expect(component.error.emit).toHaveBeenCalledWith('Failed to sync worldbuilding data');
+      expect(component.errorOccurred.emit).toHaveBeenCalledWith('Failed to sync worldbuilding data');
     }, 100);
   });
 

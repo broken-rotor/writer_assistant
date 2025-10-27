@@ -36,9 +36,7 @@ export interface TokenValidationThresholds {
 /**
  * Field validation state for form-level validation
  */
-export interface FieldValidationState {
-  [fieldName: string]: TokenValidationResult;
-}
+export type FieldValidationState = Record<string, TokenValidationResult>;
 
 /**
  * Default validation thresholds (70%, 90%)
@@ -322,7 +320,7 @@ export class TokenValidationService {
    * Validate multiple fields at once
    */
   validateMultipleFields(
-    fields: Array<{ text: string; fieldType: SystemPromptFieldType }>,
+    fields: { text: string; fieldType: SystemPromptFieldType }[],
     config: Partial<TokenValidationConfig> = {}
   ): Observable<TokenValidationResult[]> {
     const validationConfig = { ...DEFAULT_VALIDATION_CONFIG, ...config };

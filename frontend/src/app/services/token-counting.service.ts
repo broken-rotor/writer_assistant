@@ -71,11 +71,11 @@ export class TokenCountingService {
   }>();
   
   // Batch processing queue
-  private readonly batchQueue: Array<{
+  private readonly batchQueue: {
     item: TokenCountRequestItem;
     observer: any;
     timestamp: number;
-  }> = [];
+  }[] = [];
   
   private batchTimer?: any;
 

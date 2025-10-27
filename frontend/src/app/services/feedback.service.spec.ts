@@ -226,7 +226,7 @@ describe('FeedbackService', () => {
     });
 
     it('should update request status during request', (done) => {
-      let statusUpdates: any[] = [];
+      const statusUpdates: any[] = [];
       
       service.requestStatus$.subscribe(status => {
         statusUpdates.push(status);

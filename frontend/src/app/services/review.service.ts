@@ -343,7 +343,7 @@ export class ReviewService {
     reviews.forEach(review => {
       // Map review types to categories
       const category = this.mapReviewTypeToCategory(review.type);
-      if (category && categoryScores.hasOwnProperty(category)) {
+      if (category && Object.prototype.hasOwnProperty.call(categoryScores, category)) {
         // Score based on priority (high issues = lower score)
         const score = review.priority === 'high' ? 60 : 
                      review.priority === 'medium' ? 80 : 90;
@@ -1061,11 +1061,11 @@ export class ReviewService {
   getReviewStatsByPhase(
     storyId: string,
     chapterNumber: number
-  ): { [phase: string]: { total: number; applied: number; pending: number; dismissed: number } } {
+  ): Record<string, { total: number; applied: number; pending: number; dismissed: number }> {
     const cacheKey = `${storyId}_${chapterNumber}_final-edit`;
     const allReviews = this.reviewCache.get(cacheKey) || [];
 
-    const stats: { [phase: string]: { total: number; applied: number; pending: number; dismissed: number } } = {};
+    const stats: Record<string, { total: number; applied: number; pending: number; dismissed: number }> = {};
 
     allReviews.forEach(item => {
       const phase = item.metadata?.phase_context?.current_phase || 'unknown';

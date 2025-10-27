@@ -27,7 +27,8 @@ export class ToastComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Component initialization if needed
+    // Initialize toast component
+    this.toasts$ = this.toastService.getToasts();
   }
 
   ngOnDestroy(): void {
