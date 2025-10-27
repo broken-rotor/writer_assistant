@@ -620,8 +620,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
       metadata: {
         created: now,
         lastModified: now,
-        version: '1.0.0',
-        migrationSource: 'manual'
+        version: '1.0.0'
       }
     };
   }
