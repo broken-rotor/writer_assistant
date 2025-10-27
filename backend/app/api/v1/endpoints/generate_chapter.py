@@ -36,7 +36,10 @@ async def generate_chapter(request: GenerateChapterRequest):
                 characters=request.characters,
                 plot_point=request.plotPoint,
                 incorporated_feedback=request.incorporatedFeedback,
-                previous_chapters=request.previousChapters
+                previous_chapters=request.previousChapters,
+                # Pass phase context for optimization
+                compose_phase=request.compose_phase,
+                phase_context=request.phase_context
             )
             
             system_prompt = optimized_context.system_prompt
@@ -67,6 +70,22 @@ async def generate_chapter(request: GenerateChapterRequest):
 
 {request.systemPrompts.mainSuffix}"""
 
+            # Build phase-specific instructions
+            phase_instructions = ""
+            if request.compose_phase and request.phase_context:
+                if request.phase_context.phase_specific_instructions:
+                    phase_instructions = f"\nPhase-specific instructions: {request.phase_context.phase_specific_instructions}"
+                
+                if request.phase_context.previous_phase_output:
+                    phase_instructions += f"\nPrevious phase output: {request.phase_context.previous_phase_output}"
+                
+                if request.phase_context.conversation_history:
+                    conv_context = "\n".join([
+                        f"{msg.role}: {msg.content}" 
+                        for msg in request.phase_context.conversation_history[-3:]  # Last 3 messages
+                    ])
+                    phase_instructions += f"\nRecent conversation:\n{conv_context}"
+
             user_message = f"""Write a chapter for this story:
 
 World: {request.worldbuilding}
@@ -78,6 +97,8 @@ Characters:
 Plot point for this chapter: {request.plotPoint}
 
 {feedback_context}
+
+{phase_instructions}
 
 Write an engaging chapter (800-1500 words) that brings this plot point to life with vivid prose, authentic dialogue, and character development."""
 
@@ -95,7 +116,9 @@ Write an engaging chapter (800-1500 words) that brings this plot point to life w
             metadata={
                 "generatedAt": datetime.now(UTC).isoformat(),
                 "plotPoint": request.plotPoint,
-                "feedbackItemsIncorporated": len(request.incorporatedFeedback)
+                "feedbackItemsIncorporated": len(request.incorporatedFeedback),
+                "composePhase": request.compose_phase,
+                "phaseContextProvided": bool(request.phase_context)
             }
         )
     except Exception as e:

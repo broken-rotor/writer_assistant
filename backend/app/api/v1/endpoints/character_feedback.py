@@ -37,7 +37,10 @@ async def character_feedback(request: CharacterFeedbackRequest):
                 worldbuilding=request.worldbuilding,
                 story_summary=request.storySummary,
                 character=request.character,
-                plot_point=request.plotPoint
+                plot_point=request.plotPoint,
+                # Pass phase context for optimization
+                compose_phase=request.compose_phase,
+                phase_context=request.phase_context
             )
             
             system_prompt = optimized_context.system_prompt
@@ -63,10 +66,26 @@ You are embodying {character_name}, a character with the following traits:
 
 {request.systemPrompts.mainSuffix}"""
 
+            # Build phase-specific context
+            phase_context_str = ""
+            if request.compose_phase and request.phase_context:
+                phase_context_str = f"\nCompose Phase: {request.compose_phase}"
+                
+                if request.phase_context.phase_specific_instructions:
+                    phase_context_str += f"\nPhase Instructions: {request.phase_context.phase_specific_instructions}"
+                
+                if request.phase_context.conversation_history:
+                    conv_context = "\n".join([
+                        f"{msg.role}: {msg.content}" 
+                        for msg in request.phase_context.conversation_history[-2:]  # Last 2 messages
+                    ])
+                    phase_context_str += f"\nRecent conversation:\n{conv_context}"
+
             user_message = f"""Context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 - Current situation: {request.plotPoint}
+{phase_context_str}
 
 Respond in JSON format with exactly these keys:
 {{
