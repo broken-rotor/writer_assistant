@@ -27,6 +27,7 @@ import { PlotOutlinePhaseComponent } from '../plot-outline-phase/plot-outline-ph
 import { FinalEditPhaseComponent } from '../final-edit-phase/final-edit-phase.component';
 import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent, FeedbackRequestEvent, AddToChatEvent } from '../feedback-sidebar/feedback-sidebar.component';
 import { FeedbackService } from '../../services/feedback.service';
+import { WorldbuildingChatComponent } from '../worldbuilding-chat/worldbuilding-chat.component';
 
 interface ResearchChatMessage {
   role: string;
@@ -38,7 +39,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, FinalEditPhaseComponent, FeedbackSidebarComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingChatComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -57,15 +58,15 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   editingRater: any = null;
 
   // Chapter Creation tab state
-  generatingFeedback: Set<string> = new Set();
+  generatingFeedback = new Set<string>();
   generatingChapter = false;
   generatingReview = false;
   selectedAgentId: string | null = null; // Track currently selected agent for feedback display
   editingFeedbackIndex: number | null = null; // Track which feedback item is being edited
-  editingFeedbackContent: string = ''; // Store the edited content temporarily
-  changeRequest: string = ''; // User's request for chapter changes
+  editingFeedbackContent = ''; // Store the edited content temporarily
+  changeRequest = ''; // User's request for chapter changes
   editingChapterId: string | null = null; // Track which chapter is being edited (null = creating new)
-  chapterTitle: string = ''; // Title for the chapter being created/edited
+  chapterTitle = ''; // Title for the chapter being created/edited
 
   // Research Archive state
   showResearchSidebar = false;
@@ -99,7 +100,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private storyService: StoryService,
     private generationService: GenerationService,
-    private loadingService: LoadingService,
+    public loadingService: LoadingService,
     private cdr: ChangeDetectorRef,
     private archiveService: ArchiveService,
     private tokenLimitsService: TokenLimitsService,
@@ -242,6 +243,26 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           alert('Failed to flesh out worldbuilding');
         }
       });
+  }
+
+  // Worldbuilding chat event handlers
+
+  onWorldbuildingUpdated(updatedWorldbuilding: string): void {
+    if (this.story) {
+      this.story.general.worldbuilding = updatedWorldbuilding;
+      this.storyService.saveStory(this.story);
+      this.cdr.detectChanges();
+    }
+  }
+
+  onWorldbuildingConversationStarted(): void {
+    console.log('Worldbuilding conversation started');
+    // Could show a toast or update UI state here
+  }
+
+  onWorldbuildingError(error: string): void {
+    console.error('Worldbuilding chat error:', error);
+    this.toastService.showError('Worldbuilding Error', error);
   }
 
   // Helper methods

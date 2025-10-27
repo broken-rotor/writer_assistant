@@ -611,7 +611,7 @@ export class FeedbackService {
    */
   requestMultipleAgentFeedbackWithPhase(
     story: Story,
-    agents: Array<{ type: 'character' | 'rater'; agent: Character | Rater }>,
+    agents: { type: 'character' | 'rater'; agent: Character | Rater }[],
     chapterNumber: number,
     chapterComposeState?: ChapterComposeState,
     conversationThread?: ConversationThread,
@@ -718,11 +718,11 @@ export class FeedbackService {
   getFeedbackStatsByPhase(
     storyId: string,
     chapterNumber: number
-  ): { [phase: string]: { total: number; incorporated: number; pending: number } } {
+  ): Record<string, { total: number; incorporated: number; pending: number }> {
     const cacheKey = `${storyId}_${chapterNumber}_chapter-detailer`;
     const allFeedback = this.feedbackCache.get(cacheKey) || [];
 
-    const stats: { [phase: string]: { total: number; incorporated: number; pending: number } } = {};
+    const stats: Record<string, { total: number; incorporated: number; pending: number }> = {};
 
     allFeedback.forEach(item => {
       const phase = item.metadata?.phase_context?.current_phase || 'unknown';

@@ -65,6 +65,7 @@ export class ConversationService {
    */
   initializeConversation(config: ConversationConfig): ConversationThread {
     this.config = config;
+    
     this.storageKey = `conversation_${config.storyId}_${config.chapterNumber}_${config.phase}`;
 
     // Try to load existing conversation
@@ -636,7 +637,7 @@ export class ConversationService {
   /**
    * Get conversation history for API requests
    */
-  getConversationHistoryForAPI(maxMessages: number = 10): Array<{ role: 'user' | 'assistant'; content: string; timestamp?: string }> {
+  getConversationHistoryForAPI(maxMessages = 10): { role: 'user' | 'assistant'; content: string; timestamp?: string }[] {
     const currentThread = this.currentThreadSubject.value;
     if (!currentThread) {
       return [];

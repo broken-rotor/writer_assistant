@@ -395,7 +395,7 @@ export class LocalStorageService {
   }
 
   // Cleanup
-  cleanupOldStories(maxAgeInDays: number = 30): number {
+  cleanupOldStories(maxAgeInDays = 30): number {
     const cutoffDate = new Date(Date.now() - maxAgeInDays * 24 * 60 * 60 * 1000);
     const currentList = this.storyListSubject.value;
     let cleanedCount = 0;
@@ -522,5 +522,16 @@ export class LocalStorageService {
         lastModified: new Date(serialized.metadata.lastModified)
       }
     };
+  }
+
+  /**
+   * Remove an item from localStorage by key
+   */
+  removeItem(key: string): void {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Error removing item from localStorage:', error);
+    }
   }
 }

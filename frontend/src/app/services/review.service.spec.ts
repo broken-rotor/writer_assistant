@@ -73,7 +73,7 @@ describe('ReviewService', () => {
       editorReview: undefined
     },
     chapterCompose: {
-      currentPhase: 'final-edit',
+      currentPhase: 'final_edit',
       phases: {
         plotOutline: {} as any,
         chapterDetailer: {} as any,
@@ -103,12 +103,12 @@ describe('ReviewService', () => {
         targetWordCount: 2000
       },
       navigation: {} as any,
-      overallProgress: {} as any,
-      metadata: {
-        created: new Date(),
-        lastModified: new Date(),
-        version: '1.0.0'
-      }
+      overallProgress: {} as any
+    },
+    metadata: {
+      created: new Date(),
+      lastModified: new Date(),
+      version: '1.0.0'
     }
   } as Story;
 
@@ -157,7 +157,7 @@ describe('ReviewService', () => {
     it('should return reviews from cache if available', () => {
       // Setup cache
       const reviews = [mockReviewItem];
-      service['reviewCache'].set('test-story-1_1_final-edit', reviews);
+      service['reviewCache'].set('test-story-1_1_final_edit', reviews);
 
       const result = service.getAvailableReviews('test-story-1', 1);
 
@@ -187,10 +187,13 @@ describe('ReviewService', () => {
     it('should request reviews from all agents by default', () => {
       const mockCharacterResponse = { feedback: { actions: ['Test action'] } };
       const mockRaterResponse = { feedback: { opinion: 'Test opinion', suggestions: ['Test suggestion'] } };
-      const mockEditorResponse = { suggestions: [{ issue: 'Test issue', suggestion: 'Test fix', priority: 'high', selected: false }] };
+      const mockEditorResponse = { 
+        overallAssessment: 'Test assessment',
+        suggestions: [{ issue: 'Test issue', suggestion: 'Test fix', priority: 'high' as 'high' | 'medium' | 'low', selected: false }] 
+      };
 
-      feedbackServiceSpy.requestCharacterFeedback.and.returnValue(of(mockCharacterResponse));
-      feedbackServiceSpy.requestRaterFeedback.and.returnValue(of(mockRaterResponse));
+      feedbackServiceSpy.requestCharacterFeedback.and.returnValue(of(true));
+      feedbackServiceSpy.requestRaterFeedback.and.returnValue(of(true));
       generationServiceSpy.requestEditorReview.and.returnValue(of(mockEditorResponse));
       localStorageServiceSpy.loadStory.and.returnValue(mockStory);
       localStorageServiceSpy.saveStory.and.stub();
@@ -206,8 +209,8 @@ describe('ReviewService', () => {
 
     it('should handle request failures gracefully', () => {
       feedbackServiceSpy.requestCharacterFeedback.and.returnValue(throwError('Test error'));
-      feedbackServiceSpy.requestRaterFeedback.and.returnValue(of({}));
-      generationServiceSpy.requestEditorReview.and.returnValue(of({}));
+      feedbackServiceSpy.requestRaterFeedback.and.returnValue(of(true));
+      generationServiceSpy.requestEditorReview.and.returnValue(of({ overallAssessment: 'Test', suggestions: [] }));
 
       service.requestComprehensiveReviews(mockStory, 1, 'Test content').subscribe(result => {
         expect(result).toBe(false);
@@ -221,7 +224,7 @@ describe('ReviewService', () => {
         includeEditor: false
       };
 
-      feedbackServiceSpy.requestRaterFeedback.and.returnValue(of({}));
+      feedbackServiceSpy.requestRaterFeedback.and.returnValue(of(true));
       localStorageServiceSpy.loadStory.and.returnValue(mockStory);
 
       service.requestComprehensiveReviews(mockStory, 1, 'Test content', options).subscribe();
@@ -309,7 +312,7 @@ describe('ReviewService', () => {
         { ...mockReviewItem, id: 'review-2' }
       ];
       
-      service['reviewCache'].set('test-story-1_1_final-edit', reviews);
+      service['reviewCache'].set('test-story-1_1_final_edit', reviews);
       localStorageServiceSpy.loadStory.and.returnValue(mockStory);
       localStorageServiceSpy.saveStory.and.stub();
 
@@ -323,30 +326,30 @@ describe('ReviewService', () => {
 
   describe('clearReviewCache', () => {
     it('should clear specific cache entry when story and chapter provided', () => {
-      service['reviewCache'].set('test-story-1_1_final-edit', [mockReviewItem]);
-      service['reviewCache'].set('test-story-1_2_final-edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_1_final_edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_2_final_edit', [mockReviewItem]);
 
       service.clearReviewCache('test-story-1', 1);
 
-      expect(service['reviewCache'].has('test-story-1_1_final-edit')).toBe(false);
-      expect(service['reviewCache'].has('test-story-1_2_final-edit')).toBe(true);
+      expect(service['reviewCache'].has('test-story-1_1_final_edit')).toBe(false);
+      expect(service['reviewCache'].has('test-story-1_2_final_edit')).toBe(true);
     });
 
     it('should clear all story cache entries when only story provided', () => {
-      service['reviewCache'].set('test-story-1_1_final-edit', [mockReviewItem]);
-      service['reviewCache'].set('test-story-1_2_final-edit', [mockReviewItem]);
-      service['reviewCache'].set('test-story-2_1_final-edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_1_final_edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_2_final_edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-2_1_final_edit', [mockReviewItem]);
 
       service.clearReviewCache('test-story-1');
 
-      expect(service['reviewCache'].has('test-story-1_1_final-edit')).toBe(false);
-      expect(service['reviewCache'].has('test-story-1_2_final-edit')).toBe(false);
-      expect(service['reviewCache'].has('test-story-2_1_final-edit')).toBe(true);
+      expect(service['reviewCache'].has('test-story-1_1_final_edit')).toBe(false);
+      expect(service['reviewCache'].has('test-story-1_2_final_edit')).toBe(false);
+      expect(service['reviewCache'].has('test-story-2_1_final_edit')).toBe(true);
     });
 
     it('should clear entire cache when no parameters provided', () => {
-      service['reviewCache'].set('test-story-1_1_final-edit', [mockReviewItem]);
-      service['reviewCache'].set('test-story-2_1_final-edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_1_final_edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-2_1_final_edit', [mockReviewItem]);
 
       service.clearReviewCache();
 

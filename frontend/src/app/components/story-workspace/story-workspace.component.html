@@ -131,9 +131,16 @@
         </app-system-prompt-field>
       </div>
 
-      <div class="form-section">
-        <label for="worldbuilding">Overall Setting / Worldbuilding</label>
-        <textarea id="worldbuilding" [(ngModel)]="story.general.worldbuilding" placeholder="User-provided worldbuilding. AI can flesh out, user can edit." rows="10"></textarea>
+      <div class="form-section worldbuilding-section">
+        <label>Overall Setting / Worldbuilding</label>
+        <app-worldbuilding-chat
+          [story]="story"
+          [disabled]="loading"
+          [processing]="loadingService.isLoading"
+          (worldbuildingUpdated)="onWorldbuildingUpdated($event)"
+          (conversationStarted)="onWorldbuildingConversationStarted()"
+          (errorOccurred)="onWorldbuildingError($event)">
+        </app-worldbuilding-chat>
         <div class="button-group">
           <button class="secondary-button" (click)="aiFleshOutWorldbuilding()">AI Flesh Out</button>
           <button class="secondary-button">Reset to Original</button>

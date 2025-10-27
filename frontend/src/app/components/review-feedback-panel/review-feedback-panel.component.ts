@@ -59,7 +59,7 @@ export class ReviewFeedbackPanelComponent implements OnInit, OnDestroy {
 
   // Component state
   availableReviews: ReviewItem[] = [];
-  selectedReviewIds: Set<string> = new Set();
+  selectedReviewIds = new Set<string>();
   requestStatus: ReviewRequestStatus = {
     pendingRequests: [],
     completedRequests: [],

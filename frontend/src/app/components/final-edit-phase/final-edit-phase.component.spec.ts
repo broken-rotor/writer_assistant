@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 
-import { FinalEditPhaseComponent } from './final-edit-phase.component';
+import { FinalEditPhaseComponent } from './final_edit-phase.component';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
 import { ReviewFeedbackPanelComponent } from '../review-feedback-panel/review-feedback-panel.component';
 import { GenerationService } from '../../services/generation.service';
@@ -40,7 +40,7 @@ describe('FinalEditPhaseComponent', () => {
     characters: [],
     raters: [],
     chapterCompose: {
-      currentPhase: 'final-edit',
+      currentPhase: 'final_edit',
       phases: {
         plotOutline: {
           conversation: {
@@ -48,7 +48,7 @@ describe('FinalEditPhaseComponent', () => {
             messages: [],
             currentBranchId: 'main',
             branches: new Map(),
-            metadata: { created: new Date(), lastModified: new Date(), phase: 'plot-outline' }
+            metadata: { created: new Date(), lastModified: new Date(), phase: 'plot_outline' }
           },
           outline: {
             items: new Map(),
@@ -65,7 +65,7 @@ describe('FinalEditPhaseComponent', () => {
             messages: [],
             currentBranchId: 'main',
             branches: new Map(),
-            metadata: { created: new Date(), lastModified: new Date(), phase: 'chapter-detailer' }
+            metadata: { created: new Date(), lastModified: new Date(), phase: 'chapter_detail' }
           },
           chapterDraft: {
             content: 'This is the chapter content from phase 2.',
@@ -83,11 +83,11 @@ describe('FinalEditPhaseComponent', () => {
         },
         finalEdit: {
           conversation: {
-            id: 'final-edit-conversation',
+            id: 'final_edit-conversation',
             messages: [],
             currentBranchId: 'main',
             branches: new Map(),
-            metadata: { created: new Date(), lastModified: new Date(), phase: 'final-edit' }
+            metadata: { created: new Date(), lastModified: new Date(), phase: 'final_edit' }
           },
           finalChapter: {
             content: 'This is the final chapter content.',
@@ -107,9 +107,9 @@ describe('FinalEditPhaseComponent', () => {
       overallProgress: {
         currentPhaseIndex: 2,
         phaseCompletionStatus: {
-          'plot-outline': true,
-          'chapter-detailer': true,
-          'final-edit': false
+          'plot_outline': true,
+          'chapter_detail': true,
+          'final_edit': false
         },
         estimatedCompletion: new Date()
       }
@@ -549,7 +549,7 @@ describe('FinalEditPhaseComponent', () => {
 
     expect(mockPhaseStateService.updatePhaseData).toHaveBeenCalledWith(
       'test-story-1',
-      'final-edit',
+      'final_edit',
       jasmine.objectContaining({
         finalChapter: jasmine.any(Object),
         reviewSelection: jasmine.any(Object),

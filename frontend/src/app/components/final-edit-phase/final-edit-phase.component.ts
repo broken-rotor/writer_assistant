@@ -82,7 +82,7 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
 
   // Review integration
   selectedReviews: ReviewItem[] = [];
-  appliedReviewIds: Set<string> = new Set();
+  appliedReviewIds = new Set<string>();
 
   // Quality assessment
   qualityAssessment: QualityAssessment | null = null;

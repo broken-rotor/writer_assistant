@@ -468,6 +468,7 @@ export class PhaseStateService {
       case 'plot_outline': return 'Draft';
       case 'chapter_detail': return 'Refined';
       case 'final_edit': return 'Approved';
+
       default: return phase;
     }
   }
@@ -480,6 +481,7 @@ export class PhaseStateService {
       case 'plot_outline': return 'Create and refine the plot outline for your chapter';
       case 'chapter_detail': return 'Develop the chapter content with character and rater feedback';
       case 'final_edit': return 'Review and finalize the chapter with editor suggestions';
+
       default: return '';
     }
   }
@@ -680,12 +682,13 @@ export class PhaseStateService {
    */
   private getPhaseOutput(phase: PhaseType, chapterComposeState: ChapterComposeState): string {
     switch (phase) {
-      case 'plot_outline':
+      case 'plot_outline': {
         const outlineItems = Array.from(chapterComposeState.phases.plotOutline.outline.items.values());
         return outlineItems
           .sort((a, b) => a.order - b.order)
           .map(item => `${item.title}: ${item.description}`)
           .join('\n\n');
+      }
 
       case 'chapter_detail':
         return chapterComposeState.phases.chapterDetailer.chapterDraft.content || '';

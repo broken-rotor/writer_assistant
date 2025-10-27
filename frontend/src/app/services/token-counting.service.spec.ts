@@ -283,7 +283,7 @@ describe('TokenCountingService', () => {
 
   describe('Loading State Management', () => {
     it('should track loading state during API calls', (done) => {
-      let loadingStates: boolean[] = [];
+      const loadingStates: boolean[] = [];
 
       service.getLoadingState().subscribe(state => {
         loadingStates.push(state.isLoading);

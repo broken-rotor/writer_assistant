@@ -181,7 +181,7 @@ describe('TokenLimitsService', () => {
 
   describe('isLoading', () => {
     it('should emit loading state changes', (done) => {
-      let loadingStates: boolean[] = [];
+      const loadingStates: boolean[] = [];
       
       service.isLoading().subscribe(isLoading => {
         loadingStates.push(isLoading);

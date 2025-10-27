@@ -60,8 +60,8 @@ export class FeedbackSidebarComponent implements OnInit, OnDestroy {
 
   // Component state
   availableFeedback: EnhancedFeedbackItem[] = [];
-  selectedFeedbackIds: Set<string> = new Set();
-  isRequestingFeedback: Set<string> = new Set();
+  selectedFeedbackIds = new Set<string>();
+  isRequestingFeedback = new Set<string>();
   userComment = '';
   
   // Categorized feedback

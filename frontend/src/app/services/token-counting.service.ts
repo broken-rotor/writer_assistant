@@ -71,11 +71,11 @@ export class TokenCountingService {
   }>();
   
   // Batch processing queue
-  private readonly batchQueue: Array<{
+  private readonly batchQueue: {
     item: TokenCountRequestItem;
     observer: any;
     timestamp: number;
-  }> = [];
+  }[] = [];
   
   private batchTimer?: any;
 
@@ -519,5 +519,17 @@ export class TokenCountingService {
         observers.forEach(observer => observer.error(error));
       }
     });
+  }
+
+  /**
+   * Simple word counting utility method
+   * Counts words by splitting on whitespace and filtering empty strings
+   */
+  countWords(text: string): number {
+    if (!text || typeof text !== 'string') {
+      return 0;
+    }
+    
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   }
 }

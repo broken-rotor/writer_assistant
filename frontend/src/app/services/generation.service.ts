@@ -276,7 +276,7 @@ export class GenerationService {
   // Generate Chapter from Plot Outline
   generateChapterFromOutline(
     story: Story,
-    outlineItems: Array<{title: string, description: string}>,
+    outlineItems: {title: string, description: string}[],
     chapterNumber: number
   ): Observable<GenerateChapterResponse> {
     const plotPoint = outlineItems.map(item => `${item.title}: ${item.description}`).join('\n\n');
@@ -350,7 +350,7 @@ export class GenerationService {
   regenerateChapterWithFeedback(
     story: Story,
     currentChapterContent: string,
-    feedbackItems: Array<{source: string, content: string, type: string}>,
+    feedbackItems: {source: string, content: string, type: string}[],
     userInstructions?: string
   ): Observable<ModifyChapterResponse> {
     const feedbackText = feedbackItems.map(item => 

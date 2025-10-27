@@ -76,7 +76,7 @@ export class ArchiveService {
   /**
    * Search the story archive using semantic search
    */
-  search(query: string, maxResults: number = 10, filterFileName?: string): Observable<SearchResponse> {
+  search(query: string, maxResults = 10, filterFileName?: string): Observable<SearchResponse> {
     const body = {
       query: query,
       max_results: maxResults,
@@ -123,9 +123,9 @@ export class ArchiveService {
    */
   ragQuery(
     question: string,
-    nContextChunks: number = 5,
-    maxTokens: number = 1024,
-    temperature: number = 0.3,
+    nContextChunks = 5,
+    maxTokens = 1024,
+    temperature = 0.3,
     filterFileName?: string
   ): Observable<RAGResponse> {
     const body = {
@@ -144,9 +144,9 @@ export class ArchiveService {
    */
   ragChat(
     messages: RAGChatMessage[],
-    nContextChunks: number = 5,
-    maxTokens: number = 1024,
-    temperature: number = 0.4,
+    nContextChunks = 5,
+    maxTokens = 1024,
+    temperature = 0.4,
     filterFileName?: string
   ): Observable<RAGResponse> {
     const body = {
