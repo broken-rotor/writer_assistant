@@ -1,0 +1,241 @@
+<div class="plot-outline-phase">
+  <!-- Phase Header -->
+  <div class="phase-header">
+    <h2>📝 Plot Outline Phase</h2>
+    <div class="phase-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="getCompletionPercentage()"></div>
+      </div>
+      <span class="progress-text">{{ getCompletionPercentage() }}% Complete</span>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="phase-content" [class.with-chat]="showChat">
+    
+    <!-- Left Panel: Outline Development -->
+    <div class="outline-panel">
+      
+      <!-- Basic Outline Section (Legacy Functionality) -->
+      <div class="section basic-outline-section">
+        <h3>Basic Plot Outline</h3>
+        <p class="section-description">
+          Start with a basic outline of your plot. This will serve as the foundation for developing detailed outline items.
+        </p>
+        <textarea 
+          [(ngModel)]="basicOutline" 
+          (ngModelChange)="onBasicOutlineChange()"
+          placeholder="Sarah discovers a hidden letter in the attic that reveals her grandmother's secret past..."
+          rows="4"
+          class="basic-outline-input">
+        </textarea>
+        
+        <div class="button-group">
+          <button 
+            class="secondary-button" 
+            (click)="aiFleshOutPlotPoint()" 
+            [disabled]="isGeneratingFleshOut || !basicOutline.trim()">
+            <span *ngIf="!isGeneratingFleshOut">🤖 AI Flesh Out</span>
+            <span *ngIf="isGeneratingFleshOut">⏳ Generating...</span>
+          </button>
+          
+          <button 
+            class="secondary-button" 
+            (click)="researchPlotPoint()" 
+            [disabled]="isResearching || !basicOutline.trim()"
+            title="Research similar content from story archive">
+            <span *ngIf="!isResearching">📚 Research Archive</span>
+            <span *ngIf="isResearching">⏳ Researching...</span>
+          </button>
+          
+          <button 
+            class="secondary-button chat-toggle" 
+            (click)="toggleChat()"
+            [class.active]="showChat">
+            <span *ngIf="!showChat">💬 Open Chat</span>
+            <span *ngIf="showChat">💬 Close Chat</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Draft Outline Builder -->
+      <div class="section draft-outline-section">
+        <div class="section-header">
+          <h3>Draft Outline Builder</h3>
+          <div class="outline-stats">
+            <span class="item-count">{{ draftOutlineItems.length }} items</span>
+            <span class="completion-indicator" [class.complete]="canAdvancePhase()">
+              {{ canAdvancePhase() ? '✅ Ready to advance' : '⏳ In progress' }}
+            </span>
+          </div>
+        </div>
+        
+        <p class="section-description">
+          Build your detailed outline by adding items from AI conversations or creating them manually. 
+          You need at least 3 detailed items to advance to the next phase.
+        </p>
+
+        <!-- Draft Outline Items List -->
+        <div class="draft-outline-list" 
+             cdkDropList 
+             (cdkDropListDropped)="onDrop($event)">
+          
+          <div *ngFor="let item of draftOutlineItems; trackBy: trackByItemId" 
+               class="outline-item"
+               cdkDrag>
+            
+            <!-- Drag Handle -->
+            <div class="drag-handle" cdkDragHandle>
+              <span class="drag-icon">⋮⋮</span>
+            </div>
+            
+            <!-- Item Content (View Mode) -->
+            <div class="item-content" *ngIf="!item.isEditing">
+              <div class="item-header">
+                <h4 class="item-title">{{ item.title }}</h4>
+                <div class="item-actions">
+                  <button class="icon-button" (click)="startEditingItem(item)" title="Edit">
+                    ✏️
+                  </button>
+                  <button class="icon-button delete" (click)="removeItem(item.id)" title="Remove">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              <p class="item-description">{{ item.description }}</p>
+              <div class="item-meta" *ngIf="item.sourceMessageId">
+                <span class="source-indicator">💬 From chat</span>
+              </div>
+            </div>
+            
+            <!-- Item Content (Edit Mode) -->
+            <div class="item-edit-form" *ngIf="item.isEditing">
+              <div class="edit-field">
+                <label>Title:</label>
+                <input type="text" [(ngModel)]="editingTitle" class="edit-title-input">
+              </div>
+              <div class="edit-field">
+                <label>Description:</label>
+                <textarea [(ngModel)]="editingDescription" rows="3" class="edit-description-input"></textarea>
+              </div>
+              <div class="edit-actions">
+                <button class="primary-button small" (click)="saveItemEdit()">Save</button>
+                <button class="secondary-button small" (click)="cancelItemEdit()">Cancel</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Empty State -->
+          <div class="empty-state" *ngIf="draftOutlineItems.length === 0">
+            <div class="empty-icon">📝</div>
+            <h4>No outline items yet</h4>
+            <p>Use the chat interface to get AI help developing your outline, then add the best suggestions to your draft.</p>
+          </div>
+        </div>
+
+        <!-- Manual Add Item -->
+        <div class="add-item-section">
+          <button class="secondary-button" (click)="addToDraft('New outline item', undefined)">
+            ➕ Add Manual Item
+          </button>
+        </div>
+      </div>
+
+      <!-- Phase Completion Status -->
+      <div class="section completion-status-section">
+        <h3>Phase Completion</h3>
+        <div class="completion-checklist">
+          <div class="checklist-item" [class.complete]="basicOutline.trim().length > 0">
+            <span class="check-icon">{{ basicOutline.trim().length > 0 ? '✅' : '⏳' }}</span>
+            <span class="check-text">Basic plot outline entered</span>
+          </div>
+          <div class="checklist-item" [class.complete]="draftOutlineItems.length >= 3">
+            <span class="check-icon">{{ draftOutlineItems.length >= 3 ? '✅' : '⏳' }}</span>
+            <span class="check-text">At least 3 outline items ({{ draftOutlineItems.length }}/3)</span>
+          </div>
+          <div class="checklist-item" [class.complete]="hasDetailedDescriptions()">
+            <span class="check-icon">{{ hasDetailedDescriptions() ? '✅' : '⏳' }}</span>
+            <span class="check-text">All items have detailed descriptions</span>
+          </div>
+        </div>
+        
+        <div class="completion-message" *ngIf="canAdvancePhase()">
+          <div class="success-message">
+            🎉 <strong>Phase Complete!</strong> You can now advance to the Chapter Detailer phase.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Chat Interface -->
+    <div class="chat-panel" *ngIf="showChat">
+      <div class="chat-header">
+        <h3>💬 Outline Development Chat</h3>
+        <button class="close-button" (click)="toggleChat()" title="Close chat">✕</button>
+      </div>
+      
+      <div class="chat-container">
+        <app-chat-interface
+          [config]="chatConfig"
+          [disabled]="false"
+          [processing]="isGeneratingFleshOut || isResearching"
+          (messageSent)="onMessageSent($event)"
+          (messageAction)="onMessageAction($event)"
+          (branchChanged)="onBranchChanged($event)"
+          (conversationCleared)="onConversationCleared()">
+        </app-chat-interface>
+      </div>
+      
+      <!-- Add to Draft Helper -->
+      <div class="chat-helper">
+        <div class="helper-text">
+          💡 <strong>Tip:</strong> Look for useful AI responses and click "Add to Draft" to build your outline!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Research Sidebar -->
+  <div class="research-sidebar" *ngIf="showResearchSidebar" [class.show]="showResearchSidebar">
+    <div class="sidebar-header">
+      <h3>📚 Archive Research</h3>
+      <button class="close-button" (click)="closeResearchSidebar()" title="Close">✕</button>
+    </div>
+    
+    <div class="sidebar-content">
+      <div class="research-error" *ngIf="researchError">
+        <span class="error-icon">⚠️</span>
+        <p>{{ researchError }}</p>
+      </div>
+      
+      <div class="research-results" *ngIf="researchData && !researchError">
+        <div class="research-response">
+          <h4>Research Summary</h4>
+          <div class="response-text" [innerHTML]="researchData.answer | newlineToBr"></div>
+        </div>
+        
+        <div class="research-sources" *ngIf="researchData.sources && researchData.sources.length > 0">
+          <h4>Sources ({{ researchData.sources.length }})</h4>
+          <div class="sources-list">
+            <div class="source-item" *ngFor="let source of researchData.sources">
+              <div class="source-header">
+                <span class="source-file">{{ source.file_name || 'Unknown file' }}</span>
+                <span class="similarity-badge" [class]="'similarity-' + (source.similarity_score > 0.8 ? 'high' : source.similarity_score > 0.6 ? 'medium' : 'low')">
+                  {{ (source.similarity_score * 100).toFixed(1) }}%
+                </span>
+              </div>
+              <div class="source-excerpt">
+                {{ source.matching_section.substring(0, 200) }}{{ source.matching_section.length > 200 ? '...' : '' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Track by function for ngFor -->
+<ng-container>
+  <!-- This is a helper for the trackBy function -->
+</ng-container>

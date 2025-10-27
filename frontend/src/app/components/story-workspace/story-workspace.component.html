@@ -360,8 +360,19 @@
     <div *ngIf="activeTab === 'chapter-creation'" class="tab-pane chapter-creation-tab">
       <h2>Chapter Creation</h2>
 
+      <!-- Three-Phase Chapter Compose Interface -->
+      <div *ngIf="currentPhase === 'plot-outline'" class="phase-content">
+        <app-plot-outline-phase
+          [story]="story"
+          [chapterNumber]="getCurrentChapterNumber()"
+          (phaseCompleted)="onPlotOutlinePhaseCompleted()"
+          (outlineUpdated)="onOutlineUpdated($event)">
+        </app-plot-outline-phase>
+      </div>
 
-      <!-- Plot Point -->
+      <!-- Legacy Chapter Creation Interface (for other phases and backward compatibility) -->
+      <div *ngIf="currentPhase !== 'plot-outline'" class="legacy-chapter-creation">
+        <!-- Plot Point -->
       <div class="section plot-point-section">
         <h3>Plot Point</h3>
         <textarea [(ngModel)]="story.chapterCreation.plotPoint" placeholder="Sarah discovers a hidden letter in the..." rows="4"></textarea>
@@ -591,6 +602,7 @@
 
         <button class="primary-button large" (click)="acceptChapter()">Accept Chapter - Add to Story</button>
       </div>
+      </div> <!-- End legacy-chapter-creation -->
     </div>
   </div>
 

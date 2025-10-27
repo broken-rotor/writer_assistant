@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import { ChatInterfaceComponent, ChatInterfaceConfig } from './chat-interface.component';
 import { ConversationService } from '../../services/conversation.service';
@@ -118,7 +118,7 @@ describe('ChatInterfaceComponent', () => {
   });
 
   it('should throw error if config is not provided', () => {
-    component.config = undefined as any;
+    component.config = undefined as unknown as ChatInterfaceConfig;
 
     expect(() => {
       component.ngOnInit();

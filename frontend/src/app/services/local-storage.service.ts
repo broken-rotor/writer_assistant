@@ -372,6 +372,28 @@ export class LocalStorageService {
     });
   }
 
+  // Generic storage methods for other services
+  getItem(key: string): any {
+    try {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error('Error getting item from storage:', error);
+      return null;
+    }
+  }
+
+  setItem(key: string, value: any): boolean {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      console.error('Error setting item in storage:', error);
+      this.handleStorageError(error);
+      return false;
+    }
+  }
+
   // Cleanup
   cleanupOldStories(maxAgeInDays: number = 30): number {
     const cutoffDate = new Date(Date.now() - maxAgeInDays * 24 * 60 * 60 * 1000);

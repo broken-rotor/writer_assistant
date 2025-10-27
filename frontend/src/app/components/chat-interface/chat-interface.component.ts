@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -11,8 +11,7 @@ import {
 } from '../../models/story.model';
 import { 
   ConversationService, 
-  ConversationConfig, 
-  MessageSendOptions 
+  ConversationConfig
 } from '../../services/conversation.service';
 import { PhaseType } from '../../services/phase-state.service';
 
@@ -32,7 +31,7 @@ export interface ChatInterfaceConfig {
 export interface MessageActionEvent {
   action: 'edit' | 'delete' | 'branch' | 'reply';
   message: ChatMessage;
-  data?: any;
+  data?: unknown;
 }
 
 @Component({
@@ -72,8 +71,7 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
 
   // Subscriptions
   private subscriptions: Subscription[] = [];
-
-  constructor(private conversationService: ConversationService) {}
+  private conversationService = inject(ConversationService);
 
   ngOnInit(): void {
     if (!this.config) {
@@ -230,6 +228,20 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
       this.closeBranchDialog();
     } catch (error) {
       console.error('Failed to create branch:', error);
+    }
+  }
+
+  onBranchChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    if (target && target.value) {
+      this.switchToBranch(target.value);
+    }
+  }
+
+  onEditKeydown(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.ctrlKey) {
+      this.saveEditMessage();
     }
   }
 
