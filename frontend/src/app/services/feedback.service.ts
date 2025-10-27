@@ -8,7 +8,9 @@ import {
   Character,
   Rater,
   Story,
-  FeedbackItem
+  FeedbackItem,
+  ChapterComposeState,
+  ConversationThread
 } from '../models/story.model';
 import { GenerationService } from './generation.service';
 import { ConversationService } from './conversation.service';
@@ -331,7 +333,7 @@ export class FeedbackService {
           type: type,
           content: content,
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: {
@@ -361,7 +363,7 @@ export class FeedbackService {
         type: 'suggestion',
         content: response.feedback.opinion,
         incorporated: false,
-        phase: 'chapter-detailer',
+        phase: 'chapter_detail',
         priority: 'medium',
         status: 'pending',
         metadata: {
@@ -383,7 +385,7 @@ export class FeedbackService {
         type: 'suggestion',
         content: content,
         incorporated: false,
-        phase: 'chapter-detailer',
+        phase: 'chapter_detail',
         priority: priority,
         status: 'pending',
         metadata: {
@@ -506,5 +508,237 @@ export class FeedbackService {
 
   private notifyFeedbackUpdated(): void {
     this.feedbackUpdatedSubject.next();
+  }
+
+  // ============================================================================
+  // PHASE-AWARE FEEDBACK METHODS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
+  // ============================================================================
+
+  /**
+   * Request character feedback with phase context
+   */
+  requestCharacterFeedbackWithPhase(
+    story: Story,
+    character: Character,
+    chapterNumber: number,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<EnhancedFeedbackItem[]> {
+    const requestId = `character_${character.id}_${Date.now()}`;
+    this.addPendingRequest(requestId);
+
+    const plotPoint = this.getPlotPointForChapter(story, chapterNumber);
+
+    return this.generationService.requestCharacterFeedbackWithPhase(
+      story,
+      character,
+      plotPoint,
+      chapterComposeState,
+      conversationThread,
+      additionalInstructions
+    ).pipe(
+      map(response => {
+        const enhancedFeedback = this.convertCharacterFeedbackToEnhanced(
+          response,
+          character.name,
+          chapterNumber
+        );
+
+        // Store feedback with phase context
+        this.storeFeedbackWithPhase(story.id, chapterNumber, enhancedFeedback, chapterComposeState);
+        this.completeRequest(requestId);
+        this.notifyFeedbackUpdated();
+
+        return enhancedFeedback;
+      }),
+      catchError(error => {
+        console.error('Character feedback request failed:', error);
+        this.failRequest(requestId);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Request rater feedback with phase context
+   */
+  requestRaterFeedbackWithPhase(
+    story: Story,
+    rater: Rater,
+    chapterNumber: number,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<EnhancedFeedbackItem[]> {
+    const requestId = `rater_${rater.id}_${Date.now()}`;
+    this.addPendingRequest(requestId);
+
+    const plotPoint = this.getPlotPointForChapter(story, chapterNumber);
+
+    return this.generationService.requestRaterFeedbackWithPhase(
+      story,
+      rater,
+      plotPoint,
+      chapterComposeState,
+      conversationThread,
+      additionalInstructions
+    ).pipe(
+      map(response => {
+        const enhancedFeedback = this.convertRaterFeedbackToEnhanced(
+          response,
+          rater.name,
+          chapterNumber
+        );
+
+        // Store feedback with phase context
+        this.storeFeedbackWithPhase(story.id, chapterNumber, enhancedFeedback, chapterComposeState);
+        this.completeRequest(requestId);
+        this.notifyFeedbackUpdated();
+
+        return enhancedFeedback;
+      }),
+      catchError(error => {
+        console.error('Rater feedback request failed:', error);
+        this.failRequest(requestId);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Request feedback from multiple agents with phase context
+   */
+  requestMultipleAgentFeedbackWithPhase(
+    story: Story,
+    agents: Array<{ type: 'character' | 'rater'; agent: Character | Rater }>,
+    chapterNumber: number,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<EnhancedFeedbackItem[]> {
+    const feedbackRequests = agents.map(({ type, agent }) => {
+      if (type === 'character') {
+        return this.requestCharacterFeedbackWithPhase(
+          story,
+          agent as Character,
+          chapterNumber,
+          chapterComposeState,
+          conversationThread,
+          additionalInstructions
+        );
+      } else {
+        return this.requestRaterFeedbackWithPhase(
+          story,
+          agent as Rater,
+          chapterNumber,
+          chapterComposeState,
+          conversationThread,
+          additionalInstructions
+        );
+      }
+    });
+
+    // Combine all feedback requests
+    return new Observable<EnhancedFeedbackItem[]>(observer => {
+      const allFeedback: EnhancedFeedbackItem[] = [];
+      let completedRequests = 0;
+
+      feedbackRequests.forEach(request => {
+        request.subscribe({
+          next: (feedback) => {
+            allFeedback.push(...feedback);
+            completedRequests++;
+
+            if (completedRequests === feedbackRequests.length) {
+              observer.next(allFeedback);
+              observer.complete();
+            }
+          },
+          error: (error) => {
+            console.error('Agent feedback request failed:', error);
+            completedRequests++;
+
+            if (completedRequests === feedbackRequests.length) {
+              observer.next(allFeedback);
+              observer.complete();
+            }
+          }
+        });
+      });
+    });
+  }
+
+  /**
+   * Store feedback with phase context
+   */
+  private storeFeedbackWithPhase(
+    storyId: string,
+    chapterNumber: number,
+    feedback: EnhancedFeedbackItem[],
+    chapterComposeState?: ChapterComposeState
+  ): void {
+    // Add phase context to feedback metadata
+    const enhancedFeedback = feedback.map(item => ({
+      ...item,
+      metadata: {
+        ...item.metadata,
+        phase_context: chapterComposeState ? {
+          current_phase: chapterComposeState.currentPhase,
+          plot_outline: chapterComposeState.phases.plotOutline.status,
+          chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+          final_edit: chapterComposeState.phases.finalEdit.status
+        } : undefined
+      }
+    }));
+
+    // Use existing storage method with enhanced feedback
+    this.storeFeedback(storyId, chapterNumber, enhancedFeedback);
+  }
+
+  /**
+   * Get feedback filtered by phase
+   */
+  getFeedbackByPhase(
+    storyId: string,
+    chapterNumber: number,
+    phase: 'plot_outline' | 'chapter_detail' | 'final_edit'
+  ): EnhancedFeedbackItem[] {
+    const cacheKey = `${storyId}_${chapterNumber}_chapter-detailer`;
+    const allFeedback = this.feedbackCache.get(cacheKey) || [];
+
+    return allFeedback.filter(item => 
+      item.metadata?.phase_context?.current_phase === phase
+    );
+  }
+
+  /**
+   * Get feedback statistics by phase
+   */
+  getFeedbackStatsByPhase(
+    storyId: string,
+    chapterNumber: number
+  ): { [phase: string]: { total: number; incorporated: number; pending: number } } {
+    const cacheKey = `${storyId}_${chapterNumber}_chapter-detailer`;
+    const allFeedback = this.feedbackCache.get(cacheKey) || [];
+
+    const stats: { [phase: string]: { total: number; incorporated: number; pending: number } } = {};
+
+    allFeedback.forEach(item => {
+      const phase = item.metadata?.phase_context?.current_phase || 'unknown';
+      
+      if (!stats[phase]) {
+        stats[phase] = { total: 0, incorporated: 0, pending: 0 };
+      }
+
+      stats[phase].total++;
+      if (item.incorporated) {
+        stats[phase].incorporated++;
+      } else {
+        stats[phase].pending++;
+      }
+    });
+
+    return stats;
   }
 }

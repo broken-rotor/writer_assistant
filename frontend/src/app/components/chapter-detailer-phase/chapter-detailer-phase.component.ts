@@ -72,7 +72,7 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
 
   // Chat interface configuration
   chatConfig: ChatInterfaceConfig = {
-    phase: 'chapter-detailer',
+    phase: 'chapter_detail',
     storyId: '',
     chapterNumber: 1,
     enableBranching: true,
@@ -83,7 +83,7 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
 
   // Feedback sidebar configuration
   feedbackConfig: FeedbackSidebarConfig = {
-    phase: 'chapter-detailer',
+    phase: 'chapter_detail',
     storyId: '',
     chapterNumber: 1,
     showRequestButtons: true,

@@ -1,14 +1,21 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { 
   ChatMessage, 
   ConversationThread, 
   ConversationBranch, 
   BranchNavigation,
-  ChapterComposeState
+  ChapterComposeState,
+  LLMChatRequest,
+  LLMChatResponse,
+  LLMChatComposeContext,
+  Story
 } from '../models/story.model';
 import { LocalStorageService } from './local-storage.service';
 import { PhaseStateService, PhaseType } from './phase-state.service';
+import { ApiService } from './api.service';
 
 export interface ConversationConfig {
   phase: PhaseType;
@@ -49,7 +56,8 @@ export class ConversationService {
 
   constructor(
     private localStorageService: LocalStorageService,
-    private phaseStateService: PhaseStateService
+    private phaseStateService: PhaseStateService,
+    private apiService: ApiService
   ) {}
 
   /**
@@ -467,5 +475,179 @@ export class ConversationService {
 
   private generateThreadId(): string {
     return `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // ============================================================================
+  // LLM CHAT INTEGRATION FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
+  // ============================================================================
+
+  /**
+   * Send a message to the LLM chat endpoint and add the response to the conversation
+   */
+  sendLLMChatMessage(
+    content: string,
+    story: Story,
+    chapterComposeState: ChapterComposeState,
+    agentType: 'writer' | 'character' | 'editor' = 'writer',
+    options?: MessageSendOptions
+  ): Observable<ChatMessage> {
+    const currentThread = this.currentThreadSubject.value;
+    if (!currentThread) {
+      return of({
+        id: this.generateMessageId(),
+        type: 'assistant',
+        content: 'Error: No active conversation thread',
+        timestamp: new Date(),
+        metadata: { 
+          error: 'No active thread',
+          phase: chapterComposeState.currentPhase,
+          messageIndex: 0
+        }
+      });
+    }
+
+    this.isProcessingSubject.next(true);
+
+    // Add user message to thread
+    const userMessage: ChatMessage = {
+      id: this.generateMessageId(),
+      type: 'user',
+      content,
+      timestamp: new Date(),
+      metadata: options?.metadata || {}
+    };
+
+    this.sendMessage(userMessage.content, userMessage.type, options);
+
+    // Prepare LLM chat request
+    const chatRequest: LLMChatRequest = {
+      messages: currentThread.messages.map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString()
+      })),
+      agent_type: agentType,
+      compose_context: this.buildLLMChatContext(chapterComposeState, currentThread),
+      system_prompts: {
+        mainPrefix: story.general.systemPrompts.mainPrefix,
+        mainSuffix: story.general.systemPrompts.mainSuffix,
+        assistantPrompt: story.general.systemPrompts.assistantPrompt,
+        editorPrompt: story.general.systemPrompts.editorPrompt
+      },
+      max_tokens: 1000,
+      temperature: 0.8
+    };
+
+    return this.apiService.llmChat(chatRequest).pipe(
+      map((response: LLMChatResponse) => {
+        const assistantMessage: ChatMessage = {
+          id: this.generateMessageId(),
+          type: 'assistant',
+          content: response.message.content,
+          timestamp: new Date(),
+          metadata: {
+            agent_type: response.agent_type,
+            phase: chapterComposeState.currentPhase,
+            messageIndex: currentThread.messages.length,
+            ...response.metadata
+          }
+        };
+
+        this.sendMessage(assistantMessage.content, assistantMessage.type);
+        this.isProcessingSubject.next(false);
+        return assistantMessage;
+      }),
+      catchError((error) => {
+        console.error('LLM Chat error:', error);
+        const errorMessage: ChatMessage = {
+          id: this.generateMessageId(),
+          type: 'assistant',
+          content: 'Sorry, I encountered an error while processing your message. Please try again.',
+          timestamp: new Date(),
+          metadata: { 
+            error: error.message || 'Unknown error',
+            phase: chapterComposeState.currentPhase,
+            messageIndex: currentThread?.messages.length || 0
+          }
+        };
+
+        this.sendMessage(errorMessage.content, errorMessage.type);
+        this.isProcessingSubject.next(false);
+        return of(errorMessage);
+      })
+    );
+  }
+
+  /**
+   * Build LLM chat context from chapter compose state
+   */
+  private buildLLMChatContext(
+    chapterComposeState: ChapterComposeState,
+    conversationThread: ConversationThread
+  ): LLMChatComposeContext {
+    const context: LLMChatComposeContext = {
+      current_phase: chapterComposeState.currentPhase,
+      story_context: {
+        phase_status: {
+          plot_outline: chapterComposeState.phases.plotOutline.status,
+          chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+          final_edit: chapterComposeState.phases.finalEdit.status
+        }
+      },
+      conversation_branch_id: conversationThread.currentBranchId
+    };
+
+    // Add phase-specific context
+    switch (chapterComposeState.currentPhase) {
+      case 'plot_outline':
+        if (chapterComposeState.phases.plotOutline.outline.items.size > 0) {
+          const outlineItems = Array.from(chapterComposeState.phases.plotOutline.outline.items.values());
+          context.story_context['plot_outline'] = outlineItems
+            .sort((a, b) => a.order - b.order)
+            .map(item => ({ title: item.title, description: item.description }));
+        }
+        break;
+
+      case 'chapter_detail':
+        if (chapterComposeState.phases.plotOutline.status === 'completed') {
+          const outlineItems = Array.from(chapterComposeState.phases.plotOutline.outline.items.values());
+          context.story_context['completed_outline'] = outlineItems
+            .sort((a, b) => a.order - b.order)
+            .map(item => ({ title: item.title, description: item.description }));
+        }
+        if (chapterComposeState.phases.chapterDetailer.chapterDraft.content) {
+          context.chapter_draft = chapterComposeState.phases.chapterDetailer.chapterDraft.content;
+        }
+        break;
+
+      case 'final_edit':
+        if (chapterComposeState.phases.chapterDetailer.status === 'completed') {
+          context.chapter_draft = chapterComposeState.phases.chapterDetailer.chapterDraft.content;
+        }
+        if (chapterComposeState.phases.finalEdit.finalChapter.content) {
+          context.story_context['final_chapter'] = chapterComposeState.phases.finalEdit.finalChapter.content;
+        }
+        break;
+    }
+
+    return context;
+  }
+
+  /**
+   * Get conversation history for API requests
+   */
+  getConversationHistoryForAPI(maxMessages: number = 10): Array<{ role: 'user' | 'assistant'; content: string; timestamp?: string }> {
+    const currentThread = this.currentThreadSubject.value;
+    if (!currentThread) {
+      return [];
+    }
+
+    return currentThread.messages
+      .slice(-maxMessages)
+      .map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString()
+      }));
   }
 }

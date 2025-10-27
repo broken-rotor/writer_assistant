@@ -87,7 +87,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   // Phase navigation state
   showPhaseNavigation = false;
-  currentPhase: PhaseType = 'plot-outline';
+  currentPhase: PhaseType = 'plot_outline';
 
   // Feedback sidebar state
   showFeedbackSidebar = false;
@@ -1365,11 +1365,11 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     
     const currentPhase = this.story.chapterCompose.currentPhase;
     switch (currentPhase) {
-      case 'plot-outline':
+      case 'plot_outline':
         return this.story.chapterCompose.phases.plotOutline.draftSummary || '';
-      case 'chapter-detailer':
+      case 'chapter_detail':
         return this.story.chapterCompose.phases.chapterDetailer.chapterDraft.title || '';
-      case 'final-edit':
+      case 'final_edit':
         return this.story.chapterCompose.phases.finalEdit.finalChapter.title || '';
       default:
         return '';

@@ -8,7 +8,9 @@ import {
   Rater,
   Story,
   EditorSuggestion,
-  FinalEditPhase
+  FinalEditPhase,
+  ChapterComposeState,
+  ConversationThread
 } from '../models/story.model';
 import { GenerationService } from './generation.service';
 import { FeedbackService } from './feedback.service';
@@ -77,6 +79,40 @@ export class ReviewService {
     totalRequests: 0,
     completedCount: 0
   };
+
+  /**
+   * Add a pending request to track
+   */
+  private addPendingRequest(requestId: string): void {
+    this.requestStatus.pendingRequests.push(requestId);
+    this.requestStatus.totalRequests++;
+    this.requestStatusSubject.next(this.requestStatus);
+  }
+
+  /**
+   * Mark a request as completed
+   */
+  private completeRequest(requestId: string): void {
+    const index = this.requestStatus.pendingRequests.indexOf(requestId);
+    if (index > -1) {
+      this.requestStatus.pendingRequests.splice(index, 1);
+      this.requestStatus.completedRequests.push(requestId);
+      this.requestStatus.completedCount++;
+      this.requestStatusSubject.next(this.requestStatus);
+    }
+  }
+
+  /**
+   * Mark a request as failed
+   */
+  private failRequest(requestId: string): void {
+    const index = this.requestStatus.pendingRequests.indexOf(requestId);
+    if (index > -1) {
+      this.requestStatus.pendingRequests.splice(index, 1);
+      this.requestStatus.failedRequests.push(requestId);
+      this.requestStatusSubject.next(this.requestStatus);
+    }
+  }
 
   /**
    * Get available reviews for Phase 3 (final-edit)
@@ -625,5 +661,453 @@ export class ReviewService {
 
   private notifyReviewsUpdated(): void {
     this.reviewsUpdatedSubject.next();
+  }
+
+  // ============================================================================
+  // PHASE-AWARE REVIEW METHODS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
+  // ============================================================================
+
+  /**
+   * Request editor review with phase context
+   */
+  requestEditorReviewWithPhase(
+    story: Story,
+    chapterText: string,
+    chapterNumber: number,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<ReviewItem[]> {
+    const requestId = `editor_${chapterNumber}_${Date.now()}`;
+    this.addPendingRequest(requestId);
+
+    return this.generationService.requestEditorReviewWithPhase(
+      story,
+      chapterText,
+      chapterComposeState,
+      conversationThread,
+      additionalInstructions
+    ).pipe(
+      map(response => {
+        const reviews = this.convertEditorReviewToReviewsWithPhase(
+          response,
+          chapterNumber,
+          chapterComposeState
+        );
+
+        // Store reviews with phase context
+        this.storeReviewsWithPhase(story.id, chapterNumber, reviews, chapterComposeState);
+        this.completeRequest(requestId);
+        this.notifyReviewsUpdated();
+
+        return reviews;
+      }),
+      catchError(error => {
+        console.error('Editor review request failed:', error);
+        this.failRequest(requestId);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Request comprehensive review with phase context
+   */
+  requestComprehensiveReviewWithPhase(
+    story: Story,
+    chapterText: string,
+    chapterNumber: number,
+    options: ComprehensiveReviewRequest,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<ReviewItem[]> {
+    const requests: Observable<any>[] = [];
+
+    // Character feedback requests
+    if (options.includeCharacters) {
+      const availableCharacters = Array.from(story.characters.values()).filter(char => !char.isHidden);
+      availableCharacters.forEach(character => {
+        const plotPoint = this.getPlotPointForChapter(story, chapterNumber);
+        requests.push(
+          this.generationService.requestCharacterFeedbackWithPhase(
+            story,
+            character,
+            plotPoint,
+            chapterComposeState,
+            conversationThread,
+            additionalInstructions
+          )
+        );
+      });
+    }
+
+    // Rater feedback requests
+    if (options.includeRaters) {
+      const availableRaters = Array.from(story.raters.values()).filter(rater => rater.enabled);
+      availableRaters.forEach(rater => {
+        const plotPoint = this.getPlotPointForChapter(story, chapterNumber);
+        requests.push(
+          this.generationService.requestRaterFeedbackWithPhase(
+            story,
+            rater,
+            plotPoint,
+            chapterComposeState,
+            conversationThread,
+            additionalInstructions
+          )
+        );
+      });
+    }
+
+    // Editor review request
+    if (options.includeEditor) {
+      requests.push(
+        this.generationService.requestEditorReviewWithPhase(
+          story,
+          chapterText,
+          chapterComposeState,
+          conversationThread,
+          additionalInstructions
+        )
+      );
+    }
+
+    if (requests.length === 0) {
+      return of([]);
+    }
+
+    // Execute all requests
+    return forkJoin(requests).pipe(
+      map(responses => {
+        const allReviews: ReviewItem[] = [];
+        this.processComprehensiveReviewResponsesWithPhase(
+          responses,
+          story.id,
+          chapterNumber,
+          options,
+          allReviews,
+          chapterComposeState
+        );
+        return allReviews;
+      }),
+      catchError(error => {
+        console.error('Comprehensive review request failed:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Convert editor review to review items with phase context
+   */
+  private convertEditorReviewToReviewsWithPhase(
+    response: any,
+    chapterNumber: number,
+    chapterComposeState?: ChapterComposeState
+  ): ReviewItem[] {
+    const reviews: ReviewItem[] = [];
+    const now = new Date();
+
+    // Convert editor suggestions to review items
+    const suggestions = response.suggestions || [];
+    suggestions.forEach((suggestion: EditorSuggestion, index: number) => {
+      reviews.push({
+        id: `editor_${chapterNumber}_${index}_${Date.now()}`,
+        type: this.mapEditorIssueToReviewType(suggestion.issue),
+        title: `Editor - ${suggestion.issue}`,
+        description: suggestion.issue,
+        suggestion: suggestion.suggestion,
+        priority: suggestion.priority,
+        status: 'pending',
+        affectedText: suggestion.selected ? {
+          startIndex: 0,
+          endIndex: 0,
+          originalText: '',
+          suggestedText: suggestion.suggestion
+        } : undefined,
+        metadata: {
+          created: now,
+          reviewer: 'editor',
+          phase_context: chapterComposeState ? {
+            current_phase: chapterComposeState.currentPhase,
+            plot_outline: chapterComposeState.phases.plotOutline.status,
+            chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+            final_edit: chapterComposeState.phases.finalEdit.status
+          } : undefined
+        }
+      });
+    });
+
+    return reviews;
+  }
+
+  /**
+   * Process comprehensive review responses with phase context
+   */
+  private processComprehensiveReviewResponsesWithPhase(
+    responses: any[],
+    storyId: string,
+    chapterNumber: number,
+    options: ComprehensiveReviewRequest,
+    reviews: ReviewItem[],
+    chapterComposeState?: ChapterComposeState
+  ): void {
+    let responseIndex = 0;
+
+    // Process character feedback responses
+    if (options.includeCharacters) {
+      const story = this.localStorageService.loadStory(storyId);
+      if (story) {
+        const availableCharacters = Array.from(story.characters.values()).filter(char => !char.isHidden);
+        availableCharacters.forEach(character => {
+          if (responseIndex < responses.length) {
+            const characterReviews = this.convertCharacterFeedbackToReviewsWithPhase(
+              responses[responseIndex],
+              character.name,
+              chapterNumber,
+              chapterComposeState
+            );
+            reviews.push(...characterReviews);
+            responseIndex++;
+          }
+        });
+      }
+    }
+
+    // Process rater feedback responses
+    if (options.includeRaters) {
+      const story = this.localStorageService.loadStory(storyId);
+      if (story) {
+        const availableRaters = Array.from(story.raters.values()).filter(rater => rater.enabled);
+        availableRaters.forEach(rater => {
+          if (responseIndex < responses.length) {
+            const raterReviews = this.convertRaterFeedbackToReviewsWithPhase(
+              responses[responseIndex],
+              rater.name,
+              chapterNumber,
+              chapterComposeState
+            );
+            reviews.push(...raterReviews);
+            responseIndex++;
+          }
+        });
+      }
+    }
+
+    // Process editor review response
+    if (options.includeEditor && responseIndex < responses.length) {
+      const editorReviews = this.convertEditorReviewToReviewsWithPhase(
+        responses[responseIndex],
+        chapterNumber,
+        chapterComposeState
+      );
+      reviews.push(...editorReviews);
+    }
+
+    // Store reviews with phase context
+    this.storeReviewsWithPhase(storyId, chapterNumber, reviews, chapterComposeState);
+    
+    // Calculate quality score
+    this.calculateQualityScore(reviews);
+  }
+
+  /**
+   * Convert character feedback to reviews with phase context
+   */
+  private convertCharacterFeedbackToReviewsWithPhase(
+    response: any,
+    characterName: string,
+    chapterNumber: number,
+    chapterComposeState?: ChapterComposeState
+  ): ReviewItem[] {
+    const reviews: ReviewItem[] = [];
+    const now = new Date();
+
+    // Convert character feedback to review items
+    const feedbackTypes = [
+      { key: 'actions', type: 'character' as const },
+      { key: 'dialog', type: 'character' as const },
+      { key: 'physicalSensations', type: 'character' as const },
+      { key: 'emotions', type: 'character' as const },
+      { key: 'internalMonologue', type: 'character' as const }
+    ];
+
+    feedbackTypes.forEach(({ key, type }) => {
+      const items = response.feedback?.[key] || [];
+      items.forEach((content: string, index: number) => {
+        reviews.push({
+          id: `char_${characterName}_${key}_${chapterNumber}_${index}_${Date.now()}`,
+          type: type,
+          title: `${characterName} - ${key}`,
+          description: content,
+          suggestion: content,
+          priority: 'medium',
+          status: 'pending',
+          metadata: {
+            created: now,
+            reviewer: characterName,
+            phase_context: chapterComposeState ? {
+              current_phase: chapterComposeState.currentPhase,
+              plot_outline: chapterComposeState.phases.plotOutline.status,
+              chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+              final_edit: chapterComposeState.phases.finalEdit.status
+            } : undefined
+          }
+        });
+      });
+    });
+
+    return reviews;
+  }
+
+  /**
+   * Convert rater feedback to reviews with phase context
+   */
+  private convertRaterFeedbackToReviewsWithPhase(
+    response: any,
+    raterName: string,
+    chapterNumber: number,
+    chapterComposeState?: ChapterComposeState
+  ): ReviewItem[] {
+    const reviews: ReviewItem[] = [];
+    const now = new Date();
+
+    // Add opinion as a review
+    if (response.feedback?.opinion) {
+      reviews.push({
+        id: `rater_${raterName}_opinion_${chapterNumber}_${Date.now()}`,
+        type: 'style',
+        title: `${raterName} - Overall Opinion`,
+        description: response.feedback.opinion,
+        suggestion: response.feedback.opinion,
+        priority: 'medium',
+        status: 'pending',
+        metadata: {
+          created: now,
+          reviewer: raterName,
+          phase_context: chapterComposeState ? {
+            current_phase: chapterComposeState.currentPhase,
+            plot_outline: chapterComposeState.phases.plotOutline.status,
+            chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+            final_edit: chapterComposeState.phases.finalEdit.status
+          } : undefined
+        }
+      });
+    }
+
+    // Add suggestions
+    const suggestions = response.feedback?.suggestions || [];
+    suggestions.forEach((suggestion: any, index: number) => {
+      const content = typeof suggestion === 'string' ? suggestion : suggestion.suggestion;
+      const priority = suggestion.priority || 'medium';
+      
+      reviews.push({
+        id: `rater_${raterName}_suggestion_${chapterNumber}_${index}_${Date.now()}`,
+        type: 'style',
+        title: `${raterName} - Suggestion`,
+        description: content,
+        suggestion: content,
+        priority: priority,
+        status: 'pending',
+        metadata: {
+          created: now,
+          reviewer: raterName,
+          phase_context: chapterComposeState ? {
+            current_phase: chapterComposeState.currentPhase,
+            plot_outline: chapterComposeState.phases.plotOutline.status,
+            chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+            final_edit: chapterComposeState.phases.finalEdit.status
+          } : undefined
+        }
+      });
+    });
+
+    return reviews;
+  }
+
+  /**
+   * Store reviews with phase context
+   */
+  private storeReviewsWithPhase(
+    storyId: string,
+    chapterNumber: number,
+    reviews: ReviewItem[],
+    chapterComposeState?: ChapterComposeState
+  ): void {
+    // Use existing storage method - phase context is already in metadata
+    this.storeReviews(storyId, chapterNumber, reviews);
+  }
+
+  /**
+   * Get reviews filtered by phase
+   */
+  getReviewsByPhase(
+    storyId: string,
+    chapterNumber: number,
+    phase: 'plot_outline' | 'chapter_detail' | 'final_edit'
+  ): ReviewItem[] {
+    const cacheKey = `${storyId}_${chapterNumber}_final-edit`;
+    const allReviews = this.reviewCache.get(cacheKey) || [];
+
+    return allReviews.filter(item => 
+      item.metadata?.phase_context?.current_phase === phase
+    );
+  }
+
+  /**
+   * Get review statistics by phase
+   */
+  getReviewStatsByPhase(
+    storyId: string,
+    chapterNumber: number
+  ): { [phase: string]: { total: number; applied: number; pending: number; dismissed: number } } {
+    const cacheKey = `${storyId}_${chapterNumber}_final-edit`;
+    const allReviews = this.reviewCache.get(cacheKey) || [];
+
+    const stats: { [phase: string]: { total: number; applied: number; pending: number; dismissed: number } } = {};
+
+    allReviews.forEach(item => {
+      const phase = item.metadata?.phase_context?.current_phase || 'unknown';
+      
+      if (!stats[phase]) {
+        stats[phase] = { total: 0, applied: 0, pending: 0, dismissed: 0 };
+      }
+
+      stats[phase].total++;
+      switch (item.status) {
+        case 'accepted':
+        case 'modified':
+          stats[phase].applied++;
+          break;
+        case 'rejected':
+          stats[phase].dismissed++;
+          break;
+        default:
+          stats[phase].pending++;
+          break;
+      }
+    });
+
+    return stats;
+  }
+
+  /**
+   * Get plot point for chapter (helper method)
+   */
+  private getPlotPointForChapter(story: Story, chapterNumber: number): string {
+    // Try to get from current chapter creation state
+    if (story.chapterCreation.plotPoint) {
+      return story.chapterCreation.plotPoint;
+    }
+
+    // Try to get from existing chapters
+    const chapter = story.story.chapters.find(ch => ch.number === chapterNumber);
+    if (chapter) {
+      return chapter.plotPoint;
+    }
+
+    // Default fallback
+    return `Chapter ${chapterNumber} development`;
   }
 }

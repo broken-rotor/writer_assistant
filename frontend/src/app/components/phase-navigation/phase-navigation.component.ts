@@ -16,7 +16,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
   @Input() chapterTitle = '';
   @Output() phaseChanged = new EventEmitter<PhaseType>();
 
-  currentPhase: PhaseType = 'plot-outline';
+  currentPhase: PhaseType = 'plot_outline';
   chapterComposeState: ChapterComposeState | null = null;
   validationResult: PhaseValidationResult = {
     canAdvance: false,
@@ -28,9 +28,9 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   readonly phases: { key: PhaseType; label: string; description: string }[] = [
-    { key: 'plot-outline', label: 'Draft', description: 'Create plot outline' },
-    { key: 'chapter-detailer', label: 'Refined', description: 'Develop chapter content' },
-    { key: 'final-edit', label: 'Approved', description: 'Final review and edit' }
+    { key: 'plot_outline', label: 'Draft', description: 'Create plot outline' },
+    { key: 'chapter_detail', label: 'Refined', description: 'Develop chapter content' },
+    { key: 'final_edit', label: 'Approved', description: 'Final review and edit' }
   ];
 
   private phaseStateService = inject(PhaseStateService);
@@ -96,9 +96,9 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
    * Check if phase is accessible (current or completed)
    */
   isPhaseAccessible(phase: PhaseType): boolean {
-    if (!this.chapterComposeState) return phase === 'plot-outline';
+    if (!this.chapterComposeState) return phase === 'plot_outline';
     
-    const phaseOrder: PhaseType[] = ['plot-outline', 'chapter-detailer', 'final-edit'];
+    const phaseOrder: PhaseType[] = ['plot_outline', 'chapter_detail', 'final_edit'];
     const currentIndex = phaseOrder.indexOf(this.currentPhase);
     const targetIndex = phaseOrder.indexOf(phase);
     
@@ -113,19 +113,19 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
     if (!this.chapterComposeState) return 0;
 
     switch (phase) {
-      case 'plot-outline': {
+      case 'plot_outline': {
         const plotProgress = this.chapterComposeState.phases.plotOutline.progress;
         if (plotProgress.totalItems === 0) return 0;
         return Math.round((plotProgress.completedItems / plotProgress.totalItems) * 100);
       }
 
-      case 'chapter-detailer': {
+      case 'chapter_detail': {
         const detailerProgress = this.chapterComposeState.phases.chapterDetailer.progress;
         if (detailerProgress.totalFeedbackItems === 0) return 0;
         return Math.round((detailerProgress.feedbackIncorporated / detailerProgress.totalFeedbackItems) * 100);
       }
 
-      case 'final-edit': {
+      case 'final_edit': {
         const editProgress = this.chapterComposeState.phases.finalEdit.progress;
         if (editProgress.totalReviews === 0) return 0;
         return Math.round((editProgress.reviewsApplied / editProgress.totalReviews) * 100);
@@ -205,7 +205,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
    * Check if target phase is after current phase
    */
   private isPhaseAfter(targetPhase: PhaseType, currentPhase: PhaseType): boolean {
-    const phaseOrder: PhaseType[] = ['plot-outline', 'chapter-detailer', 'final-edit'];
+    const phaseOrder: PhaseType[] = ['plot_outline', 'chapter_detail', 'final_edit'];
     return phaseOrder.indexOf(targetPhase) > phaseOrder.indexOf(currentPhase);
   }
 

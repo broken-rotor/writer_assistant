@@ -90,7 +90,7 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
 
   // Chat interface configuration
   chatConfig: ChatInterfaceConfig = {
-    phase: 'final-edit',
+    phase: 'final_edit',
     storyId: '',
     chapterNumber: 1,
     enableBranching: true,
@@ -518,7 +518,7 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
     };
 
     // Save through phase state service
-    this.phaseStateService.updatePhaseData(this.story.id, 'final-edit', finalEditPhase);
+    this.phaseStateService.updatePhaseData(this.story.id, 'final_edit', finalEditPhase);
   }
 
   // UI helper methods
