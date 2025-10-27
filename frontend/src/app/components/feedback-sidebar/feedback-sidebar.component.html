@@ -1,0 +1,253 @@
+<div class="feedback-sidebar" [class.disabled]="disabled" [style.max-height]="config.maxHeight">
+  <!-- Sidebar Header -->
+  <div class="sidebar-header">
+    <h3>Feedback Manager</h3>
+    <div class="selection-summary" *ngIf="hasSelectedFeedback">
+      <span class="selected-count">{{ selectedCount }} selected</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner">⏳</div>
+    <span>Loading feedback...</span>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error && !isLoading">
+    <div class="error-icon">⚠️</div>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Main Content -->
+  <div class="sidebar-content" *ngIf="!isLoading && !error">
+    
+    <!-- Global Actions -->
+    <div class="global-actions">
+      <button 
+        class="action-button select-all" 
+        (click)="selectAllFeedback()"
+        [disabled]="disabled || availableFeedback.length === 0"
+        title="Select all feedback items">
+        Select All
+      </button>
+      <button 
+        class="action-button clear-all" 
+        (click)="clearAllSelection()"
+        [disabled]="disabled || !hasSelectedFeedback"
+        title="Clear all selections">
+        Clear All
+      </button>
+    </div>
+
+    <!-- Character Feedback Section -->
+    <div class="feedback-section character-section" *ngIf="characterFeedback.length > 0 || config.showRequestButtons">
+      <div class="section-header" (click)="toggleCharacterSection()">
+        <span class="section-toggle" [class.collapsed]="!showCharacterSection">▼</span>
+        <h4>Characters</h4>
+        <span class="section-count">({{ characterFeedback.length }})</span>
+        <div class="section-actions" *ngIf="characterFeedback.length > 0">
+          <button 
+            class="mini-button" 
+            (click)="selectCategoryFeedback('character'); $event.stopPropagation()"
+            [disabled]="disabled"
+            title="Select all character feedback">
+            Select All
+          </button>
+          <button 
+            class="mini-button" 
+            (click)="clearCategorySelection('character'); $event.stopPropagation()"
+            [disabled]="disabled"
+            title="Clear character selections">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="section-content" *ngIf="showCharacterSection">
+        <!-- Request Buttons -->
+        <div class="request-buttons" *ngIf="config.showRequestButtons">
+          <div class="request-grid">
+            <button 
+              *ngFor="let character of availableCharacters"
+              class="request-button character-request"
+              [class.loading]="isRequestingForAgent(character.id)"
+              [disabled]="disabled || isRequestingForAgent(character.id)"
+              (click)="requestCharacterFeedback(character.id)"
+              [title]="'Request feedback from ' + character.name">
+              <span *ngIf="!isRequestingForAgent(character.id)">{{ character.name }}</span>
+              <span *ngIf="isRequestingForAgent(character.id)" class="loading-text">
+                <span class="spinner">⏳</span> {{ character.name }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Character Feedback Items -->
+        <div class="feedback-items" *ngIf="characterFeedback.length > 0">
+          <div 
+            *ngFor="let item of characterFeedback; trackBy: trackByFeedbackId"
+            class="feedback-item"
+            [class.selected]="selectedFeedbackIds.has(item.id)"
+            [class.incorporated]="item.status === 'incorporated'"
+            [class.dismissed]="item.status === 'dismissed'">
+            
+            <div class="item-header">
+              <label class="checkbox-container">
+                <input 
+                  type="checkbox"
+                  [checked]="selectedFeedbackIds.has(item.id)"
+                  (change)="toggleFeedbackSelection(item.id)"
+                  [disabled]="disabled">
+                <span class="checkmark"></span>
+              </label>
+              
+              <div class="item-meta">
+                <span class="source-name">{{ item.source }}</span>
+                <span class="feedback-type">{{ item.type }}</span>
+                <span class="priority-icon">{{ getPriorityIcon(item.priority) }}</span>
+                <span class="status-icon">{{ getFeedbackStatusIcon(item) }}</span>
+              </div>
+              
+              <div class="item-timestamp">
+                {{ formatTimestamp(item.metadata.created) }}
+              </div>
+            </div>
+            
+            <div class="item-content">
+              <p>{{ item.content }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State for Characters -->
+        <div class="empty-state" *ngIf="characterFeedback.length === 0 && !config.showRequestButtons">
+          <div class="empty-icon">👥</div>
+          <p>No character feedback available</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rater Feedback Section -->
+    <div class="feedback-section rater-section" *ngIf="raterFeedback.length > 0 || config.showRequestButtons">
+      <div class="section-header" (click)="toggleRaterSection()">
+        <span class="section-toggle" [class.collapsed]="!showRaterSection">▼</span>
+        <h4>Raters</h4>
+        <span class="section-count">({{ raterFeedback.length }})</span>
+        <div class="section-actions" *ngIf="raterFeedback.length > 0">
+          <button 
+            class="mini-button" 
+            (click)="selectCategoryFeedback('rater'); $event.stopPropagation()"
+            [disabled]="disabled"
+            title="Select all rater feedback">
+            Select All
+          </button>
+          <button 
+            class="mini-button" 
+            (click)="clearCategorySelection('rater'); $event.stopPropagation()"
+            [disabled]="disabled"
+            title="Clear rater selections">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="section-content" *ngIf="showRaterSection">
+        <!-- Request Buttons -->
+        <div class="request-buttons" *ngIf="config.showRequestButtons">
+          <div class="request-grid">
+            <button 
+              *ngFor="let rater of availableRaters"
+              class="request-button rater-request"
+              [class.loading]="isRequestingForAgent(rater.id)"
+              [disabled]="disabled || isRequestingForAgent(rater.id)"
+              (click)="requestRaterFeedback(rater.id)"
+              [title]="'Request feedback from ' + rater.name">
+              <span *ngIf="!isRequestingForAgent(rater.id)">{{ rater.name }}</span>
+              <span *ngIf="isRequestingForAgent(rater.id)" class="loading-text">
+                <span class="spinner">⏳</span> {{ rater.name }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Rater Feedback Items -->
+        <div class="feedback-items" *ngIf="raterFeedback.length > 0">
+          <div 
+            *ngFor="let item of raterFeedback; trackBy: trackByFeedbackId"
+            class="feedback-item"
+            [class.selected]="selectedFeedbackIds.has(item.id)"
+            [class.incorporated]="item.status === 'incorporated'"
+            [class.dismissed]="item.status === 'dismissed'">
+            
+            <div class="item-header">
+              <label class="checkbox-container">
+                <input 
+                  type="checkbox"
+                  [checked]="selectedFeedbackIds.has(item.id)"
+                  (change)="toggleFeedbackSelection(item.id)"
+                  [disabled]="disabled">
+                <span class="checkmark"></span>
+              </label>
+              
+              <div class="item-meta">
+                <span class="source-name">{{ item.source }}</span>
+                <span class="feedback-type">{{ item.type }}</span>
+                <span class="priority-icon">{{ getPriorityIcon(item.priority) }}</span>
+                <span class="status-icon">{{ getFeedbackStatusIcon(item) }}</span>
+              </div>
+              
+              <div class="item-timestamp">
+                {{ formatTimestamp(item.metadata.created) }}
+              </div>
+            </div>
+            
+            <div class="item-content">
+              <p>{{ item.content }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State for Raters -->
+        <div class="empty-state" *ngIf="raterFeedback.length === 0 && !config.showRequestButtons">
+          <div class="empty-icon">⭐</div>
+          <p>No rater feedback available</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall Empty State -->
+    <div class="empty-state overall-empty" *ngIf="availableFeedback.length === 0 && !config.showRequestButtons">
+      <div class="empty-icon">💬</div>
+      <h4>No Feedback Available</h4>
+      <p>Request feedback from characters and raters to see it here.</p>
+    </div>
+  </div>
+
+  <!-- Chat Integration Section -->
+  <div class="chat-integration" *ngIf="config.showChatIntegration && hasSelectedFeedback">
+    <div class="chat-section-header">
+      <h4>Add to Chat</h4>
+      <span class="selected-indicator">{{ selectedCount }} item{{ selectedCount !== 1 ? 's' : '' }} selected</span>
+    </div>
+    
+    <div class="comment-input">
+      <textarea 
+        [(ngModel)]="userComment"
+        placeholder="Add your comment (optional)..."
+        rows="3"
+        [disabled]="disabled"
+        class="user-comment"></textarea>
+    </div>
+    
+    <div class="chat-actions">
+      <button 
+        class="primary-button add-to-chat"
+        (click)="addSelectedToChat()"
+        [disabled]="disabled || !hasSelectedFeedback"
+        title="Add selected feedback to chat">
+        Add to Chat
+      </button>
+    </div>
+  </div>
+</div>

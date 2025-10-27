@@ -24,6 +24,8 @@ import {
 } from '../../constants/token-limits.constants';
 import { PhaseStateService, PhaseType } from '../../services/phase-state.service';
 import { PlotOutlinePhaseComponent } from '../plot-outline-phase/plot-outline-phase.component';
+import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent, FeedbackRequestEvent, AddToChatEvent } from '../feedback-sidebar/feedback-sidebar.component';
+import { FeedbackService } from '../../services/feedback.service';
 
 interface ResearchChatMessage {
   role: string;
@@ -35,7 +37,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, FeedbackSidebarComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -86,6 +88,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   showPhaseNavigation = false;
   currentPhase: PhaseType = 'plot-outline';
 
+  // Feedback sidebar state
+  showFeedbackSidebar = false;
+  feedbackSidebarConfig: FeedbackSidebarConfig | null = null;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -98,7 +104,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     private tokenLimitsService: TokenLimitsService,
     private tokenValidationService: TokenValidationService,
     private toastService: ToastService,
-    private phaseStateService: PhaseStateService
+    private phaseStateService: PhaseStateService,
+    private feedbackService: FeedbackService
   ) {}
 
   ngOnInit() {
@@ -1341,6 +1348,9 @@ Provide actionable insights and creative suggestions to enhance this plot point.
       this.storyService.saveStory(this.story);
     }
     
+    // Update feedback sidebar config if it's open
+    this.updateFeedbackSidebarConfig();
+    
     this.cdr.detectChanges();
   }
 
@@ -1375,5 +1385,75 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     console.log('Outline updated:', outlineItems);
     // The plot outline component handles saving, we just need to trigger change detection
     this.cdr.detectChanges();
+  }
+
+  // Feedback Sidebar Methods
+  initializeFeedbackSidebar(): void {
+    if (!this.story) return;
+
+    this.feedbackSidebarConfig = {
+      phase: this.currentPhase,
+      storyId: this.story.id,
+      chapterNumber: this.getCurrentChapterNumber(),
+      showRequestButtons: true,
+      showChatIntegration: true,
+      maxHeight: '600px'
+    };
+  }
+
+  toggleFeedbackSidebar(): void {
+    this.showFeedbackSidebar = !this.showFeedbackSidebar;
+    
+    if (this.showFeedbackSidebar) {
+      this.initializeFeedbackSidebar();
+    }
+  }
+
+  closeFeedbackSidebar(): void {
+    this.showFeedbackSidebar = false;
+  }
+
+  onFeedbackSelectionChanged(event: FeedbackSelectionEvent): void {
+    console.log('Feedback selection changed:', event);
+    // Handle feedback selection changes if needed
+  }
+
+  onFeedbackRequested(event: FeedbackRequestEvent): void {
+    console.log('Feedback requested:', event);
+    this.toastService.showInfo(`Requesting feedback from ${event.agentName}...`);
+  }
+
+  onAddToChat(event: AddToChatEvent): void {
+    console.log('Adding feedback to chat:', event);
+    
+    if (!this.story || !this.feedbackSidebarConfig) return;
+
+    // Add feedback to chat via the feedback service
+    this.feedbackService.addFeedbackToChat(
+      this.feedbackSidebarConfig.storyId,
+      this.feedbackSidebarConfig.chapterNumber,
+      this.feedbackSidebarConfig.phase,
+      event.selectedFeedback,
+      event.userComment
+    ).subscribe(success => {
+      if (success) {
+        this.toastService.showSuccess(
+          `Added ${event.selectedFeedback.length} feedback item(s) to chat`
+        );
+      } else {
+        this.toastService.showError('Failed to add feedback to chat');
+      }
+    });
+  }
+
+  // Update feedback sidebar config when phase changes
+  private updateFeedbackSidebarConfig(): void {
+    if (this.feedbackSidebarConfig && this.story) {
+      this.feedbackSidebarConfig = {
+        ...this.feedbackSidebarConfig,
+        phase: this.currentPhase,
+        chapterNumber: this.getCurrentChapterNumber()
+      };
+    }
   }
 }
