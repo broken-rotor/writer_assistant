@@ -150,7 +150,7 @@ export interface MigrationUtils {
   
   createInitialChatMessage(
     plotPoint: string, 
-    phase: 'plot-outline' | 'chapter-detailer' | 'final-edit'
+    phase: 'plot_outline' | 'chapter_detail' | 'final_edit'
   ): ChatMessage;
   
   // Compatibility checks
@@ -175,9 +175,9 @@ export const MIGRATION_CONSTANTS = {
   },
   
   PHASE_NAMES: {
-    PLOT_OUTLINE: 'plot-outline' as const,
-    CHAPTER_DETAILER: 'chapter-detailer' as const,
-    FINAL_EDIT: 'final-edit' as const
+    PLOT_OUTLINE: 'plot_outline' as const,
+    CHAPTER_DETAILER: 'chapter_detail' as const,
+    FINAL_EDIT: 'final_edit' as const
   },
   
   MESSAGE_TYPES: {
@@ -202,9 +202,9 @@ export const MIGRATION_CONSTANTS = {
     ],
     
     PHASE_REQUIRED_FIELDS: {
-      'plot-outline': ['conversation', 'outline', 'draftSummary', 'status', 'progress'],
-      'chapter-detailer': ['conversation', 'chapterDraft', 'feedbackIntegration', 'status', 'progress'],
-      'final-edit': ['conversation', 'finalChapter', 'reviewSelection', 'status', 'progress']
+      'plot_outline': ['conversation', 'outline', 'draftSummary', 'status', 'progress'],
+      'chapter_detail': ['conversation', 'chapterDraft', 'feedbackIntegration', 'status', 'progress'],
+      'final_edit': ['conversation', 'finalChapter', 'reviewSelection', 'status', 'progress']
     }
   }
 } as const;

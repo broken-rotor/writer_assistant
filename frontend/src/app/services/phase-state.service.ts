@@ -19,7 +19,7 @@ import {
 import { LocalStorageService } from './local-storage.service';
 import { ApiService } from './api.service';
 
-export type PhaseType = 'plot-outline' | 'chapter-detailer' | 'final-edit';
+export type PhaseType = 'plot_outline' | 'chapter_detail' | 'final_edit';
 
 export interface PhaseValidationResult {
   canAdvance: boolean;
@@ -34,7 +34,7 @@ export interface PhaseValidationResult {
   providedIn: 'root'
 })
 export class PhaseStateService {
-  private currentPhaseSubject = new BehaviorSubject<PhaseType>('plot-outline');
+  private currentPhaseSubject = new BehaviorSubject<PhaseType>('plot_outline');
   private chapterComposeStateSubject = new BehaviorSubject<ChapterComposeState | null>(null);
   private validationResultSubject = new BehaviorSubject<PhaseValidationResult>({
     canAdvance: false,
@@ -77,12 +77,12 @@ export class PhaseStateService {
       metadata: {
         created: now,
         lastModified: now,
-        phase: 'plot-outline'
+        phase: 'plot_outline'
       }
     };
 
     const chapterComposeState: ChapterComposeState = {
-      currentPhase: 'plot-outline',
+      currentPhase: 'plot_outline',
       phases: {
         plotOutline: {
           conversation: { ...initialConversation },
@@ -103,7 +103,7 @@ export class PhaseStateService {
           conversation: { 
             ...initialConversation, 
             id: this.generateId(),
-            metadata: { ...initialConversation.metadata, phase: 'chapter-detailer' }
+            metadata: { ...initialConversation.metadata, phase: 'chapter_detail' }
           },
           chapterDraft: {
             content: '',
@@ -128,7 +128,7 @@ export class PhaseStateService {
           conversation: { 
             ...initialConversation, 
             id: this.generateId(),
-            metadata: { ...initialConversation.metadata, phase: 'final-edit' }
+            metadata: { ...initialConversation.metadata, phase: 'final_edit' }
           },
           finalChapter: {
             content: '',
@@ -157,7 +157,7 @@ export class PhaseStateService {
         pov: undefined
       },
       navigation: {
-        phaseHistory: ['plot-outline'],
+        phaseHistory: ['plot_outline'],
         canGoBack: false,
         canGoForward: false,
         branchNavigation: {
@@ -172,9 +172,9 @@ export class PhaseStateService {
         currentStep: 1,
         totalSteps: 3,
         phaseCompletionStatus: {
-          'plot-outline': false,
-          'chapter-detailer': false,
-          'final-edit': false
+          'plot_outline': false,
+          'chapter_detail': false,
+          'final_edit': false
         },
         estimatedTimeRemaining: undefined
       },
@@ -187,7 +187,7 @@ export class PhaseStateService {
     };
 
     this.chapterComposeStateSubject.next(chapterComposeState);
-    this.currentPhaseSubject.next('plot-outline');
+    this.currentPhaseSubject.next('plot_outline');
     this.updateValidationResult(chapterComposeState);
 
     return chapterComposeState;
@@ -313,13 +313,13 @@ export class PhaseStateService {
 
     // Update specific phase progress
     switch (phase) {
-      case 'plot-outline':
+      case 'plot_outline':
         Object.assign(state.phases.plotOutline.progress, progress);
         break;
-      case 'chapter-detailer':
+      case 'chapter_detail':
         Object.assign(state.phases.chapterDetailer.progress, progress);
         break;
-      case 'final-edit':
+      case 'final_edit':
         Object.assign(state.phases.finalEdit.progress, progress);
         break;
     }
@@ -347,8 +347,8 @@ export class PhaseStateService {
     const validationErrors: string[] = [];
 
     switch (targetPhase) {
-      case 'chapter-detailer':
-        if (state.currentPhase === 'plot-outline') {
+      case 'chapter_detail':
+        if (state.currentPhase === 'plot_outline') {
           requirements.push('Complete plot outline');
           requirements.push('Have at least one outline item');
           
@@ -361,8 +361,8 @@ export class PhaseStateService {
         }
         break;
 
-      case 'final-edit':
-        if (state.currentPhase === 'chapter-detailer') {
+      case 'final_edit':
+        if (state.currentPhase === 'chapter_detail') {
           requirements.push('Complete chapter draft');
           requirements.push('Incorporate minimum feedback');
           
@@ -411,9 +411,9 @@ export class PhaseStateService {
    */
   private getPhasePropertyKey(phase: PhaseType): keyof ChapterComposeState['phases'] {
     switch (phase) {
-      case 'plot-outline': return 'plotOutline';
-      case 'chapter-detailer': return 'chapterDetailer';
-      case 'final-edit': return 'finalEdit';
+      case 'plot_outline': return 'plotOutline';
+      case 'chapter_detail': return 'chapterDetailer';
+      case 'final_edit': return 'finalEdit';
       default: throw new Error(`Unknown phase: ${phase}`);
     }
   }
@@ -423,9 +423,9 @@ export class PhaseStateService {
    */
   private getNextPhase(currentPhase: PhaseType): PhaseType | undefined {
     switch (currentPhase) {
-      case 'plot-outline': return 'chapter-detailer';
-      case 'chapter-detailer': return 'final-edit';
-      case 'final-edit': return undefined;
+      case 'plot_outline': return 'chapter_detail';
+      case 'chapter_detail': return 'final_edit';
+      case 'final_edit': return undefined;
       default: return undefined;
     }
   }
@@ -435,9 +435,9 @@ export class PhaseStateService {
    */
   private getPreviousPhase(currentPhase: PhaseType): PhaseType | undefined {
     switch (currentPhase) {
-      case 'plot-outline': return undefined;
-      case 'chapter-detailer': return 'plot-outline';
-      case 'final-edit': return 'chapter-detailer';
+      case 'plot_outline': return undefined;
+      case 'chapter_detail': return 'plot_outline';
+      case 'final_edit': return 'chapter_detail';
       default: return undefined;
     }
   }
@@ -447,9 +447,9 @@ export class PhaseStateService {
    */
   private getPhaseStep(phase: PhaseType): number {
     switch (phase) {
-      case 'plot-outline': return 1;
-      case 'chapter-detailer': return 2;
-      case 'final-edit': return 3;
+      case 'plot_outline': return 1;
+      case 'chapter_detail': return 2;
+      case 'final_edit': return 3;
       default: return 1;
     }
   }
@@ -466,9 +466,9 @@ export class PhaseStateService {
    */
   getPhaseDisplayName(phase: PhaseType): string {
     switch (phase) {
-      case 'plot-outline': return 'Draft';
-      case 'chapter-detailer': return 'Refined';
-      case 'final-edit': return 'Approved';
+      case 'plot_outline': return 'Draft';
+      case 'chapter_detail': return 'Refined';
+      case 'final_edit': return 'Approved';
       default: return phase;
     }
   }
@@ -478,9 +478,9 @@ export class PhaseStateService {
    */
   getPhaseDescription(phase: PhaseType): string {
     switch (phase) {
-      case 'plot-outline': return 'Create and refine the plot outline for your chapter';
-      case 'chapter-detailer': return 'Develop the chapter content with character and rater feedback';
-      case 'final-edit': return 'Review and finalize the chapter with editor suggestions';
+      case 'plot_outline': return 'Create and refine the plot outline for your chapter';
+      case 'chapter_detail': return 'Develop the chapter content with character and rater feedback';
+      case 'final_edit': return 'Review and finalize the chapter with editor suggestions';
       default: return '';
     }
   }
@@ -509,7 +509,7 @@ export class PhaseStateService {
 
     // Update specific phase data
     switch (phase) {
-      case 'plot-outline':
+      case 'plot_outline':
         if (data.outline) {
           Object.assign(state.phases.plotOutline.outline, data.outline);
         }
@@ -521,7 +521,7 @@ export class PhaseStateService {
         }
         break;
 
-      case 'chapter-detailer':
+      case 'chapter_detail':
         if (data.chapterDraft) {
           Object.assign(state.phases.chapterDetailer.chapterDraft, data.chapterDraft);
         }
@@ -533,7 +533,7 @@ export class PhaseStateService {
         }
         break;
 
-      case 'final-edit':
+      case 'final_edit':
         if (data.finalChapter) {
           Object.assign(state.phases.finalEdit.finalChapter, data.finalChapter);
         }
@@ -601,7 +601,7 @@ export class PhaseStateService {
         current_phase_status: {
           plot_outline: chapterComposeState.phases.plotOutline.status,
           chapter_detail: chapterComposeState.phases.chapterDetailer.status,
-          final_edit: chapterComposeState.phases.finalEditor.status
+          final_edit: chapterComposeState.phases.finalEdit.status
         }
       }
     };
@@ -681,18 +681,18 @@ export class PhaseStateService {
    */
   private getPhaseOutput(phase: PhaseType, chapterComposeState: ChapterComposeState): string {
     switch (phase) {
-      case 'plot-outline':
+      case 'plot_outline':
         const outlineItems = Array.from(chapterComposeState.phases.plotOutline.outline.items.values());
         return outlineItems
           .sort((a, b) => a.order - b.order)
           .map(item => `${item.title}: ${item.description}`)
           .join('\n\n');
 
-      case 'chapter-detailer':
+      case 'chapter_detail':
         return chapterComposeState.phases.chapterDetailer.chapterDraft.content || '';
 
-      case 'final-edit':
-        return chapterComposeState.phases.finalEditor.finalChapter.content || 
+      case 'final_edit':
+        return chapterComposeState.phases.finalEdit.finalChapter.content || 
                chapterComposeState.phases.chapterDetailer.chapterDraft.content || '';
 
       default:
@@ -705,9 +705,9 @@ export class PhaseStateService {
    */
   private convertPhaseTypeToAPI(phase: PhaseType): 'plot_outline' | 'chapter_detail' | 'final_edit' {
     switch (phase) {
-      case 'plot-outline': return 'plot_outline';
-      case 'chapter-detailer': return 'chapter_detail';
-      case 'final-edit': return 'final_edit';
+      case 'plot_outline': return 'plot_outline';
+      case 'chapter_detail': return 'chapter_detail';
+      case 'final_edit': return 'final_edit';
       default: return 'plot_outline';
     }
   }
@@ -723,8 +723,8 @@ export class PhaseStateService {
     
     switch (phaseData.status) {
       case 'completed': return 100;
-      case 'in-progress': return 50;
-      case 'not-started': return 0;
+      case 'active': return 50;
+      case 'paused': return 25;
       default: return 0;
     }
   }

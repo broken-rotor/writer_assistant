@@ -333,7 +333,7 @@ export class FeedbackService {
           type: type,
           content: content,
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: {
@@ -363,7 +363,7 @@ export class FeedbackService {
         type: 'suggestion',
         content: response.feedback.opinion,
         incorporated: false,
-        phase: 'chapter-detailer',
+        phase: 'chapter_detail',
         priority: 'medium',
         status: 'pending',
         metadata: {
@@ -385,7 +385,7 @@ export class FeedbackService {
         type: 'suggestion',
         content: content,
         incorporated: false,
-        phase: 'chapter-detailer',
+        phase: 'chapter_detail',
         priority: priority,
         status: 'pending',
         metadata: {
@@ -685,11 +685,9 @@ export class FeedbackService {
         ...item.metadata,
         phase_context: chapterComposeState ? {
           current_phase: chapterComposeState.currentPhase,
-          phase_status: {
-            plot_outline: chapterComposeState.phases.plotOutline.status,
-            chapter_detail: chapterComposeState.phases.chapterDetailer.status,
-            final_edit: chapterComposeState.phases.finalEditor.status
-          }
+          plot_outline: chapterComposeState.phases.plotOutline.status,
+          chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+          final_edit: chapterComposeState.phases.finalEdit.status
         } : undefined
       }
     }));

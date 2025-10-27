@@ -372,7 +372,7 @@
       </div>
 
       <!-- Three-Phase Chapter Compose Interface -->
-      <div *ngIf="currentPhase === 'plot-outline'" class="phase-content">
+      <div *ngIf="currentPhase === 'plot_outline'" class="phase-content">
         <app-plot-outline-phase
           [story]="story"
           [chapterNumber]="getCurrentChapterNumber()"
@@ -381,7 +381,7 @@
         </app-plot-outline-phase>
       </div>
 
-      <div *ngIf="currentPhase === 'final-edit'" class="phase-content">
+      <div *ngIf="currentPhase === 'final_edit'" class="phase-content">
         <app-final-edit-phase
           [story]="story"
           [chapterNumber]="getCurrentChapterNumber()"
@@ -391,7 +391,7 @@
       </div>
 
       <!-- Legacy Chapter Creation Interface (for other phases and backward compatibility) -->
-      <div *ngIf="currentPhase !== 'plot-outline' && currentPhase !== 'final-edit'" class="legacy-chapter-creation">
+      <div *ngIf="currentPhase !== 'plot_outline' && currentPhase !== 'final_edit'" class="legacy-chapter-creation">
         <!-- Plot Point -->
       <div class="section plot-point-section">
         <h3>Plot Point</h3>

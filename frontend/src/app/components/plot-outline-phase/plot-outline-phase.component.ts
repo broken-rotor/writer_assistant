@@ -55,7 +55,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
   
   // Chat interface configuration
   chatConfig: ChatInterfaceConfig = {
-    phase: 'plot-outline',
+    phase: 'plot_outline',
     storyId: '',
     chapterNumber: 1,
     enableBranching: true,
@@ -379,7 +379,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     const isComplete = hasBasicOutline && hasDraftItems && hasDetailedItems;
     
     // Update phase state service
-    this.phaseStateService.updatePhaseValidation('plot-outline', {
+    this.phaseStateService.updatePhaseValidation('plot_outline', {
       canAdvance: isComplete,
       canRevert: false,
       requirements: this.getRequirements(hasBasicOutline, hasDraftItems, hasDetailedItems),
@@ -478,7 +478,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     const now = new Date();
     
     this.story.chapterCompose = {
-      currentPhase: 'plot-outline',
+      currentPhase: 'plot_outline',
       phases: {
         plotOutline: {
           conversation: {
@@ -496,7 +496,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
             metadata: {
               created: now,
               lastModified: now,
-              phase: 'plot-outline'
+              phase: 'plot_outline'
             }
           },
           outline: {
@@ -528,7 +528,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
             metadata: {
               created: now,
               lastModified: now,
-              phase: 'chapter-detailer'
+              phase: 'chapter_detail'
             }
           },
           chapterDraft: {
@@ -566,7 +566,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
             metadata: {
               created: now,
               lastModified: now,
-              phase: 'final-edit'
+              phase: 'final_edit'
             }
           },
           finalChapter: {
@@ -596,7 +596,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
         pov: undefined
       },
       navigation: {
-        phaseHistory: ['plot-outline'],
+        phaseHistory: ['plot_outline'],
         canGoBack: false,
         canGoForward: false,
         branchNavigation: {
@@ -611,9 +611,9 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
         currentStep: 1,
         totalSteps: 3,
         phaseCompletionStatus: {
-          'plot-outline': false,
-          'chapter-detailer': false,
-          'final-edit': false
+          'plot_outline': false,
+          'chapter_detail': false,
+          'final_edit': false
         },
         estimatedTimeRemaining: undefined
       },

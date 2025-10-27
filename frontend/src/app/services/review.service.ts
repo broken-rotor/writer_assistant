@@ -81,6 +81,40 @@ export class ReviewService {
   };
 
   /**
+   * Add a pending request to track
+   */
+  private addPendingRequest(requestId: string): void {
+    this.requestStatus.pendingRequests.push(requestId);
+    this.requestStatus.totalRequests++;
+    this.requestStatusSubject.next(this.requestStatus);
+  }
+
+  /**
+   * Mark a request as completed
+   */
+  private completeRequest(requestId: string): void {
+    const index = this.requestStatus.pendingRequests.indexOf(requestId);
+    if (index > -1) {
+      this.requestStatus.pendingRequests.splice(index, 1);
+      this.requestStatus.completedRequests.push(requestId);
+      this.requestStatus.completedCount++;
+      this.requestStatusSubject.next(this.requestStatus);
+    }
+  }
+
+  /**
+   * Mark a request as failed
+   */
+  private failRequest(requestId: string): void {
+    const index = this.requestStatus.pendingRequests.indexOf(requestId);
+    if (index > -1) {
+      this.requestStatus.pendingRequests.splice(index, 1);
+      this.requestStatus.failedRequests.push(requestId);
+      this.requestStatusSubject.next(this.requestStatus);
+    }
+  }
+
+  /**
    * Get available reviews for Phase 3 (final-edit)
    */
   getAvailableReviews(storyId: string, chapterNumber: number): ReviewItem[] {
@@ -797,11 +831,9 @@ export class ReviewService {
           reviewer: 'editor',
           phase_context: chapterComposeState ? {
             current_phase: chapterComposeState.currentPhase,
-            phase_status: {
-              plot_outline: chapterComposeState.phases.plotOutline.status,
-              chapter_detail: chapterComposeState.phases.chapterDetailer.status,
-              final_edit: chapterComposeState.phases.finalEditor.status
-            }
+            plot_outline: chapterComposeState.phases.plotOutline.status,
+            chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+            final_edit: chapterComposeState.phases.finalEdit.status
           } : undefined
         }
       });
@@ -917,11 +949,9 @@ export class ReviewService {
             reviewer: characterName,
             phase_context: chapterComposeState ? {
               current_phase: chapterComposeState.currentPhase,
-              phase_status: {
-                plot_outline: chapterComposeState.phases.plotOutline.status,
-                chapter_detail: chapterComposeState.phases.chapterDetailer.status,
-                final_edit: chapterComposeState.phases.finalEditor.status
-              }
+              plot_outline: chapterComposeState.phases.plotOutline.status,
+              chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+              final_edit: chapterComposeState.phases.finalEdit.status
             } : undefined
           }
         });
@@ -958,11 +988,9 @@ export class ReviewService {
           reviewer: raterName,
           phase_context: chapterComposeState ? {
             current_phase: chapterComposeState.currentPhase,
-            phase_status: {
-              plot_outline: chapterComposeState.phases.plotOutline.status,
-              chapter_detail: chapterComposeState.phases.chapterDetailer.status,
-              final_edit: chapterComposeState.phases.finalEditor.status
-            }
+            plot_outline: chapterComposeState.phases.plotOutline.status,
+            chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+            final_edit: chapterComposeState.phases.finalEdit.status
           } : undefined
         }
       });
@@ -987,11 +1015,9 @@ export class ReviewService {
           reviewer: raterName,
           phase_context: chapterComposeState ? {
             current_phase: chapterComposeState.currentPhase,
-            phase_status: {
-              plot_outline: chapterComposeState.phases.plotOutline.status,
-              chapter_detail: chapterComposeState.phases.chapterDetailer.status,
-              final_edit: chapterComposeState.phases.finalEditor.status
-            }
+            plot_outline: chapterComposeState.phases.plotOutline.status,
+            chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+            final_edit: chapterComposeState.phases.finalEdit.status
           } : undefined
         }
       });
@@ -1050,10 +1076,11 @@ export class ReviewService {
 
       stats[phase].total++;
       switch (item.status) {
-        case 'applied':
+        case 'accepted':
+        case 'modified':
           stats[phase].applied++;
           break;
-        case 'dismissed':
+        case 'rejected':
           stats[phase].dismissed++;
           break;
         default:
