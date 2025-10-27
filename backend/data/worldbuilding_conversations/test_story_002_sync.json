@@ -1,0 +1,157 @@
+[
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Magic System\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals\n\n## Technology\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\n\nHow do people travel between the islands? Are there sky ships or magical bridges?",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 3,
+      "content_length": 488,
+      "topics_identified": [
+        "magic_system",
+        "technology"
+      ],
+      "sync_timestamp": "2025-10-27T23:31:42.439752+00:00",
+      "quality_score": 0.6192
+    },
+    "created_at": "2025-10-27T23:31:42.439795+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Politics\n\nThey make all major decisions about crystal usage and island positioning\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\nHow do people travel between the islands? Are there sky ships or magical bridges?\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 2,
+      "content_length": 542,
+      "topics_identified": [
+        "politics"
+      ],
+      "sync_timestamp": "2025-10-27T23:31:42.441345+00:00",
+      "quality_score": 0.419
+    },
+    "created_at": "2025-10-27T23:31:42.441364+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Magic System\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals\n\n## Technology\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\n\nHow do people travel between the islands? Are there sky ships or magical bridges?",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 3,
+      "content_length": 488,
+      "topics_identified": [
+        "magic_system",
+        "technology"
+      ],
+      "sync_timestamp": "2025-10-27T23:33:18.347613+00:00",
+      "quality_score": 0.6192
+    },
+    "created_at": "2025-10-27T23:33:18.347656+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Politics\n\nThey make all major decisions about crystal usage and island positioning\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\nHow do people travel between the islands? Are there sky ships or magical bridges?\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 2,
+      "content_length": 542,
+      "topics_identified": [
+        "politics"
+      ],
+      "sync_timestamp": "2025-10-27T23:33:18.349749+00:00",
+      "quality_score": 0.419
+    },
+    "created_at": "2025-10-27T23:33:18.349768+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Magic System\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals\n\n## Technology\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\n\nHow do people travel between the islands? Are there sky ships or magical bridges?",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 3,
+      "content_length": 488,
+      "topics_identified": [
+        "magic_system",
+        "technology"
+      ],
+      "sync_timestamp": "2025-10-27T23:35:23.656732+00:00",
+      "quality_score": 0.6192
+    },
+    "created_at": "2025-10-27T23:35:23.656772+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Politics\n\nThe Crystal Keepers rule through a council called the Luminous Assembly. They make all major decisions about crystal usage and island positioning\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\nHow do people travel between the islands? Are there sky ships or magical bridges?\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 2,
+      "content_length": 615,
+      "topics_identified": [
+        "politics"
+      ],
+      "sync_timestamp": "2025-10-27T23:35:23.659129+00:00",
+      "quality_score": 0.5212
+    },
+    "created_at": "2025-10-27T23:35:23.659147+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Magic System\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals\n\n## Technology\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\n\nHow do people travel between the islands? Are there sky ships or magical bridges?",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 3,
+      "content_length": 488,
+      "topics_identified": [
+        "magic_system",
+        "technology"
+      ],
+      "sync_timestamp": "2025-10-27T23:35:42.422320+00:00",
+      "quality_score": 0.6192
+    },
+    "created_at": "2025-10-27T23:35:42.422371+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Politics\n\nThe Crystal Keepers rule through a council called the Luminous Assembly. They make all major decisions about crystal usage and island positioning\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\nHow do people travel between the islands? Are there sky ships or magical bridges?\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 2,
+      "content_length": 615,
+      "topics_identified": [
+        "politics"
+      ],
+      "sync_timestamp": "2025-10-27T23:35:42.424907+00:00",
+      "quality_score": 0.5212
+    },
+    "created_at": "2025-10-27T23:35:42.425006+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Magic System\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals\n\n## Technology\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\n\nHow do people travel between the islands? Are there sky ships or magical bridges?",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 3,
+      "content_length": 488,
+      "topics_identified": [
+        "magic_system",
+        "technology"
+      ],
+      "sync_timestamp": "2025-10-27T23:35:53.106699+00:00",
+      "quality_score": 0.6192
+    },
+    "created_at": "2025-10-27T23:35:53.106717+00:00"
+  },
+  {
+    "story_id": "test_story_002",
+    "worldbuilding_content": "## Politics\n\nThe Crystal Keepers rule through a council called the Luminous Assembly. They make all major decisions about crystal usage and island positioning\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\nHow do people travel between the islands? Are there sky ships or magical bridges?\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals",
+    "metadata": {
+      "story_id": "test_story_002",
+      "messages_processed": 2,
+      "content_length": 615,
+      "topics_identified": [
+        "politics"
+      ],
+      "sync_timestamp": "2025-10-27T23:35:53.109190+00:00",
+      "quality_score": 0.5212
+    },
+    "created_at": "2025-10-27T23:35:53.109208+00:00"
+  }
+]

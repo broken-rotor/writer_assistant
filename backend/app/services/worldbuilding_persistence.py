@@ -391,3 +391,71 @@ class WorldbuildingPersistenceService:
         except Exception as e:
             print(f"Error getting storage stats: {e}")
             return {}
+    
+    def _get_sync_file_path(self, story_id: str) -> str:
+        """Get the file path for sync records."""
+        return os.path.join(self.storage_path, f"{story_id}_sync.json")
+    
+    async def store_sync_record(self, story_id: str, sync_record: Dict) -> bool:
+        """Store a sync record for a story."""
+        try:
+            file_path = self._get_sync_file_path(story_id)
+            
+            # Load existing records
+            existing_records = []
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    existing_records = json.load(f)
+            
+            # Add new record
+            existing_records.append(sync_record)
+            
+            # Keep only the last 50 records to prevent file from growing too large
+            if len(existing_records) > 50:
+                existing_records = existing_records[-50:]
+            
+            # Write back to file
+            temp_path = f"{file_path}.tmp"
+            with open(temp_path, 'w', encoding='utf-8') as f:
+                json.dump(existing_records, f, indent=2, ensure_ascii=False)
+            
+            # Atomic rename
+            os.rename(temp_path, file_path)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error storing sync record for {story_id}: {e}")
+            return False
+    
+    async def get_sync_history(self, story_id: str, limit: int = 10) -> List[Dict]:
+        """Get sync history for a story."""
+        try:
+            file_path = self._get_sync_file_path(story_id)
+            
+            if not os.path.exists(file_path):
+                return []
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                records = json.load(f)
+            
+            # Return the most recent records
+            return records[-limit:] if len(records) > limit else records
+            
+        except Exception as e:
+            print(f"Error getting sync history for {story_id}: {e}")
+            return []
+    
+    async def clear_sync_history(self, story_id: str) -> bool:
+        """Clear sync history for a story."""
+        try:
+            file_path = self._get_sync_file_path(story_id)
+            
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error clearing sync history for {story_id}: {e}")
+            return False

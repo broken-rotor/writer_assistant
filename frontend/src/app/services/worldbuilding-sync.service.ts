@@ -1,10 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { debounceTime, distinctUntilChanged, catchError, retry, timeout } from 'rxjs/operators';
 
 import { ConversationService } from './conversation.service';
 import { LocalStorageService } from './local-storage.service';
+import { WorldbuildingValidatorService, ValidationResult } from './worldbuilding-validator.service';
 import { ChatMessage } from '../models/story.model';
+import { environment } from '../../environments/environment';
 
 export interface WorldbuildingSyncConfig {
   storyId: string;
@@ -12,6 +15,37 @@ export interface WorldbuildingSyncConfig {
   maxSummaryLength?: number;
   includeAssistantMessages?: boolean;
   includeUserMessages?: boolean;
+  enableBackendSync?: boolean;
+  retryAttempts?: number;
+  timeoutMs?: number;
+}
+
+export interface BackendSyncRequest {
+  story_id: string;
+  messages: ChatMessage[];
+  current_worldbuilding: string;
+  force_sync?: boolean;
+}
+
+export interface BackendSyncResponse {
+  success: boolean;
+  updated_worldbuilding: string;
+  metadata: {
+    story_id: string;
+    messages_processed: number;
+    content_length: number;
+    topics_identified: string[];
+    sync_timestamp: string;
+    quality_score: number;
+  };
+  errors: string[];
+}
+
+export interface SyncError {
+  type: 'network' | 'validation' | 'server' | 'timeout' | 'unknown';
+  message: string;
+  details?: any;
+  recoverable: boolean;
 }
 
 @Injectable({
@@ -20,18 +54,26 @@ export interface WorldbuildingSyncConfig {
 export class WorldbuildingSyncService {
   private worldbuildingUpdatedSubject = new BehaviorSubject<string>('');
   private syncInProgressSubject = new BehaviorSubject<boolean>(false);
+  private syncErrorSubject = new BehaviorSubject<SyncError | null>(null);
   
   // Services
   private conversationService = inject(ConversationService);
   private localStorageService = inject(LocalStorageService);
+  private validatorService = inject(WorldbuildingValidatorService);
+  private http = inject(HttpClient);
 
   // Configuration
   private defaultConfig: Partial<WorldbuildingSyncConfig> = {
     syncInterval: 2000, // 2 seconds debounce
     maxSummaryLength: 5000, // characters
     includeAssistantMessages: true,
-    includeUserMessages: true
+    includeUserMessages: true,
+    enableBackendSync: true,
+    retryAttempts: 3,
+    timeoutMs: 10000
   };
+
+  private readonly apiBaseUrl = environment.apiUrl || 'http://localhost:8000/api/v1';
 
   // Observables
   public worldbuildingUpdated$ = this.worldbuildingUpdatedSubject.asObservable().pipe(
@@ -40,6 +82,7 @@ export class WorldbuildingSyncService {
   );
   
   public syncInProgress$ = this.syncInProgressSubject.asObservable();
+  public syncError$ = this.syncErrorSubject.asObservable();
 
   /**
    * Sync worldbuilding content from conversation messages
@@ -51,6 +94,7 @@ export class WorldbuildingSyncService {
   ): Promise<string> {
     try {
       this.syncInProgressSubject.next(true);
+      this.syncErrorSubject.next(null);
 
       const syncConfig = { ...this.defaultConfig, ...config, storyId };
       const messages = this.conversationService.getCurrentBranchMessages();
@@ -60,18 +104,46 @@ export class WorldbuildingSyncService {
         return currentWorldbuilding;
       }
 
-      // Extract worldbuilding information from messages
-      const extractedWorldbuilding = this.extractWorldbuildingFromMessages(
-        messages, 
-        syncConfig
-      );
+      let updatedWorldbuilding: string;
 
-      // Merge with existing worldbuilding
-      const updatedWorldbuilding = this.mergeWorldbuildingContent(
-        currentWorldbuilding,
-        extractedWorldbuilding,
-        syncConfig
-      );
+      // Try backend sync first if enabled
+      if (syncConfig.enableBackendSync) {
+        try {
+          updatedWorldbuilding = await this.syncWithBackend(storyId, messages, currentWorldbuilding, syncConfig);
+        } catch (error) {
+          console.warn('Backend sync failed, falling back to local sync:', error);
+          
+          // Set recoverable error
+          this.syncErrorSubject.next({
+            type: 'network',
+            message: 'Backend sync unavailable, using local processing',
+            details: error,
+            recoverable: true
+          });
+
+          // Fallback to local sync
+          updatedWorldbuilding = await this.syncLocally(messages, currentWorldbuilding, syncConfig);
+        }
+      } else {
+        // Use local sync only
+        updatedWorldbuilding = await this.syncLocally(messages, currentWorldbuilding, syncConfig);
+      }
+
+      // Validate the result
+      const validation = this.validatorService.validateContent(updatedWorldbuilding);
+      if (!validation.isValid) {
+        console.warn('Worldbuilding validation failed:', validation.errors);
+        
+        // Sanitize content if validation fails
+        updatedWorldbuilding = this.validatorService.sanitizeContent(updatedWorldbuilding);
+        
+        this.syncErrorSubject.next({
+          type: 'validation',
+          message: 'Content validation issues detected and fixed',
+          details: validation.errors,
+          recoverable: true
+        });
+      }
 
       // Update the subject to notify subscribers
       this.worldbuildingUpdatedSubject.next(updatedWorldbuilding);
@@ -83,10 +155,115 @@ export class WorldbuildingSyncService {
 
     } catch (error) {
       console.error('Failed to sync worldbuilding from conversation:', error);
+      
+      this.syncErrorSubject.next({
+        type: 'unknown',
+        message: 'Sync failed unexpectedly',
+        details: error,
+        recoverable: false
+      });
+      
       throw error;
     } finally {
       this.syncInProgressSubject.next(false);
     }
+  }
+
+  /**
+   * Sync with backend API
+   */
+  private async syncWithBackend(
+    storyId: string,
+    messages: ChatMessage[],
+    currentWorldbuilding: string,
+    config: WorldbuildingSyncConfig
+  ): Promise<string> {
+    const request: BackendSyncRequest = {
+      story_id: storyId,
+      messages: messages,
+      current_worldbuilding: currentWorldbuilding,
+      force_sync: false
+    };
+
+    return this.http.post<BackendSyncResponse>(`${this.apiBaseUrl}/worldbuilding/sync`, request)
+      .pipe(
+        timeout(config.timeoutMs!),
+        retry(config.retryAttempts!),
+        catchError(this.handleHttpError.bind(this))
+      )
+      .toPromise()
+      .then(response => {
+        if (!response || !response.success) {
+          throw new Error(response?.errors?.join(', ') || 'Backend sync failed');
+        }
+        return response.updated_worldbuilding;
+      });
+  }
+
+  /**
+   * Sync locally using frontend processing
+   */
+  private async syncLocally(
+    messages: ChatMessage[],
+    currentWorldbuilding: string,
+    config: WorldbuildingSyncConfig
+  ): Promise<string> {
+    // Extract worldbuilding information from messages
+    const extractedWorldbuilding = this.extractWorldbuildingFromMessages(
+      messages, 
+      config
+    );
+
+    // Merge with existing worldbuilding
+    return this.mergeWorldbuildingContent(
+      currentWorldbuilding,
+      extractedWorldbuilding,
+      config
+    );
+  }
+
+  /**
+   * Handle HTTP errors with proper error classification
+   */
+  private handleHttpError(error: HttpErrorResponse): Observable<never> {
+    let syncError: SyncError;
+
+    if (error.status === 0) {
+      // Network error
+      syncError = {
+        type: 'network',
+        message: 'Network connection failed',
+        details: error,
+        recoverable: true
+      };
+    } else if (error.status >= 400 && error.status < 500) {
+      // Client error
+      syncError = {
+        type: 'validation',
+        message: error.error?.detail || 'Request validation failed',
+        details: error,
+        recoverable: false
+      };
+    } else if (error.status >= 500) {
+      // Server error
+      syncError = {
+        type: 'server',
+        message: 'Server error occurred',
+        details: error,
+        recoverable: true
+      };
+    } else {
+      // Unknown error
+      syncError = {
+        type: 'unknown',
+        message: 'Unknown error occurred',
+        details: error,
+        recoverable: false
+      };
+    }
+
+    this.syncErrorSubject.next(syncError);
+    return throwError(syncError);
   }
 
   /**
@@ -266,5 +443,68 @@ export class WorldbuildingSyncService {
    */
   isSyncInProgress(): boolean {
     return this.syncInProgressSubject.value;
+  }
+
+  /**
+   * Get current sync error
+   */
+  getCurrentSyncError(): SyncError | null {
+    return this.syncErrorSubject.value;
+  }
+
+  /**
+   * Clear current sync error
+   */
+  clearSyncError(): void {
+    this.syncErrorSubject.next(null);
+  }
+
+  /**
+   * Validate worldbuilding content
+   */
+  validateWorldbuilding(content: string): ValidationResult {
+    return this.validatorService.validateContent(content);
+  }
+
+  /**
+   * Get content suggestions
+   */
+  getContentSuggestions(content: string): string[] {
+    return this.validatorService.suggestImprovements(content);
+  }
+
+  /**
+   * Get content statistics
+   */
+  getContentStatistics(content: string) {
+    return this.validatorService.getContentStatistics(content);
+  }
+
+  /**
+   * Force sync with backend (bypass local fallback)
+   */
+  async forceSyncWithBackend(
+    storyId: string,
+    currentWorldbuilding: string = ''
+  ): Promise<string> {
+    const messages = this.conversationService.getCurrentBranchMessages();
+    const config = { ...this.defaultConfig, storyId, enableBackendSync: true };
+
+    return this.syncWithBackend(storyId, messages, currentWorldbuilding, config as WorldbuildingSyncConfig);
+  }
+
+  /**
+   * Test backend connectivity
+   */
+  async testBackendConnection(): Promise<boolean> {
+    try {
+      const response = await this.http.get(`${this.apiBaseUrl}/worldbuilding/status/test`)
+        .pipe(timeout(5000))
+        .toPromise();
+      return true;
+    } catch (error) {
+      console.warn('Backend connectivity test failed:', error);
+      return false;
+    }
   }
 }
