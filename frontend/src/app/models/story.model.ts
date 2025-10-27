@@ -88,6 +88,266 @@ export interface EditorSuggestion {
   selected: boolean;
 }
 
+// ============================================================================
+// THREE-PHASE CHAPTER COMPOSE DATA MODELS
+// ============================================================================
+
+/**
+ * Represents a single message in a conversation thread
+ */
+export interface ChatMessage {
+  id: string;
+  type: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  author?: string; // For system messages, could be 'character-feedback', 'rater-feedback', etc.
+  parentMessageId?: string; // For branching conversations
+  metadata?: {
+    phase: 'plot-outline' | 'chapter-detailer' | 'final-edit';
+    messageIndex: number;
+    branchId?: string;
+    [key: string]: any;
+  };
+}
+
+/**
+ * Represents a conversation thread with branching support
+ */
+export interface ConversationThread {
+  id: string;
+  messages: ChatMessage[];
+  currentBranchId: string;
+  branches: Map<string, ConversationBranch>;
+  metadata: {
+    created: Date;
+    lastModified: Date;
+    phase: 'plot-outline' | 'chapter-detailer' | 'final-edit';
+  };
+}
+
+/**
+ * Represents a branch in a conversation for alternative conversation paths
+ */
+export interface ConversationBranch {
+  id: string;
+  name: string;
+  parentMessageId: string;
+  messageIds: string[]; // Messages that belong to this branch
+  isActive: boolean;
+  metadata: {
+    created: Date;
+    description?: string;
+  };
+}
+
+/**
+ * Navigation state for managing conversation branches
+ */
+export interface BranchNavigation {
+  currentBranchId: string;
+  availableBranches: string[];
+  branchHistory: string[]; // Stack of previously visited branches
+  canNavigateBack: boolean;
+  canNavigateForward: boolean;
+}
+
+/**
+ * Represents an item in the plot outline
+ */
+export interface OutlineItem {
+  id: string;
+  type: 'chapter' | 'scene' | 'plot-point' | 'character-arc';
+  title: string;
+  description: string;
+  order: number;
+  parentId?: string; // For hierarchical structure
+  children?: string[]; // Child outline item IDs
+  status: 'draft' | 'reviewed' | 'approved';
+  metadata: {
+    created: Date;
+    lastModified: Date;
+    wordCountEstimate?: number;
+  };
+}
+
+/**
+ * Enhanced feedback item for sidebar feedback management
+ */
+export interface EnhancedFeedbackItem extends FeedbackItem {
+  id: string;
+  phase: 'plot-outline' | 'chapter-detailer' | 'final-edit';
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'incorporated' | 'dismissed';
+  conversationThreadId?: string; // Link to related conversation
+  metadata: {
+    created: Date;
+    lastModified: Date;
+  };
+}
+
+/**
+ * Review item for final phase review feedback
+ */
+export interface ReviewItem {
+  id: string;
+  type: 'grammar' | 'style' | 'consistency' | 'flow' | 'character' | 'plot';
+  title: string;
+  description: string;
+  suggestion: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'accepted' | 'rejected' | 'modified';
+  affectedText?: {
+    startIndex: number;
+    endIndex: number;
+    originalText: string;
+    suggestedText: string;
+  };
+  metadata: {
+    created: Date;
+    reviewer: string; // 'editor' | 'user' | character/rater name
+  };
+}
+
+/**
+ * Phase 1: Plot Outline Phase State
+ */
+export interface PlotOutlinePhase {
+  conversation: ConversationThread;
+  outline: {
+    items: Map<string, OutlineItem>;
+    structure: string[]; // Ordered list of outline item IDs
+    currentFocus?: string; // Currently focused outline item ID
+  };
+  draftSummary: string;
+  status: 'active' | 'completed' | 'paused';
+  progress: {
+    completedItems: number;
+    totalItems: number;
+    lastActivity: Date;
+  };
+}
+
+/**
+ * Phase 2: Chapter Detailer Phase State
+ */
+export interface ChapterDetailerPhase {
+  conversation: ConversationThread;
+  chapterDraft: {
+    content: string;
+    title: string;
+    plotPoint: string;
+    wordCount: number;
+    status: 'drafting' | 'reviewing' | 'completed';
+  };
+  feedbackIntegration: {
+    pendingFeedback: EnhancedFeedbackItem[];
+    incorporatedFeedback: EnhancedFeedbackItem[];
+    feedbackRequests: Map<string, {
+      status: 'pending' | 'generating' | 'ready';
+      feedback: CharacterFeedback | RaterFeedback;
+    }>;
+  };
+  status: 'active' | 'completed' | 'paused';
+  progress: {
+    feedbackIncorporated: number;
+    totalFeedbackItems: number;
+    lastActivity: Date;
+  };
+}
+
+/**
+ * Phase 3: Final Edit Phase State
+ */
+export interface FinalEditPhase {
+  conversation: ConversationThread;
+  finalChapter: {
+    content: string;
+    title: string;
+    wordCount: number;
+    version: number;
+  };
+  reviewSelection: {
+    availableReviews: ReviewItem[];
+    selectedReviews: string[]; // IDs of selected review items
+    appliedReviews: string[]; // IDs of reviews that have been applied
+  };
+  editorReview?: {
+    suggestions: EditorSuggestion[];
+    userSelections: boolean[];
+    overallAssessment: string;
+  };
+  status: 'active' | 'completed' | 'paused';
+  progress: {
+    reviewsApplied: number;
+    totalReviews: number;
+    lastActivity: Date;
+  };
+}
+
+/**
+ * Phase transition logic and validation
+ */
+export interface PhaseTransition {
+  fromPhase: 'plot-outline' | 'chapter-detailer' | 'final-edit';
+  toPhase: 'plot-outline' | 'chapter-detailer' | 'final-edit';
+  canTransition: boolean;
+  requirements: string[]; // List of requirements that must be met
+  validationErrors: string[]; // Current validation errors preventing transition
+  transitionData?: any; // Data to carry forward to next phase
+}
+
+/**
+ * Main Chapter Compose State Container
+ * Replaces ChapterCreationState with three-phase support
+ */
+export interface ChapterComposeState {
+  // Phase Management
+  currentPhase: 'plot-outline' | 'chapter-detailer' | 'final-edit';
+  phases: {
+    plotOutline: PlotOutlinePhase;
+    chapterDetailer: ChapterDetailerPhase;
+    finalEdit: FinalEditPhase;
+  };
+  
+  // Shared Context
+  sharedContext: {
+    chapterNumber: number;
+    targetWordCount?: number;
+    genre?: string;
+    tone?: string;
+    pov?: string;
+  };
+  
+  // Navigation and State
+  navigation: {
+    phaseHistory: ('plot-outline' | 'chapter-detailer' | 'final-edit')[];
+    canGoBack: boolean;
+    canGoForward: boolean;
+    branchNavigation: BranchNavigation;
+  };
+  
+  // Progress Tracking
+  overallProgress: {
+    currentStep: number;
+    totalSteps: number;
+    phaseCompletionStatus: {
+      'plot-outline': boolean;
+      'chapter-detailer': boolean;
+      'final-edit': boolean;
+    };
+    estimatedTimeRemaining?: number;
+  };
+  
+  // Metadata
+  metadata: {
+    created: Date;
+    lastModified: Date;
+    version: string;
+    migrationSource?: 'ChapterCreationState' | 'manual';
+  };
+}
+
+// Legacy interface maintained for backward compatibility
 export interface ChapterCreationState {
   plotPoint: string;
   incorporatedFeedback: FeedbackItem[];
@@ -115,11 +375,17 @@ export interface Story {
     summary: string;
     chapters: Chapter[];
   };
+  // New three-phase chapter compose system (optional for gradual migration)
+  chapterCompose?: ChapterComposeState;
+  // Legacy chapter creation (required for backward compatibility)
   chapterCreation: ChapterCreationState;
   metadata: {
     version: string;
     created: Date;
     lastModified: Date;
+    // Migration tracking
+    migrationStatus?: 'pending' | 'in-progress' | 'completed' | 'failed';
+    lastMigrationAttempt?: Date;
   };
 }
 
