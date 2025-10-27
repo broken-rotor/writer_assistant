@@ -8,6 +8,7 @@ import { StoryService } from '../../services/story.service';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
+import { PhaseNavigationComponent } from '../phase-navigation/phase-navigation.component';
 import { ArchiveService, RAGResponse } from '../../services/archive.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
 import { SystemPromptFieldComponent } from '../system-prompt-field/system-prompt-field.component';
@@ -21,6 +22,7 @@ import {
   ErrorContext, 
   RecoveryAction 
 } from '../../constants/token-limits.constants';
+import { PhaseStateService, PhaseType } from '../../services/phase-state.service';
 
 interface ResearchChatMessage {
   role: string;
@@ -32,7 +34,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -79,6 +81,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   isTokenLimitsRetrying = false;
   isTokenLimitsFallbackMode = false;
 
+  // Phase navigation state
+  showPhaseNavigation = false;
+  currentPhase: PhaseType = 'plot-outline';
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -90,7 +96,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     private archiveService: ArchiveService,
     private tokenLimitsService: TokenLimitsService,
     private tokenValidationService: TokenValidationService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private phaseStateService: PhaseStateService
   ) {}
 
   ngOnInit() {
@@ -120,6 +127,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       this.story = this.storyService.getStory(storyId);
       if (!this.story) {
         this.error = 'Story not found';
+      } else {
+        this.initializePhaseNavigation(storyId);
       }
     } catch (err) {
       this.error = 'Failed to load story';
@@ -131,6 +140,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   selectTab(tab: 'general' | 'characters' | 'raters' | 'story' | 'chapter-creation') {
     this.activeTab = tab;
+    
+    // Show phase navigation only for chapter-creation tab
+    this.showPhaseNavigation = tab === 'chapter-creation';
+    
     // Auto-save when switching tabs (only if validation allows)
     if (this.story && this.canSave()) {
       this.storyService.saveStory(this.story);
@@ -1288,5 +1301,66 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     if (score >= 0.8) return 'high';
     if (score >= 0.6) return 'medium';
     return 'low';
+  }
+
+  // Phase Navigation Methods
+  private initializePhaseNavigation(storyId: string) {
+    if (!this.story) return;
+
+    // Initialize ChapterComposeState if it doesn't exist
+    if (!this.story.chapterCompose) {
+      const nextChapterNumber = this.story.story.chapters.length + 1;
+      this.story.chapterCompose = this.phaseStateService.initializeChapterComposeState(storyId, nextChapterNumber);
+      
+      // Save the updated story
+      this.storyService.saveStory(this.story);
+    } else {
+      // Load existing state
+      this.phaseStateService.loadChapterComposeState(this.story.chapterCompose);
+    }
+
+    // Subscribe to phase changes
+    this.phaseStateService.currentPhase$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(phase => {
+        this.currentPhase = phase;
+        this.cdr.detectChanges();
+      });
+  }
+
+  onPhaseChanged(newPhase: PhaseType) {
+    this.currentPhase = newPhase;
+    
+    // Update the story's chapter compose state
+    if (this.story && this.story.chapterCompose) {
+      this.story.chapterCompose.currentPhase = newPhase;
+      this.story.chapterCompose.metadata.lastModified = new Date();
+      
+      // Save the updated story
+      this.storyService.saveStory(this.story);
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  getCurrentChapterNumber(): number {
+    if (!this.story) return 1;
+    return this.story.story.chapters.length + 1;
+  }
+
+  getCurrentChapterTitle(): string {
+    if (!this.story?.chapterCompose) return '';
+    
+    const currentPhase = this.story.chapterCompose.currentPhase;
+    switch (currentPhase) {
+      case 'plot-outline':
+        return this.story.chapterCompose.phases.plotOutline.draftSummary || '';
+      case 'chapter-detailer':
+        return this.story.chapterCompose.phases.chapterDetailer.chapterDraft.title || '';
+      case 'final-edit':
+        return this.story.chapterCompose.phases.finalEdit.finalChapter.title || '';
+      default:
+        return '';
+    }
   }
 }

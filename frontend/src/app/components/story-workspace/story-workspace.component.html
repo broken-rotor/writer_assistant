@@ -60,6 +60,14 @@
     <button class="tab-button" [class.active]="activeTab === 'chapter-creation'" (click)="selectTab('chapter-creation')">Chapter Creation</button>
   </nav>
 
+  <!-- Phase Navigation (shown only for chapter-creation tab) -->
+  <app-phase-navigation 
+    *ngIf="showPhaseNavigation"
+    [chapterNumber]="getCurrentChapterNumber()"
+    [chapterTitle]="getCurrentChapterTitle()"
+    (phaseChanged)="onPhaseChanged($event)">
+  </app-phase-navigation>
+
   <!-- Tab Content -->
   <div class="tab-content">
     <!-- General Tab -->
