@@ -24,6 +24,7 @@ import {
 } from '../../constants/token-limits.constants';
 import { PhaseStateService, PhaseType } from '../../services/phase-state.service';
 import { PlotOutlinePhaseComponent } from '../plot-outline-phase/plot-outline-phase.component';
+import { FinalEditPhaseComponent } from '../final-edit-phase/final-edit-phase.component';
 import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent, FeedbackRequestEvent, AddToChatEvent } from '../feedback-sidebar/feedback-sidebar.component';
 import { FeedbackService } from '../../services/feedback.service';
 
@@ -37,7 +38,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, FeedbackSidebarComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, FinalEditPhaseComponent, FeedbackSidebarComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -1384,6 +1385,46 @@ Provide actionable insights and creative suggestions to enhance this plot point.
   onOutlineUpdated(outlineItems: any[]): void {
     console.log('Outline updated:', outlineItems);
     // The plot outline component handles saving, we just need to trigger change detection
+    this.cdr.detectChanges();
+  }
+
+  // Final Edit Phase handlers
+  onFinalEditPhaseCompleted(): void {
+    console.log('Final edit phase completed');
+    // The phase navigation component will handle the actual phase advancement
+    this.cdr.detectChanges();
+  }
+
+  onChapterFinalized(chapterData: { content: string; title: string; }): void {
+    console.log('Chapter finalized:', chapterData);
+    // Update the story with the finalized chapter
+    if (this.story) {
+      // Add the finalized chapter to the story's chapters array
+      const newChapter = {
+        id: `chapter-${this.getCurrentChapterNumber()}`,
+        number: this.getCurrentChapterNumber(),
+        title: chapterData.title,
+        content: chapterData.content,
+        wordCount: chapterData.content.split(/\s+/).length,
+        createdAt: new Date(),
+        lastModified: new Date()
+      };
+
+      if (!this.story.chapters) {
+        this.story.chapters = [];
+      }
+
+      // Replace existing chapter or add new one
+      const existingIndex = this.story.chapters.findIndex(ch => ch.number === newChapter.number);
+      if (existingIndex >= 0) {
+        this.story.chapters[existingIndex] = newChapter;
+      } else {
+        this.story.chapters.push(newChapter);
+      }
+
+      // Save the updated story
+      this.saveStory();
+    }
     this.cdr.detectChanges();
   }
 

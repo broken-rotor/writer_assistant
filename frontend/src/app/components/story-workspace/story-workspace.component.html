@@ -381,8 +381,17 @@
         </app-plot-outline-phase>
       </div>
 
+      <div *ngIf="currentPhase === 'final-edit'" class="phase-content">
+        <app-final-edit-phase
+          [story]="story"
+          [chapterNumber]="getCurrentChapterNumber()"
+          (phaseCompleted)="onFinalEditPhaseCompleted()"
+          (chapterFinalized)="onChapterFinalized($event)">
+        </app-final-edit-phase>
+      </div>
+
       <!-- Legacy Chapter Creation Interface (for other phases and backward compatibility) -->
-      <div *ngIf="currentPhase !== 'plot-outline'" class="legacy-chapter-creation">
+      <div *ngIf="currentPhase !== 'plot-outline' && currentPhase !== 'final-edit'" class="legacy-chapter-creation">
         <!-- Plot Point -->
       <div class="section plot-point-section">
         <h3>Plot Point</h3>
