@@ -10,7 +10,7 @@ describe('ConversationService', () => {
   let phaseStateService: jasmine.SpyObj<PhaseStateService>;
 
   const mockConfig: ConversationConfig = {
-    phase: 'plot-outline',
+    phase: 'plot_outline',
     storyId: 'test-story-1',
     chapterNumber: 1,
     enableBranching: true,
@@ -48,7 +48,7 @@ describe('ConversationService', () => {
       expect(thread.messages).toEqual([]);
       expect(thread.currentBranchId).toBe('main');
       expect(thread.branches.has('main')).toBe(true);
-      expect(thread.metadata.phase).toBe('plot-outline');
+      expect(thread.metadata.phase).toBe('plot_outline');
     });
 
     it('should load existing conversation thread from storage', () => {
@@ -60,7 +60,7 @@ describe('ConversationService', () => {
             type: 'user',
             content: 'Hello',
             timestamp: new Date(),
-            metadata: { phase: 'plot-outline', messageIndex: 0, branchId: 'main' }
+            metadata: { phase: 'plot_outline', messageIndex: 0, branchId: 'main' }
           }
         ],
         currentBranchId: 'main',
@@ -75,7 +75,7 @@ describe('ConversationService', () => {
         metadata: {
           created: new Date(),
           lastModified: new Date(),
-          phase: 'plot-outline'
+          phase: 'plot_outline'
         }
       };
 
@@ -102,7 +102,7 @@ describe('ConversationService', () => {
       expect(message.content).toBe('Hello world');
       expect(message.id).toBeTruthy();
       expect(message.timestamp).toBeTruthy();
-      expect(message.metadata?.phase).toBe('plot-outline');
+      expect(message.metadata?.phase).toBe('plot_outline');
       expect(message.metadata?.branchId).toBe('main');
     });
 
@@ -357,7 +357,7 @@ describe('ConversationService', () => {
               type: 'user',
               content: 'Imported message',
               timestamp: new Date(),
-              metadata: { phase: 'plot-outline', messageIndex: 0, branchId: 'main' }
+              metadata: { phase: 'plot_outline', messageIndex: 0, branchId: 'main' }
             }
           ],
           currentBranchId: 'main',
@@ -372,7 +372,7 @@ describe('ConversationService', () => {
           metadata: {
             created: new Date(),
             lastModified: new Date(),
-            phase: 'plot-outline'
+            phase: 'plot_outline'
           }
         },
         navigation: {

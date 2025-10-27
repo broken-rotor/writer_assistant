@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { of, throwError } from 'rxjs';
 
-import { PlotOutlinePhaseComponent } from './plot-outline-phase.component';
+import { PlotOutlinePhaseComponent } from './plot_outline-phase.component';
 import { GenerationService } from '../../services/generation.service';
 import { ArchiveService } from '../../services/archive.service';
 import { ConversationService } from '../../services/conversation.service';
@@ -104,7 +104,7 @@ describe('PlotOutlinePhaseComponent', () => {
     fixture.detectChanges();
     expect(component.chatConfig.storyId).toBe('test-story-1');
     expect(component.chatConfig.chapterNumber).toBe(1);
-    expect(component.chatConfig.phase).toBe('plot-outline');
+    expect(component.chatConfig.phase).toBe('plot_outline');
   });
 
   describe('Basic Outline Functionality', () => {
@@ -391,7 +391,7 @@ describe('PlotOutlinePhaseComponent', () => {
       component.addToDraft('Test item');
       
       expect(component.story.chapterCompose).toBeDefined();
-      expect(component.story.chapterCompose!.currentPhase).toBe('plot-outline');
+      expect(component.story.chapterCompose!.currentPhase).toBe('plot_outline');
       expect(component.story.chapterCompose!.phases.plotOutline).toBeDefined();
     });
 

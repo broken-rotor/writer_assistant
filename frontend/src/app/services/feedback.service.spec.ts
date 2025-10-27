@@ -168,7 +168,7 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test feedback',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
@@ -176,16 +176,16 @@ describe('FeedbackService', () => {
       ];
 
       // Set cache
-      service['feedbackCache'].set('test-story-id_1_chapter-detailer', mockFeedback);
+      service['feedbackCache'].set('test-story-id_1_chapter_detail', mockFeedback);
 
-      const result = service.getAvailableFeedback('test-story-id', 1, 'chapter-detailer');
+      const result = service.getAvailableFeedback('test-story-id', 1, 'chapter_detail');
 
       expect(result).toEqual(mockFeedback);
       expect(mockLocalStorageService.loadStory).not.toHaveBeenCalled();
     });
 
     it('should load feedback from story if not cached', () => {
-      const result = service.getAvailableFeedback('test-story-id', 1, 'chapter-detailer');
+      const result = service.getAvailableFeedback('test-story-id', 1, 'chapter_detail');
 
       expect(mockLocalStorageService.loadStory).toHaveBeenCalledWith('test-story-id');
       expect(result.length).toBeGreaterThan(0);
@@ -195,7 +195,7 @@ describe('FeedbackService', () => {
     it('should return empty array if story not found', () => {
       mockLocalStorageService.loadStory.and.returnValue(null);
 
-      const result = service.getAvailableFeedback('nonexistent', 1, 'chapter-detailer');
+      const result = service.getAvailableFeedback('nonexistent', 1, 'chapter_detail');
 
       expect(result).toEqual([]);
     });
@@ -274,7 +274,7 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test feedback',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
@@ -284,7 +284,7 @@ describe('FeedbackService', () => {
       service.addFeedbackToChat(
         'test-story-id',
         1,
-        'chapter-detailer',
+        'chapter_detail',
         mockFeedback,
         'User comment'
       ).subscribe(result => {
@@ -302,7 +302,7 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test feedback',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
@@ -312,7 +312,7 @@ describe('FeedbackService', () => {
       service.addFeedbackToChat(
         'test-story-id',
         1,
-        'chapter-detailer',
+        'chapter_detail',
         mockFeedback,
         'User comment'
       ).subscribe(() => {
@@ -336,14 +336,14 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
         }
       ];
 
-      service.addFeedbackToChat('test-story-id', 1, 'chapter-detailer', mockFeedback).subscribe(result => {
+      service.addFeedbackToChat('test-story-id', 1, 'chapter_detail', mockFeedback).subscribe(result => {
         expect(result).toBeFalse();
         done();
       });
@@ -359,18 +359,18 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
         }
       ];
 
-      service['feedbackCache'].set('test-story-id_1_chapter-detailer', mockFeedback);
+      service['feedbackCache'].set('test-story-id_1_chapter_detail', mockFeedback);
 
       service.markFeedbackAsIncorporated('test-story-id', ['feedback1']);
 
-      const updatedFeedback = service['feedbackCache'].get('test-story-id_1_chapter-detailer');
+      const updatedFeedback = service['feedbackCache'].get('test-story-id_1_chapter_detail');
       expect(updatedFeedback![0].status).toBe('incorporated');
     });
 
@@ -382,14 +382,14 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test feedback',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
         }
       ];
 
-      service['feedbackCache'].set('test-story-id_1_chapter-detailer', mockFeedback);
+      service['feedbackCache'].set('test-story-id_1_chapter_detail', mockFeedback);
 
       service.markFeedbackAsIncorporated('test-story-id', ['feedback1']);
 
@@ -399,25 +399,25 @@ describe('FeedbackService', () => {
 
   describe('clearFeedbackCache', () => {
     beforeEach(() => {
-      service['feedbackCache'].set('story1_1_chapter-detailer', []);
-      service['feedbackCache'].set('story1_2_chapter-detailer', []);
-      service['feedbackCache'].set('story2_1_chapter-detailer', []);
+      service['feedbackCache'].set('story1_1_chapter_detail', []);
+      service['feedbackCache'].set('story1_2_chapter_detail', []);
+      service['feedbackCache'].set('story2_1_chapter_detail', []);
     });
 
     it('should clear specific cache entry', () => {
-      service.clearFeedbackCache('story1', 1, 'chapter-detailer');
+      service.clearFeedbackCache('story1', 1, 'chapter_detail');
 
-      expect(service['feedbackCache'].has('story1_1_chapter-detailer')).toBeFalse();
-      expect(service['feedbackCache'].has('story1_2_chapter-detailer')).toBeTrue();
-      expect(service['feedbackCache'].has('story2_1_chapter-detailer')).toBeTrue();
+      expect(service['feedbackCache'].has('story1_1_chapter_detail')).toBeFalse();
+      expect(service['feedbackCache'].has('story1_2_chapter_detail')).toBeTrue();
+      expect(service['feedbackCache'].has('story2_1_chapter_detail')).toBeTrue();
     });
 
     it('should clear all entries for a story', () => {
       service.clearFeedbackCache('story1');
 
-      expect(service['feedbackCache'].has('story1_1_chapter-detailer')).toBeFalse();
-      expect(service['feedbackCache'].has('story1_2_chapter-detailer')).toBeFalse();
-      expect(service['feedbackCache'].has('story2_1_chapter-detailer')).toBeTrue();
+      expect(service['feedbackCache'].has('story1_1_chapter_detail')).toBeFalse();
+      expect(service['feedbackCache'].has('story1_2_chapter_detail')).toBeFalse();
+      expect(service['feedbackCache'].has('story2_1_chapter_detail')).toBeTrue();
     });
 
     it('should clear entire cache', () => {
@@ -529,7 +529,7 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Be more decisive',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
@@ -540,7 +540,7 @@ describe('FeedbackService', () => {
           type: 'suggestion',
           content: 'Add tension',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'high',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }

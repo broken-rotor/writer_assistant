@@ -16,28 +16,28 @@ describe('WorldbuildingSyncService', () => {
       type: 'user',
       content: 'Tell me about the magic system in this world.',
       timestamp: new Date('2023-01-01T10:00:00Z'),
-      metadata: {}
+      metadata: { phase: 'plot_outline', messageIndex: 0, branchId: 'main' }
     },
     {
       id: 'msg2',
       type: 'assistant',
       content: 'The magic system is based on elemental forces. Fire magic is common in the desert kingdoms, while water magic dominates the coastal regions.',
       timestamp: new Date('2023-01-01T10:01:00Z'),
-      metadata: {}
+      metadata: { phase: 'plot_outline', messageIndex: 1, branchId: 'main' }
     },
     {
       id: 'msg3',
       type: 'user',
       content: 'What about the political structure?',
       timestamp: new Date('2023-01-01T10:02:00Z'),
-      metadata: {}
+      metadata: { phase: 'plot_outline', messageIndex: 2, branchId: 'main' }
     },
     {
       id: 'msg4',
       type: 'assistant',
       content: 'The world is divided into five kingdoms, each ruled by a council of mages. The central kingdom serves as a neutral meeting ground.',
       timestamp: new Date('2023-01-01T10:03:00Z'),
-      metadata: {}
+      metadata: { phase: 'plot_outline', messageIndex: 3, branchId: 'main' }
     }
   ];
 

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { of, BehaviorSubject } from 'rxjs';
 
-import { ChapterDetailerPhaseComponent } from './chapter-detailer-phase.component';
+import { ChapterDetailerPhaseComponent } from './chapter_detail-phase.component';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
 import { FeedbackSidebarComponent } from '../feedback-sidebar/feedback-sidebar.component';
 import { GenerationService } from '../../services/generation.service';
@@ -188,7 +188,7 @@ describe('ChapterDetailerPhaseComponent', () => {
       targetWordCount: 2000
     },
     navigation: {
-      phaseHistory: ['plot-outline'],
+      phaseHistory: ['plot_outline'],
       canGoBack: false,
       canGoForward: false,
       branchNavigation: {
@@ -203,9 +203,9 @@ describe('ChapterDetailerPhaseComponent', () => {
       currentStep: 2,
       totalSteps: 3,
       phaseCompletionStatus: {
-        'plot-outline': true,
-        'chapter-detailer': false,
-        'final-edit': false
+        'plot_outline': true,
+        'chapter_detail': false,
+        'final_edit': false
       }
     },
     metadata: {
@@ -307,11 +307,11 @@ describe('ChapterDetailerPhaseComponent', () => {
     it('should set up chat and feedback configurations', () => {
       component.ngOnInit();
       
-      expect(component.chatConfig.phase).toBe('chapter-detailer');
+      expect(component.chatConfig.phase).toBe('chapter_detail');
       expect(component.chatConfig.storyId).toBe('test-story-1');
       expect(component.chatConfig.chapterNumber).toBe(1);
       
-      expect(component.feedbackConfig.phase).toBe('chapter-detailer');
+      expect(component.feedbackConfig.phase).toBe('chapter_detail');
       expect(component.feedbackConfig.storyId).toBe('test-story-1');
       expect(component.feedbackConfig.chapterNumber).toBe(1);
     });
@@ -584,7 +584,7 @@ describe('ChapterDetailerPhaseComponent', () => {
           type: 'dialog',
           content: 'Add more emotion to dialogue',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'high',
           status: 'pending',
           metadata: {
@@ -616,7 +616,7 @@ describe('ChapterDetailerPhaseComponent', () => {
           type: 'dialog',
           content: 'Add more emotion',
           incorporated: false,
-          phase: 'chapter-detailer',
+          phase: 'chapter_detail',
           priority: 'high',
           status: 'pending',
           metadata: {
