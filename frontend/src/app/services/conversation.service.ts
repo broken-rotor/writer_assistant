@@ -65,7 +65,13 @@ export class ConversationService {
    */
   initializeConversation(config: ConversationConfig): ConversationThread {
     this.config = config;
-    this.storageKey = `conversation_${config.storyId}_${config.chapterNumber}_${config.phase}`;
+    
+    // For worldbuilding, use a different storage key pattern since it's not chapter-specific
+    if (config.phase === 'worldbuilding') {
+      this.storageKey = `conversation_${config.storyId}_worldbuilding`;
+    } else {
+      this.storageKey = `conversation_${config.storyId}_${config.chapterNumber}_${config.phase}`;
+    }
 
     // Try to load existing conversation
     let thread = this.loadConversationFromStorage();

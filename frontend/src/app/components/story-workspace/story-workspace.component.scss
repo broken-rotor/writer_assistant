@@ -1538,3 +1538,75 @@ button {
     }
   }
 }
+
+// Worldbuilding section specific styles
+.worldbuilding-section {
+  .form-section {
+    margin-bottom: 0; // Remove default margin since we have our own spacing
+  }
+
+  label {
+    display: block;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  app-worldbuilding-chat {
+    display: block;
+    margin-bottom: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+
+    .secondary-button {
+      padding: 8px 16px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      color: #495057;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background: #e9ecef;
+        border-color: #adb5bd;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Responsive adjustments for worldbuilding section
+@media (max-width: 768px) {
+  .worldbuilding-section {
+    app-worldbuilding-chat {
+      // The component itself handles mobile responsiveness
+    }
+
+    .button-group {
+      flex-direction: column;
+      gap: 8px;
+
+      .secondary-button {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  }
+}

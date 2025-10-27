@@ -1,0 +1,74 @@
+<div class="worldbuilding-chat-container" *ngIf="isInitialized && chatConfig">
+  <!-- Two-panel layout: Current worldbuilding summary + Interactive chat -->
+  <div class="worldbuilding-panels">
+    
+    <!-- Current Worldbuilding Summary Panel -->
+    <div class="worldbuilding-summary-panel">
+      <div class="panel-header">
+        <h3>Current Worldbuilding</h3>
+        <div class="panel-actions">
+          <button 
+            class="sync-button" 
+            (click)="syncWorldbuilding()" 
+            [disabled]="disabled"
+            title="Sync worldbuilding from conversation">
+            <i class="icon-sync"></i>
+            Sync
+          </button>
+        </div>
+      </div>
+      
+      <div class="worldbuilding-content">
+        <div *ngIf="currentWorldbuilding; else emptyWorldbuilding" class="worldbuilding-text">
+          <pre>{{ currentWorldbuilding }}</pre>
+        </div>
+        <ng-template #emptyWorldbuilding>
+          <div class="empty-state">
+            <p>No worldbuilding content yet.</p>
+            <p>Start a conversation to build your world!</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Interactive Chat Panel -->
+    <div class="chat-panel">
+      <div class="panel-header">
+        <h3>Worldbuilding Assistant</h3>
+        <div class="panel-info">
+          <span class="info-text">Ask questions, describe your world, or request assistance</span>
+        </div>
+      </div>
+      
+      <div class="chat-interface-wrapper">
+        <app-chat-interface
+          [config]="chatConfig"
+          [disabled]="disabled"
+          [processing]="processing"
+          (messageSent)="onMessageSent($event)"
+          (messageAction)="onMessageAction($event)"
+          (branchChanged)="onBranchChanged($event)"
+          (conversationCleared)="onConversationCleared()">
+        </app-chat-interface>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Display -->
+  <div *ngIf="error" class="error-message">
+    <i class="icon-error"></i>
+    <span>{{ error }}</span>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="!isInitialized" class="loading-state">
+  <div class="loading-spinner"></div>
+  <p>Initializing worldbuilding chat...</p>
+</div>
+
+<!-- Error State -->
+<div *ngIf="!story" class="error-state">
+  <i class="icon-error"></i>
+  <p>Unable to initialize worldbuilding chat: No story provided</p>
+</div>

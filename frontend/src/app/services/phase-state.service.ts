@@ -19,7 +19,7 @@ import {
 import { LocalStorageService } from './local-storage.service';
 import { ApiService } from './api.service';
 
-export type PhaseType = 'plot_outline' | 'chapter_detail' | 'final_edit';
+export type PhaseType = 'plot_outline' | 'chapter_detail' | 'final_edit' | 'worldbuilding';
 
 export interface PhaseValidationResult {
   canAdvance: boolean;
@@ -468,6 +468,7 @@ export class PhaseStateService {
       case 'plot_outline': return 'Draft';
       case 'chapter_detail': return 'Refined';
       case 'final_edit': return 'Approved';
+      case 'worldbuilding': return 'Worldbuilding';
       default: return phase;
     }
   }
@@ -480,6 +481,7 @@ export class PhaseStateService {
       case 'plot_outline': return 'Create and refine the plot outline for your chapter';
       case 'chapter_detail': return 'Develop the chapter content with character and rater feedback';
       case 'final_edit': return 'Review and finalize the chapter with editor suggestions';
+      case 'worldbuilding': return 'Build and develop your story world through interactive conversation';
       default: return '';
     }
   }
@@ -702,11 +704,12 @@ export class PhaseStateService {
   /**
    * Convert internal phase type to API phase type
    */
-  private convertPhaseTypeToAPI(phase: PhaseType): 'plot_outline' | 'chapter_detail' | 'final_edit' {
+  private convertPhaseTypeToAPI(phase: PhaseType): 'plot_outline' | 'chapter_detail' | 'final_edit' | 'worldbuilding' {
     switch (phase) {
       case 'plot_outline': return 'plot_outline';
       case 'chapter_detail': return 'chapter_detail';
       case 'final_edit': return 'final_edit';
+      case 'worldbuilding': return 'worldbuilding';
       default: return 'plot_outline';
     }
   }
