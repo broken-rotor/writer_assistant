@@ -242,17 +242,17 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
   private loadQualityScores(): void {
     // This would integrate with the review service to get quality scores
     // For now, we'll set up the structure
-    this.reviewService.getQualityScore(this.story.id, this.chapterNumber)
+    this.reviewService.qualityScore$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (qualityScore) => {
+        next: (qualityScore: QualityScore | null) => {
           if (qualityScore && this.qualityAssessment) {
-            this.qualityAssessment.overallScore = qualityScore.overallScore;
+            this.qualityAssessment.overallScore = qualityScore.overall;
             // Map quality score categories to our assessment structure
             this.updateQualityAssessment(qualityScore);
           }
         },
-        error: (error) => {
+        error: (error: any) => {
           console.warn('Could not load quality scores:', error);
         }
       });
@@ -262,9 +262,9 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
     if (!this.qualityAssessment) return;
 
     // Update readiness level based on overall score
-    if (qualityScore.overallScore >= 85) {
+    if (qualityScore.overall >= 85) {
       this.qualityAssessment.readinessLevel = 'excellent';
-    } else if (qualityScore.overallScore >= 70) {
+    } else if (qualityScore.overall >= 70) {
       this.qualityAssessment.readinessLevel = 'good';
     } else {
       this.qualityAssessment.readinessLevel = 'needs-work';
@@ -273,7 +273,7 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
     this.updateFinalizationStatus();
   }
 
-  private updateFinalizationStatus(): void {
+  public updateFinalizationStatus(): void {
     this.finalizationChecks.hasAppliedReviews = this.appliedReviewIds.size > 0;
     this.finalizationChecks.qualityThresholdMet = 
       this.qualityAssessment?.overallScore ? this.qualityAssessment.overallScore >= 70 : false;
@@ -290,13 +290,13 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
   }
 
   onReviewRequested(event: ReviewRequestEvent): void {
-    this.toastService.show(`Requesting ${event.requestType} review...`, 'info');
+    this.toastService.showInfo(`Requesting ${event.requestType} review...`);
     // The review service will handle the actual request
   }
 
   onAddToChat(event: AddToChatEvent): void {
     if (event.selectedReviews.length === 0) {
-      this.toastService.show('Please select reviews to add to chat', 'warning');
+      this.toastService.showWarning('Please select reviews to add to chat');
       return;
     }
 
@@ -312,7 +312,7 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
     }
 
     // Add message to chat (this would be handled by the chat interface)
-    this.toastService.show(`Added ${event.selectedReviews.length} reviews to chat`, 'success');
+    this.toastService.showSuccess(`Added ${event.selectedReviews.length} reviews to chat`);
   }
 
   // Event handlers for chat interface
@@ -370,7 +370,7 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
 
     this.updateFinalizationStatus();
     this.savePhaseState();
-    this.toastService.show('New revision created', 'success');
+    this.toastService.showSuccess('New revision created');
   }
 
   // Revision history methods
@@ -404,7 +404,7 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
       
       if (confirmRollback) {
         this.createNewRevision(`Rolled back to ${revision.name}`);
-        this.toastService.show(`Rolled back to ${revision.name}`, 'info');
+        this.toastService.showInfo(`Rolled back to ${revision.name}`);
       }
     }
   }
@@ -443,13 +443,13 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
   // Chapter finalization methods
   finalizeChapter(): void {
     if (!this.canFinalize) {
-      this.toastService.show('Chapter is not ready for finalization', 'warning');
+      this.toastService.showWarning('Chapter is not ready for finalization');
       return;
     }
 
     const currentRevision = this.getCurrentRevision();
     if (!currentRevision) {
-      this.toastService.show('No active revision found', 'error');
+      this.toastService.showError('No active revision found');
       return;
     }
 
@@ -479,7 +479,7 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.toastService.show('Chapter finalized successfully!', 'success');
+          this.toastService.showSuccess('Chapter finalized successfully!');
           this.chapterFinalized.emit({
             content: revision.content,
             title: revision.title
@@ -487,9 +487,9 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
           this.phaseCompleted.emit();
           this.isFinalizingChapter = false;
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error finalizing chapter:', error);
-          this.toastService.show('Error finalizing chapter', 'error');
+          this.toastService.showError('Error finalizing chapter');
           this.isFinalizingChapter = false;
         }
       });
@@ -539,4 +539,3 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
     return this.revisions.length;
   }
 }
-

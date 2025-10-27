@@ -490,4 +490,67 @@ export class PhaseStateService {
     
     this.validationResultSubject.next(updatedValidation);
   }
+
+  /**
+   * Update phase data
+   */
+  updatePhaseData(storyId: string, phase: PhaseType, data: any): void {
+    const state = this.getCurrentState();
+    if (!state) return;
+
+    // Update specific phase data
+    switch (phase) {
+      case 'plot-outline':
+        if (data.outline) {
+          Object.assign(state.phases.plotOutline.outline, data.outline);
+        }
+        if (data.draftSummary !== undefined) {
+          state.phases.plotOutline.draftSummary = data.draftSummary;
+        }
+        if (data.conversation) {
+          Object.assign(state.phases.plotOutline.conversation, data.conversation);
+        }
+        break;
+
+      case 'chapter-detailer':
+        if (data.chapterDraft) {
+          Object.assign(state.phases.chapterDetailer.chapterDraft, data.chapterDraft);
+        }
+        if (data.feedbackIntegration) {
+          Object.assign(state.phases.chapterDetailer.feedbackIntegration, data.feedbackIntegration);
+        }
+        if (data.conversation) {
+          Object.assign(state.phases.chapterDetailer.conversation, data.conversation);
+        }
+        break;
+
+      case 'final-edit':
+        if (data.finalChapter) {
+          Object.assign(state.phases.finalEdit.finalChapter, data.finalChapter);
+        }
+        if (data.reviewSelection) {
+          Object.assign(state.phases.finalEdit.reviewSelection, data.reviewSelection);
+        }
+        if (data.conversation) {
+          Object.assign(state.phases.finalEdit.conversation, data.conversation);
+        }
+        break;
+    }
+
+    // Update metadata
+    state.metadata.lastModified = new Date();
+
+    // Emit updated state
+    this.chapterComposeStateSubject.next(state);
+    this.updateValidationResult(state);
+
+    // Save to local storage if story ID is provided
+    if (storyId) {
+      const story = this.localStorageService.loadStory(storyId);
+      if (story) {
+        story.chapterCompose = state;
+        this.localStorageService.saveStory(story);
+      }
+    }
+  }
 }

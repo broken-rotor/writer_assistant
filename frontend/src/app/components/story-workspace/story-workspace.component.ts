@@ -1405,25 +1405,29 @@ Provide actionable insights and creative suggestions to enhance this plot point.
         number: this.getCurrentChapterNumber(),
         title: chapterData.title,
         content: chapterData.content,
-        wordCount: chapterData.content.split(/\s+/).length,
-        createdAt: new Date(),
-        lastModified: new Date()
+        plotPoint: '',
+        incorporatedFeedback: [],
+        metadata: {
+          created: new Date(),
+          lastModified: new Date(),
+          wordCount: chapterData.content.split(/\s+/).length
+        }
       };
 
-      if (!this.story.chapters) {
-        this.story.chapters = [];
+      if (!this.story.story.chapters) {
+        this.story.story.chapters = [];
       }
 
       // Replace existing chapter or add new one
-      const existingIndex = this.story.chapters.findIndex(ch => ch.number === newChapter.number);
+      const existingIndex = this.story.story.chapters.findIndex((ch: any) => ch.number === newChapter.number);
       if (existingIndex >= 0) {
-        this.story.chapters[existingIndex] = newChapter;
+        this.story.story.chapters[existingIndex] = newChapter;
       } else {
-        this.story.chapters.push(newChapter);
+        this.story.story.chapters.push(newChapter);
       }
 
       // Save the updated story
-      this.saveStory();
+      this.storyService.saveStory(this.story);
     }
     this.cdr.detectChanges();
   }

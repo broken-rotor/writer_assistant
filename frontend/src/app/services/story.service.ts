@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { Story, StoryListItem, Character, Rater, Chapter } from '../models/story.model';
 import { LocalStorageService } from './local-storage.service';
 
@@ -363,4 +363,66 @@ export class StoryService {
       this.autoSaveInterval = null;
     }
   }
+
+  /**
+   * Save a chapter to the story
+   */
+  saveChapter(storyId: string, chapterNumber: number, chapterData: any): Observable<any> {
+    const story = this.localStorageService.loadStory(storyId);
+    if (!story) {
+      return throwError(() => new Error('Story not found'));
+    }
+
+    try {
+      // Ensure chapters array exists
+      if (!story.story.chapters) {
+        story.story.chapters = [];
+      }
+
+      // Find existing chapter or create new one
+      const existingIndex = story.story.chapters.findIndex((ch: any) => ch.number === chapterNumber);
+      
+      const chapter = {
+        id: chapterData.id || this.generateId(),
+        number: chapterNumber,
+        title: chapterData.title || `Chapter ${chapterNumber}`,
+        content: chapterData.content || '',
+        plotPoint: chapterData.plotPoint || '',
+        incorporatedFeedback: chapterData.incorporatedFeedback || [],
+        metadata: {
+          created: chapterData.metadata?.created || new Date(),
+          lastModified: new Date(),
+          wordCount: chapterData.wordCount || 0
+        }
+      };
+
+      if (existingIndex !== -1) {
+        // Update existing chapter
+        story.story.chapters[existingIndex] = chapter;
+      } else {
+        // Add new chapter
+        story.story.chapters.push(chapter);
+        // Sort chapters by number
+        story.story.chapters.sort((a: any, b: any) => a.number - b.number);
+      }
+
+      // Update story metadata
+      story.metadata.lastModified = new Date();
+
+      // Save story
+      const success = this.localStorageService.saveStory(story);
+      if (success) {
+        // Update current story if it's the same one
+        if (this.currentStorySubject.value?.id === storyId) {
+          this.currentStorySubject.next(story);
+        }
+        return of(chapter);
+      } else {
+        return throwError(() => new Error('Failed to save story'));
+      }
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
 }
