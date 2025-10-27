@@ -358,7 +358,18 @@
 
     <!-- Chapter Creation Tab -->
     <div *ngIf="activeTab === 'chapter-creation'" class="tab-pane chapter-creation-tab">
-      <h2>Chapter Creation</h2>
+      <div class="chapter-creation-header">
+        <h2>Chapter Creation</h2>
+        <div class="chapter-creation-actions">
+          <button 
+            class="secondary-button feedback-toggle"
+            (click)="toggleFeedbackSidebar()"
+            [class.active]="showFeedbackSidebar"
+            title="Toggle feedback sidebar">
+            💬 Feedback
+          </button>
+        </div>
+      </div>
 
       <!-- Three-Phase Chapter Compose Interface -->
       <div *ngIf="currentPhase === 'plot-outline'" class="phase-content">
@@ -724,6 +735,25 @@
         <span *ngIf="!researchLoading">Send</span>
         <span *ngIf="researchLoading">⏳</span>
       </button>
+    </div>
+  </div>
+
+  <!-- Feedback Sidebar -->
+  <div class="feedback-sidebar-container" *ngIf="showFeedbackSidebar && story && feedbackSidebarConfig" [class.show]="showFeedbackSidebar">
+    <div class="sidebar-header">
+      <h3>💬 Feedback Manager</h3>
+      <button class="close-button" (click)="closeFeedbackSidebar()" title="Close">✕</button>
+    </div>
+    
+    <div class="sidebar-content">
+      <app-feedback-sidebar
+        [config]="feedbackSidebarConfig"
+        [story]="story"
+        [disabled]="false"
+        (selectionChanged)="onFeedbackSelectionChanged($event)"
+        (feedbackRequested)="onFeedbackRequested($event)"
+        (addToChat)="onAddToChat($event)">
+      </app-feedback-sidebar>
     </div>
   </div>
 </div>
