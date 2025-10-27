@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Story, StoryListItem } from '../models/story.model';
+import { Story, StoryListItem, ChapterComposeState } from '../models/story.model';
 
 export interface StorageQuota {
   used: number;
@@ -51,7 +51,9 @@ export class LocalStorageService {
         chapterCreation: {
           ...story.chapterCreation,
           feedbackRequests: Array.from(story.chapterCreation.feedbackRequests.entries())
-        }
+        },
+        // Serialize ChapterComposeState if it exists
+        chapterCompose: story.chapterCompose ? this.serializeChapterComposeState(story.chapterCompose) : undefined
       };
 
       localStorage.setItem(key, JSON.stringify(serializedStory));
@@ -84,6 +86,8 @@ export class LocalStorageService {
           ...parsed.chapterCreation,
           feedbackRequests: new Map(parsed.chapterCreation?.feedbackRequests || [])
         },
+        // Deserialize ChapterComposeState if it exists
+        chapterCompose: parsed.chapterCompose ? this.deserializeChapterComposeState(parsed.chapterCompose) : undefined,
         metadata: {
           ...parsed.metadata,
           created: new Date(parsed.metadata.created),
@@ -407,5 +411,94 @@ export class LocalStorageService {
       console.error('Error clearing all data:', error);
       return false;
     }
+  }
+
+  // ChapterComposeState serialization methods
+  private serializeChapterComposeState(state: any): any {
+    return {
+      ...state,
+      phases: {
+        plotOutline: {
+          ...state.phases.plotOutline,
+          conversation: this.serializeConversationThread(state.phases.plotOutline.conversation),
+          outline: {
+            ...state.phases.plotOutline.outline,
+            items: Array.from(state.phases.plotOutline.outline.items.entries())
+          }
+        },
+        chapterDetailer: {
+          ...state.phases.chapterDetailer,
+          conversation: this.serializeConversationThread(state.phases.chapterDetailer.conversation),
+          feedbackIntegration: {
+            ...state.phases.chapterDetailer.feedbackIntegration,
+            feedbackRequests: Array.from(state.phases.chapterDetailer.feedbackIntegration.feedbackRequests.entries())
+          }
+        },
+        finalEdit: {
+          ...state.phases.finalEdit,
+          conversation: this.serializeConversationThread(state.phases.finalEdit.conversation)
+        }
+      }
+    };
+  }
+
+  private deserializeChapterComposeState(serialized: any): any {
+    return {
+      ...serialized,
+      phases: {
+        plotOutline: {
+          ...serialized.phases.plotOutline,
+          conversation: this.deserializeConversationThread(serialized.phases.plotOutline.conversation),
+          outline: {
+            ...serialized.phases.plotOutline.outline,
+            items: new Map(serialized.phases.plotOutline.outline.items || [])
+          }
+        },
+        chapterDetailer: {
+          ...serialized.phases.chapterDetailer,
+          conversation: this.deserializeConversationThread(serialized.phases.chapterDetailer.conversation),
+          feedbackIntegration: {
+            ...serialized.phases.chapterDetailer.feedbackIntegration,
+            feedbackRequests: new Map(serialized.phases.chapterDetailer.feedbackIntegration.feedbackRequests || [])
+          }
+        },
+        finalEdit: {
+          ...serialized.phases.finalEdit,
+          conversation: this.deserializeConversationThread(serialized.phases.finalEdit.conversation)
+        }
+      },
+      metadata: {
+        ...serialized.metadata,
+        created: new Date(serialized.metadata.created),
+        lastModified: new Date(serialized.metadata.lastModified)
+      }
+    };
+  }
+
+  private serializeConversationThread(conversation: any): any {
+    return {
+      ...conversation,
+      branches: Array.from(conversation.branches.entries()),
+      messages: conversation.messages.map((msg: any) => ({
+        ...msg,
+        timestamp: msg.timestamp.toISOString()
+      }))
+    };
+  }
+
+  private deserializeConversationThread(serialized: any): any {
+    return {
+      ...serialized,
+      branches: new Map(serialized.branches || []),
+      messages: serialized.messages.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      })),
+      metadata: {
+        ...serialized.metadata,
+        created: new Date(serialized.metadata.created),
+        lastModified: new Date(serialized.metadata.lastModified)
+      }
+    };
   }
 }
