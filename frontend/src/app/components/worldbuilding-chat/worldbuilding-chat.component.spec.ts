@@ -389,4 +389,93 @@ describe('WorldbuildingChatComponent', () => {
 
     expect(component.syncWorldbuilding).toHaveBeenCalled();
   });
+
+  // New accessibility and navigation tests
+  describe('Accessibility Features', () => {
+    beforeEach(() => {
+      component.story = mockStory;
+      fixture.detectChanges();
+    });
+
+    it('should initialize with proper mobile view detection', () => {
+      expect(component.isMobileView).toBeDefined();
+      expect(component.focusedPanel).toBe('chat');
+    });
+
+    it('should handle keyboard shortcuts', () => {
+      spyOn(component, 'toggleKeyboardHelp');
+      spyOn(component, 'syncWorldbuilding');
+
+      // Test Ctrl+/ for help
+      const helpEvent = new KeyboardEvent('keydown', { key: '/', ctrlKey: true });
+      component.onKeyDown(helpEvent);
+      expect(component.toggleKeyboardHelp).toHaveBeenCalled();
+
+      // Test Ctrl+S for sync
+      const syncEvent = new KeyboardEvent('keydown', { key: 's', ctrlKey: true });
+      component.onKeyDown(syncEvent);
+      expect(component.syncWorldbuilding).toHaveBeenCalled();
+    });
+
+    it('should handle mobile panel switching', () => {
+      component.isMobileView = true;
+      spyOn(component, 'switchToPanel');
+
+      const event1 = new KeyboardEvent('keydown', { key: '1', altKey: true });
+      const event2 = new KeyboardEvent('keydown', { key: '2', altKey: true });
+
+      component.onKeyDown(event1);
+      component.onKeyDown(event2);
+
+      expect(component.switchToPanel).toHaveBeenCalledWith('summary');
+      expect(component.switchToPanel).toHaveBeenCalledWith('chat');
+    });
+
+    it('should handle escape key for help dialog', () => {
+      component.showKeyboardHelp = true;
+      spyOn(component, 'hideKeyboardHelp');
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
+      component.onKeyDown(escapeEvent);
+
+      expect(component.hideKeyboardHelp).toHaveBeenCalled();
+    });
+
+    it('should update mobile view on window resize', () => {
+      spyOn(component, 'updateMobileView' as any);
+      component.onResize();
+      expect((component as any).updateMobileView).toHaveBeenCalled();
+    });
+
+    it('should switch panels correctly', () => {
+      component.switchToPanel('summary');
+      expect(component.focusedPanel).toBe('summary');
+
+      component.switchToPanel('chat');
+      expect(component.focusedPanel).toBe('chat');
+    });
+
+    it('should toggle keyboard help visibility', () => {
+      expect(component.showKeyboardHelp).toBe(false);
+      
+      component.toggleKeyboardHelp();
+      expect(component.showKeyboardHelp).toBe(true);
+      
+      component.toggleKeyboardHelp();
+      expect(component.showKeyboardHelp).toBe(false);
+    });
+
+    it('should handle focus management for skip links', () => {
+      const event = new Event('click');
+      spyOn(event, 'preventDefault');
+
+      component.focusSummaryPanel(event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(component.focusedPanel).toBe('summary');
+
+      component.focusChatPanel(event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(component.focusedPanel).toBe('chat');
+    });
+  });
 });
