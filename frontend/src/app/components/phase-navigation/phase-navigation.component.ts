@@ -251,13 +251,13 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
    * Check if advance button should be shown
    */
   showAdvanceButton(): boolean {
-    return this.validationResult.nextPhase !== null;
+    return this.validationResult.nextPhase !== undefined;
   }
 
   /**
    * Check if revert button should be shown
    */
   showRevertButton(): boolean {
-    return this.validationResult.previousPhase !== null;
+    return this.validationResult.previousPhase !== undefined;
   }
 }

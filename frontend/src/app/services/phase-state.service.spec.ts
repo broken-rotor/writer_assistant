@@ -61,15 +61,13 @@ describe('PhaseStateService', () => {
 
   describe('loadChapterComposeState', () => {
     it('should load existing state and update observables', () => {
-      const mockState: Partial<ChapterComposeState> = {
-        currentPhase: 'chapter-detailer',
-        sharedContext: { chapterNumber: 2 }
-      } as ChapterComposeState;
+      const mockState = service.initializeChapterComposeState('test-story', 2);
+      mockState.currentPhase = 'chapter-detailer';
 
-      service.loadChapterComposeState(mockState as ChapterComposeState);
+      service.loadChapterComposeState(mockState);
 
       expect(service.getCurrentPhase()).toBe('chapter-detailer');
-      expect(service.getCurrentState()).toBe(mockState);
+      expect(service.getCurrentState()).toEqual(mockState);
     });
   });
 

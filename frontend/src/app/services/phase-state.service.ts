@@ -226,7 +226,7 @@ export class PhaseStateService {
     if (!state) return false;
 
     const previousPhase = this.getPreviousPhase(state.currentPhase);
-    return previousPhase !== null && state.navigation.phaseHistory.length > 1;
+    return previousPhase !== undefined && state.navigation.phaseHistory.length > 1;
   }
 
   /**
@@ -265,8 +265,10 @@ export class PhaseStateService {
     try {
       // Update phase status
       const currentPhase = state.currentPhase;
-      state.phases[currentPhase].status = 'completed';
-      state.phases[targetPhase].status = 'active';
+      const currentPhaseKey = this.getPhasePropertyKey(currentPhase);
+      const targetPhaseKey = this.getPhasePropertyKey(targetPhase);
+      state.phases[currentPhaseKey].status = 'completed';
+      state.phases[targetPhaseKey].status = 'active';
 
       // Update navigation
       state.currentPhase = targetPhase;
@@ -321,7 +323,7 @@ export class PhaseStateService {
   /**
    * Validate phase transition
    */
-  private validatePhaseTransition(state: ChapterComposeState, targetPhase: PhaseType | null): PhaseTransition {
+  private validatePhaseTransition(state: ChapterComposeState, targetPhase: PhaseType | undefined): PhaseTransition {
     if (!targetPhase) {
       return {
         fromPhase: state.currentPhase,
@@ -385,7 +387,7 @@ export class PhaseStateService {
 
     const result: PhaseValidationResult = {
       canAdvance: nextValidation?.canTransition || false,
-      canRevert: previousPhase !== null && state.navigation.phaseHistory.length > 1,
+      canRevert: previousPhase !== undefined && state.navigation.phaseHistory.length > 1,
       requirements: nextValidation?.requirements || [],
       validationErrors: nextValidation?.validationErrors || [],
       nextPhase,
@@ -396,26 +398,38 @@ export class PhaseStateService {
   }
 
   /**
+   * Convert phase type to property key for phases object
+   */
+  private getPhasePropertyKey(phase: PhaseType): keyof ChapterComposeState['phases'] {
+    switch (phase) {
+      case 'plot-outline': return 'plotOutline';
+      case 'chapter-detailer': return 'chapterDetailer';
+      case 'final-edit': return 'finalEdit';
+      default: throw new Error(`Unknown phase: ${phase}`);
+    }
+  }
+
+  /**
    * Get next phase in sequence
    */
-  private getNextPhase(currentPhase: PhaseType): PhaseType | null {
+  private getNextPhase(currentPhase: PhaseType): PhaseType | undefined {
     switch (currentPhase) {
       case 'plot-outline': return 'chapter-detailer';
       case 'chapter-detailer': return 'final-edit';
-      case 'final-edit': return null;
-      default: return null;
+      case 'final-edit': return undefined;
+      default: return undefined;
     }
   }
 
   /**
    * Get previous phase in sequence
    */
-  private getPreviousPhase(currentPhase: PhaseType): PhaseType | null {
+  private getPreviousPhase(currentPhase: PhaseType): PhaseType | undefined {
     switch (currentPhase) {
-      case 'plot-outline': return null;
+      case 'plot-outline': return undefined;
       case 'chapter-detailer': return 'plot-outline';
       case 'final-edit': return 'chapter-detailer';
-      default: return null;
+      default: return undefined;
     }
   }
 
