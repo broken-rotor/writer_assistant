@@ -385,11 +385,23 @@ export class ReviewFeedbackPanelComponent implements OnInit, OnDestroy {
 
   // Comprehensive review options
   toggleComprehensiveOption(option: keyof ComprehensiveReviewRequest): void {
-    this.comprehensiveOptions[option] = !this.comprehensiveOptions[option];
+    if (option === 'targetedAspects') {
+      // Handle targetedAspects separately as it's a string array
+      return;
+    }
+    // Type assertion to handle boolean properties
+    (this.comprehensiveOptions as any)[option] = !(this.comprehensiveOptions as any)[option];
   }
 
   // TrackBy function for ngFor performance
   trackByReviewId(index: number, item: ReviewItem): string {
     return item.id;
+  }
+
+  // Helper method to safely get category score
+  getCategoryScore(category: string): number {
+    if (!this.qualityScore?.categories) return 0;
+    const categories = this.qualityScore.categories as any;
+    return categories[category] || 0;
   }
 }

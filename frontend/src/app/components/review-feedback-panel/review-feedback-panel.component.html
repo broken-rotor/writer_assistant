@@ -27,8 +27,8 @@
       <div class="score-item" *ngFor="let category of ['grammar', 'style', 'consistency', 'flow', 'character', 'plot']">
         <span class="category-name">{{ category | titlecase }}</span>
         <div class="score-bar">
-          <div class="score-fill" [style.width.%]="qualityScore.categories[category]"></div>
-          <span class="score-text">{{ qualityScore.categories[category] }}%</span>
+          <div class="score-fill" [style.width.%]="getCategoryScore(category)"></div>
+          <span class="score-text">{{ getCategoryScore(category) }}%</span>
         </div>
       </div>
     </div>
