@@ -336,8 +336,8 @@ class WorldbuildingValidator:
     def sanitize_content(self, content: str) -> str:
         """Sanitize content by removing/escaping dangerous elements."""
         
-        # HTML escape dangerous characters
-        sanitized = html.escape(content)
+        # First remove dangerous content before HTML escaping
+        sanitized = content
         
         # Remove script tags and their content
         sanitized = re.sub(r'<script[^>]*>.*?</script>', '', sanitized, flags=re.IGNORECASE | re.DOTALL)
@@ -345,11 +345,14 @@ class WorldbuildingValidator:
         # Remove dangerous attributes
         dangerous_attrs = ['onload', 'onerror', 'onclick', 'onmouseover', 'onfocus']
         for attr in dangerous_attrs:
-            sanitized = re.sub(f'{attr}\s*=\s*["\'][^"\']*["\']', '', sanitized, flags=re.IGNORECASE)
+            sanitized = re.sub(rf'{attr}\s*=\s*["\'][^"\']*["\']', '', sanitized, flags=re.IGNORECASE)
         
         # Remove javascript: and data: URLs
         sanitized = re.sub(r'javascript:[^"\'\s]*', '', sanitized, flags=re.IGNORECASE)
         sanitized = re.sub(r'data:text/html[^"\'\s]*', '', sanitized, flags=re.IGNORECASE)
+        
+        # HTML escape dangerous characters (after removing dangerous content)
+        sanitized = html.escape(sanitized)
         
         # Normalize whitespace
         sanitized = re.sub(r'\s+', ' ', sanitized)

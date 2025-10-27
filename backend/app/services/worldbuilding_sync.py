@@ -174,7 +174,10 @@ class WorldbuildingSyncService:
             # Look for descriptive content
             descriptive_indicators = [
                 'is', 'are', 'has', 'have', 'contains', 'features',
-                'located', 'known for', 'characterized by', 'consists of'
+                'located', 'known for', 'characterized by', 'consists of',
+                'rule', 'rules', 'governed', 'controlled', 'led by',
+                'called', 'named', 'divided into', 'made up of',
+                'built', 'constructed', 'established', 'founded'
             ]
             
             if any(indicator in sentence.lower() for indicator in descriptive_indicators):
