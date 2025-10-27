@@ -153,8 +153,8 @@
             <span class="check-icon">{{ draftOutlineItems.length >= 3 ? '✅' : '⏳' }}</span>
             <span class="check-text">At least 3 outline items ({{ draftOutlineItems.length }}/3)</span>
           </div>
-          <div class="checklist-item" [class.complete]="draftOutlineItems.every(item => item.title.trim().length > 0 && item.description.trim().length > 20)">
-            <span class="check-icon">{{ draftOutlineItems.every(item => item.title.trim().length > 0 && item.description.trim().length > 20) ? '✅' : '⏳' }}</span>
+          <div class="checklist-item" [class.complete]="hasDetailedDescriptions()">
+            <span class="check-icon">{{ hasDetailedDescriptions() ? '✅' : '⏳' }}</span>
             <span class="check-text">All items have detailed descriptions</span>
           </div>
         </div>

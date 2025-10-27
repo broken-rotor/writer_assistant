@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 describe('LoadingSpinnerComponent', () => {
   let component: LoadingSpinnerComponent;
   let fixture: ComponentFixture<LoadingSpinnerComponent>;
-  let loadingService: jasmine.SpyObj<LoadingService>;
 
   beforeEach(async () => {
     const loadingServiceSpy = jasmine.createSpyObj('LoadingService', [], {

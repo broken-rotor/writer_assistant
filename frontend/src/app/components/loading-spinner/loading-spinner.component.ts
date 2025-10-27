@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { LoadingService, LoadingState } from '../../services/loading.service';
@@ -13,8 +13,7 @@ import { LoadingService, LoadingState } from '../../services/loading.service';
 export class LoadingSpinnerComponent implements OnInit, OnDestroy {
   loadingState: LoadingState = { isLoading: false };
   private destroy$ = new Subject<void>();
-
-  constructor(private loadingService: LoadingService) {}
+  private loadingService = inject(LoadingService);
 
   ngOnInit(): void {
     this.loadingService.loading$

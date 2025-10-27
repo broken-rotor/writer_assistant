@@ -1,21 +1,19 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 
 import { 
   Story, 
   OutlineItem, 
-  ChatMessage, 
-  PlotOutlinePhase,
-  ChapterComposeState 
+  ChatMessage
 } from '../../models/story.model';
 import { ChatInterfaceComponent, ChatInterfaceConfig, MessageActionEvent } from '../chat-interface/chat-interface.component';
 import { GenerationService } from '../../services/generation.service';
 import { ArchiveService, RAGResponse } from '../../services/archive.service';
 import { ConversationService } from '../../services/conversation.service';
-import { PhaseStateService, PhaseType } from '../../services/phase-state.service';
+import { PhaseStateService } from '../../services/phase-state.service';
 import { StoryService } from '../../services/story.service';
 import { ToastService } from '../../services/toast.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
@@ -44,12 +42,12 @@ interface DraftOutlineItem {
 })
 export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
   @Input() story!: Story;
-  @Input() chapterNumber: number = 1;
+  @Input() chapterNumber = 1;
   @Output() phaseCompleted = new EventEmitter<void>();
   @Output() outlineUpdated = new EventEmitter<DraftOutlineItem[]>();
 
   // Basic outline (legacy functionality)
-  basicOutline: string = '';
+  basicOutline = '';
   
   // Draft outline builder
   draftOutlineItems: DraftOutlineItem[] = [];
@@ -80,16 +78,13 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
   researchError: string | null = null;
   
   private destroy$ = new Subject<void>();
-
-  constructor(
-    private generationService: GenerationService,
-    private archiveService: ArchiveService,
-    private conversationService: ConversationService,
-    private phaseStateService: PhaseStateService,
-    private storyService: StoryService,
-    private toastService: ToastService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  private generationService = inject(GenerationService);
+  private archiveService = inject(ArchiveService);
+  private conversationService = inject(ConversationService);
+  private phaseStateService = inject(PhaseStateService);
+  private storyService = inject(StoryService);
+  private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
     this.initializeComponent();
@@ -188,7 +183,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
           'user'
         );
         
-        const aiMessage = this.conversationService.sendMessage(
+        this.conversationService.sendMessage(
           response.fleshedOutText,
           'assistant'
         );
@@ -412,6 +407,15 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     }
     
     return requirements;
+  }
+
+  /**
+   * Check if all draft outline items have detailed descriptions
+   */
+  hasDetailedDescriptions(): boolean {
+    return this.draftOutlineItems.every(item => 
+      item.title.trim().length > 0 && item.description.trim().length >= 20
+    );
   }
 
   private getValidationErrors(hasBasicOutline: boolean, hasDraftItems: boolean, hasDetailedItems: boolean): string[] {

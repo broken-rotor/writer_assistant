@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -8,7 +8,6 @@ import {
   FileInfo,
   ArchiveStats,
   RAGChatMessage,
-  RAGResponse,
   RAGStatusResponse
 } from '../../services/archive.service';
 
@@ -21,35 +20,34 @@ import {
 })
 export class ArchiveComponent implements OnInit, OnDestroy {
   // Search mode properties
-  searchQuery: string = '';
+  searchQuery = '';
   searchResults: SearchResult[] = [];
-  isSearching: boolean = false;
-  hasSearched: boolean = false;
+  isSearching = false;
+  hasSearched = false;
   error: string | null = null;
 
   stats: ArchiveStats | null = null;
   files: FileInfo[] = [];
   selectedFile: FileInfo | null = null;
   fileContent: string | null = null;
-  isLoadingContent: boolean = false;
+  isLoadingContent = false;
 
-  maxResults: number = 10;
-  showAdvancedOptions: boolean = false;
+  maxResults = 10;
+  showAdvancedOptions = false;
 
   // RAG/Chat mode properties
   mode: 'search' | 'chat' = 'search';
   ragStatus: RAGStatusResponse | null = null;
   chatMessages: RAGChatMessage[] = [];
-  chatInput: string = '';
-  isChatProcessing: boolean = false;
+  chatInput = '';
+  isChatProcessing = false;
   chatError: string | null = null;
   chatInfoMessage: string | null = null;
-  currentChatSources: any[] = [];
+  currentChatSources: unknown[] = [];
   selectedMessageIndex: number | null = null;
 
   private subscriptions: Subscription[] = [];
-
-  constructor(private archiveService: ArchiveService) {}
+  private archiveService = inject(ArchiveService);
 
   ngOnInit(): void {
     this.loadStats();
@@ -168,7 +166,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
     this.showAdvancedOptions = !this.showAdvancedOptions;
   }
 
-  getHighlightedText(text: string, maxLength: number = 500): string {
+  getHighlightedText(text: string, maxLength = 500): string {
     if (text.length <= maxLength) {
       return text;
     }
@@ -350,7 +348,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
     html = html.replace(/_(.+?)_/g, '<em>$1</em>');
 
     // Lists: lines starting with - or *
-    html = html.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
+    html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
     html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
 
     // Line breaks

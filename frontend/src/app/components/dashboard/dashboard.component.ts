@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -20,12 +20,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   storageQuota: StorageQuota = { used: 0, available: 0, total: 0, percentage: 0 };
 
   private subscriptions: Subscription[] = [];
-
-  constructor(
-    private storyService: StoryService,
-    private localStorageService: LocalStorageService,
-    private router: Router
-  ) {}
+  private storyService = inject(StoryService);
+  private localStorageService = inject(LocalStorageService);
+  private router = inject(Router);
 
   ngOnInit(): void {
     this.loadStories();

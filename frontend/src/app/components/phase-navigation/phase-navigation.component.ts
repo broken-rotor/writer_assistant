@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { PhaseStateService, PhaseType, PhaseValidationResult } from '../../services/phase-state.service';
@@ -12,8 +12,8 @@ import { ChapterComposeState } from '../../models/story.model';
   styleUrl: './phase-navigation.component.scss'
 })
 export class PhaseNavigationComponent implements OnInit, OnDestroy {
-  @Input() chapterNumber: number = 1;
-  @Input() chapterTitle: string = '';
+  @Input() chapterNumber = 1;
+  @Input() chapterTitle = '';
   @Output() phaseChanged = new EventEmitter<PhaseType>();
 
   currentPhase: PhaseType = 'plot-outline';
@@ -33,7 +33,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
     { key: 'final-edit', label: 'Approved', description: 'Final review and edit' }
   ];
 
-  constructor(private phaseStateService: PhaseStateService) {}
+  private phaseStateService = inject(PhaseStateService);
 
   ngOnInit(): void {
     // Subscribe to phase state changes
@@ -113,20 +113,23 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
     if (!this.chapterComposeState) return 0;
 
     switch (phase) {
-      case 'plot-outline':
+      case 'plot-outline': {
         const plotProgress = this.chapterComposeState.phases.plotOutline.progress;
         if (plotProgress.totalItems === 0) return 0;
         return Math.round((plotProgress.completedItems / plotProgress.totalItems) * 100);
+      }
 
-      case 'chapter-detailer':
+      case 'chapter-detailer': {
         const detailerProgress = this.chapterComposeState.phases.chapterDetailer.progress;
         if (detailerProgress.totalFeedbackItems === 0) return 0;
         return Math.round((detailerProgress.feedbackIncorporated / detailerProgress.totalFeedbackItems) * 100);
+      }
 
-      case 'final-edit':
+      case 'final-edit': {
         const editProgress = this.chapterComposeState.phases.finalEdit.progress;
         if (editProgress.totalReviews === 0) return 0;
         return Math.round((editProgress.reviewsApplied / editProgress.totalReviews) * 100);
+      }
 
       default:
         return 0;
@@ -225,7 +228,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
   /**
    * Revert to target phase
    */
-  private async revertToPhase(targetPhase: PhaseType): Promise<boolean> {
+  private async revertToPhase(_targetPhase: PhaseType): Promise<boolean> {
     // For now, we'll implement simple reversion
     // In a more complex implementation, we might need to handle multiple steps
     return await this.phaseStateService.revertToPrevious();

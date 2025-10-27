@@ -147,6 +147,9 @@
               'message-selected': isMessageSelected(i)
             }"
             (click)="selectMessage(i)"
+            (keydown.enter)="selectMessage(i)"
+            (keydown.space)="selectMessage(i)"
+            [tabindex]="message.role === 'assistant' && message.sources ? 0 : -1"
             [style.cursor]="message.role === 'assistant' && message.sources ? 'pointer' : 'default'"
           >
             <div class="message-avatar">

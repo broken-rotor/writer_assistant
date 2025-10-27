@@ -189,8 +189,8 @@
 </div>
 
 <!-- Branch Creation Dialog -->
-<div class="modal-overlay" *ngIf="showBranchDialog" (click)="closeBranchDialog()">
-  <div class="modal-dialog" (click)="$event.stopPropagation()">
+<div class="modal-overlay" *ngIf="showBranchDialog" (click)="closeBranchDialog()" (keydown.escape)="closeBranchDialog()" tabindex="0">
+  <div class="modal-dialog" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()" tabindex="0">
     <div class="modal-header">
       <h4>Create New Branch</h4>
       <button class="close-btn" (click)="closeBranchDialog()">×</button>
