@@ -181,8 +181,7 @@ export class PhaseStateService {
       metadata: {
         created: now,
         lastModified: now,
-        version: '1.0.0',
-        migrationSource: 'manual'
+        version: '1.0.0'
       }
     };
 

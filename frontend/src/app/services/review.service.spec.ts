@@ -107,8 +107,7 @@ describe('ReviewService', () => {
       metadata: {
         created: new Date(),
         lastModified: new Date(),
-        version: '1.0.0',
-        migrationSource: 'manual'
+        version: '1.0.0'
       }
     }
   } as Story;

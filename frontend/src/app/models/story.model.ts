@@ -310,7 +310,7 @@ export interface PhaseTransition {
 
 /**
  * Main Chapter Compose State Container
- * Replaces ChapterCreationState with three-phase support
+ * Three-phase chapter composition system
  */
 export interface ChapterComposeState {
   // Phase Management
@@ -355,7 +355,6 @@ export interface ChapterComposeState {
     created: Date;
     lastModified: Date;
     version: string;
-    migrationSource?: 'ChapterCreationState' | 'manual';
   };
 }
 
@@ -387,17 +386,14 @@ export interface Story {
     summary: string;
     chapters: Chapter[];
   };
-  // New three-phase chapter compose system (optional for gradual migration)
+  // Three-phase chapter compose system
   chapterCompose?: ChapterComposeState;
-  // Legacy chapter creation (required for backward compatibility)
+  // Legacy chapter creation (maintained for backward compatibility)
   chapterCreation: ChapterCreationState;
   metadata: {
     version: string;
     created: Date;
     lastModified: Date;
-    // Migration tracking
-    migrationStatus?: 'pending' | 'in-progress' | 'completed' | 'failed';
-    lastMigrationAttempt?: Date;
   };
 }
 
