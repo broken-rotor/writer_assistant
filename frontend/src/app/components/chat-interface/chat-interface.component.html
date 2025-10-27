@@ -1,0 +1,225 @@
+<div class="chat-interface" [style.max-height]="config.maxHeight || '600px'">
+  <!-- Chat Header -->
+  <div class="chat-header">
+    <div class="chat-title">
+      <h3>{{ config.phase | titlecase }} Phase</h3>
+      <span class="branch-indicator" *ngIf="branchNavigation">
+        Branch: <strong>{{ getCurrentBranchName() }}</strong>
+      </span>
+    </div>
+    
+    <!-- Branch Navigation -->
+    <div class="branch-navigation" *ngIf="config.enableBranching && branchNavigation">
+      <select 
+        class="branch-selector"
+        [value]="branchNavigation.currentBranchId"
+        (change)="switchToBranch($event.target.value)"
+        [disabled]="disabled">
+        <option 
+          *ngFor="let branch of getAvailableBranches()" 
+          [value]="branch.id">
+          {{ branch.name }}
+        </option>
+      </select>
+      
+      <button 
+        class="btn btn-sm btn-outline"
+        (click)="clearConversation()"
+        [disabled]="disabled"
+        title="Clear conversation">
+        🗑️
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages Container -->
+  <div 
+    class="messages-container" 
+    #messagesContainer
+    [class.processing]="isProcessing || processing">
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="messages.length === 0">
+      <div class="empty-icon">💬</div>
+      <h4>Start Your Conversation</h4>
+      <p>Begin your {{ config.phase }} phase by typing a message below.</p>
+    </div>
+
+    <!-- Messages List -->
+    <div class="messages-list" *ngIf="messages.length > 0">
+      <div 
+        *ngFor="let message of messages; trackBy: trackByMessageId"
+        class="message-wrapper">
+        
+        <!-- Message Content -->
+        <div 
+          class="message-container"
+          [ngClass]="getMessageTypeClass(message)">
+          
+          <!-- Message Header -->
+          <div class="message-header" *ngIf="config.showMessageTypes !== false">
+            <span class="message-author">{{ getMessageTypeLabel(message) }}</span>
+            <span class="message-timestamp" *ngIf="config.showTimestamps !== false">
+              {{ formatTimestamp(message.timestamp) }}
+            </span>
+          </div>
+
+          <!-- Message Content (Normal Display) -->
+          <div 
+            class="message-content"
+            *ngIf="editingMessageId !== message.id">
+            {{ message.content }}
+          </div>
+
+          <!-- Message Content (Edit Mode) -->
+          <div class="message-edit" *ngIf="editingMessageId === message.id">
+            <textarea 
+              class="edit-textarea"
+              [(ngModel)]="editingMessageText"
+              rows="3"
+              (keydown.enter)="$event.ctrlKey && saveEditMessage()"
+              (keydown.escape)="cancelEditMessage()">
+            </textarea>
+            <div class="edit-actions">
+              <button class="btn btn-sm btn-primary" (click)="saveEditMessage()">
+                Save
+              </button>
+              <button class="btn btn-sm btn-secondary" (click)="cancelEditMessage()">
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          <!-- Message Actions -->
+          <div class="message-actions" *ngIf="!disabled && message.type === 'user'">
+            <button 
+              class="action-btn"
+              (click)="startEditMessage(message)"
+              *ngIf="canEditMessage(message) && editingMessageId !== message.id"
+              title="Edit message">
+              ✏️
+            </button>
+            
+            <button 
+              class="action-btn"
+              (click)="showCreateBranchDialog(message)"
+              *ngIf="canCreateBranch()"
+              title="Create branch from this message">
+              🌿
+            </button>
+            
+            <button 
+              class="action-btn delete-btn"
+              (click)="deleteMessage(message)"
+              title="Delete message">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <!-- Branch Navigation Arrows -->
+        <div 
+          class="branch-arrows" 
+          *ngIf="config.enableBranching && message.type === 'user' && getBranchesForMessage(message).length > 0">
+          
+          <div class="branch-arrow-container">
+            <span class="branch-arrow-label">Branches:</span>
+            <div class="branch-arrows-list">
+              <button 
+                *ngFor="let branch of getBranchesForMessage(message)"
+                class="branch-arrow-btn"
+                [class.active]="isCurrentBranch(branch.id)"
+                (click)="switchToBranch(branch.id)"
+                [title]="'Switch to: ' + branch.name">
+                {{ isCurrentBranch(branch.id) ? '↙️' : '↘️' }} {{ branch.name }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Processing Indicator -->
+    <div class="processing-indicator" *ngIf="isProcessing || processing">
+      <div class="typing-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <span class="processing-text">Processing...</span>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    <div class="input-container">
+      <textarea 
+        #messageInput
+        class="message-input"
+        [(ngModel)]="messageText"
+        [placeholder]="getPlaceholderText()"
+        [disabled]="disabled || isProcessing"
+        (keydown)="onKeyPress($event)"
+        rows="2"
+        maxlength="2000">
+      </textarea>
+      
+      <button 
+        class="send-button"
+        (click)="sendMessage()"
+        [disabled]="!messageText.trim() || disabled || isProcessing"
+        title="Send message (Enter)">
+        <span *ngIf="!isProcessing && !processing">Send</span>
+        <span *ngIf="isProcessing || processing" class="sending-indicator">
+          <span class="spinner"></span>
+        </span>
+      </button>
+    </div>
+    
+    <!-- Character Counter -->
+    <div class="input-footer">
+      <span class="char-counter" [class.warning]="messageText.length > 1800">
+        {{ messageText.length }}/2000
+      </span>
+      <span class="input-hint">
+        Press Enter to send, Shift+Enter for new line
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Branch Creation Dialog -->
+<div class="modal-overlay" *ngIf="showBranchDialog" (click)="closeBranchDialog()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h4>Create New Branch</h4>
+      <button class="close-btn" (click)="closeBranchDialog()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <label for="branchName">Branch Name:</label>
+      <input 
+        id="branchName"
+        type="text"
+        class="form-input"
+        [(ngModel)]="newBranchName"
+        placeholder="Enter branch name..."
+        maxlength="50"
+        (keydown.enter)="createBranch()"
+        (keydown.escape)="closeBranchDialog()">
+      
+      <p class="help-text">
+        This will create a new conversation branch starting from the selected message.
+      </p>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="createBranch()" [disabled]="!newBranchName.trim()">
+        Create Branch
+      </button>
+      <button class="btn btn-secondary" (click)="closeBranchDialog()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
