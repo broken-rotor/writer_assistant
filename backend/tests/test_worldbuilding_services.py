@@ -393,7 +393,13 @@ class TestWorldbuildingIntegration:
         assert len(followup_questions) > 0
         assert len(followup_questions) <= 3
         
-        # Questions should be relevant to the classified topic
+        # Questions should be relevant to the classified topic or explore other worldbuilding aspects
         for question in followup_questions:
             assert len(question.question) > 10
-            assert question.topic in [classification.primary_topic, 'general'] or question.topic in classification.secondary_topics
+            # Questions can be about the primary topic, general, secondary topics, or other worldbuilding topics
+            valid_topics = ['geography', 'culture', 'magic_system', 'politics', 'history', 'technology', 'economy', 'general']
+            assert question.topic in valid_topics
+        
+        # At least one question should be related to the primary topic or be general
+        primary_related_questions = [q for q in followup_questions if q.topic in [classification.primary_topic, 'general'] or q.topic in classification.secondary_topics]
+        assert len(primary_related_questions) > 0

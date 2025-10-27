@@ -23,11 +23,14 @@ class TestWorldbuildingConversationEngine:
         self.classifier = WorldbuildingTopicClassifier()
         self.prompts = WorldbuildingPromptService()
         self.followup = WorldbuildingFollowupGenerator()
-        self.state_machine = WorldbuildingStateMachine()
         self.persistence = WorldbuildingPersistenceService("test_data/worldbuilding")
+        self.state_machine = WorldbuildingStateMachine(self.persistence)
         
         # Test data
         self.test_story_id = "test_story_123"
+        
+        # Clean up any existing test data
+        self.persistence.delete_conversation_state(self.test_story_id)
         self.test_messages = [
             ConversationMessage(
                 role="user",

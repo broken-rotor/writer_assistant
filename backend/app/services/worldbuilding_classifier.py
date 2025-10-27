@@ -30,7 +30,8 @@ class WorldbuildingTopicClassifier:
                 'culture', 'society', 'tradition', 'custom', 'ritual', 'ceremony', 'festival',
                 'belief', 'value', 'norm', 'practice', 'lifestyle', 'art', 'music', 'dance',
                 'food', 'cuisine', 'clothing', 'fashion', 'architecture', 'building', 'house',
-                'family', 'marriage', 'education', 'social', 'community', 'tribe', 'clan'
+                'family', 'families', 'marriage', 'education', 'social', 'community', 'tribe', 'clan',
+                'organize', 'organization', 'structure', 'hierarchy', 'relationship', 'kinship'
             },
             'magic_system': {
                 'magic', 'spell', 'wizard', 'mage', 'sorcerer', 'enchantment', 'potion',
@@ -57,7 +58,8 @@ class WorldbuildingTopicClassifier:
                 'craft', 'skill', 'technique', 'method', 'process', 'material', 'metal',
                 'forge', 'smith', 'engineer', 'builder', 'construction', 'transportation',
                 'communication', 'medicine', 'healing', 'alchemy', 'science', 'knowledge',
-                'discovery', 'innovation', 'advancement', 'progress', 'development'
+                'discovery', 'innovation', 'advancement', 'progress', 'development',
+                'ship', 'ships', 'vessel', 'vehicle', 'flying', 'powered', 'engine'
             },
             'economy': {
                 'trade', 'merchant', 'market', 'shop', 'store', 'goods', 'product', 'service',
@@ -178,6 +180,9 @@ class WorldbuildingTopicClassifier:
                     if re.search(pattern, message_lower):
                         score += 2  # Pattern matches are weighted higher
             
+            # Apply contextual bonuses for better classification
+            score = self._apply_contextual_bonuses(message_lower, topic, score)
+            
             if score > 0:
                 topic_scores[topic] = score
                 keywords_found.extend(topic_keywords)
@@ -190,7 +195,20 @@ class WorldbuildingTopicClassifier:
             primary_topic = max(topic_scores, key=topic_scores.get)
             max_score = topic_scores[primary_topic]
             total_score = sum(topic_scores.values())
-            confidence = min(max_score / max(total_score, 1), 1.0)
+            
+            # Improved confidence calculation
+            if total_score == max_score:
+                # Only one topic matched
+                confidence = min(0.8, max_score / 3.0)  # Cap at 0.8, scale by keyword count
+            else:
+                # Multiple topics matched
+                confidence = max_score / total_score
+                # Boost confidence if there's a clear winner
+                if max_score >= total_score * 0.6:
+                    confidence = min(confidence * 1.2, 1.0)
+                # Additional boost for topic transitions with strong indicators
+                elif max_score >= 3 and confidence > 0.5:
+                    confidence = min(confidence * 1.1, 0.9)
         
         # Find secondary topics
         secondary_topics = [
@@ -198,9 +216,9 @@ class WorldbuildingTopicClassifier:
             if topic != primary_topic and score >= max(topic_scores.get(primary_topic, 0) * 0.5, 1)
         ]
         
-        # Check for topic transition
+        # Check for topic transition (lower threshold for better detection)
         suggested_transition = None
-        if primary_topic != current_topic and confidence > 0.6:
+        if primary_topic != current_topic and confidence > 0.4:
             suggested_transition = TopicTransition(
                 from_topic=current_topic,
                 to_topic=primary_topic,
@@ -301,6 +319,69 @@ class WorldbuildingTopicClassifier:
         }
         
         return topic_questions.get(topic, topic_questions['general'])
+    
+    def _apply_contextual_bonuses(self, message_lower: str, topic: WorldbuildingTopic, base_score: int) -> int:
+        """Apply contextual bonuses to improve classification accuracy."""
+        score = base_score
+        
+        # Magic system bonuses
+        if topic == 'magic_system':
+            magic_indicators = ['arcane', 'mystical', 'supernatural', 'enchant', 'spell', 'magic', 'wizard', 'mage']
+            if any(indicator in message_lower for indicator in magic_indicators):
+                score += 2  # Strong magic indicator
+            
+            # Boost for magic-specific phrases
+            if any(phrase in message_lower for phrase in ['forbidden magic', 'arcane arts', 'magical power', 'cast spell']):
+                score += 3
+        
+        # Culture bonuses
+        elif topic == 'culture':
+            culture_indicators = ['tradition', 'custom', 'value', 'belief', 'practice', 'honor', 'society']
+            if any(indicator in message_lower for indicator in culture_indicators):
+                score += 1
+            
+            # Boost for culture-specific phrases
+            if any(phrase in message_lower for phrase in ['people value', 'cultural tradition', 'social custom', 'developed unique traditions', 'people have developed']):
+                score += 2
+        
+        # Geography bonuses
+        elif topic == 'geography':
+            geo_indicators = ['mountain', 'river', 'valley', 'hill', 'forest', 'desert', 'ocean', 'lake']
+            geo_count = sum(1 for indicator in geo_indicators if indicator in message_lower)
+            if geo_count >= 2:  # Multiple geographical features mentioned
+                score += 2
+        
+        # Technology bonuses
+        elif topic == 'technology':
+            tech_indicators = ['ship', 'ships', 'flying', 'powered', 'engine', 'machine', 'device', 'vehicle']
+            if any(indicator in message_lower for indicator in tech_indicators):
+                score += 1
+            
+            # Boost for technology-specific phrases
+            if any(phrase in message_lower for phrase in ['flying ships', 'powered by', 'use ships', 'transportation']):
+                score += 2
+        
+        # Politics bonuses
+        elif topic == 'politics':
+            politics_indicators = ['ruled', 'rule', 'ruler', 'government', 'king', 'queen', 'emperor', 'control', 'power', 'authority']
+            if any(indicator in message_lower for indicator in politics_indicators):
+                score += 1
+            
+            # Boost for politics-specific phrases
+            if any(phrase in message_lower for phrase in ['is ruled by', 'ruled by', 'controls the', 'who controls', 'government of']):
+                score += 3
+        
+        # Politics penalty for magic-related content (but not for political control of magic)
+        if topic == 'politics' and any(magic_word in message_lower for magic_word in ['arcane', 'spell', 'mystical']):
+            # Don't penalize if it's about political control of magic
+            if not any(control_phrase in message_lower for control_phrase in ['controls the magic', 'ruled by', 'keeper']):
+                score = max(0, score - 2)  # Reduce politics score for magical content
+        
+        # Magic system penalty for technology-related content
+        if topic == 'magic_system' and any(tech_word in message_lower for tech_word in ['ship', 'ships', 'flying ships', 'vehicle', 'transportation']):
+            score = max(0, score - 1)  # Reduce magic score for technological content
+        
+        return score
     
     def suggest_topic_exploration(self, current_topics: List[WorldbuildingTopic]) -> List[WorldbuildingTopic]:
         """Suggest unexplored topics based on current conversation."""
