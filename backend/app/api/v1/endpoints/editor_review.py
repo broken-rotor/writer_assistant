@@ -34,7 +34,10 @@ async def editor_review(request: EditorReviewRequest):
                 system_prompts=request.systemPrompts,
                 worldbuilding=request.worldbuilding,
                 story_summary=request.storySummary,
-                chapter_to_review=request.chapterToReview
+                chapter_to_review=request.chapterToReview,
+                # Pass phase context for optimization
+                compose_phase=request.compose_phase,
+                phase_context=request.phase_context
             )
             
             system_prompt = optimized_context.system_prompt
@@ -57,9 +60,27 @@ Review chapters and provide specific suggestions for improvement.
 
 {request.systemPrompts.mainSuffix}"""
 
+            # Build phase-specific context
+            phase_context_str = ""
+            if request.compose_phase and request.phase_context:
+                phase_context_str = f"\nCompose Phase: {request.compose_phase}"
+                
+                phase_guidance = {
+                    'plot_outline': "Focus on plot structure, story beats, and narrative coherence.",
+                    'chapter_detail': "Focus on scene development, character interactions, and pacing.",
+                    'final_edit': "Focus on prose quality, consistency, and final polish."
+                }
+                
+                if request.compose_phase in phase_guidance:
+                    phase_context_str += f"\nPhase Focus: {phase_guidance[request.compose_phase]}"
+                
+                if request.phase_context.phase_specific_instructions:
+                    phase_context_str += f"\nPhase Instructions: {request.phase_context.phase_specific_instructions}"
+
             user_message = f"""Story context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
+{phase_context_str}
 
 Chapter to review:
 {request.chapterToReview}

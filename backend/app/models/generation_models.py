@@ -2,7 +2,7 @@
 Pydantic models for generation API requests and responses.
 Based on the requirements in api_requirements.md and ui_requirements.md.
 """
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Literal
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -44,6 +44,23 @@ class FeedbackItem(BaseModel):
     incorporated: bool = True
 
 
+# Phase-specific models for three-phase compose system
+ComposePhase = Literal['plot_outline', 'chapter_detail', 'final_edit']
+
+
+class ConversationMessage(BaseModel):
+    role: Literal['user', 'assistant']
+    content: str
+    timestamp: Optional[str] = None
+
+
+class PhaseContext(BaseModel):
+    previous_phase_output: Optional[str] = None
+    phase_specific_instructions: Optional[str] = None
+    conversation_history: Optional[List[ConversationMessage]] = None
+    conversation_branch_id: Optional[str] = None
+
+
 # Character Feedback Request/Response
 class CharacterFeedbackRequest(BaseModel):
     systemPrompts: SystemPrompts
@@ -53,6 +70,9 @@ class CharacterFeedbackRequest(BaseModel):
     character: CharacterInfo
     plotPoint: str
     incorporatedFeedback: Optional[List[FeedbackItem]] = []
+    # Phase-specific fields (optional for backward compatibility)
+    compose_phase: Optional[ComposePhase] = None
+    phase_context: Optional[PhaseContext] = None
 
 
 class CharacterFeedback(BaseModel):
@@ -77,6 +97,9 @@ class RaterFeedbackRequest(BaseModel):
     previousChapters: List[ChapterInfo]
     plotPoint: str
     incorporatedFeedback: Optional[List[FeedbackItem]] = []
+    # Phase-specific fields (optional for backward compatibility)
+    compose_phase: Optional[ComposePhase] = None
+    phase_context: Optional[PhaseContext] = None
 
 
 class RaterFeedback(BaseModel):
@@ -98,6 +121,9 @@ class GenerateChapterRequest(BaseModel):
     characters: List[CharacterInfo]
     plotPoint: str
     incorporatedFeedback: List[FeedbackItem]
+    # Phase-specific fields (optional for backward compatibility)
+    compose_phase: Optional[ComposePhase] = None
+    phase_context: Optional[PhaseContext] = None
 
 
 class GenerateChapterResponse(BaseModel):
@@ -130,6 +156,9 @@ class EditorReviewRequest(BaseModel):
     previousChapters: List[ChapterInfo]
     characters: List[CharacterInfo]
     chapterToReview: str
+    # Phase-specific fields (optional for backward compatibility)
+    compose_phase: Optional[ComposePhase] = None
+    phase_context: Optional[PhaseContext] = None
 
 
 class EditorSuggestion(BaseModel):
