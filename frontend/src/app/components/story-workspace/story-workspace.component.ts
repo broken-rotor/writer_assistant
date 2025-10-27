@@ -23,6 +23,7 @@ import {
   RecoveryAction 
 } from '../../constants/token-limits.constants';
 import { PhaseStateService, PhaseType } from '../../services/phase-state.service';
+import { PlotOutlinePhaseComponent } from '../plot-outline-phase/plot-outline-phase.component';
 
 interface ResearchChatMessage {
   role: string;
@@ -34,7 +35,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -1362,5 +1363,17 @@ Provide actionable insights and creative suggestions to enhance this plot point.
       default:
         return '';
     }
+  }
+
+  // Plot Outline Phase handlers
+  onPlotOutlinePhaseCompleted(): void {
+    console.log('Plot outline phase completed');
+    // The phase navigation component will handle the actual phase advancement
+  }
+
+  onOutlineUpdated(outlineItems: any[]): void {
+    console.log('Outline updated:', outlineItems);
+    // The plot outline component handles saving, we just need to trigger change detection
+    this.cdr.detectChanges();
   }
 }

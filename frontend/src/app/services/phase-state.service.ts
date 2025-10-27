@@ -475,4 +475,19 @@ export class PhaseStateService {
       default: return '';
     }
   }
+
+  /**
+   * Update phase validation result
+   */
+  updatePhaseValidation(phase: PhaseType, validation: Partial<PhaseValidationResult>): void {
+    const currentValidation = this.validationResultSubject.value;
+    const updatedValidation: PhaseValidationResult = {
+      ...currentValidation,
+      ...validation,
+      nextPhase: this.getNextPhase(phase),
+      previousPhase: this.getPreviousPhase(phase)
+    };
+    
+    this.validationResultSubject.next(updatedValidation);
+  }
 }
