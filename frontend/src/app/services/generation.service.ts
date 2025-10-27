@@ -18,7 +18,15 @@ import {
   FleshOutRequest,
   FleshOutResponse,
   GenerateCharacterDetailsRequest,
-  GenerateCharacterDetailsResponse
+  GenerateCharacterDetailsResponse,
+  // Enhanced interfaces with phase support
+  EnhancedCharacterFeedbackRequest,
+  EnhancedRaterFeedbackRequest,
+  EnhancedGenerateChapterRequest,
+  EnhancedEditorReviewRequest,
+  ApiPhaseContext,
+  ChapterComposeState,
+  ConversationThread
 } from '../models/story.model';
 
 @Injectable({
@@ -430,5 +438,244 @@ export class GenerationService {
     };
 
     return this.apiService.modifyChapter(request);
+  }
+
+  // ============================================================================
+  // PHASE-AWARE METHODS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
+  // ============================================================================
+
+  /**
+   * Helper method to build phase context from chapter compose state
+   */
+  private buildPhaseContext(
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): ApiPhaseContext | undefined {
+    if (!chapterComposeState) {
+      return undefined;
+    }
+
+    const context: ApiPhaseContext = {};
+
+    // Add previous phase output based on current phase
+    const currentPhase = chapterComposeState.currentPhase;
+    if (currentPhase === 'chapter_detail' && chapterComposeState.phases.plotOutline.status === 'completed') {
+      // Get plot outline as previous phase output
+      const outlineItems = Array.from(chapterComposeState.phases.plotOutline.outline.items.values());
+      context.previous_phase_output = outlineItems
+        .sort((a, b) => a.order - b.order)
+        .map(item => `${item.title}: ${item.description}`)
+        .join('\n\n');
+    } else if (currentPhase === 'final_edit' && chapterComposeState.phases.chapterDetailer.status === 'completed') {
+      // Get chapter draft as previous phase output
+      context.previous_phase_output = chapterComposeState.phases.chapterDetailer.chapterDraft.content;
+    }
+
+    // Add phase-specific instructions
+    if (additionalInstructions) {
+      context.phase_specific_instructions = additionalInstructions;
+    }
+
+    // Add conversation history if available
+    if (conversationThread && conversationThread.messages.length > 0) {
+      // Get last 5 messages for context
+      const recentMessages = conversationThread.messages.slice(-5);
+      context.conversation_history = recentMessages.map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString()
+      }));
+      context.conversation_branch_id = conversationThread.currentBranchId;
+    }
+
+    return Object.keys(context).length > 0 ? context : undefined;
+  }
+
+  /**
+   * Phase-aware character feedback request
+   */
+  requestCharacterFeedbackWithPhase(
+    story: Story,
+    character: Character,
+    plotPoint: string,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<CharacterFeedbackResponse> {
+    const baseRequest: CharacterFeedbackRequest = {
+      systemPrompts: {
+        mainPrefix: story.general.systemPrompts.mainPrefix,
+        mainSuffix: story.general.systemPrompts.mainSuffix
+      },
+      worldbuilding: story.general.worldbuilding,
+      storySummary: story.story.summary,
+      previousChapters: story.story.chapters.map(ch => ({
+        number: ch.number,
+        title: ch.title,
+        content: ch.content
+      })),
+      character: {
+        name: character.name,
+        basicBio: character.basicBio,
+        sex: character.sex,
+        gender: character.gender,
+        sexualPreference: character.sexualPreference,
+        age: character.age,
+        physicalAppearance: character.physicalAppearance,
+        usualClothing: character.usualClothing,
+        personality: character.personality,
+        motivations: character.motivations,
+        fears: character.fears,
+        relationships: character.relationships
+      },
+      plotPoint: plotPoint
+    };
+
+    const enhancedRequest: EnhancedCharacterFeedbackRequest = {
+      ...baseRequest,
+      compose_phase: chapterComposeState?.currentPhase,
+      phase_context: this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions)
+    };
+
+    return this.apiService.requestCharacterFeedbackWithPhase(enhancedRequest);
+  }
+
+  /**
+   * Phase-aware rater feedback request
+   */
+  requestRaterFeedbackWithPhase(
+    story: Story,
+    rater: Rater,
+    plotPoint: string,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<RaterFeedbackResponse> {
+    const baseRequest: RaterFeedbackRequest = {
+      systemPrompts: {
+        mainPrefix: story.general.systemPrompts.mainPrefix,
+        mainSuffix: story.general.systemPrompts.mainSuffix
+      },
+      raterPrompt: rater.systemPrompt,
+      worldbuilding: story.general.worldbuilding,
+      storySummary: story.story.summary,
+      previousChapters: story.story.chapters.map(ch => ({
+        number: ch.number,
+        title: ch.title,
+        content: ch.content
+      })),
+      plotPoint: plotPoint
+    };
+
+    const enhancedRequest: EnhancedRaterFeedbackRequest = {
+      ...baseRequest,
+      compose_phase: chapterComposeState?.currentPhase,
+      phase_context: this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions)
+    };
+
+    return this.apiService.requestRaterFeedbackWithPhase(enhancedRequest);
+  }
+
+  /**
+   * Phase-aware chapter generation
+   */
+  generateChapterWithPhase(
+    story: Story,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<GenerateChapterResponse> {
+    const baseRequest: GenerateChapterRequest = {
+      systemPrompts: {
+        mainPrefix: story.general.systemPrompts.mainPrefix,
+        mainSuffix: story.general.systemPrompts.mainSuffix,
+        assistantPrompt: story.general.systemPrompts.assistantPrompt
+      },
+      worldbuilding: story.general.worldbuilding,
+      storySummary: story.story.summary,
+      previousChapters: story.story.chapters.map(ch => ({
+        number: ch.number,
+        title: ch.title,
+        content: ch.content
+      })),
+      characters: Array.from(story.characters.values())
+        .filter(c => !c.isHidden)
+        .map(c => ({
+          name: c.name,
+          basicBio: c.basicBio,
+          sex: c.sex,
+          gender: c.gender,
+          sexualPreference: c.sexualPreference,
+          age: c.age,
+          physicalAppearance: c.physicalAppearance,
+          usualClothing: c.usualClothing,
+          personality: c.personality,
+          motivations: c.motivations,
+          fears: c.fears,
+          relationships: c.relationships
+        })),
+      plotPoint: story.chapterCreation.plotPoint,
+      incorporatedFeedback: story.chapterCreation.incorporatedFeedback
+    };
+
+    const enhancedRequest: EnhancedGenerateChapterRequest = {
+      ...baseRequest,
+      compose_phase: chapterComposeState?.currentPhase,
+      phase_context: this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions)
+    };
+
+    return this.apiService.generateChapterWithPhase(enhancedRequest);
+  }
+
+  /**
+   * Phase-aware editor review
+   */
+  requestEditorReviewWithPhase(
+    story: Story,
+    chapterText: string,
+    chapterComposeState?: ChapterComposeState,
+    conversationThread?: ConversationThread,
+    additionalInstructions?: string
+  ): Observable<EditorReviewResponse> {
+    const baseRequest: EditorReviewRequest = {
+      systemPrompts: {
+        mainPrefix: story.general.systemPrompts.mainPrefix,
+        mainSuffix: story.general.systemPrompts.mainSuffix,
+        editorPrompt: story.general.systemPrompts.editorPrompt
+      },
+      worldbuilding: story.general.worldbuilding,
+      storySummary: story.story.summary,
+      previousChapters: story.story.chapters.map(ch => ({
+        number: ch.number,
+        title: ch.title,
+        content: ch.content
+      })),
+      characters: Array.from(story.characters.values())
+        .filter(c => !c.isHidden)
+        .map(c => ({
+          name: c.name,
+          basicBio: c.basicBio,
+          sex: c.sex,
+          gender: c.gender,
+          sexualPreference: c.sexualPreference,
+          age: c.age,
+          physicalAppearance: c.physicalAppearance,
+          usualClothing: c.usualClothing,
+          personality: c.personality,
+          motivations: c.motivations,
+          fears: c.fears,
+          relationships: c.relationships
+        })),
+      chapterToReview: chapterText
+    };
+
+    const enhancedRequest: EnhancedEditorReviewRequest = {
+      ...baseRequest,
+      compose_phase: chapterComposeState?.currentPhase,
+      phase_context: this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions)
+    };
+
+    return this.apiService.requestEditorReviewWithPhase(enhancedRequest);
   }
 }

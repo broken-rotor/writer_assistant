@@ -603,3 +603,113 @@ export interface GenerateCharacterDetailsResponse {
   fears: string;
   relationships: string;
 }
+
+// ============================================================================
+// NEW API MODELS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
+// ============================================================================
+
+/**
+ * Phase context for API requests
+ */
+export interface ApiPhaseContext {
+  previous_phase_output?: string;
+  phase_specific_instructions?: string;
+  conversation_history?: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp?: string;
+  }>;
+  conversation_branch_id?: string;
+}
+
+/**
+ * Enhanced API request interfaces with phase support
+ */
+export interface EnhancedCharacterFeedbackRequest extends CharacterFeedbackRequest {
+  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  phase_context?: ApiPhaseContext;
+}
+
+export interface EnhancedRaterFeedbackRequest extends RaterFeedbackRequest {
+  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  phase_context?: ApiPhaseContext;
+}
+
+export interface EnhancedGenerateChapterRequest extends GenerateChapterRequest {
+  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  phase_context?: ApiPhaseContext;
+}
+
+export interface EnhancedEditorReviewRequest extends EditorReviewRequest {
+  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  phase_context?: ApiPhaseContext;
+}
+
+/**
+ * LLM Chat API models (separate from RAG)
+ */
+export interface LLMChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
+export interface LLMChatComposeContext {
+  current_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  story_context: {
+    [key: string]: any;
+  };
+  chapter_draft?: string;
+  conversation_branch_id?: string;
+}
+
+export interface LLMChatRequest {
+  messages: LLMChatMessage[];
+  agent_type: 'writer' | 'character' | 'editor';
+  compose_context?: LLMChatComposeContext;
+  system_prompts?: {
+    mainPrefix?: string;
+    mainSuffix?: string;
+    assistantPrompt?: string;
+    editorPrompt?: string;
+  };
+  max_tokens?: number;
+  temperature?: number;
+}
+
+export interface LLMChatResponse {
+  message: LLMChatMessage;
+  agent_type: 'writer' | 'character' | 'editor';
+  metadata: {
+    [key: string]: any;
+  };
+}
+
+/**
+ * Phase Validation API models
+ */
+export interface PhaseTransitionRequest {
+  from_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  to_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  phase_output: string;
+  story_context: {
+    [key: string]: any;
+  };
+}
+
+export interface ValidationResult {
+  criterion: string;
+  passed: boolean;
+  message: string;
+  score?: number;
+}
+
+export interface PhaseTransitionResponse {
+  valid: boolean;
+  overall_score: number;
+  validation_results: ValidationResult[];
+  recommendations: string[];
+  metadata: {
+    [key: string]: any;
+  };
+}

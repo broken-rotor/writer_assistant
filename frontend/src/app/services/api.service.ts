@@ -15,7 +15,18 @@ import {
   FleshOutRequest,
   FleshOutResponse,
   GenerateCharacterDetailsRequest,
-  GenerateCharacterDetailsResponse
+  GenerateCharacterDetailsResponse,
+  // New enhanced interfaces with phase support
+  EnhancedCharacterFeedbackRequest,
+  EnhancedRaterFeedbackRequest,
+  EnhancedGenerateChapterRequest,
+  EnhancedEditorReviewRequest,
+  // New LLM Chat interfaces
+  LLMChatRequest,
+  LLMChatResponse,
+  // New Phase Validation interfaces
+  PhaseTransitionRequest,
+  PhaseTransitionResponse
 } from '../models/story.model';
 import { TokenStrategiesResponse } from '../models/token-limits.model';
 
@@ -32,13 +43,28 @@ export class ApiService {
     return this.http.post<CharacterFeedbackResponse>(`${this.baseUrl}/character-feedback`, request);
   }
 
+  // Enhanced Character Feedback with Phase Support
+  requestCharacterFeedbackWithPhase(request: EnhancedCharacterFeedbackRequest): Observable<CharacterFeedbackResponse> {
+    return this.http.post<CharacterFeedbackResponse>(`${this.baseUrl}/character-feedback`, request);
+  }
+
   // Rater Feedback
   requestRaterFeedback(request: RaterFeedbackRequest): Observable<RaterFeedbackResponse> {
     return this.http.post<RaterFeedbackResponse>(`${this.baseUrl}/rater-feedback`, request);
   }
 
+  // Enhanced Rater Feedback with Phase Support
+  requestRaterFeedbackWithPhase(request: EnhancedRaterFeedbackRequest): Observable<RaterFeedbackResponse> {
+    return this.http.post<RaterFeedbackResponse>(`${this.baseUrl}/rater-feedback`, request);
+  }
+
   // Chapter Generation
   generateChapter(request: GenerateChapterRequest): Observable<GenerateChapterResponse> {
+    return this.http.post<GenerateChapterResponse>(`${this.baseUrl}/generate-chapter`, request);
+  }
+
+  // Enhanced Chapter Generation with Phase Support
+  generateChapterWithPhase(request: EnhancedGenerateChapterRequest): Observable<GenerateChapterResponse> {
     return this.http.post<GenerateChapterResponse>(`${this.baseUrl}/generate-chapter`, request);
   }
 
@@ -49,6 +75,11 @@ export class ApiService {
 
   // Editor Review
   requestEditorReview(request: EditorReviewRequest): Observable<EditorReviewResponse> {
+    return this.http.post<EditorReviewResponse>(`${this.baseUrl}/editor-review`, request);
+  }
+
+  // Enhanced Editor Review with Phase Support
+  requestEditorReviewWithPhase(request: EnhancedEditorReviewRequest): Observable<EditorReviewResponse> {
     return this.http.post<EditorReviewResponse>(`${this.baseUrl}/editor-review`, request);
   }
 
@@ -65,5 +96,19 @@ export class ApiService {
   // Token Strategies
   getTokenStrategies(): Observable<TokenStrategiesResponse> {
     return this.http.get<TokenStrategiesResponse>(`${this.baseUrl}/tokens/strategies`);
+  }
+
+  // ============================================================================
+  // NEW ENDPOINTS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
+  // ============================================================================
+
+  // LLM Chat (separate from RAG)
+  llmChat(request: LLMChatRequest): Observable<LLMChatResponse> {
+    return this.http.post<LLMChatResponse>(`${this.baseUrl}/chat/llm`, request);
+  }
+
+  // Phase Transition Validation
+  validatePhaseTransition(request: PhaseTransitionRequest): Observable<PhaseTransitionResponse> {
+    return this.http.post<PhaseTransitionResponse>(`${this.baseUrl}/validate/phase-transition`, request);
   }
 }

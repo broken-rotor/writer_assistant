@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { 
   ChapterComposeState, 
   PhaseTransition,
@@ -9,9 +11,13 @@ import {
   ConversationThread,
   ChatMessage,
   OutlineItem,
-  EnhancedFeedbackItem
+  EnhancedFeedbackItem,
+  PhaseTransitionRequest,
+  PhaseTransitionResponse,
+  Story
 } from '../models/story.model';
 import { LocalStorageService } from './local-storage.service';
+import { ApiService } from './api.service';
 
 export type PhaseType = 'plot-outline' | 'chapter-detailer' | 'final-edit';
 
@@ -41,7 +47,10 @@ export class PhaseStateService {
   public chapterComposeState$ = this.chapterComposeStateSubject.asObservable();
   public validationResult$ = this.validationResultSubject.asObservable();
 
-  constructor(private localStorageService: LocalStorageService) {}
+  constructor(
+    private localStorageService: LocalStorageService,
+    private apiService: ApiService
+  ) {}
 
   /**
    * Initialize chapter compose state for a story
@@ -552,5 +561,191 @@ export class PhaseStateService {
         this.localStorageService.saveStory(story);
       }
     }
+  }
+
+  // ============================================================================
+  // PHASE VALIDATION INTEGRATION FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
+  // ============================================================================
+
+  /**
+   * Validate phase transition using the backend API
+   */
+  validatePhaseTransitionAPI(
+    fromPhase: PhaseType,
+    toPhase: PhaseType,
+    story: Story,
+    chapterComposeState: ChapterComposeState
+  ): Observable<PhaseTransitionResponse> {
+    const phaseOutput = this.getPhaseOutput(fromPhase, chapterComposeState);
+    
+    const request: PhaseTransitionRequest = {
+      from_phase: this.convertPhaseTypeToAPI(fromPhase),
+      to_phase: this.convertPhaseTypeToAPI(toPhase),
+      phase_output: phaseOutput,
+      story_context: {
+        worldbuilding: story.general.worldbuilding,
+        story_summary: story.story.summary,
+        previous_chapters: story.story.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content
+        })),
+        characters: Array.from(story.characters.values())
+          .filter(c => !c.isHidden)
+          .map(c => ({
+            name: c.name,
+            basicBio: c.basicBio,
+            personality: c.personality,
+            motivations: c.motivations
+          })),
+        current_phase_status: {
+          plot_outline: chapterComposeState.phases.plotOutline.status,
+          chapter_detail: chapterComposeState.phases.chapterDetailer.status,
+          final_edit: chapterComposeState.phases.finalEditor.status
+        }
+      }
+    };
+
+    return this.apiService.validatePhaseTransition(request).pipe(
+      map((response: PhaseTransitionResponse) => {
+        // Update local validation result based on API response
+        this.updatePhaseValidation(fromPhase, {
+          canAdvance: response.valid,
+          validationErrors: response.valid ? [] : response.validation_results
+            .filter(result => !result.passed)
+            .map(result => result.message),
+          requirements: response.recommendations
+        });
+
+        return response;
+      }),
+      catchError((error) => {
+        console.error('Phase validation API error:', error);
+        // Fallback to local validation on API error
+        this.updateValidationResult(chapterComposeState);
+        return of({
+          valid: false,
+          overall_score: 0,
+          validation_results: [{
+            criterion: 'API Error',
+            passed: false,
+            message: 'Unable to validate phase transition. Please try again.',
+            score: 0
+          }],
+          recommendations: ['Please check your connection and try again.'],
+          metadata: { error: error.message || 'Unknown error' }
+        } as PhaseTransitionResponse);
+      })
+    );
+  }
+
+  /**
+   * Attempt phase transition with API validation
+   */
+  attemptPhaseTransitionWithValidation(
+    toPhase: PhaseType,
+    story: Story,
+    chapterComposeState: ChapterComposeState
+  ): Observable<{ success: boolean; message: string; validationResponse?: PhaseTransitionResponse }> {
+    const currentPhase = this.currentPhaseSubject.value;
+    
+    return this.validatePhaseTransitionAPI(currentPhase, toPhase, story, chapterComposeState).pipe(
+      map((validationResponse: PhaseTransitionResponse) => {
+        if (validationResponse.valid) {
+          // Proceed with phase transition
+          this.transitionToPhase(toPhase);
+          return {
+            success: true,
+            message: `Successfully transitioned to ${this.getPhaseDisplayName(toPhase)} phase.`,
+            validationResponse
+          };
+        } else {
+          // Phase transition not allowed
+          const failedCriteria = validationResponse.validation_results
+            .filter(result => !result.passed)
+            .map(result => result.message)
+            .join(', ');
+          
+          return {
+            success: false,
+            message: `Cannot transition to ${this.getPhaseDisplayName(toPhase)} phase. Issues: ${failedCriteria}`,
+            validationResponse
+          };
+        }
+      })
+    );
+  }
+
+  /**
+   * Get phase output for validation
+   */
+  private getPhaseOutput(phase: PhaseType, chapterComposeState: ChapterComposeState): string {
+    switch (phase) {
+      case 'plot-outline':
+        const outlineItems = Array.from(chapterComposeState.phases.plotOutline.outline.items.values());
+        return outlineItems
+          .sort((a, b) => a.order - b.order)
+          .map(item => `${item.title}: ${item.description}`)
+          .join('\n\n');
+
+      case 'chapter-detailer':
+        return chapterComposeState.phases.chapterDetailer.chapterDraft.content || '';
+
+      case 'final-edit':
+        return chapterComposeState.phases.finalEditor.finalChapter.content || 
+               chapterComposeState.phases.chapterDetailer.chapterDraft.content || '';
+
+      default:
+        return '';
+    }
+  }
+
+  /**
+   * Convert internal phase type to API phase type
+   */
+  private convertPhaseTypeToAPI(phase: PhaseType): 'plot_outline' | 'chapter_detail' | 'final_edit' {
+    switch (phase) {
+      case 'plot-outline': return 'plot_outline';
+      case 'chapter-detailer': return 'chapter_detail';
+      case 'final-edit': return 'final_edit';
+      default: return 'plot_outline';
+    }
+  }
+
+  /**
+   * Get validation score for a phase
+   */
+  getPhaseValidationScore(phase: PhaseType, chapterComposeState: ChapterComposeState): number {
+    // This could be enhanced to call the API for real-time scoring
+    // For now, return a basic score based on completion status
+    const phaseKey = this.getPhasePropertyKey(phase);
+    const phaseData = chapterComposeState.phases[phaseKey];
+    
+    switch (phaseData.status) {
+      case 'completed': return 100;
+      case 'in-progress': return 50;
+      case 'not-started': return 0;
+      default: return 0;
+    }
+  }
+
+  /**
+   * Check if phase can be advanced based on API validation
+   */
+  canAdvancePhaseWithAPI(
+    story: Story,
+    chapterComposeState: ChapterComposeState
+  ): Observable<boolean> {
+    const currentPhase = this.currentPhaseSubject.value;
+    const nextPhase = this.getNextPhase(currentPhase);
+    
+    if (!nextPhase) {
+      return of(false);
+    }
+
+    return this.validatePhaseTransitionAPI(currentPhase, nextPhase, story, chapterComposeState).pipe(
+      map(response => response.valid),
+      catchError(() => of(false))
+    );
   }
 }
