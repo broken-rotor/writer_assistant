@@ -17,6 +17,10 @@ class ChatComposeContext(BaseModel):
     story_context: Dict[str, Any]  # Flexible story context
     chapter_draft: Optional[str] = None
     conversation_branch_id: Optional[str] = None
+    # Worldbuilding-specific context
+    worldbuilding_topic: Optional[str] = None
+    worldbuilding_state: Optional[str] = None
+    accumulated_worldbuilding: Optional[str] = None
 
 
 class LLMChatRequest(BaseModel):

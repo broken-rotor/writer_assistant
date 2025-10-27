@@ -9,15 +9,17 @@ from app.models.worldbuilding_models import (
     ConversationBranch, TopicContext, TopicTransition, WorldbuildingChatContext
 )
 from app.models.generation_models import ConversationMessage
+from app.services.worldbuilding_persistence import WorldbuildingPersistenceService
 
 
 class WorldbuildingStateMachine:
     """Manages worldbuilding conversation state and flow transitions."""
     
-    def __init__(self):
+    def __init__(self, persistence_service: Optional[WorldbuildingPersistenceService] = None):
         self.state_transitions = self._initialize_state_transitions()
         self.topic_completion_thresholds = self._initialize_completion_thresholds()
         self.conversation_states: Dict[str, WorldbuildingConversationState] = {}
+        self.persistence = persistence_service or WorldbuildingPersistenceService()
     
     def _initialize_state_transitions(self) -> Dict[ConversationState, List[ConversationState]]:
         """Initialize valid state transitions."""
@@ -42,7 +44,12 @@ class WorldbuildingStateMachine:
     def get_or_create_conversation_state(self, story_id: str) -> WorldbuildingConversationState:
         """Get existing conversation state or create a new one."""
         if story_id not in self.conversation_states:
-            self.conversation_states[story_id] = self._create_initial_state(story_id)
+            # Try to load from persistence first
+            persisted_state = self.persistence.load_conversation_state(story_id)
+            if persisted_state:
+                self.conversation_states[story_id] = persisted_state
+            else:
+                self.conversation_states[story_id] = self._create_initial_state(story_id)
         return self.conversation_states[story_id]
     
     def _create_initial_state(self, story_id: str) -> WorldbuildingConversationState:
@@ -113,6 +120,9 @@ class WorldbuildingStateMachine:
         
         # Update metadata
         state.last_updated = datetime.now(UTC).isoformat()
+        
+        # Persist the updated state
+        self.persistence.save_conversation_state(state)
         
         return state, actions_taken
     
