@@ -8,7 +8,7 @@ from .generation_models import ConversationMessage, ComposePhase, SystemPrompts
 
 
 # Agent types for LLM chat
-AgentType = Literal['writer', 'character', 'editor']
+AgentType = Literal['writer', 'character', 'editor', 'worldbuilding']
 
 
 class ChatComposeContext(BaseModel):

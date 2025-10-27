@@ -18,7 +18,8 @@ def _build_agent_system_prompt(agent_type: str, compose_context=None, system_pro
     base_prompts = {
         'writer': "You are a skilled writer assistant helping with story creation. Provide creative, engaging responses that help develop compelling narratives.",
         'character': "You are a character development specialist. Help create authentic, well-rounded characters with realistic motivations and behaviors.",
-        'editor': "You are an experienced editor providing constructive feedback on writing. Focus on narrative flow, consistency, and overall story quality."
+        'editor': "You are an experienced editor providing constructive feedback on writing. Focus on narrative flow, consistency, and overall story quality.",
+        'worldbuilding': "You are a worldbuilding specialist helping create rich, immersive fictional worlds. Guide users through developing comprehensive world details including geography, cultures, magic systems, politics, history, and societies. Ask thoughtful follow-up questions to help expand and deepen their world creation."
     }
     
     prompt = base_prompts.get(agent_type, base_prompts['writer'])
