@@ -231,6 +231,20 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
     }
   }
 
+  onBranchChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    if (target && target.value) {
+      this.switchToBranch(target.value);
+    }
+  }
+
+  onEditKeydown(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.ctrlKey) {
+      this.saveEditMessage();
+    }
+  }
+
   switchToBranch(branchId: string): void {
     try {
       this.conversationService.switchToBranch(branchId);

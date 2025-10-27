@@ -55,7 +55,7 @@ describe('PlotOutlinePhaseComponent', () => {
 
   beforeEach(async () => {
     const generationServiceSpy = jasmine.createSpyObj('GenerationService', ['fleshOut']);
-    const archiveServiceSpy = jasmine.createSpyObj('ArchiveService', ['searchArchive']);
+    const archiveServiceSpy = jasmine.createSpyObj('ArchiveService', ['ragQuery']);
     const conversationServiceSpy = jasmine.createSpyObj('ConversationService', ['sendMessage', 'initializeConversation']);
     const phaseStateServiceSpy = jasmine.createSpyObj('PhaseStateService', ['updatePhaseValidation']);
     const storyServiceSpy = jasmine.createSpyObj('StoryService', ['saveStory']);
@@ -177,28 +177,31 @@ describe('PlotOutlinePhaseComponent', () => {
       await component.researchPlotPoint();
       
       expect(mockToastService.showError).toHaveBeenCalledWith('Please enter a plot point to research');
-      expect(mockArchiveService.searchArchive).not.toHaveBeenCalled();
+      expect(mockArchiveService.ragQuery).not.toHaveBeenCalled();
     });
 
     it('should call archive service and show results on success', async () => {
       const mockResponse = {
-        response: 'Research results',
+        query: 'Test plot point',
+        answer: 'Research results',
         sources: [
           {
-            content: 'Source content',
-            similarity_score: 0.8,
-            metadata: { file_name: 'test.txt' }
+            file_path: 'test.txt',
+            file_name: 'test.txt',
+            matching_section: 'Source content',
+            similarity_score: 0.8
           }
-        ]
+        ],
+        total_sources: 1
       };
       
-      mockArchiveService.searchArchive.and.returnValue(of(mockResponse));
+      mockArchiveService.ragQuery.and.returnValue(of(mockResponse));
       mockConversationService.sendMessage.and.returnValue({} as ChatMessage);
       
       component.basicOutline = 'Test plot point';
       await component.researchPlotPoint();
       
-      expect(mockArchiveService.searchArchive).toHaveBeenCalledWith('Test plot point');
+      expect(mockArchiveService.ragQuery).toHaveBeenCalledWith('Test plot point');
       expect(component.researchData).toBe(mockResponse);
       expect(component.showResearchSidebar).toBe(true);
       expect(component.showChat).toBe(true);
@@ -206,7 +209,7 @@ describe('PlotOutlinePhaseComponent', () => {
     });
 
     it('should handle archive service error', async () => {
-      mockArchiveService.searchArchive.and.returnValue(throwError('Research failed'));
+      mockArchiveService.ragQuery.and.returnValue(throwError('Research failed'));
       
       component.basicOutline = 'Test plot point';
       await component.researchPlotPoint();
@@ -360,14 +363,14 @@ describe('PlotOutlinePhaseComponent', () => {
 
     it('should close research sidebar', () => {
       component.showResearchSidebar = true;
-      component.researchData = { response: 'test', sources: [] };
+      component.researchData = { query: 'test', answer: 'test', sources: [], total_sources: 0 };
       component.researchError = 'test error';
       
       component.closeResearchSidebar();
       
       expect(component.showResearchSidebar).toBe(false);
-      expect(component.researchData).toBe(null);
-      expect(component.researchError).toBe(null);
+      expect(component.researchData).toBeNull();
+      expect(component.researchError).toBeNull();
     });
 
     it('should track items by id', () => {
@@ -388,8 +391,8 @@ describe('PlotOutlinePhaseComponent', () => {
       component.addToDraft('Test item');
       
       expect(component.story.chapterCompose).toBeDefined();
-      expect(component.story.chapterCompose?.currentPhase).toBe('plot-outline');
-      expect(component.story.chapterCompose?.phases.plotOutline).toBeDefined();
+      expect(component.story.chapterCompose!.currentPhase).toBe('plot-outline');
+      expect(component.story.chapterCompose!.phases.plotOutline).toBeDefined();
     });
 
     it('should update plot outline phase progress', () => {

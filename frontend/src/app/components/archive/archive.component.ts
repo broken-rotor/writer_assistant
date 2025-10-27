@@ -8,7 +8,8 @@ import {
   FileInfo,
   ArchiveStats,
   RAGChatMessage,
-  RAGStatusResponse
+  RAGStatusResponse,
+  RAGSource
 } from '../../services/archive.service';
 
 @Component({
@@ -43,7 +44,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
   isChatProcessing = false;
   chatError: string | null = null;
   chatInfoMessage: string | null = null;
-  currentChatSources: unknown[] = [];
+  currentChatSources: RAGSource[] = [];
   selectedMessageIndex: number | null = null;
 
   private subscriptions: Subscription[] = [];

@@ -128,8 +128,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
           id: item.id,
           title: item.title,
           description: item.description,
-          order: item.order,
-          sourceMessageId: item.metadata?.sourceMessageId
+          order: item.order
         }))
         .sort((a, b) => a.order - b.order);
     }
@@ -143,8 +142,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
         id: item.id,
         title: item.title,
         description: item.description,
-        order: item.order,
-        sourceMessageId: item.metadata?.sourceMessageId
+        order: item.order
       })).sort((a, b) => a.order - b.order);
       
       this.nextItemId = Math.max(...this.draftOutlineItems.map(item => parseInt(item.id.split('-')[1]) || 0)) + 1;
@@ -211,7 +209,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     this.researchError = null;
     
     try {
-      const response = await this.archiveService.searchArchive(this.basicOutline).toPromise();
+      const response = await this.archiveService.ragQuery(this.basicOutline).toPromise();
       
       if (response) {
         this.researchData = response;
@@ -242,12 +240,12 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
   }
 
   private formatResearchForChat(research: RAGResponse): string {
-    let summary = `📚 **Archive Research Results**\n\n${research.response}\n\n`;
+    let summary = `📚 **Archive Research Results**\n\n${research.answer}\n\n`;
     
     if (research.sources && research.sources.length > 0) {
       summary += `**Sources found (${research.sources.length}):**\n`;
       research.sources.forEach((source, index) => {
-        const fileName = source.metadata?.file_name || 'Unknown file';
+        const fileName = source.file_name || 'Unknown file';
         const similarity = (source.similarity_score * 100).toFixed(1);
         summary += `${index + 1}. ${fileName} (${similarity}% match)\n`;
       });
@@ -458,8 +456,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
         status: 'draft',
         metadata: {
           created: new Date(),
-          lastModified: new Date(),
-          sourceMessageId: item.sourceMessageId
+          lastModified: new Date()
         }
       };
       
