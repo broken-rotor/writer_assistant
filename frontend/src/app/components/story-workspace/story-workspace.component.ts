@@ -45,7 +45,7 @@ interface ResearchChatMessage {
 })
 export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   story: Story | null = null;
-  activeTab: 'general' | 'characters' | 'raters' | 'story' | 'chapter-creation' = 'general';
+  activeTab: 'general' | 'characters' | 'raters' | 'plot-outline' | 'story' | 'chapter-creation' = 'general';
   loading = true;
   error: string | null = null;
 
@@ -148,8 +148,13 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  selectTab(tab: 'general' | 'characters' | 'raters' | 'story' | 'chapter-creation') {
+  selectTab(tab: 'general' | 'characters' | 'raters' | 'plot-outline' | 'story' | 'chapter-creation') {
     this.activeTab = tab;
+    
+    // Initialize plot outline if selecting plot-outline tab
+    if (tab === 'plot-outline') {
+      this.initializePlotOutline();
+    }
     
     // Show phase navigation only for chapter-creation tab
     this.showPhaseNavigation = tab === 'chapter-creation';
@@ -162,6 +167,26 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   get lastSaved(): Date | null {
     return this.story?.metadata.lastModified || null;
+  }
+
+  // Plot outline initialization method
+  initializePlotOutline(): void {
+    if (!this.story?.plotOutline) {
+      if (this.story) {
+        this.story.plotOutline = {
+          content: '',
+          status: 'draft',
+          chatHistory: [],
+          raterFeedback: new Map(),
+          metadata: {
+            created: new Date(),
+            lastModified: new Date(),
+            version: 1
+          }
+        };
+        this.storyService.saveStory(this.story);
+      }
+    }
   }
 
   // General tab methods

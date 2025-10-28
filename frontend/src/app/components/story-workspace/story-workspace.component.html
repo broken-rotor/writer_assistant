@@ -56,6 +56,7 @@
     <button class="tab-button" [class.active]="activeTab === 'general'" (click)="selectTab('general')">General</button>
     <button class="tab-button" [class.active]="activeTab === 'characters'" (click)="selectTab('characters')">Characters</button>
     <button class="tab-button" [class.active]="activeTab === 'raters'" (click)="selectTab('raters')">Raters</button>
+    <button class="tab-button" [class.active]="activeTab === 'plot-outline'" (click)="selectTab('plot-outline')">Plot Outline</button>
     <button class="tab-button" [class.active]="activeTab === 'story'" (click)="selectTab('story')">Story</button>
     <button class="tab-button" [class.active]="activeTab === 'chapter-creation'" (click)="selectTab('chapter-creation')">Chapter Creation</button>
   </nav>
@@ -318,6 +319,13 @@
           <p>Select a rater to edit or add a new one.</p>
         </div>
       </div>
+    </div>
+
+    <!-- Plot Outline Tab -->
+    <div *ngIf="activeTab === 'plot-outline'" class="tab-pane plot-outline-tab">
+      <h2>Plot Outline</h2>
+      <p>Plot outline component will be implemented in the next task.</p>
+      <!-- Placeholder for plot-outline-tab component -->
     </div>
 
     <!-- Story Tab -->
