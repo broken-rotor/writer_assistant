@@ -535,6 +535,8 @@ class TestContextManager:
     
     def test_rag_integration_when_enabled(self):
         """Test RAG (Retrieval-Augmented Generation) integration."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         scenario = self.generator.generate_context_scenario("test_rag", StoryComplexity.COMPLEX)
         
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
@@ -544,15 +546,31 @@ class TestContextManager:
             with patch.dict('os.environ', {'CONTEXT_ENABLE_RAG': 'true', 'CONTEXT_MAX_TOKENS': '10000', 'CONTEXT_BUFFER_TOKENS': '1000'}):
                 context_manager = ContextManager()
                 
-                # Test context optimization (which could use RAG)
-                result, metadata = context_manager.optimize_context(scenario.context_items)
+                # Create a processing configuration for RAG testing
+                config = ContextProcessingConfig(
+                    target_agent=AgentType.WRITER,
+                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    max_tokens=10000,
+                    prioritize_recent=True
+                )
                 
-                # Verify optimization worked
-                assert len(result) >= 0
+                # Create a structured context container from the scenario
+                container = self._create_context_container_from_scenario(scenario)
+                
+                # Test context processing (which could use RAG if enabled)
+                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                
+                # Verify processing worked
+                assert isinstance(formatted_context, str)
+                assert len(formatted_context) > 0
                 assert isinstance(metadata, dict)
+                assert "original_element_count" in metadata
+                assert "filtered_element_count" in metadata
     
     def test_stress_testing_with_large_contexts(self):
         """Test system behavior under stress with large context scenarios."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         # Generate a very large context scenario
         large_scenario = self.generator.generate_context_scenario("stress_test", StoryComplexity.EPIC)
         
@@ -563,17 +581,27 @@ class TestContextManager:
             
             # Test that the system handles large contexts without crashing
             try:
-                # Test analysis of large context
-                analysis = context_manager.analyze_context(large_scenario.context_items)
+                # Create a processing configuration for stress testing
+                config = ContextProcessingConfig(
+                    target_agent=AgentType.WRITER,
+                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    max_tokens=30000,  # Large token limit for stress testing
+                    prioritize_recent=True
+                )
                 
-                assert analysis.total_tokens > 0
-                assert isinstance(analysis.items_by_type, dict)
+                # Create a structured context container from the scenario
+                container = self._create_context_container_from_scenario(large_scenario)
                 
-                # Test optimization of large context
-                result, metadata = context_manager.optimize_context(large_scenario.context_items, target_tokens=30000)
+                # Test processing of large context
+                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
                 
-                assert len(result) >= 0
+                # Verify processing worked even with large context
+                assert isinstance(formatted_context, str)
+                assert len(formatted_context) > 0
                 assert isinstance(metadata, dict)
+                assert "original_element_count" in metadata
+                assert "filtered_element_count" in metadata
+                assert metadata["original_element_count"] > 0
                     
             except Exception as e:
                 pytest.fail(f"Context manager failed under stress: {e}")
