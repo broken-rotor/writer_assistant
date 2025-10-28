@@ -1,346 +1,557 @@
 """
-Context Manager for Writer Assistant
+Context Manager Service for Writer Assistant API.
 
-This module provides the core context management functionality for the Writer Assistant,
-including context item management, context analysis, and optimization coordination.
+This service handles:
+- Context prioritization based on metadata and current phase
+- Intelligent summarization when token limits are approached
+- Agent-specific context filtering and formatting
+- Context combination and deduplication
+- Token budget management and optimization
+- Context validation and consistency checking
 """
 
+from typing import Dict, List, Optional, Tuple, Any
+from datetime import datetime
 import logging
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
-from enum import Enum
+from collections import defaultdict
 
-from app.services.token_management import LayerType, TokenCounter, ContentType as TokenContentType, TokenAllocator
-from app.core.config import settings
-from app.services.context_distillation import ContextDistiller, DistillationConfig
-from app.services.content_prioritization import LayeredPrioritizer, PrioritizationConfig
-from app.services.llm_inference import get_llm
+from app.models.context_models import (
+    StructuredContextContainer,
+    BaseContextElement,
+    ContextType,
+    AgentType,
+    ComposePhase,
+    SummarizationRule,
+    ContextProcessingConfig,
+    SystemContextElement,
+    StoryContextElement,
+    CharacterContextElement,
+    UserContextElement,
+    PhaseContextElement,
+    ConversationContextElement
+)
 
 logger = logging.getLogger(__name__)
 
 
-class ContextType(Enum):
-    """Types of context content for categorization and prioritization."""
-    SYSTEM = "system"
-    STORY = "story"
-    CHARACTER = "character"
-    WORLD = "world"
-    FEEDBACK = "feedback"
-    MEMORY = "memory"
-
-
-@dataclass
-class ContextItem:
-    """
-    Represents a single item of context with metadata for optimization.
-    
-    Attributes:
-        content: The actual text content
-        context_type: Type of context for categorization
-        priority: Priority level (1-10, higher is more important)
-        layer_type: Memory layer type for token management
-        metadata: Additional metadata for processing
-    """
-    content: str
-    context_type: ContextType
-    priority: int
-    layer_type: LayerType
-    metadata: Dict[str, Any]
-
-
-@dataclass
-class ContextAnalysis:
-    """
-    Analysis results for a set of context items.
-    
-    Attributes:
-        total_tokens: Total token count across all items
-        items_by_type: Context items grouped by type
-        priority_distribution: Token distribution by priority level
-        optimization_needed: Whether optimization is recommended
-        compression_ratio: Potential compression ratio if optimized
-        recommendations: List of optimization recommendations
-    """
-    total_tokens: int
-    items_by_type: Dict[ContextType, List[ContextItem]]
-    priority_distribution: Dict[int, int]
-    optimization_needed: bool
-    compression_ratio: float
-    recommendations: List[str]
-
-
 class ContextManager:
-    """
-    Core context management system that coordinates context optimization,
-    distillation, and prioritization.
-    """
+    """Service for managing structured context elements."""
     
-    def __init__(
+    def __init__(self):
+        """Initialize the context manager."""
+        self.summarizer = ContextSummarizer()
+        self.formatter = ContextFormatter()
+    
+    def process_context_for_agent(
         self,
-        max_context_tokens: int = 32000,
-        distillation_threshold: int = 6000,
-        enable_compression: bool = True
-    ):
+        context_container: StructuredContextContainer,
+        config: ContextProcessingConfig
+    ) -> Tuple[str, Dict[str, Any]]:
         """
-        Initialize the context manager.
+        Process context container for a specific agent and phase.
         
-        Args:
-            max_context_tokens: Maximum tokens allowed in context
-            distillation_threshold: Token threshold to trigger distillation
-            enable_compression: Whether to enable content compression
-        """
-        self.max_context_tokens = max_context_tokens
-        self.distillation_threshold = distillation_threshold
-        self.enable_compression = enable_compression
-        
-        # Initialize components
-        self.token_counter = TokenCounter(model_path=settings.MODEL_PATH)
-        self.token_allocator = TokenAllocator(total_budget=max_context_tokens)
-        self.llm_service = get_llm()
-        self.distiller = ContextDistiller(
-            token_counter=self.token_counter,
-            token_allocator=self.token_allocator,
-            llm_service=self.llm_service,
-            config=DistillationConfig(
-                max_summary_depth=3,
-                preserve_key_plot_points=True,
-                preserve_character_arcs=True,
-                preserve_emotional_beats=True
-            )
-        )
-        self.prioritizer = LayeredPrioritizer(
-            config=PrioritizationConfig(
-                token_budget=max_context_tokens,
-                max_items_per_category=20,
-                min_score_threshold=0.1
-            )
-        )
-        
-        logger.info(f"ContextManager initialized with max_tokens={max_context_tokens}, threshold={distillation_threshold}")
-    
-    def analyze_context(self, context_items: List[ContextItem]) -> ContextAnalysis:
-        """
-        Analyze a set of context items to determine optimization needs.
-        
-        Args:
-            context_items: List of context items to analyze
-            
         Returns:
-            ContextAnalysis with analysis results
-        """
-        # Count total tokens
-        total_tokens = 0
-        items_by_type = {}
-        priority_distribution = {}
-        
-        for item in context_items:
-            # Count tokens in content
-            token_count = self.token_counter.count_tokens(
-                item.content, 
-                TokenContentType.UNKNOWN
-            ).token_count
-            total_tokens += token_count
-            
-            # Group by type
-            if item.context_type not in items_by_type:
-                items_by_type[item.context_type] = []
-            items_by_type[item.context_type].append(item)
-            
-            # Track priority distribution
-            if item.priority not in priority_distribution:
-                priority_distribution[item.priority] = 0
-            priority_distribution[item.priority] += token_count
-        
-        # Determine if optimization is needed
-        optimization_needed = (
-            self.enable_compression and 
-            total_tokens > self.distillation_threshold
-        )
-        
-        # Estimate compression ratio
-        compression_ratio = 0.3 if optimization_needed else 1.0
-        
-        # Generate recommendations based on analysis
-        recommendations = self._generate_recommendations(
-            total_tokens, items_by_type, priority_distribution, optimization_needed
-        )
-        
-        return ContextAnalysis(
-            total_tokens=total_tokens,
-            items_by_type=items_by_type,
-            priority_distribution=priority_distribution,
-            optimization_needed=optimization_needed,
-            compression_ratio=compression_ratio,
-            recommendations=recommendations
-        )
-    
-    def _generate_recommendations(
-        self,
-        total_tokens: int,
-        items_by_type: Dict[ContextType, List[ContextItem]],
-        priority_distribution: Dict[int, int],
-        optimization_needed: bool
-    ) -> List[str]:
-        """
-        Generate optimization recommendations based on context analysis.
-        
-        Args:
-            total_tokens: Total token count
-            items_by_type: Context items grouped by type
-            priority_distribution: Token distribution by priority
-            optimization_needed: Whether optimization is needed
-            
-        Returns:
-            List of recommendation strings
-        """
-        recommendations = []
-        
-        if not optimization_needed:
-            recommendations.append("Context is within optimal size limits")
-            return recommendations
-        
-        # Token-based recommendations
-        if total_tokens > self.max_context_tokens:
-            recommendations.append(f"Context exceeds maximum limit ({total_tokens} > {self.max_context_tokens} tokens)")
-        elif total_tokens > self.distillation_threshold:
-            recommendations.append(f"Context approaching limit, consider optimization ({total_tokens} > {self.distillation_threshold} tokens)")
-        
-        # Type-based recommendations
-        for context_type, items in items_by_type.items():
-            item_count = len(items)
-            if item_count > 10:  # Arbitrary threshold for too many items
-                recommendations.append(f"Consider reducing {context_type.value} items (currently {item_count})")
-        
-        # Priority-based recommendations
-        low_priority_tokens = sum(tokens for priority, tokens in priority_distribution.items() if priority <= 3)
-        if low_priority_tokens > total_tokens * 0.3:  # More than 30% low priority
-            recommendations.append("Consider removing low-priority content to optimize context")
-        
-        # Compression recommendations
-        if optimization_needed:
-            recommendations.append("Apply context compression to reduce token usage")
-            recommendations.append("Prioritize high-importance content during optimization")
-        
-        return recommendations
-    
-    def optimize_context(
-        self, 
-        context_items: List[ContextItem],
-        target_tokens: Optional[int] = None
-    ) -> Tuple[List[ContextItem], Dict[str, Any]]:
-        """
-        Optimize a set of context items to fit within token limits.
-        
-        Args:
-            context_items: List of context items to optimize
-            target_tokens: Target token count (defaults to max_context_tokens)
-            
-        Returns:
-            Tuple of (optimized_items, optimization_metadata)
-        """
-        if target_tokens is None:
-            target_tokens = self.max_context_tokens
-        
-        # Analyze current context
-        analysis = self.analyze_context(context_items)
-        
-        if not analysis.optimization_needed:
-            logger.info("No optimization needed, returning original context")
-            return context_items, {"optimization_applied": False, "original_tokens": analysis.total_tokens}
-        
-        logger.info(f"Optimizing context: {analysis.total_tokens} tokens -> target {target_tokens}")
-        
-        # Sort items by priority (highest first)
-        sorted_items = sorted(context_items, key=lambda x: x.priority, reverse=True)
-        
-        optimized_items = []
-        current_tokens = 0
-        
-        for item in sorted_items:
-            item_tokens = self.token_counter.count_tokens(
-                item.content, 
-                TokenContentType.UNKNOWN
-            ).token_count
-            
-            # Always include highest priority items (priority >= 9)
-            if item.priority >= 9:
-                optimized_items.append(item)
-                current_tokens += item_tokens
-                continue
-            
-            # For lower priority items, check if we have space
-            if current_tokens + item_tokens <= target_tokens:
-                optimized_items.append(item)
-                current_tokens += item_tokens
-            else:
-                # Try to compress the item if possible
-                if self.enable_compression and len(item.content) > 500:
-                    try:
-                        compressed_content = self._compress_content(item.content, item.context_type)
-                        compressed_tokens = self.token_counter.count_tokens(
-                            compressed_content, 
-                            TokenContentType.UNKNOWN
-                        ).token_count
-                        
-                        if current_tokens + compressed_tokens <= target_tokens:
-                            compressed_item = ContextItem(
-                                content=compressed_content,
-                                context_type=item.context_type,
-                                priority=item.priority,
-                                layer_type=item.layer_type,
-                                metadata={**item.metadata, "compressed": True}
-                            )
-                            optimized_items.append(compressed_item)
-                            current_tokens += compressed_tokens
-                    except Exception as e:
-                        logger.warning(f"Failed to compress content: {e}")
-        
-        optimization_metadata = {
-            "optimization_applied": True,
-            "original_tokens": analysis.total_tokens,
-            "optimized_tokens": current_tokens,
-            "compression_ratio": current_tokens / analysis.total_tokens if analysis.total_tokens > 0 else 1.0,
-            "items_removed": len(context_items) - len(optimized_items)
-        }
-        
-        logger.info(f"Context optimization complete: {analysis.total_tokens} -> {current_tokens} tokens")
-        
-        return optimized_items, optimization_metadata
-    
-    def _compress_content(self, content: str, context_type: ContextType) -> str:
-        """
-        Compress content using the distillation service.
-        
-        Args:
-            content: Content to compress
-            context_type: Type of content for appropriate compression strategy
-            
-        Returns:
-            Compressed content
+            Tuple of (formatted_context_string, processing_metadata)
         """
         try:
-            # Map context types to distillation content types
-            content_type_mapping = {
-                ContextType.STORY: "story_summary",
-                ContextType.CHARACTER: "character_profile",
-                ContextType.WORLD: "world_building",
-                ContextType.FEEDBACK: "feedback_summary",
-                ContextType.MEMORY: "memory_summary",
-                ContextType.SYSTEM: "system_prompt"  # Usually not compressed
-            }
-            
-            distillation_type = content_type_mapping.get(context_type, "general")
-            
-            # Use distillation service to compress
-            result = self.distiller.distill_content(
-                content=content,
-                content_type=distillation_type,
-                target_length=len(content) // 3  # Aim for 1/3 original length
+            # Step 1: Filter elements for target agent and phase
+            relevant_elements = self._filter_elements_for_agent_and_phase(
+                context_container, config.target_agent, config.current_phase
             )
             
-            return result.distilled_content
+            # Step 2: Apply custom filters if provided
+            if config.custom_filters:
+                relevant_elements = self._apply_custom_filters(relevant_elements, config.custom_filters)
+            
+            # Step 3: Sort by priority and recency
+            sorted_elements = self._sort_elements_by_priority(
+                relevant_elements, config.prioritize_recent
+            )
+            
+            # Step 4: Include related elements if requested
+            if config.include_relationships:
+                sorted_elements = self._include_related_elements(
+                    sorted_elements, context_container.relationships
+                )
+            
+            # Step 5: Apply token budget management
+            final_elements, was_summarized = self._apply_token_budget(
+                sorted_elements, config.max_tokens, config.summarization_threshold
+            )
+            
+            # Step 6: Format for the target agent
+            formatted_context = self.formatter.format_for_agent(
+                final_elements, config.target_agent, config.current_phase
+            )
+            
+            # Step 7: Generate processing metadata
+            metadata = self._generate_processing_metadata(
+                original_count=len(context_container.elements),
+                filtered_count=len(relevant_elements),
+                final_count=len(final_elements),
+                was_summarized=was_summarized,
+                target_agent=config.target_agent,
+                current_phase=config.current_phase
+            )
+            
+            return formatted_context, metadata
             
         except Exception as e:
-            logger.warning(f"Content compression failed: {e}")
-            # Return truncated content as fallback
-            return content[:len(content) // 2] + "..."
+            logger.error(f"Error processing context for agent {config.target_agent}: {str(e)}")
+            raise
+    
+    def _filter_elements_for_agent_and_phase(
+        self,
+        container: StructuredContextContainer,
+        agent_type: AgentType,
+        phase: ComposePhase
+    ) -> List[BaseContextElement]:
+        """Filter context elements for specific agent and phase."""
+        filtered_elements = []
+        
+        for element in container.elements:
+            # Check if element is relevant for this agent
+            if agent_type not in element.metadata.target_agents:
+                continue
+            
+            # Check if element is relevant for this phase
+            if phase not in element.metadata.relevant_phases:
+                continue
+            
+            # Check if element has expired
+            if element.metadata.expires_at and element.metadata.expires_at < datetime.utcnow():
+                continue
+            
+            filtered_elements.append(element)
+        
+        return filtered_elements
+    
+    def _apply_custom_filters(
+        self,
+        elements: List[BaseContextElement],
+        custom_filters: Dict[str, Any]
+    ) -> List[BaseContextElement]:
+        """Apply custom filtering criteria."""
+        filtered_elements = []
+        
+        for element in elements:
+            include_element = True
+            
+            # Filter by tags if specified
+            if 'required_tags' in custom_filters:
+                required_tags = custom_filters['required_tags']
+                if not any(tag in element.metadata.tags for tag in required_tags):
+                    include_element = False
+            
+            # Filter by excluded tags if specified
+            if 'excluded_tags' in custom_filters:
+                excluded_tags = custom_filters['excluded_tags']
+                if any(tag in element.metadata.tags for tag in excluded_tags):
+                    include_element = False
+            
+            # Filter by minimum priority if specified
+            if 'min_priority' in custom_filters:
+                if element.metadata.priority < custom_filters['min_priority']:
+                    include_element = False
+            
+            # Filter by context type if specified
+            if 'allowed_types' in custom_filters:
+                if element.type not in custom_filters['allowed_types']:
+                    include_element = False
+            
+            # Filter by character if specified (for character contexts)
+            if 'character_ids' in custom_filters and isinstance(element, CharacterContextElement):
+                if element.character_id not in custom_filters['character_ids']:
+                    include_element = False
+            
+            if include_element:
+                filtered_elements.append(element)
+        
+        return filtered_elements
+    
+    def _sort_elements_by_priority(
+        self,
+        elements: List[BaseContextElement],
+        prioritize_recent: bool = True
+    ) -> List[BaseContextElement]:
+        """Sort elements by priority and optionally by recency."""
+        def sort_key(element: BaseContextElement) -> Tuple[float, datetime]:
+            priority = element.metadata.priority
+            
+            # If prioritizing recent, use updated_at as secondary sort
+            if prioritize_recent:
+                recency = element.metadata.updated_at
+            else:
+                recency = element.metadata.created_at
+            
+            # Return negative priority for descending sort, positive datetime for ascending
+            return (-priority, -recency.timestamp())
+        
+        return sorted(elements, key=sort_key)
+    
+    def _include_related_elements(
+        self,
+        elements: List[BaseContextElement],
+        relationships: List[Any]
+    ) -> List[BaseContextElement]:
+        """Include related context elements based on relationships."""
+        # For now, return elements as-is
+        # TODO: Implement relationship-based inclusion logic
+        return elements
+    
+    def _apply_token_budget(
+        self,
+        elements: List[BaseContextElement],
+        max_tokens: Optional[int],
+        summarization_threshold: float
+    ) -> Tuple[List[BaseContextElement], bool]:
+        """Apply token budget constraints with intelligent summarization."""
+        if not max_tokens:
+            return elements, False
+        
+        # Calculate current token usage
+        current_tokens = sum(
+            element.metadata.estimated_tokens or len(element.content) // 4
+            for element in elements
+        )
+        
+        if current_tokens <= max_tokens:
+            return elements, False
+        
+        # Need to reduce token usage
+        threshold_tokens = int(max_tokens * summarization_threshold)
+        
+        if current_tokens <= threshold_tokens:
+            # Just trim lowest priority elements
+            return self._trim_by_priority(elements, max_tokens), False
+        
+        # Need summarization
+        return self._summarize_elements(elements, max_tokens), True
+    
+    def _trim_by_priority(
+        self,
+        elements: List[BaseContextElement],
+        max_tokens: int
+    ) -> List[BaseContextElement]:
+        """Trim elements by removing lowest priority ones."""
+        result = []
+        current_tokens = 0
+        
+        for element in elements:  # Already sorted by priority
+            element_tokens = element.metadata.estimated_tokens or len(element.content) // 4
+            
+            if current_tokens + element_tokens <= max_tokens:
+                result.append(element)
+                current_tokens += element_tokens
+            else:
+                # Check if we can include this element by removing some lower priority ones
+                if element.metadata.summarization_rule == SummarizationRule.PRESERVE_FULL:
+                    # Try to make room for this high-priority element
+                    while result and current_tokens + element_tokens > max_tokens:
+                        removed = result.pop()
+                        removed_tokens = removed.metadata.estimated_tokens or len(removed.content) // 4
+                        current_tokens -= removed_tokens
+                    
+                    if current_tokens + element_tokens <= max_tokens:
+                        result.append(element)
+                        current_tokens += element_tokens
+                break
+        
+        return result
+    
+    def _summarize_elements(
+        self,
+        elements: List[BaseContextElement],
+        max_tokens: int
+    ) -> List[BaseContextElement]:
+        """Summarize elements to fit within token budget."""
+        # Group elements by summarization rule
+        preserve_full = []
+        allow_compression = []
+        extract_key_points = []
+        omit_if_needed = []
+        
+        for element in elements:
+            if element.metadata.summarization_rule == SummarizationRule.PRESERVE_FULL:
+                preserve_full.append(element)
+            elif element.metadata.summarization_rule == SummarizationRule.ALLOW_COMPRESSION:
+                allow_compression.append(element)
+            elif element.metadata.summarization_rule == SummarizationRule.EXTRACT_KEY_POINTS:
+                extract_key_points.append(element)
+            else:  # OMIT_IF_NEEDED
+                omit_if_needed.append(element)
+        
+        # Start with preserve_full elements
+        result = preserve_full[:]
+        current_tokens = sum(
+            element.metadata.estimated_tokens or len(element.content) // 4
+            for element in result
+        )
+        
+        remaining_tokens = max_tokens - current_tokens
+        
+        if remaining_tokens <= 0:
+            logger.warning("PRESERVE_FULL elements exceed token budget")
+            return preserve_full
+        
+        # Add compressed elements
+        for element in allow_compression:
+            compressed = self.summarizer.compress_element(element, remaining_tokens // 2)
+            if compressed:
+                result.append(compressed)
+                compressed_tokens = compressed.metadata.estimated_tokens or len(compressed.content) // 4
+                remaining_tokens -= compressed_tokens
+        
+        # Add key points from remaining elements
+        for element in extract_key_points:
+            if remaining_tokens > 50:  # Minimum tokens for key points
+                key_points = self.summarizer.extract_key_points(element, min(remaining_tokens // 3, 100))
+                if key_points:
+                    result.append(key_points)
+                    key_points_tokens = key_points.metadata.estimated_tokens or len(key_points.content) // 4
+                    remaining_tokens -= key_points_tokens
+        
+        return result
+    
+    def _generate_processing_metadata(
+        self,
+        original_count: int,
+        filtered_count: int,
+        final_count: int,
+        was_summarized: bool,
+        target_agent: AgentType,
+        current_phase: ComposePhase
+    ) -> Dict[str, Any]:
+        """Generate metadata about context processing."""
+        return {
+            "original_element_count": original_count,
+            "filtered_element_count": filtered_count,
+            "final_element_count": final_count,
+            "was_summarized": was_summarized,
+            "target_agent": target_agent.value,
+            "current_phase": current_phase.value,
+            "processing_timestamp": datetime.utcnow().isoformat(),
+            "reduction_ratio": final_count / original_count if original_count > 0 else 0
+        }
+
+
+class ContextSummarizer:
+    """Service for summarizing context elements."""
+    
+    def compress_element(
+        self,
+        element: BaseContextElement,
+        target_tokens: int
+    ) -> Optional[BaseContextElement]:
+        """Compress a context element to fit within target tokens."""
+        if element.metadata.summarization_rule == SummarizationRule.PRESERVE_FULL:
+            return element
+        
+        current_tokens = element.metadata.estimated_tokens or len(element.content) // 4
+        
+        if current_tokens <= target_tokens:
+            return element
+        
+        # Simple compression: truncate to target length
+        target_chars = target_tokens * 4
+        if len(element.content) > target_chars:
+            compressed_content = element.content[:target_chars - 3] + "..."
+            
+            # Create compressed copy
+            compressed_element = element.copy(deep=True)
+            compressed_element.content = compressed_content
+            compressed_element.metadata.estimated_tokens = target_tokens
+            compressed_element.metadata.tags.append("compressed")
+            
+            return compressed_element
+        
+        return element
+    
+    def extract_key_points(
+        self,
+        element: BaseContextElement,
+        target_tokens: int
+    ) -> Optional[BaseContextElement]:
+        """Extract key points from a context element."""
+        # Simple key point extraction: take first and last sentences
+        sentences = element.content.split('. ')
+        
+        if len(sentences) <= 2:
+            return self.compress_element(element, target_tokens)
+        
+        key_points = f"{sentences[0]}. ... {sentences[-1]}"
+        
+        # Create key points copy
+        key_points_element = element.copy(deep=True)
+        key_points_element.content = key_points
+        key_points_element.metadata.estimated_tokens = len(key_points) // 4
+        key_points_element.metadata.tags.append("key_points")
+        
+        return key_points_element
+
+
+class ContextFormatter:
+    """Service for formatting context elements for different agents."""
+    
+    def format_for_agent(
+        self,
+        elements: List[BaseContextElement],
+        agent_type: AgentType,
+        phase: ComposePhase
+    ) -> str:
+        """Format context elements for a specific agent type."""
+        if agent_type == AgentType.WRITER:
+            return self._format_for_writer(elements, phase)
+        elif agent_type == AgentType.CHARACTER:
+            return self._format_for_character(elements, phase)
+        elif agent_type == AgentType.RATER:
+            return self._format_for_rater(elements, phase)
+        elif agent_type == AgentType.EDITOR:
+            return self._format_for_editor(elements, phase)
+        elif agent_type == AgentType.WORLDBUILDING:
+            return self._format_for_worldbuilding(elements, phase)
+        else:
+            return self._format_generic(elements, phase)
+    
+    def _format_for_writer(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+        """Format context for the Writer agent."""
+        sections = []
+        
+        # Group elements by type
+        by_type = defaultdict(list)
+        for element in elements:
+            by_type[element.type].append(element)
+        
+        # System prompts first
+        if by_type[ContextType.SYSTEM_PROMPT]:
+            sections.append("=== SYSTEM INSTRUCTIONS ===")
+            for element in by_type[ContextType.SYSTEM_PROMPT]:
+                sections.append(element.content)
+        
+        # Story context
+        story_types = [ContextType.WORLD_BUILDING, ContextType.STORY_SUMMARY, ContextType.PLOT_OUTLINE]
+        story_elements = []
+        for story_type in story_types:
+            story_elements.extend(by_type[story_type])
+        
+        if story_elements:
+            sections.append("\n=== STORY CONTEXT ===")
+            for element in story_elements:
+                sections.append(f"- {element.type.value.replace('_', ' ').title()}: {element.content}")
+        
+        # Character information
+        if by_type[ContextType.CHARACTER_PROFILE]:
+            sections.append("\n=== CHARACTERS ===")
+            for element in by_type[ContextType.CHARACTER_PROFILE]:
+                if isinstance(element, CharacterContextElement):
+                    sections.append(f"- {element.character_name}: {element.content}")
+        
+        # User instructions and feedback
+        user_types = [ContextType.USER_INSTRUCTION, ContextType.USER_FEEDBACK, ContextType.USER_REQUEST]
+        user_elements = []
+        for user_type in user_types:
+            user_elements.extend(by_type[user_type])
+        
+        if user_elements:
+            sections.append("\n=== USER GUIDANCE ===")
+            for element in user_elements:
+                sections.append(f"- {element.content}")
+        
+        # Phase-specific context
+        if by_type[ContextType.PHASE_INSTRUCTION]:
+            sections.append(f"\n=== {phase.value.upper()} PHASE INSTRUCTIONS ===")
+            for element in by_type[ContextType.PHASE_INSTRUCTION]:
+                sections.append(element.content)
+        
+        return "\n".join(sections)
+    
+    def _format_for_character(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+        """Format context for Character agents."""
+        sections = []
+        
+        # Character-specific elements first
+        character_elements = [e for e in elements if isinstance(e, CharacterContextElement)]
+        if character_elements:
+            sections.append("=== CHARACTER CONTEXT ===")
+            for element in character_elements:
+                sections.append(f"{element.type.value.replace('_', ' ').title()}: {element.content}")
+        
+        # Story context relevant to character
+        story_elements = [e for e in elements if e.type in [ContextType.WORLD_BUILDING, ContextType.STORY_SUMMARY]]
+        if story_elements:
+            sections.append("\n=== STORY BACKGROUND ===")
+            for element in story_elements:
+                sections.append(element.content)
+        
+        return "\n".join(sections)
+    
+    def _format_for_rater(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+        """Format context for Rater agents."""
+        sections = []
+        
+        # Evaluation criteria from system prompts
+        system_elements = [e for e in elements if e.type == ContextType.SYSTEM_PROMPT]
+        if system_elements:
+            sections.append("=== EVALUATION CRITERIA ===")
+            for element in system_elements:
+                sections.append(element.content)
+        
+        # Story context for evaluation
+        story_elements = [e for e in elements if e.type in [ContextType.STORY_SUMMARY, ContextType.PLOT_OUTLINE]]
+        if story_elements:
+            sections.append("\n=== STORY CONTEXT FOR EVALUATION ===")
+            for element in story_elements:
+                sections.append(element.content)
+        
+        return "\n".join(sections)
+    
+    def _format_for_editor(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+        """Format context for Editor agent."""
+        sections = []
+        
+        # Editorial guidelines
+        system_elements = [e for e in elements if e.type in [ContextType.SYSTEM_PROMPT, ContextType.SYSTEM_INSTRUCTION]]
+        if system_elements:
+            sections.append("=== EDITORIAL GUIDELINES ===")
+            for element in system_elements:
+                sections.append(element.content)
+        
+        # Story consistency context
+        story_elements = [e for e in elements if e.type in [ContextType.STORY_SUMMARY, ContextType.CHARACTER_PROFILE]]
+        if story_elements:
+            sections.append("\n=== CONSISTENCY CONTEXT ===")
+            for element in story_elements:
+                sections.append(element.content)
+        
+        return "\n".join(sections)
+    
+    def _format_for_worldbuilding(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+        """Format context for Worldbuilding agent."""
+        sections = []
+        
+        # Worldbuilding elements
+        wb_elements = [e for e in elements if e.type == ContextType.WORLD_BUILDING]
+        if wb_elements:
+            sections.append("=== CURRENT WORLDBUILDING ===")
+            for element in wb_elements:
+                sections.append(element.content)
+        
+        # Story context for worldbuilding
+        story_elements = [e for e in elements if e.type == ContextType.STORY_SUMMARY]
+        if story_elements:
+            sections.append("\n=== STORY CONTEXT ===")
+            for element in story_elements:
+                sections.append(element.content)
+        
+        return "\n".join(sections)
+    
+    def _format_generic(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+        """Generic formatting for unknown agent types."""
+        sections = []
+        
+        for element in elements:
+            sections.append(f"=== {element.type.value.upper().replace('_', ' ')} ===")
+            sections.append(element.content)
+        
+        return "\n".join(sections)
+
