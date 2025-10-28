@@ -485,7 +485,7 @@ export class WorldbuildingSyncService {
    */
   async forceSyncWithBackend(
     storyId: string,
-    currentWorldbuilding: string = ''
+    currentWorldbuilding = ''
   ): Promise<string> {
     const messages = this.conversationService.getCurrentBranchMessages();
     const config = { ...this.defaultConfig, storyId, enableBackendSync: true };
