@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 import logging
 from collections import defaultdict
+from dataclasses import dataclass
 
 from app.models.context_models import (
     StructuredContextContainer,
@@ -30,8 +31,29 @@ from app.models.context_models import (
     PhaseContextElement,
     ConversationContextElement
 )
+from app.services.token_management.layers import LayerType
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ContextItem:
+    """Simple context item for backward compatibility."""
+    content: str
+    context_type: ContextType
+    priority: int
+    layer_type: LayerType
+    metadata: Dict[str, Any]
+
+
+@dataclass
+class ContextAnalysis:
+    """Analysis results for context processing."""
+    total_tokens: int
+    items_by_type: Dict[ContextType, List[ContextItem]]
+    priority_distribution: Dict[int, int]
+    layer_distribution: Dict[LayerType, int]
+    optimization_suggestions: List[str]
 
 
 class ContextManager:
@@ -554,4 +576,3 @@ class ContextFormatter:
             sections.append(element.content)
         
         return "\n".join(sections)
-

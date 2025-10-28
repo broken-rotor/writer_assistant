@@ -11,10 +11,9 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 
-from app.services.context_manager import (
-    ContextManager, ContextItem, ContextType, ContextAnalysis
-)
-from app.services.token_management import LayerType
+from app.services.context_manager import ContextManager, ContextItem, ContextAnalysis
+from app.models.context_models import ContextType
+from app.services.token_management.layers import LayerType
 from app.services.content_prioritization import (
     LayeredPrioritizer, RAGRetriever, RetrievalStrategy, RetrievalMode,
     PrioritizationConfig, AgentType

@@ -6,7 +6,7 @@ Updated to support structured context data schema alongside legacy fields
 for backward compatibility during the transition period.
 """
 from typing import Dict, List, Optional, Any, Literal
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 
@@ -95,21 +95,25 @@ class CharacterFeedbackRequest(BaseModel):
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
     
-    @validator('systemPrompts', 'worldbuilding', 'storySummary', 'structured_context')
-    def validate_context_provided(cls, v, values, field):
+    @field_validator('systemPrompts', 'worldbuilding', 'storySummary', 'structured_context', mode='before')
+    @classmethod
+    def validate_context_provided(cls, v, info):
         """Ensure either legacy or structured context is provided."""
-        context_mode = values.get('context_mode', 'legacy')
+        # Get the context_mode from the data being validated
+        data = info.data if hasattr(info, 'data') else {}
+        context_mode = data.get('context_mode', 'legacy')
+        field_name = info.field_name
         
         if context_mode == 'structured':
-            if field.name == 'structured_context' and v is None:
+            if field_name == 'structured_context' and v is None:
                 raise ValueError("structured_context is required when context_mode is 'structured'")
         elif context_mode == 'legacy':
-            if field.name in ['systemPrompts', 'worldbuilding', 'storySummary']:
+            if field_name in ['systemPrompts', 'worldbuilding', 'storySummary']:
                 # At least one legacy field should be provided
                 legacy_fields = [
-                    values.get('systemPrompts'),
-                    values.get('worldbuilding'),
-                    values.get('storySummary')
+                    data.get('systemPrompts'),
+                    data.get('worldbuilding'),
+                    data.get('storySummary')
                 ]
                 if all(f is None or f == "" for f in legacy_fields):
                     raise ValueError("At least one legacy context field must be provided when context_mode is 'legacy'")
