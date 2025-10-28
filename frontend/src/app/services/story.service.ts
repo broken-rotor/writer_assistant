@@ -436,4 +436,36 @@ export class StoryService {
     }
   }
 
+  // ============================================================================
+  // PLOT OUTLINE MIGRATION LOGIC (WRI-65)
+  // ============================================================================
+
+  /**
+   * Migrate story to include plot outline structure if missing
+   */
+  migrateStoryForPlotOutline(story: Story): void {
+    if (!story.plotOutline) {
+      story.plotOutline = {
+        content: '',
+        status: 'draft',
+        chatHistory: [],
+        raterFeedback: new Map(),
+        metadata: {
+          created: new Date(),
+          lastModified: new Date(),
+          version: 1
+        }
+      };
+      
+      // If story has existing chapters, suggest creating outline
+      if (story.story.chapters.length > 0) {
+        story.plotOutline.content = `// TODO: Create plot outline based on existing ${story.story.chapters.length} chapters
+// Consider the following chapter titles:
+${story.story.chapters.map(c => `// - Chapter ${c.number}: ${c.title}`).join('\n')}`;
+      }
+      
+      this.saveStory(story);
+    }
+  }
+
 }

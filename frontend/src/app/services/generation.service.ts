@@ -104,7 +104,7 @@ export class GenerationService {
       systemPrompts: {
         mainPrefix: story.general.systemPrompts.mainPrefix,
         mainSuffix: story.general.systemPrompts.mainSuffix,
-        assistantPrompt: story.general.systemPrompts.assistantPrompt
+        assistantPrompt: this.buildChapterGenerationPrompt(story, story.chapterCreation.plotPoint)
       },
       worldbuilding: story.general.worldbuilding,
       storySummary: story.story.summary,
@@ -740,6 +740,97 @@ export class GenerationService {
    * Format characters for AI context
    */
   private formatCharactersForContext(story: Story): string {
+    const characters = Array.from(story.characters.values())
+      .filter(c => !c.isHidden)
+      .map(c => `- ${c.name}: ${c.basicBio}`)
+      .join('\n');
+    return characters || 'No characters defined yet.';
+  }
+
+  // ============================================================================
+  // PLOT OUTLINE INTEGRATION FOR CHAPTER GENERATION (WRI-65)
+  // ============================================================================
+
+  /**
+   * Build chapter generation prompt with plot outline context
+   */
+  buildChapterGenerationPrompt(story: Story, plotPoint: string, additionalContext?: any): string {
+    let prompt = `${story.general.systemPrompts.mainPrefix}
+
+STORY CONTEXT:
+Title: ${story.general.title}
+Worldbuilding: ${story.general.worldbuilding}
+
+APPROVED PLOT OUTLINE:
+${this.getPlotOutlineContext(story)}
+
+CURRENT CHAPTER PLOT POINT:
+${plotPoint}
+
+CHARACTERS:
+${this.formatCharacters(story)}
+
+RATER FEEDBACK ON PLOT OUTLINE:
+${this.formatPlotOutlineFeedback(story)}
+
+Please generate a chapter that follows the approved plot outline while developing the specific plot point provided. Ensure the chapter contributes to the overall story arc and maintains consistency with the established plot structure.
+
+${story.general.systemPrompts.mainSuffix}`;
+
+    return prompt;
+  }
+
+  /**
+   * Get plot outline context based on status
+   */
+  private getPlotOutlineContext(story: Story): string {
+    if (!story.plotOutline) {
+      return 'No plot outline available. Please create and approve a plot outline for better chapter consistency.';
+    }
+
+    switch (story.plotOutline.status) {
+      case 'approved':
+        return `APPROVED PLOT OUTLINE (Approved on ${story.plotOutline.metadata.approvedAt?.toLocaleDateString()}):
+${story.plotOutline.content}`;
+      
+      case 'under_review':
+        return `DRAFT PLOT OUTLINE (Under Review - Use with caution):
+${story.plotOutline.content}
+
+Note: This plot outline is still under review and may change.`;
+      
+      case 'draft':
+        return `DRAFT PLOT OUTLINE (Not yet reviewed):
+${story.plotOutline.content}
+
+Warning: This plot outline has not been reviewed by raters and may need revision.`;
+      
+      default:
+        return `PLOT OUTLINE (Status: ${story.plotOutline.status}):
+${story.plotOutline.content}`;
+    }
+  }
+
+  /**
+   * Format plot outline rater feedback for chapter generation
+   */
+  private formatPlotOutlineFeedback(story: Story): string {
+    if (!story.plotOutline || story.plotOutline.raterFeedback.size === 0) {
+      return 'No rater feedback available on plot outline.';
+    }
+
+    const feedbackSummary = Array.from(story.plotOutline.raterFeedback.values())
+      .filter(f => f.status === 'complete' && f.userResponse === 'accepted')
+      .map(f => `- ${f.raterName}: ${f.feedback.substring(0, 200)}...`)
+      .join('\n');
+
+    return feedbackSummary || 'No accepted rater feedback available.';
+  }
+
+  /**
+   * Format characters for chapter generation context
+   */
+  private formatCharacters(story: Story): string {
     const characters = Array.from(story.characters.values())
       .filter(c => !c.isHidden)
       .map(c => `- ${c.name}: ${c.basicBio}`)
