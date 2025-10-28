@@ -38,7 +38,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
   // UI state for accessibility and navigation
   isMobileView = false;
   focusedPanel: 'summary' | 'chat' = 'chat';
-  showKeyboardHelp = false;
+  showKeyboardHelpDialog = false;
   private lastFocusedElement: HTMLElement | null = null;
   
   // Services
@@ -96,7 +96,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
     // Handle Escape key
     if (event.key === 'Escape') {
-      if (this.showKeyboardHelp) {
+      if (this.showKeyboardHelpDialog) {
         this.hideKeyboardHelp();
       } else {
         this.restoreFocus();
@@ -349,7 +349,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
    * Toggle keyboard shortcuts help
    */
   public toggleKeyboardHelp(): void {
-    if (this.showKeyboardHelp) {
+    if (this.showKeyboardHelpDialog) {
       this.hideKeyboardHelp();
     } else {
       this.showKeyboardHelp();
@@ -361,7 +361,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
    */
   public showKeyboardHelp(): void {
     this.lastFocusedElement = document.activeElement as HTMLElement;
-    this.showKeyboardHelp = true;
+    this.showKeyboardHelpDialog = true;
     
     // Focus the help dialog
     setTimeout(() => {
@@ -378,7 +378,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
    * Hide keyboard shortcuts help
    */
   public hideKeyboardHelp(): void {
-    this.showKeyboardHelp = false;
+    this.showKeyboardHelpDialog = false;
     this.restoreFocus();
     this.announceToScreenReader('Keyboard shortcuts help closed');
   }

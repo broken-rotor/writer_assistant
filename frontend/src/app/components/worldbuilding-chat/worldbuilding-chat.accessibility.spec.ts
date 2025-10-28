@@ -189,7 +189,7 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     });
 
     it('should handle Escape key to close help dialog', () => {
-      component.showKeyboardHelp = true;
+      component.showKeyboardHelpDialog = true;
       spyOn(component, 'hideKeyboardHelp');
       
       const event = new KeyboardEvent('keydown', { key: 'Escape' });
@@ -303,7 +303,7 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     });
 
     it('should show keyboard shortcuts help dialog with proper ARIA attributes', () => {
-      component.showKeyboardHelp = true;
+      component.showKeyboardHelpDialog = true;
       fixture.detectChanges();
       
       const helpDialog = fixture.debugElement.query(By.css('.keyboard-help-overlay'));
@@ -313,7 +313,7 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     });
 
     it('should have proper list structure for shortcuts', () => {
-      component.showKeyboardHelp = true;
+      component.showKeyboardHelpDialog = true;
       fixture.detectChanges();
       
       const shortcutsList = fixture.debugElement.query(By.css('.shortcuts-list'));
@@ -326,7 +326,7 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     });
 
     it('should have proper close button accessibility', () => {
-      component.showKeyboardHelp = true;
+      component.showKeyboardHelpDialog = true;
       fixture.detectChanges();
       
       const closeButton = fixture.debugElement.query(By.css('.close-button'));

@@ -432,7 +432,7 @@ describe('WorldbuildingChatComponent', () => {
     });
 
     it('should handle escape key for help dialog', () => {
-      component.showKeyboardHelp = true;
+      component.showKeyboardHelpDialog = true;
       spyOn(component, 'hideKeyboardHelp');
 
       const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
@@ -456,13 +456,13 @@ describe('WorldbuildingChatComponent', () => {
     });
 
     it('should toggle keyboard help visibility', () => {
-      expect(component.showKeyboardHelp).toBe(false);
+      expect(component.showKeyboardHelpDialog).toBe(false);
       
       component.toggleKeyboardHelp();
-      expect(component.showKeyboardHelp).toBe(true);
+      expect(component.showKeyboardHelpDialog).toBe(true);
       
       component.toggleKeyboardHelp();
-      expect(component.showKeyboardHelp).toBe(false);
+      expect(component.showKeyboardHelpDialog).toBe(false);
     });
 
     it('should handle focus management for skip links', () => {
