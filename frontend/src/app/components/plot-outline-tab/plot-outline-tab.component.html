@@ -1,0 +1,96 @@
+<!-- plot-outline-tab.component.html -->
+<div class="plot-outline-tab">
+  <!-- Main Content Area -->
+  <div class="main-content" [class.with-chat]="showChat">
+    
+    <!-- Left Panel: Outline Editor -->
+    <div class="outline-panel">
+      <h3>Overall Story Plot Outline</h3>
+      <textarea 
+        [(ngModel)]="story.plotOutline.content"
+        (ngModelChange)="onOutlineChange()"
+        placeholder="Act I: Setup&#10;- Character introduction&#10;- Inciting incident&#10;&#10;Act II: Rising Action&#10;- Conflict development&#10;- Complications&#10;&#10;Act III: Resolution&#10;- Climax&#10;- Resolution"
+        rows="20"
+        class="outline-editor"
+        [disabled]="disabled">
+      </textarea>
+      
+      <div class="outline-actions">
+        <button 
+          class="secondary-button" 
+          (click)="aiExpandOutline()" 
+          [disabled]="isGeneratingAI || disabled">
+          <span *ngIf="!isGeneratingAI">🤖 AI Expand</span>
+          <span *ngIf="isGeneratingAI">⏳ Generating...</span>
+        </button>
+        
+        <button 
+          class="secondary-button" 
+          (click)="researchOutline()" 
+          [disabled]="isResearching || disabled"
+          title="Research similar content from story archive">
+          <span *ngIf="!isResearching">📚 Research</span>
+          <span *ngIf="isResearching">⏳ Researching...</span>
+        </button>
+        
+        <button class="secondary-button" (click)="saveOutline()" [disabled]="disabled">💾 Save</button>
+        <button class="secondary-button" (click)="resetOutline()" [disabled]="disabled">🔄 Reset</button>
+      </div>
+      
+      <div class="outline-status">
+        Status: <span class="status-badge status-{{story.plotOutline.status}}">
+          {{ getStatusDisplay() }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Right Panel: AI Chat Assistant -->
+    <div class="chat-panel" *ngIf="showChat">
+      <h3>💬 AI Chat Assistant</h3>
+      
+      <div class="chat-messages">
+        <div *ngFor="let message of story.plotOutline.chatHistory" 
+             class="chat-message"
+             [class.user-message]="message.type === 'user'"
+             [class.ai-message]="message.type === 'assistant'">
+          <div class="message-content">{{ message.content }}</div>
+          <div class="message-timestamp">{{ message.timestamp | date:'short' }}</div>
+        </div>
+        
+        <div *ngIf="story.plotOutline.chatHistory.length === 0" class="empty-chat">
+          Start a conversation about your plot outline...
+        </div>
+      </div>
+      
+      <div class="chat-input-area">
+        <textarea 
+          [(ngModel)]="chatInput"
+          placeholder="Type your message..."
+          rows="3"
+          class="chat-input"
+          [disabled]="disabled">
+        </textarea>
+        <div class="chat-actions">
+          <button class="primary-button" (click)="sendChatMessage()" [disabled]="!chatInput.trim() || disabled">Send</button>
+          <button class="secondary-button" (click)="clearChat()" [disabled]="disabled">Clear Chat</button>
+        </div>
+      </div>
+      
+      <div class="quick-actions">
+        <h4>Quick Actions</h4>
+        <ul>
+          <li>• Suggest plot structure</li>
+          <li>• Identify plot holes</li>
+          <li>• Generate character arcs</li>
+          <li>• Check pacing</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Placeholder for Rater Feedback Section -->
+  <div class="rater-feedback-section">
+    <h3>📝 Rater Feedback Section</h3>
+    <p><em>Rater feedback functionality will be implemented in the next task.</em></p>
+  </div>
+</div>

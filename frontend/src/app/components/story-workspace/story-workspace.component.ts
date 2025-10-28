@@ -24,6 +24,7 @@ import {
 } from '../../constants/token-limits.constants';
 import { PhaseStateService, PhaseType } from '../../services/phase-state.service';
 import { PlotOutlinePhaseComponent } from '../plot-outline-phase/plot-outline-phase.component';
+import { PlotOutlineTabComponent } from '../plot-outline-tab/plot-outline-tab.component';
 import { FinalEditPhaseComponent } from '../final-edit-phase/final-edit-phase.component';
 import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent, FeedbackRequestEvent, AddToChatEvent } from '../feedback-sidebar/feedback-sidebar.component';
 import { FeedbackService } from '../../services/feedback.service';
@@ -39,7 +40,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingChatComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, PlotOutlineTabComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingChatComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -1432,6 +1433,28 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     console.log('Outline updated:', outlineItems);
     // The plot outline component handles saving, we just need to trigger change detection
     this.cdr.detectChanges();
+  }
+
+  // Plot Outline Tab handlers
+  onPlotOutlineUpdated(content: string): void {
+    console.log('Plot outline content updated:', content);
+    // Handle outline updates
+    if (this.story) {
+      this.storyService.saveStory(this.story);
+    }
+  }
+
+  onPlotOutlineApproved(): void {
+    console.log('Plot outline approved');
+    // Handle outline approval
+    if (this.story?.plotOutline) {
+      this.story.plotOutline.status = 'approved';
+      this.story.plotOutline.metadata.approvedAt = new Date();
+      this.story.plotOutline.metadata.lastModified = new Date();
+    }
+    if (this.story) {
+      this.storyService.saveStory(this.story);
+    }
   }
 
   // Final Edit Phase handlers
