@@ -37,6 +37,17 @@ export class StoryService {
         summary: '',
         chapters: []
       },
+      plotOutline: {
+        content: '',
+        status: 'draft',
+        chatHistory: [],
+        raterFeedback: new Map(),
+        metadata: {
+          created: new Date(),
+          lastModified: new Date(),
+          version: 1
+        }
+      },
       chapterCreation: {
         plotPoint: '',
         incorporatedFeedback: [],
