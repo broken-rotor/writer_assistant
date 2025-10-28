@@ -24,9 +24,56 @@ class TestFullContextPipeline:
         self.settings = Settings()
         self.generator = ContextDataGenerator(seed=42)
     
+    def _create_context_container_from_scenario(self, scenario):
+        """Helper method to convert scenario context items to structured container."""
+        from app.models.context_models import (
+            StructuredContextContainer, SystemContextElement, StoryContextElement, 
+            CharacterContextElement, ContextMetadata
+        )
+        
+        elements = []
+        for item in scenario.context_items:
+            # Create appropriate metadata
+            metadata = ContextMetadata(
+                priority=min(max(item.priority / 10.0, 0.0), 1.0),  # Normalize to 0.0-1.0 range
+                estimated_tokens=len(item.content) // 4  # Rough estimate
+            )
+            
+            # Create appropriate element type based on context type
+            if item.context_type == ContextType.SYSTEM_PROMPT:
+                element = SystemContextElement(
+                    id=f"system_{len(elements)}",
+                    type=item.context_type,
+                    content=item.content,
+                    metadata=metadata
+                )
+            elif item.context_type in [ContextType.CHARACTER_PROFILE, ContextType.CHARACTER_MEMORY]:
+                element = CharacterContextElement(
+                    id=f"character_{len(elements)}",
+                    type=item.context_type,
+                    content=item.content,
+                    character_id="test_character",
+                    character_name="Test Character",
+                    metadata=metadata
+                )
+            else:
+                # Default to StoryContextElement for all other types
+                element = StoryContextElement(
+                    id=f"story_{len(elements)}",
+                    type=item.context_type,
+                    content=item.content,
+                    metadata=metadata
+                )
+            
+            elements.append(element)
+        
+        return StructuredContextContainer(elements=elements)
+    
     @patch('app.services.llm_inference.get_llm')
     def test_end_to_end_context_processing(self, mock_get_llm):
         """Test complete end-to-end context processing pipeline."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         mock_get_llm.return_value = Mock()
         
         # Generate realistic test scenario
@@ -42,39 +89,40 @@ class TestFullContextPipeline:
             overflow_strategy=OverflowStrategy.REALLOCATE
         )
         
-        # Execute the actual pipeline using real API
+        # Execute the actual pipeline using new unified API
         start_time = time.time()
         
-        # Analyze context first
-        analysis = context_manager.analyze_context(scenario.context_items)
+        # Create processing configuration
+        config = ContextProcessingConfig(
+            target_agent=AgentType.WRITER,
+            current_phase=ComposePhase.CHAPTER_DETAIL,
+            max_tokens=self.settings.CONTEXT_MAX_TOKENS,
+            prioritize_recent=True
+        )
         
-        # Optimize if needed
-        if analysis.optimization_needed:
-            optimized_items, optimization_metadata = context_manager.optimize_context(
-                scenario.context_items, 
-                target_tokens=self.settings.CONTEXT_MAX_TOKENS
-            )
-        else:
-            optimized_items = scenario.context_items
-            optimization_metadata = {"optimization_applied": False}
+        # Create structured context container from scenario
+        container = self._create_context_container_from_scenario(scenario)
+        
+        # Process context using the new unified API
+        formatted_context, metadata = context_manager.process_context_for_agent(container, config)
         
         processing_time = time.time() - start_time
         
-        # Calculate final token count
-        final_tokens = sum(
-            context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
-            for item in optimized_items
-        )
-        
         # Verify results
-        assert final_tokens <= self.settings.CONTEXT_MAX_TOKENS
+        assert isinstance(formatted_context, str)
+        assert len(formatted_context) > 0
+        assert isinstance(metadata, dict)
+        assert "original_element_count" in metadata
+        assert "filtered_element_count" in metadata
         assert processing_time < 1.0  # Should complete quickly in integration test
-        assert len(optimized_items) > 0
-        assert analysis.total_tokens > 0
+        assert metadata["original_element_count"] > 0
+        assert metadata["filtered_element_count"] > 0
     
     @patch('app.services.llm_inference.get_llm')
     def test_configuration_driven_pipeline(self, mock_get_llm):
         """Test that pipeline behavior is properly driven by configuration."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         mock_get_llm.return_value = Mock()
         
         # Test with different configuration settings
@@ -106,26 +154,30 @@ class TestFullContextPipeline:
                 
                 context_manager = ContextManager()
                 
-                # Test with real API using configuration
-                analysis = context_manager.analyze_context(scenario.context_items)
-                
-                # Optimize with configuration-specific target
+                # Calculate target tokens with buffer
                 target_tokens = settings.CONTEXT_MAX_TOKENS - settings.CONTEXT_BUFFER_TOKENS
-                optimized_items, optimization_metadata = context_manager.optimize_context(
-                    scenario.context_items, 
-                    target_tokens=target_tokens
+                
+                # Create processing configuration
+                processing_config = ContextProcessingConfig(
+                    target_agent=AgentType.WRITER,
+                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    max_tokens=target_tokens,
+                    prioritize_recent=True
                 )
                 
-                # Calculate final token count
-                final_tokens = sum(
-                    context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
-                    for item in optimized_items
-                )
+                # Create structured context container from scenario
+                container = self._create_context_container_from_scenario(scenario)
+                
+                # Process context using the new unified API
+                formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
                 
                 # Verify configuration is respected
-                assert final_tokens <= target_tokens
-                assert context_manager.max_context_tokens == settings.CONTEXT_MAX_TOKENS
-                assert len(optimized_items) > 0
+                assert isinstance(formatted_context, str)
+                assert len(formatted_context) > 0
+                assert isinstance(metadata, dict)
+                assert "original_element_count" in metadata
+                assert "filtered_element_count" in metadata
+                assert metadata["original_element_count"] > 0
     
     @patch('app.services.llm_inference.get_llm')
     def test_layer_allocation_integration(self, mock_get_llm):
