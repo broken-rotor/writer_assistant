@@ -137,18 +137,23 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       
     } catch (error) {
       this.chatError = 'Failed to generate AI response. Please try again.';
-      this.toastService.show('Chat error: ' + error, 'error');
+      this.toastService.showError('Chat error: ' + error);
     } finally {
       this.isChatGenerating = false;
     }
   }
 
   private async generateAIResponse(userInput: string): Promise<string> {
-    return this.generationService.generatePlotOutlineResponse(
-      this.story,
-      userInput,
-      this.story.plotOutline.chatHistory
-    ).toPromise();
+    return new Promise((resolve, reject) => {
+      this.generationService.generatePlotOutlineResponse(
+        this.story,
+        userInput,
+        this.story.plotOutline.chatHistory
+      ).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error)
+      });
+    });
   }
 
   private generateMessageId(): string {
@@ -159,7 +164,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     if (confirm('Are you sure you want to clear the chat history?')) {
       this.story.plotOutline.chatHistory = [];
       this.outlineUpdated.emit(this.story.plotOutline.content);
-      this.toastService.show('Chat history cleared', 'info');
+      this.toastService.showInfo('Chat history cleared');
     }
   }
 
