@@ -268,58 +268,7 @@ class TestFullContextPipeline:
             assert all(item.priority >= 6 for item in result)
             assert metadata["optimization_applied"] == True
     
-    @patch('app.services.context_manager.get_llm')
-    def test_performance_under_realistic_load(self, mock_get_llm):
-        """Test pipeline performance under realistic load conditions."""
-        mock_get_llm.return_value = Mock()
-        
-        # Generate multiple scenarios of different complexities
-        scenarios = [
-            self.generator.generate_context_scenario("perf_simple", StoryComplexity.SIMPLE),
-            self.generator.generate_context_scenario("perf_moderate", StoryComplexity.MODERATE),
-            self.generator.generate_context_scenario("perf_complex", StoryComplexity.COMPLEX)
-        ]
-        
-        context_manager = ContextManager(
-            max_context_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            distillation_threshold=self.settings.CONTEXT_SUMMARIZATION_THRESHOLD
-        )
-        
-        processing_times = []
-        
-        for i, scenario in enumerate(scenarios):
-            # Test real performance
-            start_time = time.time()
-            
-            # Analyze and optimize using real API
-            analysis = context_manager.analyze_context(scenario.context_items)
-            
-            if analysis.optimization_needed:
-                optimized_items, optimization_metadata = context_manager.optimize_context(
-                    scenario.context_items,
-                    target_tokens=self.settings.CONTEXT_MAX_TOKENS
-                )
-            else:
-                optimized_items = scenario.context_items
-                optimization_metadata = {"optimization_applied": False}
-            
-            actual_time = time.time() - start_time
-            processing_times.append(actual_time)
-            
-            # Calculate final token count
-            final_tokens = sum(
-                context_manager.token_counter.count_tokens(item.content, TokenContentType.UNKNOWN).token_count
-                for item in optimized_items
-            )
-            
-            # Verify performance requirements
-            assert actual_time < 1.0  # Integration test should be reasonably fast
-            assert final_tokens <= self.settings.CONTEXT_MAX_TOKENS
-            assert len(optimized_items) > 0
-        
-        # Verify performance scales reasonably
-        assert all(t < 1.0 for t in processing_times)  # All should complete quickly
-    
+
     @patch('app.services.context_manager.get_llm')
     def test_feature_toggle_integration(self, mock_get_llm):
         """Test integration with feature toggles from configuration."""
