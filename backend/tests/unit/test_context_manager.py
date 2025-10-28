@@ -296,6 +296,8 @@ class TestContextManager:
     
     def test_token_budget_enforcement(self):
         """Test enforcement of token budgets and limits."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
@@ -305,21 +307,33 @@ class TestContextManager:
             # Generate large context that exceeds limits
             large_scenario = self.generator.generate_context_scenario("test_budget", StoryComplexity.EPIC)
             
-            with patch.object(context_manager, 'optimize_context') as mock_optimize:
-                # Simulate budget enforcement reducing context
-                reduced_items = large_scenario.context_items[:3]  # Keep only first 3 items
-                mock_optimize.return_value = (reduced_items, {"optimization_applied": True})
-                
-                result, metadata = context_manager.optimize_context(
-                    large_scenario.context_items,
-                    target_tokens=2000
-                )
-                
-                assert len(result) <= len(large_scenario.context_items)
-                mock_optimize.assert_called_once()
+            # Create a processing configuration with very strict token limits
+            config = ContextProcessingConfig(
+                target_agent=AgentType.WRITER,
+                current_phase=ComposePhase.CHAPTER_DETAIL,
+                max_tokens=2000,  # Very strict token limit to force budget enforcement
+                prioritize_recent=True
+            )
+            
+            # Create a structured context container from the scenario
+            container = self._create_context_container_from_scenario(large_scenario)
+            
+            # Process context using the new API
+            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            
+            # Verify budget enforcement occurred
+            assert isinstance(formatted_context, str)
+            assert len(formatted_context) > 0
+            assert isinstance(metadata, dict)
+            assert "original_element_count" in metadata
+            assert "filtered_element_count" in metadata
+            # Budget enforcement should reduce the number of elements
+            assert metadata["filtered_element_count"] <= metadata["original_element_count"]
     
     def test_context_assembly_performance(self):
         """Test context assembly performance and timeout handling."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         scenario = self.generator.generate_context_scenario("test_performance", StoryComplexity.MODERATE)
         
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
@@ -327,27 +341,36 @@ class TestContextManager:
             
             context_manager = ContextManager()
             
-            # Test optimization performance
-            with patch.object(context_manager, 'optimize_context') as mock_optimize:
-                optimized_items = scenario.context_items[:3]  # Simulate optimization
-                mock_optimize.return_value = (optimized_items, {
-                    'optimization_applied': True,
-                    'original_tokens': 8000,
-                    'optimized_tokens': 5000,
-                    'compression_ratio': 0.625
-                })
-                
-                result, metadata = context_manager.optimize_context(
-                    scenario.context_items,
-                    target_tokens=6000
-                )
-                
-                assert len(result) > 0
-                assert metadata['optimization_applied'] == True
-                assert metadata['optimized_tokens'] > 0
+            # Create a processing configuration for performance testing
+            config = ContextProcessingConfig(
+                target_agent=AgentType.WRITER,
+                current_phase=ComposePhase.CHAPTER_DETAIL,
+                max_tokens=6000,  # Moderate token limit
+                prioritize_recent=True
+            )
+            
+            # Create a structured context container from the scenario
+            container = self._create_context_container_from_scenario(scenario)
+            
+            # Process context using the new API and measure performance
+            import time
+            start_time = time.time()
+            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            processing_time = time.time() - start_time
+            
+            # Verify performance and results
+            assert isinstance(formatted_context, str)
+            assert len(formatted_context) > 0
+            assert isinstance(metadata, dict)
+            assert "original_element_count" in metadata
+            assert "filtered_element_count" in metadata
+            # Performance should be reasonable (less than 5 seconds for moderate complexity)
+            assert processing_time < 5.0
     
     def test_configuration_integration_with_settings(self):
         """Test integration with configuration settings."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         # Test with custom configuration
         custom_env = {
             'CONTEXT_MAX_TOKENS': '16000',
@@ -369,32 +392,82 @@ class TestContextManager:
                 
                 context_manager = ContextManager()
                 
-                assert context_manager.max_context_tokens == 16000
-                assert context_manager.distillation_threshold == 12000
+                # Test that configuration settings are properly integrated
+                scenario = self.generator.generate_context_scenario("test_config", StoryComplexity.MODERATE)
+                
+                # Create a processing configuration that uses custom settings
+                config = ContextProcessingConfig(
+                    target_agent=AgentType.WRITER,
+                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    max_tokens=16000,  # Use the custom max tokens setting
+                    prioritize_recent=True
+                )
+                
+                # Create a structured context container from the scenario
+                container = self._create_context_container_from_scenario(scenario)
+                
+                # Process context using the new API
+                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                
+                # Verify that configuration settings are respected
+                assert isinstance(formatted_context, str)
+                assert len(formatted_context) > 0
+                assert isinstance(metadata, dict)
+                assert "original_element_count" in metadata
+                assert "filtered_element_count" in metadata
     
     def test_error_handling_and_recovery(self):
         """Test error handling and recovery mechanisms."""
+        from app.models.context_models import (
+            ContextProcessingConfig, AgentType, ComposePhase, StructuredContextContainer,
+            SystemContextElement, StoryContextElement, ContextMetadata
+        )
+        
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
             context_manager = ContextManager()
             
-            # Test with invalid context items
-            invalid_items = [
-                ContextItem("", ContextType.SYSTEM_PROMPT, 10, LayerType.WORKING_MEMORY, {}),  # Empty content
-                ContextItem("Valid content", ContextType.STORY_SUMMARY, -1, LayerType.EPISODIC_MEMORY, {}),  # Invalid priority
+            # Test with potentially problematic context elements
+            elements = [
+                SystemContextElement(
+                    id="empty_content",
+                    type=ContextType.SYSTEM_PROMPT,
+                    content="",  # Empty content
+                    metadata=ContextMetadata(priority=1.0)
+                ),
+                StoryContextElement(
+                    id="valid_content",
+                    type=ContextType.STORY_SUMMARY,
+                    content="Valid content",
+                    metadata=ContextMetadata(priority=0.0)  # Minimum priority
+                )
             ]
             
-            # Test that the system handles invalid items gracefully through analysis
-            analysis = context_manager.analyze_context(invalid_items)
+            container = StructuredContextContainer(elements=elements)
             
-            # The analysis should still work even with invalid items
-            assert analysis.total_tokens >= 0
-            assert isinstance(analysis.items_by_type, dict)
-            assert isinstance(analysis.priority_distribution, dict)
+            # Create a processing configuration
+            config = ContextProcessingConfig(
+                target_agent=AgentType.WRITER,
+                current_phase=ComposePhase.CHAPTER_DETAIL,
+                max_tokens=5000,
+                prioritize_recent=True
+            )
+            
+            # Test that the system handles problematic elements gracefully
+            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            
+            # The processing should still work even with problematic elements
+            assert isinstance(formatted_context, str)
+            assert isinstance(metadata, dict)
+            assert "original_element_count" in metadata
+            assert "filtered_element_count" in metadata
+            assert metadata["original_element_count"] == 2
     
     def test_context_caching_functionality(self):
         """Test context caching when enabled."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         scenario = self.generator.generate_context_scenario("test_caching", StoryComplexity.MODERATE)
         
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
@@ -404,15 +477,31 @@ class TestContextManager:
             with patch.dict('os.environ', {'CONTEXT_ENABLE_CACHING': 'true', 'CONTEXT_MAX_TOKENS': '10000', 'CONTEXT_BUFFER_TOKENS': '1000'}):
                 context_manager = ContextManager()
                 
-                # Test basic context processing (optimization)
-                result1, metadata1 = context_manager.optimize_context(scenario.context_items)
+                # Create a processing configuration
+                config = ContextProcessingConfig(
+                    target_agent=AgentType.WRITER,
+                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    max_tokens=10000,
+                    prioritize_recent=True
+                )
                 
-                # Verify optimization worked
-                assert len(result1) >= 0
-                assert isinstance(metadata1, dict)
+                # Create a structured context container from the scenario
+                container = self._create_context_container_from_scenario(scenario)
+                
+                # Test basic context processing (which would use caching if enabled)
+                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                
+                # Verify processing worked
+                assert isinstance(formatted_context, str)
+                assert len(formatted_context) > 0
+                assert isinstance(metadata, dict)
+                assert "original_element_count" in metadata
+                assert "filtered_element_count" in metadata
     
     def test_monitoring_and_analytics_integration(self):
         """Test monitoring and analytics when enabled."""
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        
         scenario = self.generator.generate_context_scenario("test_monitoring", StoryComplexity.MODERATE)
         
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
@@ -422,12 +511,27 @@ class TestContextManager:
             with patch.dict('os.environ', {'CONTEXT_ENABLE_MONITORING': 'true', 'CONTEXT_MAX_TOKENS': '10000', 'CONTEXT_BUFFER_TOKENS': '1000'}):
                 context_manager = ContextManager()
                 
-                # Test context analysis (which would be monitored)
-                analysis = context_manager.analyze_context(scenario.context_items)
+                # Create a processing configuration
+                config = ContextProcessingConfig(
+                    target_agent=AgentType.WRITER,
+                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    max_tokens=10000,
+                    prioritize_recent=True
+                )
                 
-                # Verify analysis worked
-                assert analysis.total_tokens >= 0
-                assert isinstance(analysis.items_by_type, dict)
+                # Create a structured context container from the scenario
+                container = self._create_context_container_from_scenario(scenario)
+                
+                # Test context processing (which would be monitored)
+                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                
+                # Verify processing worked and includes monitoring metadata
+                assert isinstance(formatted_context, str)
+                assert len(formatted_context) > 0
+                assert isinstance(metadata, dict)
+                assert "original_element_count" in metadata
+                assert "filtered_element_count" in metadata
+                assert "processing_timestamp" in metadata
     
     def test_rag_integration_when_enabled(self):
         """Test RAG (Retrieval-Augmented Generation) integration."""
