@@ -123,9 +123,133 @@
     </div>
   </div>
   
-  <!-- Placeholder for Rater Feedback Section -->
+  <!-- Rater Feedback Section -->
   <div class="rater-feedback-section">
-    <h3>📝 Rater Feedback Section</h3>
-    <p><em>Rater feedback functionality will be implemented in the next task.</em></p>
+    <div class="feedback-header">
+      <h3>📝 Rater Feedback Section</h3>
+      <div class="feedback-actions">
+        <button 
+          class="primary-button" 
+          (click)="requestAllRaterFeedback()" 
+          [disabled]="disabled || generatingFeedback.size > 0">
+          🎯 Request All Feedback
+        </button>
+        <button 
+          class="secondary-button" 
+          (click)="regenerateAllFeedback()" 
+          [disabled]="disabled || generatingFeedback.size > 0">
+          🔄 Regenerate All
+        </button>
+        <button 
+          class="secondary-button" 
+          (click)="clearAllFeedback()" 
+          [disabled]="disabled">
+          ❌ Clear All
+        </button>
+      </div>
+    </div>
+
+    <div class="feedback-error" *ngIf="feedbackError">
+      <span class="error-message">{{ feedbackError }}</span>
+      <button class="retry-button" (click)="feedbackError = null">✕</button>
+    </div>
+
+    <div class="rater-feedback-list">
+      <div *ngFor="let rater of getEnabledRaters()" class="rater-feedback-card">
+        <div class="rater-header">
+          <h4>{{ rater.name }}</h4>
+          <div class="rater-status">
+            <span *ngIf="!story.plotOutline.raterFeedback.has(rater.id)" class="status-badge status-pending">
+              ⏸️ Pending
+            </span>
+            <span *ngIf="generatingFeedback.has(rater.id)" class="status-badge status-generating">
+              ⏳ Generating...
+            </span>
+            <span *ngIf="story.plotOutline.raterFeedback.get(rater.id)?.status === 'complete'" 
+                  class="status-badge status-complete">
+              ✅ Complete
+            </span>
+            <span *ngIf="story.plotOutline.raterFeedback.get(rater.id)?.status === 'error'" 
+                  class="status-badge status-error">
+              ❌ Error
+            </span>
+          </div>
+        </div>
+
+        <div class="rater-feedback-content" 
+             *ngIf="story.plotOutline.raterFeedback.get(rater.id)?.status === 'complete'">
+          <div class="feedback-text">
+            {{ story.plotOutline.raterFeedback.get(rater.id)?.feedback }}
+          </div>
+          <div class="feedback-actions">
+            <button 
+              class="feedback-action-btn accept" 
+              (click)="acceptFeedback(rater.id)"
+              [class.selected]="story.plotOutline.raterFeedback.get(rater.id)?.userResponse === 'accepted'">
+              👍 Accept
+            </button>
+            <button 
+              class="feedback-action-btn revision" 
+              (click)="requestRevision(rater.id)"
+              [disabled]="generatingFeedback.has(rater.id)">
+              🔄 Request Revision
+            </button>
+            <button 
+              class="feedback-action-btn discuss" 
+              (click)="discussFeedback(rater.id)">
+              💬 Discuss Further
+            </button>
+          </div>
+        </div>
+
+        <div class="rater-feedback-content" 
+             *ngIf="story.plotOutline.raterFeedback.get(rater.id)?.status === 'error'">
+          <div class="error-message">
+            Failed to generate feedback. Please try again.
+          </div>
+          <div class="feedback-actions">
+            <button 
+              class="feedback-action-btn retry" 
+              (click)="requestRaterFeedback(rater.id)"
+              [disabled]="generatingFeedback.has(rater.id)">
+              🔄 Retry
+            </button>
+            <button 
+              class="feedback-action-btn skip" 
+              (click)="story.plotOutline.raterFeedback.delete(rater.id)">
+              ❌ Skip
+            </button>
+          </div>
+        </div>
+
+        <div class="rater-feedback-content" 
+             *ngIf="!story.plotOutline.raterFeedback.has(rater.id) && !generatingFeedback.has(rater.id)">
+          <button 
+            class="request-feedback-btn" 
+            (click)="requestRaterFeedback(rater.id)"
+            [disabled]="disabled">
+            📝 Request Feedback from {{ rater.name }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="getEnabledRaters().length === 0" class="no-raters">
+        <p>No enabled raters found. Please enable raters in the <strong>Raters</strong> tab to get feedback on your plot outline.</p>
+      </div>
+    </div>
+
+    <div class="feedback-summary">
+      <div class="progress-info">
+        Progress: {{ getFeedbackProgress().completed }}/{{ getFeedbackProgress().total }} raters complete
+      </div>
+      <button 
+        class="approve-button" 
+        (click)="approveOutline()" 
+        [disabled]="!canApproveOutline() || disabled"
+        [class.ready]="canApproveOutline()">
+        <span *ngIf="canApproveOutline()">✅ Approve Plot Outline</span>
+        <span *ngIf="!canApproveOutline()">⏳ Waiting for feedback...</span>
+      </button>
+    </div>
   </div>
 </div>

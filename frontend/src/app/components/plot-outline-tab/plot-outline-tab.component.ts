@@ -1,10 +1,11 @@
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Story, ChatMessage } from '../../models/story.model';
+import { Story, ChatMessage, PlotOutlineFeedback, Rater } from '../../models/story.model';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
 import { ToastService } from '../../services/toast.service';
+import { PlotOutlineService } from '../../services/plot-outline.service';
 
 @Component({
   selector: 'app-plot-outline-tab',
@@ -32,10 +33,15 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   chatError: string | null = null;
   private shouldScrollToBottom = false;
 
+  // Rater feedback state
+  generatingFeedback = new Set<string>();
+  feedbackError: string | null = null;
+
   constructor(
     private generationService: GenerationService,
     private loadingService: LoadingService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private plotOutlineService: PlotOutlineService
   ) {}
 
   ngOnInit(): void {
@@ -56,10 +62,10 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     if (!this.story?.plotOutline) return 'Not initialized';
     
     switch (this.story.plotOutline.status) {
-      case 'draft': return 'Draft';
-      case 'under_review': return 'Under Review';
-      case 'approved': return 'Approved';
-      case 'needs_revision': return 'Needs Revision';
+      case 'draft': return '⏳ Draft';
+      case 'under_review': return '👀 Under Review';
+      case 'approved': return '✅ Approved';
+      case 'needs_revision': return '🔄 Needs Revision';
       default: return 'Unknown';
     }
   }
@@ -206,4 +212,199 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     this.chatInput = 'Please review the pacing of my plot outline. Are there any areas that might feel rushed or too slow?';
     await this.sendChatMessage();
   }
+
+  // Rater feedback methods
+  async requestAllRaterFeedback(): Promise<void> {
+    if (!this.story.plotOutline.content.trim()) {
+      this.toastService.show('Please write a plot outline before requesting feedback', 'warning');
+      return;
+    }
+
+    const enabledRaters = this.getEnabledRaters();
+    if (enabledRaters.length === 0) {
+      this.toastService.show('No enabled raters found. Please enable raters in the Raters tab.', 'warning');
+      return;
+    }
+
+    // Set all raters to generating state
+    enabledRaters.forEach(rater => {
+      this.generatingFeedback.add(rater.id);
+      this.story.plotOutline.raterFeedback.set(rater.id, {
+        raterId: rater.id,
+        raterName: rater.name,
+        feedback: '',
+        status: 'generating',
+        timestamp: new Date()
+      });
+    });
+
+    this.story.plotOutline.metadata.lastFeedbackRequest = new Date();
+    this.outlineUpdated.emit(this.story.plotOutline.content);
+
+    try {
+      const feedbackResults = await this.plotOutlineService.requestAllRaterFeedback(this.story.id).toPromise();
+      
+      feedbackResults.forEach(feedback => {
+        this.story.plotOutline.raterFeedback.set(feedback.raterId, feedback);
+        this.generatingFeedback.delete(feedback.raterId);
+      });
+
+      this.updateOutlineStatus();
+      this.outlineUpdated.emit(this.story.plotOutline.content);
+      this.toastService.show('Rater feedback received!', 'success');
+
+    } catch (error) {
+      this.feedbackError = 'Failed to get feedback from some raters';
+      this.toastService.show('Error getting rater feedback: ' + error, 'error');
+      
+      // Clear generating state for all raters
+      this.generatingFeedback.clear();
+    }
+  }
+
+  async requestRaterFeedback(raterId: string): Promise<void> {
+    if (!this.story.plotOutline.content.trim()) {
+      this.toastService.show('Please write a plot outline before requesting feedback', 'warning');
+      return;
+    }
+
+    this.generatingFeedback.add(raterId);
+    const rater = this.story.raters.get(raterId);
+    
+    if (!rater) {
+      this.toastService.show('Rater not found', 'error');
+      return;
+    }
+
+    // Set generating state
+    this.story.plotOutline.raterFeedback.set(raterId, {
+      raterId: raterId,
+      raterName: rater.name,
+      feedback: '',
+      status: 'generating',
+      timestamp: new Date()
+    });
+
+    this.outlineUpdated.emit(this.story.plotOutline.content);
+
+    try {
+      const feedback = await this.plotOutlineService.requestPlotOutlineFeedback(
+        this.story.id, 
+        raterId, 
+        this.story.plotOutline.content
+      ).toPromise();
+
+      this.story.plotOutline.raterFeedback.set(raterId, feedback);
+      this.generatingFeedback.delete(raterId);
+      this.updateOutlineStatus();
+      this.outlineUpdated.emit(this.story.plotOutline.content);
+      this.toastService.show(`Feedback received from ${rater.name}!`, 'success');
+
+    } catch (error) {
+      this.generatingFeedback.delete(raterId);
+      this.story.plotOutline.raterFeedback.set(raterId, {
+        raterId: raterId,
+        raterName: rater.name,
+        feedback: '',
+        status: 'error',
+        timestamp: new Date()
+      });
+      this.toastService.show(`Error getting feedback from ${rater.name}`, 'error');
+    }
+  }
+
+  regenerateAllFeedback(): void {
+    if (confirm('Are you sure you want to regenerate all rater feedback? This will replace existing feedback.')) {
+      this.clearAllFeedback();
+      this.requestAllRaterFeedback();
+    }
+  }
+
+  clearAllFeedback(): void {
+    if (confirm('Are you sure you want to clear all rater feedback?')) {
+      this.story.plotOutline.raterFeedback.clear();
+      this.generatingFeedback.clear();
+      this.story.plotOutline.status = 'draft';
+      this.outlineUpdated.emit(this.story.plotOutline.content);
+      this.toastService.show('All rater feedback cleared', 'info');
+    }
+  }
+
+  acceptFeedback(raterId: string): void {
+    const feedback = this.story.plotOutline.raterFeedback.get(raterId);
+    if (feedback) {
+      feedback.userResponse = 'accepted';
+      this.updateOutlineStatus();
+      this.outlineUpdated.emit(this.story.plotOutline.content);
+    }
+  }
+
+  requestRevision(raterId: string): void {
+    const feedback = this.story.plotOutline.raterFeedback.get(raterId);
+    if (feedback) {
+      feedback.userResponse = 'revision_requested';
+      this.requestRaterFeedback(raterId); // Request new feedback
+    }
+  }
+
+  discussFeedback(raterId: string): void {
+    const feedback = this.story.plotOutline.raterFeedback.get(raterId);
+    if (feedback) {
+      feedback.userResponse = 'discussed';
+      // Add to chat with context about the specific feedback
+      this.chatInput = `I'd like to discuss the feedback from ${feedback.raterName}: "${feedback.feedback.substring(0, 100)}..."`;
+    }
+  }
+
+  canApproveOutline(): boolean {
+    const enabledRaters = this.getEnabledRaters();
+    if (enabledRaters.length === 0) return true; // Can approve if no raters
+
+    const completedFeedback = Array.from(this.story.plotOutline.raterFeedback.values())
+      .filter(f => f.status === 'complete');
+
+    return this.story.plotOutline.content.trim().length > 0 &&
+           completedFeedback.length >= enabledRaters.length;
+  }
+
+  approveOutline(): void {
+    if (this.canApproveOutline()) {
+      this.story.plotOutline.status = 'approved';
+      this.story.plotOutline.metadata.approvedAt = new Date();
+      this.outlineUpdated.emit(this.story.plotOutline.content);
+      this.outlineApproved.emit();
+      this.toastService.show('Plot outline approved! It will now be included in chapter generation.', 'success');
+    }
+  }
+
+  private getEnabledRaters(): Rater[] {
+    return Array.from(this.story.raters.values()).filter(r => r.enabled);
+  }
+
+  private updateOutlineStatus(): void {
+    const enabledRaters = this.getEnabledRaters();
+    const completedFeedback = Array.from(this.story.plotOutline.raterFeedback.values())
+      .filter(f => f.status === 'complete');
+
+    if (enabledRaters.length === 0) {
+      this.story.plotOutline.status = 'draft';
+    } else if (completedFeedback.length >= enabledRaters.length) {
+      this.story.plotOutline.status = 'under_review';
+    } else {
+      this.story.plotOutline.status = 'draft';
+    }
+  }
+
+  getFeedbackProgress(): { completed: number; total: number } {
+    const enabledRaters = this.getEnabledRaters();
+    const completedFeedback = Array.from(this.story.plotOutline.raterFeedback.values())
+      .filter(f => f.status === 'complete');
+
+    return {
+      completed: completedFeedback.length,
+      total: enabledRaters.length
+    };
+  }
+
+
 }
