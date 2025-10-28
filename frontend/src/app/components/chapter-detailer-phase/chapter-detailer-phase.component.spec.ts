@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { of, BehaviorSubject } from 'rxjs';
 
-import { ChapterDetailerPhaseComponent } from './chapter_detail-phase.component';
+import { ChapterDetailerPhaseComponent } from './chapter-detailer-phase.component';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
 import { FeedbackSidebarComponent } from '../feedback-sidebar/feedback-sidebar.component';
 import { GenerationService } from '../../services/generation.service';
@@ -51,6 +51,17 @@ describe('ChapterDetailerPhaseComponent', () => {
     story: {
       summary: 'Test summary',
       chapters: []
+    },
+    plotOutline: {
+      content: 'Test plot outline content',
+      status: 'approved',
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: 1
+      }
     },
     chapterCreation: {
       plotPoint: 'Test plot point',

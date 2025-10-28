@@ -61,13 +61,24 @@ describe('ReviewService', () => {
         }
       } as Rater]
     ]),
+    plotOutline: {
+      content: '',
+      status: 'draft',
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: 1
+      }
+    },
     story: {
       summary: 'Test summary',
       chapters: []
     },
     chapterCreation: {
       plotPoint: 'Test plot point',
-      generatedChapter: null,
+      generatedChapter: undefined,
       incorporatedFeedback: [],
       feedbackRequests: new Map(),
       editorReview: undefined
@@ -103,7 +114,12 @@ describe('ReviewService', () => {
         targetWordCount: 2000
       },
       navigation: {} as any,
-      overallProgress: {} as any
+      overallProgress: {} as any,
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: '1.0'
+      }
     },
     metadata: {
       created: new Date(),

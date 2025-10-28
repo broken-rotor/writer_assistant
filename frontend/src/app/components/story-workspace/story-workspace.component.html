@@ -389,6 +389,25 @@
         </div>
       </div>
 
+      <!-- Plot Outline Status Indicator -->
+      <div class="plot-outline-status-section">
+        <div *ngIf="story.plotOutline" class="plot-outline-status">
+          <span class="status-label">Plot Outline:</span>
+          <span class="status-badge" [class]="'status-' + story.plotOutline.status">
+            {{ getPlotOutlineStatusDisplay() }}
+          </span>
+          <button class="link-button" (click)="selectTab('plot-outline')" title="Go to Plot Outline tab">
+            📝 Edit Outline
+          </button>
+        </div>
+        <div *ngIf="!story.plotOutline" class="plot-outline-warning">
+          <span class="warning-text">⚠️ No plot outline available</span>
+          <button class="link-button" (click)="selectTab('plot-outline')" title="Create plot outline">
+            📝 Create Outline
+          </button>
+        </div>
+      </div>
+
       <!-- Three-Phase Chapter Compose Interface -->
       <div *ngIf="currentPhase === 'plot_outline'" class="phase-content">
         <app-plot-outline-phase

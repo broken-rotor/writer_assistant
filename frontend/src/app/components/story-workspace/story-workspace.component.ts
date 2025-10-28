@@ -139,6 +139,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       if (!this.story) {
         this.error = 'Story not found';
       } else {
+        // Migrate story for plot outline integration (WRI-65)
+        this.storyService.migrateStoryForPlotOutline(this.story);
         this.initializePhaseNavigation(storyId);
       }
     } catch (err) {
@@ -767,6 +769,14 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   generateChapter() {
     if (!this.story) return;
 
+    if (!this.story.chapterCreation.plotPoint.trim()) {
+      this.toastService.show('Please enter a plot point before generating a chapter', 'warning');
+      return;
+    }
+
+    // Check plot outline status and warn user if needed
+    this.checkPlotOutlineStatus();
+
     this.generatingChapter = true;
     this.loadingService.show('Generating chapter...', 'generate-chapter');
 
@@ -783,14 +793,19 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
             this.story.chapterCreation.generatedChapter = {
               text: response.chapterText,
               status: 'ready',
-              metadata: {}
+              metadata: {
+                generatedAt: new Date(),
+                plotOutlineStatus: this.story.plotOutline?.status || 'none',
+                plotOutlineVersion: this.story.plotOutline?.metadata.version || 0
+              }
             };
             this.storyService.saveStory(this.story);
+            this.toastService.show('Chapter generated successfully!', 'success');
           }
         },
         error: (err) => {
           console.error('Error generating chapter:', err);
-          alert('Failed to generate chapter');
+          this.toastService.show('Error generating chapter: ' + err, 'error');
         }
       });
   }
@@ -1568,6 +1583,51 @@ Provide actionable insights and creative suggestions to enhance this plot point.
         phase: this.currentPhase,
         chapterNumber: this.getCurrentChapterNumber()
       };
+    }
+  }
+
+  // ============================================================================
+  // PLOT OUTLINE INTEGRATION METHODS (WRI-65)
+  // ============================================================================
+
+  /**
+   * Check plot outline status and provide user guidance
+   */
+  private checkPlotOutlineStatus(): void {
+    if (!this.story) return;
+
+    if (!this.story.plotOutline) {
+      this.toastService.show('No plot outline found. Consider creating one for better chapter consistency.', 'info');
+      return;
+    }
+
+    switch (this.story.plotOutline.status) {
+      case 'draft':
+        this.toastService.show('Plot outline is still in draft. Consider getting rater feedback before generating chapters.', 'warning');
+        break;
+      case 'under_review':
+        this.toastService.show('Plot outline is under review. Generated chapter may need revision if outline changes.', 'info');
+        break;
+      case 'approved':
+        // No warning needed
+        break;
+      default:
+        this.toastService.show(`Plot outline status: ${this.story.plotOutline.status}`, 'info');
+    }
+  }
+
+  /**
+   * Get display text for plot outline status
+   */
+  getPlotOutlineStatusDisplay(): string {
+    if (!this.story?.plotOutline) return 'None';
+    
+    switch (this.story.plotOutline.status) {
+      case 'draft': return '⏳ Draft';
+      case 'under_review': return '👀 Under Review';
+      case 'approved': return '✅ Approved';
+      case 'needs_revision': return '🔄 Needs Revision';
+      default: return this.story.plotOutline.status;
     }
   }
 }

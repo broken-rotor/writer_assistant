@@ -1438,6 +1438,76 @@ button {
   }
 }
 
+// Plot Outline Status Styles (WRI-65)
+.plot-outline-status-section {
+  margin-bottom: 1rem;
+  
+  .plot-outline-status, .plot-outline-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+  
+  .plot-outline-status {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+  }
+  
+  .plot-outline-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+  }
+  
+  .status-label {
+    font-weight: 500;
+  }
+  
+  .status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    
+    &.status-draft { 
+      background: #f0f0f0; 
+      color: #666; 
+    }
+    &.status-under_review { 
+      background: #fff3cd; 
+      color: #856404; 
+    }
+    &.status-approved { 
+      background: #d4edda; 
+      color: #155724; 
+    }
+    &.status-needs_revision { 
+      background: #f8d7da; 
+      color: #721c24; 
+    }
+  }
+  
+  .link-button {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.9rem;
+    
+    &:hover {
+      color: #0056b3;
+    }
+  }
+  
+  .warning-text {
+    font-weight: 500;
+  }
+}
+
 .feedback-sidebar-container {
   position: fixed;
   top: 0;

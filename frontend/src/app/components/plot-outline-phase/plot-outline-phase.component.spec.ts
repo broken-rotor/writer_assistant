@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { of, throwError } from 'rxjs';
 
-import { PlotOutlinePhaseComponent } from './plot_outline-phase.component';
+import { PlotOutlinePhaseComponent } from './plot-outline-phase.component';
 import { GenerationService } from '../../services/generation.service';
 import { ArchiveService } from '../../services/archive.service';
 import { ConversationService } from '../../services/conversation.service';
@@ -40,6 +40,17 @@ describe('PlotOutlinePhaseComponent', () => {
     story: {
       summary: 'Test summary',
       chapters: []
+    },
+    plotOutline: {
+      content: 'Test plot outline content',
+      status: 'approved',
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: 1
+      }
     },
     chapterCreation: {
       plotPoint: 'Test plot point',

@@ -410,5 +410,51 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     };
   }
 
+  // ============================================================================
+  // CHAPTER GENERATION INTEGRATION METHODS (WRI-65)
+  // ============================================================================
+
+  /**
+   * Sync current content with main plot outline
+   */
+  syncWithMainPlotOutline(): void {
+    if (this.story.plotOutline && this.story.plotOutline.content) {
+      // This component already works directly with story.plotOutline
+      this.toastService.showSuccess('Plot outline is already synced');
+    } else {
+      this.toastService.showWarning('No main plot outline found to sync with');
+    }
+  }
+
+  /**
+   * Update main plot outline with current content
+   */
+  updateMainPlotOutline(): void {
+    if (!this.story.plotOutline) {
+      this.story.plotOutline = {
+        content: '',
+        status: 'draft',
+        chatHistory: [],
+        raterFeedback: new Map(),
+        metadata: {
+          created: new Date(),
+          lastModified: new Date(),
+          version: 1
+        }
+      };
+    } else {
+      this.story.plotOutline.metadata.lastModified = new Date();
+      this.story.plotOutline.metadata.version += 1;
+      // Reset status to draft if content changed significantly
+      if (this.story.plotOutline.status === 'approved') {
+        this.story.plotOutline.status = 'draft';
+        this.toastService.showInfo('Plot outline updated. Status reset to draft - consider re-approval.');
+      }
+    }
+    
+    this.toastService.showSuccess('Main plot outline updated');
+    this.outlineUpdated.emit(this.story.plotOutline.content);
+  }
+
 
 }

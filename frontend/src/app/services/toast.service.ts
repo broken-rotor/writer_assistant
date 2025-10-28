@@ -70,6 +70,23 @@ export class ToastService {
   }
 
   /**
+   * Generic show method for backward compatibility
+   */
+  show(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): string {
+    switch (type) {
+      case 'success':
+        return this.showSuccess(message);
+      case 'error':
+        return this.showError(message);
+      case 'warning':
+        return this.showWarning(message);
+      case 'info':
+      default:
+        return this.showInfo(message);
+    }
+  }
+
+  /**
    * Show a success toast
    */
   showSuccess(
