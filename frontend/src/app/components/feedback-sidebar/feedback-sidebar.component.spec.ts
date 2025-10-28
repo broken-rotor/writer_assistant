@@ -77,6 +77,17 @@ describe('FeedbackSidebarComponent', () => {
       summary: 'A test story',
       chapters: []
     },
+    plotOutline: {
+      content: 'Test plot outline content',
+      status: 'approved',
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: 1
+      }
+    },
     chapterCreation: {
       plotPoint: 'Test plot point',
       incorporatedFeedback: [],

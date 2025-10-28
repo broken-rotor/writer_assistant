@@ -19,14 +19,154 @@ describe('WorldbuildingChatComponent', () => {
     general: {
       title: 'Test Story',
       systemPrompts: {
-        writerPrompt: '',
+        mainPrefix: '',
+        mainSuffix: '',
+        assistantPrompt: '',
         editorPrompt: ''
       },
       worldbuilding: 'Initial worldbuilding content'
     },
     characters: new Map(),
     raters: new Map(),
-    chapters: new Map(),
+    story: {
+      summary: '',
+      chapters: []
+    },
+    plotOutline: {
+      content: '',
+      status: 'draft',
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: 1
+      }
+    },
+    chapterCompose: {
+      currentPhase: 'plot_outline',
+      phases: {
+        plotOutline: {
+          conversation: {
+            id: 'conv-1',
+            messages: [],
+            currentBranchId: 'main',
+            branches: new Map(),
+            metadata: {
+              created: new Date(),
+              lastModified: new Date(),
+              phase: 'plot_outline'
+            }
+          },
+          status: 'active',
+          outline: {
+            items: new Map(),
+            structure: []
+          },
+          draftSummary: '',
+          progress: {
+            totalItems: 0,
+            completedItems: 0,
+            lastActivity: new Date()
+          }
+        },
+        chapterDetailer: {
+          conversation: {
+            id: 'conv-2',
+            messages: [],
+            currentBranchId: 'main',
+            branches: new Map(),
+            metadata: {
+              created: new Date(),
+              lastModified: new Date(),
+              phase: 'chapter_detail'
+            }
+          },
+          chapterDraft: {
+            content: '',
+            title: '',
+            plotPoint: '',
+            wordCount: 0,
+            status: 'drafting'
+          },
+          feedbackIntegration: {
+            pendingFeedback: [],
+            incorporatedFeedback: [],
+            feedbackRequests: new Map()
+          },
+          status: 'active',
+          progress: {
+            feedbackIncorporated: 0,
+            totalFeedbackItems: 0,
+            lastActivity: new Date()
+          }
+        },
+        finalEdit: {
+          conversation: {
+            id: 'conv-3',
+            messages: [],
+            currentBranchId: 'main',
+            branches: new Map(),
+            metadata: {
+              created: new Date(),
+              lastModified: new Date(),
+              phase: 'final_edit'
+            }
+          },
+          finalChapter: {
+            content: '',
+            title: '',
+            wordCount: 0,
+            version: 1
+          },
+          reviewSelection: {
+            availableReviews: [],
+            selectedReviews: [],
+            appliedReviews: []
+          },
+          status: 'active',
+          progress: {
+            reviewsApplied: 0,
+            totalReviews: 0,
+            lastActivity: new Date()
+          }
+        }
+      },
+      sharedContext: {
+        chapterNumber: 1
+      },
+      navigation: {
+        phaseHistory: ['plot_outline'],
+        canGoBack: false,
+        canGoForward: false,
+        branchNavigation: {
+          currentBranchId: 'main',
+          availableBranches: ['main'],
+          branchHistory: [],
+          canNavigateBack: false,
+          canNavigateForward: false
+        }
+      },
+      overallProgress: {
+        currentStep: 1,
+        totalSteps: 3,
+        phaseCompletionStatus: {
+          'plot_outline': false,
+          'chapter_detail': false,
+          'final_edit': false
+        }
+      },
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: '1'
+      }
+    },
+    chapterCreation: {
+      plotPoint: '',
+      incorporatedFeedback: [],
+      feedbackRequests: new Map()
+    },
     metadata: {
       created: new Date(),
       lastModified: new Date(),
@@ -95,7 +235,7 @@ describe('WorldbuildingChatComponent', () => {
   });
 
   it('should emit error when no story is provided', () => {
-    spyOn(component.error, 'emit');
+    spyOn(component.errorOccurred, 'emit');
     
     component.ngOnInit();
     
@@ -143,7 +283,10 @@ describe('WorldbuildingChatComponent', () => {
       type: 'user',
       content: 'Test message',
       timestamp: new Date(),
-      metadata: {}
+      metadata: {
+        phase: 'plot_outline',
+        messageIndex: 0
+      }
     };
 
     spyOn(component.conversationStarted, 'emit');
@@ -182,7 +325,10 @@ describe('WorldbuildingChatComponent', () => {
       type: 'user',
       content: 'Test message',
       timestamp: new Date(),
-      metadata: {}
+      metadata: {
+        phase: 'plot_outline',
+        messageIndex: 0
+      }
     };
 
     spyOn(component, 'syncWorldbuildingFromConversation' as any);
@@ -273,7 +419,7 @@ describe('WorldbuildingChatComponent', () => {
     component.story = mockStory;
     fixture.detectChanges();
 
-    spyOn(component.error, 'emit');
+    spyOn(component.errorOccurred, 'emit');
     spyOn(console, 'error');
 
     // Simulate error in sync service

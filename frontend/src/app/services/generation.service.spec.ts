@@ -346,6 +346,17 @@ function createMockStory(): Story {
     },
     characters: new Map(),
     raters: new Map(),
+    plotOutline: {
+      content: '',
+      status: 'draft',
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: 1
+      }
+    },
     story: {
       summary: 'A story about heroes',
       chapters: []

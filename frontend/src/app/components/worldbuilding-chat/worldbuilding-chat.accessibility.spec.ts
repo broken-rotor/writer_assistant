@@ -17,27 +17,162 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
 
   const mockStory: Story = {
     id: 'test-story-id',
-    title: 'Test Story',
     general: {
       title: 'Test Story',
-      genre: 'Fantasy',
-      worldbuilding: 'Test worldbuilding content',
-      characters: [],
-      plotOutline: '',
-      themes: '',
-      targetAudience: '',
-      estimatedLength: '',
-      writingStyle: ''
+      systemPrompts: {
+        mainPrefix: '',
+        mainSuffix: '',
+        assistantPrompt: '',
+        editorPrompt: ''
+      },
+      worldbuilding: 'Test worldbuilding content'
     },
-    outline: {
-      chapters: [],
-      currentChapterIndex: 0,
-      isComplete: false
+    characters: new Map(),
+    raters: new Map(),
+    story: {
+      summary: '',
+      chapters: []
     },
-    chapters: [],
-    currentPhase: 'general',
-    createdAt: new Date(),
-    updatedAt: new Date()
+    plotOutline: {
+      content: '',
+      status: 'draft',
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: 1
+      }
+    },
+    chapterCompose: {
+      currentPhase: 'plot_outline',
+      phases: {
+        plotOutline: {
+          conversation: {
+            id: 'conv-1',
+            messages: [],
+            currentBranchId: 'main',
+            branches: new Map(),
+            metadata: {
+              created: new Date(),
+              lastModified: new Date(),
+              phase: 'plot_outline'
+            }
+          },
+          status: 'active',
+          outline: {
+            items: new Map(),
+            structure: []
+          },
+          draftSummary: '',
+          progress: {
+            totalItems: 0,
+            completedItems: 0,
+            lastActivity: new Date()
+          }
+        },
+        chapterDetailer: {
+          conversation: {
+            id: 'conv-2',
+            messages: [],
+            currentBranchId: 'main',
+            branches: new Map(),
+            metadata: {
+              created: new Date(),
+              lastModified: new Date(),
+              phase: 'chapter_detail'
+            }
+          },
+          chapterDraft: {
+            content: '',
+            title: '',
+            plotPoint: '',
+            wordCount: 0,
+            status: 'drafting'
+          },
+          feedbackIntegration: {
+            pendingFeedback: [],
+            incorporatedFeedback: [],
+            feedbackRequests: new Map()
+          },
+          status: 'active',
+          progress: {
+            feedbackIncorporated: 0,
+            totalFeedbackItems: 0,
+            lastActivity: new Date()
+          }
+        },
+        finalEdit: {
+          conversation: {
+            id: 'conv-3',
+            messages: [],
+            currentBranchId: 'main',
+            branches: new Map(),
+            metadata: {
+              created: new Date(),
+              lastModified: new Date(),
+              phase: 'final_edit'
+            }
+          },
+          finalChapter: {
+            content: '',
+            title: '',
+            wordCount: 0,
+            version: 1
+          },
+          reviewSelection: {
+            availableReviews: [],
+            selectedReviews: [],
+            appliedReviews: []
+          },
+          status: 'active',
+          progress: {
+            reviewsApplied: 0,
+            totalReviews: 0,
+            lastActivity: new Date()
+          }
+        }
+      },
+      sharedContext: {
+        chapterNumber: 1
+      },
+      navigation: {
+        phaseHistory: ['plot_outline'],
+        canGoBack: false,
+        canGoForward: false,
+        branchNavigation: {
+          currentBranchId: 'main',
+          availableBranches: ['main'],
+          branchHistory: [],
+          canNavigateBack: false,
+          canNavigateForward: false
+        }
+      },
+      overallProgress: {
+        currentStep: 1,
+        totalSteps: 3,
+        phaseCompletionStatus: {
+          'plot_outline': false,
+          'chapter_detail': false,
+          'final_edit': false
+        }
+      },
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: '1.0'
+      }
+    },
+    chapterCreation: {
+      plotPoint: '',
+      incorporatedFeedback: [],
+      feedbackRequests: new Map()
+    },
+    metadata: {
+      created: new Date(),
+      lastModified: new Date(),
+      version: '1.0'
+    }
   };
 
   beforeEach(async () => {

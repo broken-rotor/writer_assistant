@@ -2,12 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { ConversationService, ConversationConfig } from './conversation.service';
 import { LocalStorageService } from './local-storage.service';
 import { PhaseStateService } from './phase-state.service';
+import { ApiService } from './api.service';
 import { ChatMessage, ConversationThread } from '../models/story.model';
 
 describe('ConversationService', () => {
   let service: ConversationService;
   let localStorageService: jasmine.SpyObj<LocalStorageService>;
   let phaseStateService: jasmine.SpyObj<PhaseStateService>;
+  let apiService: jasmine.SpyObj<ApiService>;
 
   const mockConfig: ConversationConfig = {
     phase: 'plot_outline',
@@ -20,18 +22,21 @@ describe('ConversationService', () => {
   beforeEach(() => {
     const localStorageSpy = jasmine.createSpyObj('LocalStorageService', ['getItem', 'setItem']);
     const phaseStateSpy = jasmine.createSpyObj('PhaseStateService', ['getCurrentPhase']);
+    const apiServiceSpy = jasmine.createSpyObj('ApiService', ['sendMessage', 'getConversation']);
 
     TestBed.configureTestingModule({
       providers: [
         ConversationService,
         { provide: LocalStorageService, useValue: localStorageSpy },
-        { provide: PhaseStateService, useValue: phaseStateSpy }
+        { provide: PhaseStateService, useValue: phaseStateSpy },
+        { provide: ApiService, useValue: apiServiceSpy }
       ]
     });
 
     service = TestBed.inject(ConversationService);
     localStorageService = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
     phaseStateService = TestBed.inject(PhaseStateService) as jasmine.SpyObj<PhaseStateService>;
+    apiService = TestBed.inject(ApiService) as jasmine.SpyObj<ApiService>;
   });
 
   it('should be created', () => {
@@ -114,7 +119,7 @@ describe('ConversationService', () => {
     });
 
     it('should throw error when conversation not initialized', () => {
-      const uninitializedService = new ConversationService(localStorageService, phaseStateService);
+      const uninitializedService = new ConversationService(localStorageService, phaseStateService, apiService);
       
       expect(() => {
         uninitializedService.sendMessage('test', 'user');
@@ -145,7 +150,7 @@ describe('ConversationService', () => {
     });
 
     it('should throw error when no active conversation thread', () => {
-      const uninitializedService = new ConversationService(localStorageService, phaseStateService);
+      const uninitializedService = new ConversationService(localStorageService, phaseStateService, apiService);
       
       expect(() => {
         uninitializedService.createBranch('Test Branch');
@@ -231,7 +236,7 @@ describe('ConversationService', () => {
     });
 
     it('should return zero stats when no conversation', () => {
-      const uninitializedService = new ConversationService(localStorageService, phaseStateService);
+      const uninitializedService = new ConversationService(localStorageService, phaseStateService, apiService);
       const stats = uninitializedService.getConversationStats();
 
       expect(stats.totalMessages).toBe(0);
@@ -339,7 +344,7 @@ describe('ConversationService', () => {
     });
 
     it('should return null when no conversation', () => {
-      const uninitializedService = new ConversationService(localStorageService, phaseStateService);
+      const uninitializedService = new ConversationService(localStorageService, phaseStateService, apiService);
       const exportData = uninitializedService.exportConversation();
 
       expect(exportData).toBeNull();

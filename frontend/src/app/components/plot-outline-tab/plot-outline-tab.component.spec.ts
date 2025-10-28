@@ -30,9 +30,12 @@ describe('PlotOutlineTabComponent', () => {
         },
         worldbuilding: ''
       },
-      characters: [],
-      raters: [],
-      chapters: [],
+      characters: new Map(),
+      raters: new Map(),
+      story: {
+        summary: '',
+        chapters: []
+      },
       plotOutline: {
         content: 'Test plot outline content',
         status: 'draft',
@@ -47,7 +50,18 @@ describe('PlotOutlineTabComponent', () => {
       chapterCompose: {
         phases: {
           plotOutline: {
-            status: 'not_started',
+            conversation: {
+              id: 'conv-1',
+              messages: [],
+              currentBranchId: 'main',
+              branches: new Map(),
+              metadata: {
+                created: new Date(),
+                lastModified: new Date(),
+                phase: 'plot_outline'
+              }
+            },
+            status: 'active',
             outline: {
               items: new Map(),
               structure: []
@@ -59,37 +73,113 @@ describe('PlotOutlineTabComponent', () => {
               lastActivity: new Date()
             }
           },
-          chapterDetail: {
-            status: 'not_started',
-            chapters: new Map(),
+          chapterDetailer: {
+            conversation: {
+              id: 'conv-2',
+              messages: [],
+              currentBranchId: 'main',
+              branches: new Map(),
+              metadata: {
+                created: new Date(),
+                lastModified: new Date(),
+                phase: 'chapter_detail'
+              }
+            },
+            chapterDraft: {
+              content: '',
+              title: '',
+              plotPoint: '',
+              wordCount: 0,
+              status: 'drafting'
+            },
+            feedbackIntegration: {
+              pendingFeedback: [],
+              incorporatedFeedback: [],
+              feedbackRequests: new Map()
+            },
+            status: 'active',
             progress: {
-              totalChapters: 0,
-              completedChapters: 0,
+              feedbackIncorporated: 0,
+              totalFeedbackItems: 0,
               lastActivity: new Date()
             }
           },
           finalEdit: {
-            status: 'not_started',
-            finalStory: '',
-            editorSuggestions: [],
+            conversation: {
+              id: 'conv-3',
+              messages: [],
+              currentBranchId: 'main',
+              branches: new Map(),
+              metadata: {
+                created: new Date(),
+                lastModified: new Date(),
+                phase: 'final_edit'
+              }
+            },
+            finalChapter: {
+              content: '',
+              title: '',
+              wordCount: 0,
+              version: 1
+            },
+            reviewSelection: {
+              availableReviews: [],
+              selectedReviews: [],
+              appliedReviews: []
+            },
+            status: 'active',
             progress: {
-              totalSuggestions: 0,
-              appliedSuggestions: 0,
+              reviewsApplied: 0,
+              totalReviews: 0,
               lastActivity: new Date()
             }
           }
         },
         currentPhase: 'plot_outline',
+        sharedContext: {
+          chapterNumber: 1,
+          targetWordCount: 2000,
+          genre: 'Fantasy',
+          tone: 'Epic',
+          pov: 'Third Person'
+        },
+        navigation: {
+          phaseHistory: ['plot_outline'],
+          canGoBack: false,
+          canGoForward: false,
+          branchNavigation: {
+            currentBranchId: 'main',
+            availableBranches: ['main'],
+            branchHistory: [],
+            canNavigateBack: false,
+            canNavigateForward: false
+          }
+        },
+        overallProgress: {
+          currentStep: 1,
+          totalSteps: 3,
+          phaseCompletionStatus: {
+            'plot_outline': false,
+            'chapter_detail': false,
+            'final_edit': false
+          },
+          estimatedTimeRemaining: 30
+        },
         metadata: {
           created: new Date(),
           lastModified: new Date(),
-          version: 1
+          version: '1.0'
         }
+      },
+      chapterCreation: {
+        plotPoint: '',
+        incorporatedFeedback: [],
+        feedbackRequests: new Map()
       },
       metadata: {
         created: new Date(),
         lastModified: new Date(),
-        version: 1
+        version: '1.0'
       }
     } as Story;
 

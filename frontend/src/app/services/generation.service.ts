@@ -755,7 +755,7 @@ export class GenerationService {
    * Build chapter generation prompt with plot outline context
    */
   buildChapterGenerationPrompt(story: Story, plotPoint: string, additionalContext?: any): string {
-    let prompt = `${story.general.systemPrompts.mainPrefix}
+    const prompt = `${story.general.systemPrompts.mainPrefix}
 
 STORY CONTEXT:
 Title: ${story.general.title}

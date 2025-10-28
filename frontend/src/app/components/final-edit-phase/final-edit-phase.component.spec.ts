@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 
-import { FinalEditPhaseComponent } from './final_edit-phase.component';
+import { FinalEditPhaseComponent } from './final-edit-phase.component';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
 import { ReviewFeedbackPanelComponent } from '../review-feedback-panel/review-feedback-panel.component';
 import { GenerationService } from '../../services/generation.service';
@@ -28,19 +28,37 @@ describe('FinalEditPhaseComponent', () => {
     id: 'test-story-1',
     general: {
       title: 'Test Story',
-      genre: 'Fantasy',
-      targetAudience: 'Young Adult',
-      description: 'A test story',
-      themes: ['Adventure'],
-      setting: 'Fantasy World',
-      pointOfView: 'Third Person',
-      tense: 'Past',
-      estimatedLength: 'Novel'
+      systemPrompts: {
+        mainPrefix: 'Test prefix',
+        mainSuffix: 'Test suffix',
+        assistantPrompt: 'Test assistant',
+        editorPrompt: 'Test editor'
+      },
+      worldbuilding: 'A fantasy world'
     },
-    characters: [],
-    raters: [],
+    characters: new Map(),
+    raters: new Map(),
     chapterCompose: {
       currentPhase: 'final_edit',
+      sharedContext: {
+        chapterNumber: 1,
+        targetWordCount: 2000,
+        genre: 'Fantasy',
+        tone: 'Adventure',
+        pov: 'Third Person'
+      },
+      navigation: {
+        phaseHistory: ['plot_outline', 'chapter_detail', 'final_edit'],
+        canGoBack: true,
+        canGoForward: false,
+        branchNavigation: {
+          currentBranchId: 'main',
+          availableBranches: ['main'],
+          branchHistory: [],
+          canNavigateBack: false,
+          canNavigateForward: false
+        }
+      },
       phases: {
         plotOutline: {
           conversation: {
@@ -57,7 +75,7 @@ describe('FinalEditPhaseComponent', () => {
           },
           draftSummary: 'Test plot summary',
           status: 'completed',
-          progress: { outlineItemsCreated: 5, totalPlanned: 5, lastActivity: new Date() }
+          progress: { completedItems: 5, totalItems: 5, lastActivity: new Date() }
         },
         chapterDetailer: {
           conversation: {
@@ -70,16 +88,17 @@ describe('FinalEditPhaseComponent', () => {
           chapterDraft: {
             content: 'This is the chapter content from phase 2.',
             title: 'Chapter 1: The Beginning',
+            plotPoint: 'The hero begins their journey',
             wordCount: 1500,
-            version: 1
+            status: 'completed'
           },
           feedbackIntegration: {
-            availableFeedback: [],
-            selectedFeedback: [],
-            appliedFeedback: []
+            pendingFeedback: [],
+            incorporatedFeedback: [],
+            feedbackRequests: new Map()
           },
           status: 'completed',
-          progress: { draftsCreated: 1, feedbackApplied: 0, lastActivity: new Date() }
+          progress: { feedbackIncorporated: 1, totalFeedbackItems: 0, lastActivity: new Date() }
         },
         finalEdit: {
           conversation: {
@@ -105,33 +124,46 @@ describe('FinalEditPhaseComponent', () => {
         }
       },
       overallProgress: {
-        currentPhaseIndex: 2,
+        currentStep: 2,
+        totalSteps: 3,
         phaseCompletionStatus: {
-          'plot_outline': true,
-          'chapter_detail': true,
-          'final_edit': false
+          plot_outline: true,
+          chapter_detail: true,
+          final_edit: false
         },
-        estimatedCompletion: new Date()
+        estimatedTimeRemaining: 60
+      },
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: '1.0.0'
+      }
+    },
+    story: {
+      summary: 'Test story summary',
+      chapters: []
+    },
+    plotOutline: {
+      content: 'Test plot outline content',
+      status: 'approved',
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date(),
+        lastModified: new Date(),
+        version: 1
       }
     },
     chapterCreation: {
-      plotPoint: '',
+      plotPoint: 'Test plot point',
       incorporatedFeedback: [],
-      chapterDraft: '',
-      chapterTitle: '',
-      wordCount: 0,
-      isGenerating: false,
-      lastGenerated: null
+      feedbackRequests: new Map()
     },
-    chapters: [],
-    archive: {
-      stories: [],
-      characters: [],
-      settings: [],
-      plotElements: []
-    },
-    createdAt: new Date(),
-    lastModified: new Date()
+    metadata: {
+      version: '1.0.0',
+      created: new Date(),
+      lastModified: new Date()
+    }
   };
 
   const mockReviewItems: ReviewItem[] = [
@@ -161,7 +193,18 @@ describe('FinalEditPhaseComponent', () => {
     const generationServiceSpy = jasmine.createSpyObj('GenerationService', ['generateContent']);
     const conversationServiceSpy = jasmine.createSpyObj('ConversationService', ['addMessage', 'getConversation']);
     const phaseStateServiceSpy = jasmine.createSpyObj('PhaseStateService', ['updatePhaseData', 'getPhaseData']);
-    const reviewServiceSpy = jasmine.createSpyObj('ReviewService', ['getQualityScore', 'getReviews']);
+    const reviewServiceSpy = jasmine.createSpyObj('ReviewService', ['getReviews'], {
+    qualityScore$: of({
+      overall: 85,
+      categories: {
+        plot: 90,
+        character: 80,
+        pacing: 85,
+        dialogue: 88
+      },
+      feedback: 'Good chapter overall'
+    })
+  });
     const storyServiceSpy = jasmine.createSpyObj('StoryService', ['saveChapter', 'updateStory']);
     const toastServiceSpy = jasmine.createSpyObj('ToastService', ['show']);
 
@@ -196,17 +239,6 @@ describe('FinalEditPhaseComponent', () => {
     component.chapterNumber = 1;
 
     // Setup default service responses
-    mockReviewService.getQualityScore.and.returnValue(of({
-      overallScore: 75,
-      categoryScores: {
-        characterConsistency: 80,
-        narrativeFlow: 70,
-        literaryQuality: 75,
-        genreSpecific: 75
-      },
-      feedback: [],
-      timestamp: new Date()
-    }));
   });
 
   it('should create', () => {
@@ -532,7 +564,11 @@ describe('FinalEditPhaseComponent', () => {
   });
 
   it('should handle quality score loading error', () => {
-    mockReviewService.getQualityScore.and.returnValue(throwError('Quality score error'));
+    // Override the qualityScore$ property to return an error
+    Object.defineProperty(mockReviewService, 'qualityScore$', {
+      value: throwError('Quality score error'),
+      writable: true
+    });
     spyOn(console, 'warn');
 
     component.ngOnInit();
@@ -569,4 +605,3 @@ describe('FinalEditPhaseComponent', () => {
     expect(component['destroy$'].complete).toHaveBeenCalled();
   });
 });
-
