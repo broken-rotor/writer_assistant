@@ -111,14 +111,14 @@ ${story.general.systemPrompts.mainSuffix}`;
     }
 
     const feedbackRequests = enabledRaters.map(rater => 
-      this.requestPlotOutlineFeedback(storyId, rater.id, story.plotOutline.content)
+      this.requestPlotOutlineFeedback(storyId, rater.id, story.plotOutline.content).toPromise()
     );
 
     return from(Promise.allSettled(feedbackRequests)).pipe(
       map(results => {
         const feedback: PlotOutlineFeedback[] = [];
         results.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
+          if (result.status === 'fulfilled' && result.value) {
             feedback.push(result.value);
           } else {
             // Create error feedback for failed requests

@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Story, ChatMessage, PlotOutlineFeedback, Rater } from '../../models/story.model';
+import { Story, ChatMessage, Rater } from '../../models/story.model';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
 import { ToastService } from '../../services/toast.service';
@@ -216,13 +216,13 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   // Rater feedback methods
   async requestAllRaterFeedback(): Promise<void> {
     if (!this.story.plotOutline.content.trim()) {
-      this.toastService.show('Please write a plot outline before requesting feedback', 'warning');
+      this.toastService.showWarning('Please write a plot outline before requesting feedback');
       return;
     }
 
     const enabledRaters = this.getEnabledRaters();
     if (enabledRaters.length === 0) {
-      this.toastService.show('No enabled raters found. Please enable raters in the Raters tab.', 'warning');
+      this.toastService.showWarning('No enabled raters found. Please enable raters in the Raters tab.');
       return;
     }
 
@@ -244,18 +244,20 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     try {
       const feedbackResults = await this.plotOutlineService.requestAllRaterFeedback(this.story.id).toPromise();
       
-      feedbackResults.forEach(feedback => {
-        this.story.plotOutline.raterFeedback.set(feedback.raterId, feedback);
-        this.generatingFeedback.delete(feedback.raterId);
-      });
+      if (feedbackResults) {
+        feedbackResults.forEach(feedback => {
+          this.story.plotOutline.raterFeedback.set(feedback.raterId, feedback);
+          this.generatingFeedback.delete(feedback.raterId);
+        });
+      }
 
       this.updateOutlineStatus();
       this.outlineUpdated.emit(this.story.plotOutline.content);
-      this.toastService.show('Rater feedback received!', 'success');
+      this.toastService.showSuccess('Rater feedback received!');
 
     } catch (error) {
       this.feedbackError = 'Failed to get feedback from some raters';
-      this.toastService.show('Error getting rater feedback: ' + error, 'error');
+      this.toastService.showError('Error getting rater feedback: ' + error);
       
       // Clear generating state for all raters
       this.generatingFeedback.clear();
@@ -264,7 +266,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
 
   async requestRaterFeedback(raterId: string): Promise<void> {
     if (!this.story.plotOutline.content.trim()) {
-      this.toastService.show('Please write a plot outline before requesting feedback', 'warning');
+      this.toastService.showWarning('Please write a plot outline before requesting feedback');
       return;
     }
 
@@ -272,7 +274,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     const rater = this.story.raters.get(raterId);
     
     if (!rater) {
-      this.toastService.show('Rater not found', 'error');
+      this.toastService.showError('Rater not found');
       return;
     }
 
@@ -294,13 +296,15 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
         this.story.plotOutline.content
       ).toPromise();
 
-      this.story.plotOutline.raterFeedback.set(raterId, feedback);
+      if (feedback) {
+        this.story.plotOutline.raterFeedback.set(raterId, feedback);
+      }
       this.generatingFeedback.delete(raterId);
       this.updateOutlineStatus();
       this.outlineUpdated.emit(this.story.plotOutline.content);
-      this.toastService.show(`Feedback received from ${rater.name}!`, 'success');
+      this.toastService.showSuccess(`Feedback received from ${rater.name}!`);
 
-    } catch (error) {
+    } catch (err) {
       this.generatingFeedback.delete(raterId);
       this.story.plotOutline.raterFeedback.set(raterId, {
         raterId: raterId,
@@ -309,7 +313,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
         status: 'error',
         timestamp: new Date()
       });
-      this.toastService.show(`Error getting feedback from ${rater.name}`, 'error');
+      this.toastService.showError(`Error getting feedback from ${rater.name}`);
     }
   }
 
@@ -326,7 +330,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       this.generatingFeedback.clear();
       this.story.plotOutline.status = 'draft';
       this.outlineUpdated.emit(this.story.plotOutline.content);
-      this.toastService.show('All rater feedback cleared', 'info');
+      this.toastService.showInfo('All rater feedback cleared');
     }
   }
 
@@ -373,11 +377,11 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       this.story.plotOutline.metadata.approvedAt = new Date();
       this.outlineUpdated.emit(this.story.plotOutline.content);
       this.outlineApproved.emit();
-      this.toastService.show('Plot outline approved! It will now be included in chapter generation.', 'success');
+      this.toastService.showSuccess('Plot outline approved! It will now be included in chapter generation.');
     }
   }
 
-  private getEnabledRaters(): Rater[] {
+  getEnabledRaters(): Rater[] {
     return Array.from(this.story.raters.values()).filter(r => r.enabled);
   }
 
