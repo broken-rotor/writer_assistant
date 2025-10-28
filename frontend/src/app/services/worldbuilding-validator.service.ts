@@ -29,7 +29,7 @@ export class WorldbuildingValidatorService {
   /**
    * Validate worldbuilding content on the frontend
    */
-  validateContent(content: string, strict: boolean = false): ValidationResult {
+  validateContent(content: string, strict = false): ValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
     const suggestions: string[] = [];

@@ -244,12 +244,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
   // Public methods for external integration
 
-  /**
-   * Manually trigger worldbuilding sync
-   */
-  public syncWorldbuilding(): void {
-    this.syncWorldbuildingFromConversation();
-  }
+
 
   /**
    * Update the current worldbuilding content
