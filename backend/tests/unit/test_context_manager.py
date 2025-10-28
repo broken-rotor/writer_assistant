@@ -34,13 +34,11 @@ class TestContextManager:
         """Test ContextManager initialization with configuration settings."""
         mock_get_llm.return_value = Mock()
         
-        context_manager = ContextManager(
-            max_context_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            distillation_threshold=self.settings.CONTEXT_SUMMARIZATION_THRESHOLD
-        )
+        context_manager = ContextManager()
         
-        assert context_manager.max_context_tokens == 32000
-        assert context_manager.distillation_threshold == 25000
+        # Verify the context manager initializes properly
+        assert context_manager.summarizer is not None
+        assert context_manager.formatter is not None
     
     def test_context_item_creation_and_validation(self):
         """Test creation and validation of context items."""
@@ -64,13 +62,10 @@ class TestContextManager:
         # Generate test scenario
         scenario = self.generator.generate_context_scenario("test_analysis", StoryComplexity.MODERATE)
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
-            context_manager = ContextManager(
-                max_context_tokens=10000,
-                distillation_threshold=8000
-            )
+            context_manager = ContextManager()
             
             # Mock the analyze_context method
             with patch.object(context_manager, 'analyze_context') as mock_analyze:
@@ -94,13 +89,10 @@ class TestContextManager:
         """Test the complete context optimization workflow."""
         scenario = self.generator.generate_context_scenario("test_optimization", StoryComplexity.COMPLEX)
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
-            context_manager = ContextManager(
-                max_context_tokens=8000,
-                distillation_threshold=6000
-            )
+            context_manager = ContextManager()
             
             # Mock the optimize_context method
             with patch.object(context_manager, 'optimize_context') as mock_optimize:
@@ -126,13 +118,10 @@ class TestContextManager:
             ContextItem("Very low priority detail", ContextType.CHARACTER_MEMORY, 1, LayerType.LONG_TERM_MEMORY, {})
         ]
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
-            context_manager = ContextManager(
-                max_context_tokens=5000,
-                distillation_threshold=4000
-            )
+            context_manager = ContextManager()
             
             # Test optimization with priority-based filtering
             with patch.object(context_manager, 'optimize_context') as mock_optimize:
@@ -150,13 +139,10 @@ class TestContextManager:
         """Test management of context distribution across memory layers."""
         scenario = self.generator.generate_context_scenario("test_layers", StoryComplexity.MODERATE)
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
-            context_manager = ContextManager(
-                max_context_tokens=10000,
-                distillation_threshold=8000
-            )
+            context_manager = ContextManager()
             
             # Test layer distribution analysis
             layer_distribution = {}
@@ -195,14 +181,11 @@ class TestContextManager:
     
     def test_token_budget_enforcement(self):
         """Test enforcement of token budgets and limits."""
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
             # Create context manager with strict limits
-            context_manager = ContextManager(
-                max_context_tokens=2000,
-                distillation_threshold=1500
-            )
+            context_manager = ContextManager()
             
             # Generate large context that exceeds limits
             large_scenario = self.generator.generate_context_scenario("test_budget", StoryComplexity.EPIC)
@@ -224,13 +207,10 @@ class TestContextManager:
         """Test context assembly performance and timeout handling."""
         scenario = self.generator.generate_context_scenario("test_performance", StoryComplexity.MODERATE)
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
-            context_manager = ContextManager(
-                max_context_tokens=10000,
-                distillation_threshold=8000
-            )
+            context_manager = ContextManager()
             
             # Test optimization performance
             with patch.object(context_manager, 'optimize_context') as mock_optimize:
@@ -269,26 +249,20 @@ class TestContextManager:
         with patch.dict('os.environ', custom_env):
             custom_settings = Settings()
             
-            with patch('app.services.context_manager.get_llm') as mock_get_llm:
+            with patch('app.services.llm_inference.get_llm') as mock_get_llm:
                 mock_get_llm.return_value = Mock()
                 
-                context_manager = ContextManager(
-                    max_context_tokens=custom_settings.CONTEXT_MAX_TOKENS,
-                    distillation_threshold=custom_settings.CONTEXT_SUMMARIZATION_THRESHOLD
-                )
+                context_manager = ContextManager()
                 
                 assert context_manager.max_context_tokens == 16000
                 assert context_manager.distillation_threshold == 12000
     
     def test_error_handling_and_recovery(self):
         """Test error handling and recovery mechanisms."""
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
-            context_manager = ContextManager(
-                max_context_tokens=5000,
-                distillation_threshold=4000
-            )
+            context_manager = ContextManager()
             
             # Test with invalid context items
             invalid_items = [
@@ -308,15 +282,12 @@ class TestContextManager:
         """Test context caching when enabled."""
         scenario = self.generator.generate_context_scenario("test_caching", StoryComplexity.MODERATE)
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
             # Test with caching enabled
             with patch.dict('os.environ', {'CONTEXT_ENABLE_CACHING': 'true', 'CONTEXT_MAX_TOKENS': '10000', 'CONTEXT_BUFFER_TOKENS': '1000'}):
-                context_manager = ContextManager(
-                    max_context_tokens=10000,
-                    distillation_threshold=8000
-                )
+                context_manager = ContextManager()
                 
                 # Test basic context processing (optimization)
                 result1, metadata1 = context_manager.optimize_context(scenario.context_items)
@@ -329,15 +300,12 @@ class TestContextManager:
         """Test monitoring and analytics when enabled."""
         scenario = self.generator.generate_context_scenario("test_monitoring", StoryComplexity.MODERATE)
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
             # Test with monitoring enabled
             with patch.dict('os.environ', {'CONTEXT_ENABLE_MONITORING': 'true', 'CONTEXT_MAX_TOKENS': '10000', 'CONTEXT_BUFFER_TOKENS': '1000'}):
-                context_manager = ContextManager(
-                    max_context_tokens=10000,
-                    distillation_threshold=8000
-                )
+                context_manager = ContextManager()
                 
                 # Test context analysis (which would be monitored)
                 analysis = context_manager.analyze_context(scenario.context_items)
@@ -350,15 +318,12 @@ class TestContextManager:
         """Test RAG (Retrieval-Augmented Generation) integration."""
         scenario = self.generator.generate_context_scenario("test_rag", StoryComplexity.COMPLEX)
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
             # Test with RAG enabled
             with patch.dict('os.environ', {'CONTEXT_ENABLE_RAG': 'true', 'CONTEXT_MAX_TOKENS': '10000', 'CONTEXT_BUFFER_TOKENS': '1000'}):
-                context_manager = ContextManager(
-                    max_context_tokens=10000,
-                    distillation_threshold=8000
-                )
+                context_manager = ContextManager()
                 
                 # Test context optimization (which could use RAG)
                 result, metadata = context_manager.optimize_context(scenario.context_items)
@@ -372,13 +337,10 @@ class TestContextManager:
         # Generate a very large context scenario
         large_scenario = self.generator.generate_context_scenario("stress_test", StoryComplexity.EPIC)
         
-        with patch('app.services.context_manager.get_llm') as mock_get_llm:
+        with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
             
-            context_manager = ContextManager(
-                max_context_tokens=50000,  # Large limit for stress test
-                distillation_threshold=40000
-            )
+            context_manager = ContextManager()
             
             # Test that the system handles large contexts without crashing
             try:

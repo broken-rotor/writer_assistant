@@ -104,10 +104,7 @@ class TestFullContextPipeline:
                 settings = Settings()
                 scenario = self.generator.generate_context_scenario("config_test", StoryComplexity.MODERATE)
                 
-                context_manager = ContextManager(
-                    max_context_tokens=settings.CONTEXT_MAX_TOKENS,
-                    distillation_threshold=settings.CONTEXT_SUMMARIZATION_THRESHOLD
-                )
+                context_manager = ContextManager()
                 
                 # Test with real API using configuration
                 analysis = context_manager.analyze_context(scenario.context_items)
@@ -137,10 +134,7 @@ class TestFullContextPipeline:
         
         scenario = self.generator.generate_context_scenario("layer_test", StoryComplexity.COMPLEX)
         
-        context_manager = ContextManager(
-            max_context_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            distillation_threshold=self.settings.CONTEXT_SUMMARIZATION_THRESHOLD
-        )
+        context_manager = ContextManager()
         
         allocator = TokenAllocator(
             total_budget=self.settings.CONTEXT_MAX_TOKENS,
@@ -194,11 +188,7 @@ class TestFullContextPipeline:
         
         # Use small limits to force overflow
         small_limit = 5000
-        context_manager = ContextManager(
-            max_context_tokens=small_limit,
-            distillation_threshold=100,  # Very low threshold to ensure optimization is triggered
-            enable_compression=True
-        )
+        context_manager = ContextManager()
         
         allocator = TokenAllocator(
             total_budget=small_limit,
@@ -245,10 +235,7 @@ class TestFullContextPipeline:
             ContextItem("Minor detail", ContextType.CHARACTER_MEMORY, 2, LayerType.LONG_TERM_MEMORY, {})
         ]
         
-        context_manager = ContextManager(
-            max_context_tokens=8000,
-            distillation_threshold=6000
-        )
+        context_manager = ContextManager()
         
         # Test optimization with priority and layer awareness
         with patch.object(context_manager, 'optimize_context') as mock_optimize:
@@ -284,10 +271,7 @@ class TestFullContextPipeline:
             with patch.dict('os.environ', config):
                 settings = Settings()
                 
-                context_manager = ContextManager(
-                    max_context_tokens=settings.CONTEXT_MAX_TOKENS,
-                    distillation_threshold=settings.CONTEXT_SUMMARIZATION_THRESHOLD
-                )
+                context_manager = ContextManager()
                 
                 # Test with real API - just verify the configuration is loaded correctly
                 analysis = context_manager.analyze_context(scenario.context_items)
@@ -325,10 +309,7 @@ class TestFullContextPipeline:
         
         scenario = self.generator.generate_context_scenario("error_test", StoryComplexity.MODERATE)
         
-        context_manager = ContextManager(
-            max_context_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            distillation_threshold=self.settings.CONTEXT_SUMMARIZATION_THRESHOLD
-        )
+        context_manager = ContextManager()
         
         # Test error recovery by simulating problematic content
         # Create items with potentially problematic content
@@ -368,10 +349,7 @@ class TestFullContextPipeline:
         # Generate large scenario to test memory handling
         large_scenario = self.generator.generate_context_scenario("memory_test", StoryComplexity.EPIC)
         
-        context_manager = ContextManager(
-            max_context_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            distillation_threshold=self.settings.CONTEXT_SUMMARIZATION_THRESHOLD
-        )
+        context_manager = ContextManager()
         
         # Test memory efficiency by processing in smaller chunks
         # Split large scenario into smaller batches to simulate memory-efficient processing
