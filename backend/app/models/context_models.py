@@ -13,7 +13,7 @@ The schema supports:
 """
 
 from typing import Dict, List, Optional, Any, Literal, Union
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from enum import Enum
 
@@ -392,7 +392,8 @@ class StructuredContextContainer(BaseModel):
                 total += len(element.content) // 4
         return total
     
-    @validator('elements')
+    @field_validator('elements')
+    @classmethod
     def validate_unique_ids(cls, v):
         """Ensure all context element IDs are unique."""
         ids = [element.id for element in v]
@@ -458,4 +459,3 @@ class ContextProcessingConfig(BaseModel):
         default_factory=dict,
         description="Custom filtering criteria"
     )
-

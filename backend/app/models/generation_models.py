@@ -95,28 +95,15 @@ class CharacterFeedbackRequest(BaseModel):
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
     
-    @field_validator('systemPrompts', 'worldbuilding', 'storySummary', 'structured_context', mode='before')
+    @field_validator('structured_context', mode='before')
     @classmethod
-    def validate_context_provided(cls, v, info):
-        """Ensure either legacy or structured context is provided."""
-        # Get the context_mode from the data being validated
+    def validate_structured_context(cls, v, info):
+        """Validate structured context when in structured mode."""
         data = info.data if hasattr(info, 'data') else {}
         context_mode = data.get('context_mode', 'legacy')
-        field_name = info.field_name
         
-        if context_mode == 'structured':
-            if field_name == 'structured_context' and v is None:
-                raise ValueError("structured_context is required when context_mode is 'structured'")
-        elif context_mode == 'legacy':
-            if field_name in ['systemPrompts', 'worldbuilding', 'storySummary']:
-                # At least one legacy field should be provided
-                legacy_fields = [
-                    data.get('systemPrompts'),
-                    data.get('worldbuilding'),
-                    data.get('storySummary')
-                ]
-                if all(f is None or f == "" for f in legacy_fields):
-                    raise ValueError("At least one legacy context field must be provided when context_mode is 'legacy'")
+        if context_mode == 'structured' and v is None:
+            raise ValueError("structured_context is required when context_mode is 'structured'")
         
         return v
 

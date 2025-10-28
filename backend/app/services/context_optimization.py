@@ -64,11 +64,7 @@ class ContextOptimizationService:
         self.enable_optimization = enable_optimization
         
         # Initialize context manager
-        self.context_manager = ContextManager(
-            max_context_tokens=max_context_tokens,
-            distillation_threshold=optimization_threshold,
-            enable_compression=enable_optimization
-        )
+        self.context_manager = ContextManager()
         
         # Initialize content prioritization components
         self.layered_prioritizer = LayeredPrioritizer(
