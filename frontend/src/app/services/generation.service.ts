@@ -678,4 +678,72 @@ export class GenerationService {
 
     return this.apiService.requestEditorReviewWithPhase(enhancedRequest);
   }
+
+  // ============================================================================
+  // PLOT OUTLINE AI CHAT FUNCTIONALITY (WRI-63)
+  // ============================================================================
+
+  /**
+   * Generate AI response for plot outline chat assistance
+   */
+  generatePlotOutlineResponse(
+    story: Story,
+    userMessage: string,
+    chatHistory: any[] = []
+  ): Observable<string> {
+    const request: any = {
+      messages: [
+        ...chatHistory.slice(-6).map((msg: any) => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        })),
+        {
+          role: 'user',
+          content: userMessage
+        }
+      ],
+      agent_type: 'writer',
+      compose_context: {
+        current_phase: 'plot_outline',
+        story_context: {
+          title: story.general.title,
+          worldbuilding: story.general.worldbuilding,
+          plotOutline: story.plotOutline.content || 'No outline yet.',
+          characters: this.formatCharactersForContext(story),
+          systemPrompts: story.general.systemPrompts
+        }
+      },
+      system_prompts: {
+        mainPrefix: story.general.systemPrompts.mainPrefix,
+        mainSuffix: story.general.systemPrompts.mainSuffix,
+        assistantPrompt: story.general.systemPrompts.assistantPrompt
+      },
+      max_tokens: 500,
+      temperature: 0.7
+    };
+
+    return new Observable(observer => {
+      this.apiService.llmChat(request).subscribe({
+        next: (response: any) => {
+          observer.next(response.message.content);
+          observer.complete();
+        },
+        error: (error) => {
+          console.error('AI chat error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Format characters for AI context
+   */
+  private formatCharactersForContext(story: Story): string {
+    const characters = Array.from(story.characters.values())
+      .filter(c => !c.isHidden)
+      .map(c => `- ${c.name}: ${c.basicBio}`)
+      .join('\n');
+    return characters || 'No characters defined yet.';
+  }
 }
