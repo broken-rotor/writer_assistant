@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { debounceTime, distinctUntilChanged, catchError, retry, timeout } from 'rxjs/operators';
 
 import { ConversationService } from './conversation.service';
@@ -498,7 +498,7 @@ export class WorldbuildingSyncService {
    */
   async testBackendConnection(): Promise<boolean> {
     try {
-      const response = await this.http.get(`${this.apiBaseUrl}/worldbuilding/status/test`)
+      await this.http.get(`${this.apiBaseUrl}/worldbuilding/status/test`)
         .pipe(timeout(5000))
         .toPromise();
       return true;

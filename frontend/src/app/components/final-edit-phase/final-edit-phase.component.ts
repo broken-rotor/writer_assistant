@@ -1,15 +1,14 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { 
-  Story, 
+import {
+  Story,
   FinalEditPhase,
   ChatMessage,
-  ReviewItem,
-  EditorSuggestion
+  ReviewItem
 } from '../../models/story.model';
 import { ChatInterfaceComponent, ChatInterfaceConfig, MessageActionEvent } from '../chat-interface/chat-interface.component';
 import { ReviewFeedbackPanelComponent, ReviewFeedbackPanelConfig, ReviewSelectionEvent, ReviewRequestEvent, AddToChatEvent } from '../review-feedback-panel/review-feedback-panel.component';

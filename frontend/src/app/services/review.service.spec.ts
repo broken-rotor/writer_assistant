@@ -6,7 +6,7 @@ import { GenerationService } from './generation.service';
 import { FeedbackService } from './feedback.service';
 import { ConversationService } from './conversation.service';
 import { LocalStorageService } from './local-storage.service';
-import { Story, ReviewItem, Character, Rater, EditorSuggestion } from '../models/story.model';
+import { Story, ReviewItem, Character, Rater } from '../models/story.model';
 
 describe('ReviewService', () => {
   let service: ReviewService;

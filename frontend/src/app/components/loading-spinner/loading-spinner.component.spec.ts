@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 describe('LoadingSpinnerComponent', () => {
   let component: LoadingSpinnerComponent;
   let fixture: ComponentFixture<LoadingSpinnerComponent>;
-  let loadingService: jasmine.SpyObj<LoadingService>;
 
   beforeEach(async () => {
     const loadingServiceSpy = jasmine.createSpyObj('LoadingService', [], {
@@ -20,7 +19,6 @@ describe('LoadingSpinnerComponent', () => {
       ]
     }).compileComponents();
 
-    loadingService = TestBed.inject(LoadingService) as jasmine.SpyObj<LoadingService>;
     fixture = TestBed.createComponent(LoadingSpinnerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

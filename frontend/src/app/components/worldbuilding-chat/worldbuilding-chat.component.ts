@@ -1,9 +1,9 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subscription, fromEvent } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { ChatInterfaceComponent, ChatInterfaceConfig, MessageActionEvent } from '../chat-interface/chat-interface.component';
-import { ChatMessage, Story } from '../../models/story.model';
+import { Story } from '../../models/story.model';
 import { ConversationService } from '../../services/conversation.service';
 import { WorldbuildingSyncService } from '../../services/worldbuilding-sync.service';
 
@@ -161,7 +161,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
   // Event handlers
 
-  onMessageSent(message: ChatMessage): void {
+  onMessageSent(): void {
     try {
       // Emit conversation started event on first message
       if (!this.conversationStarted.observers.length) {

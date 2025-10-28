@@ -19,7 +19,11 @@
       "Bash(npm run build:*)",
       "Bash(curl:*)",
       "Bash(python:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(npx ng lint)",
+      "Bash(awk:*)",
+      "Bash(npx ng lint:*)",
+      "Bash(1)"
     ],
     "deny": [],
     "ask": []

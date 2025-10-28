@@ -304,7 +304,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       this.outlineUpdated.emit(this.story.plotOutline.content);
       this.toastService.showSuccess(`Feedback received from ${rater.name}!`);
 
-    } catch (err) {
+    } catch {
       this.generatingFeedback.delete(raterId);
       this.story.plotOutline.raterFeedback.set(raterId, {
         raterId: raterId,

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { WorldbuildingChatComponent } from './worldbuilding-chat.component';
@@ -12,8 +11,6 @@ import { Story } from '../../models/story.model';
 describe('WorldbuildingChatComponent - Accessibility', () => {
   let component: WorldbuildingChatComponent;
   let fixture: ComponentFixture<WorldbuildingChatComponent>;
-  let mockConversationService: jasmine.SpyObj<ConversationService>;
-  let mockWorldbuildingSyncService: jasmine.SpyObj<WorldbuildingSyncService>;
 
   const mockStory: Story = {
     id: 'test-story-id',
@@ -192,9 +189,6 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
         { provide: WorldbuildingSyncService, useValue: worldbuildingSyncServiceSpy }
       ]
     }).compileComponents();
-
-    mockConversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
-    mockWorldbuildingSyncService = TestBed.inject(WorldbuildingSyncService) as jasmine.SpyObj<WorldbuildingSyncService>;
 
     fixture = TestBed.createComponent(WorldbuildingChatComponent);
     component = fixture.componentInstance;

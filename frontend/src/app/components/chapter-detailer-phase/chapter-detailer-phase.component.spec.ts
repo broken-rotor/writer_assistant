@@ -28,10 +28,6 @@ describe('ChapterDetailerPhaseComponent', () => {
   let component: ChapterDetailerPhaseComponent;
   let fixture: ComponentFixture<ChapterDetailerPhaseComponent>;
   let mockGenerationService: jasmine.SpyObj<GenerationService>;
-  let mockConversationService: jasmine.SpyObj<ConversationService>;
-  let mockPhaseStateService: jasmine.SpyObj<PhaseStateService>;
-  let mockFeedbackService: jasmine.SpyObj<FeedbackService>;
-  let mockStoryService: jasmine.SpyObj<StoryService>;
   let mockToastService: jasmine.SpyObj<ToastService>;
   let mockTokenCountingService: jasmine.SpyObj<TokenCountingService>;
 
@@ -292,10 +288,6 @@ describe('ChapterDetailerPhaseComponent', () => {
     
     // Inject spies
     mockGenerationService = TestBed.inject(GenerationService) as jasmine.SpyObj<GenerationService>;
-    mockConversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
-    mockPhaseStateService = TestBed.inject(PhaseStateService) as jasmine.SpyObj<PhaseStateService>;
-    mockFeedbackService = TestBed.inject(FeedbackService) as jasmine.SpyObj<FeedbackService>;
-    mockStoryService = TestBed.inject(StoryService) as jasmine.SpyObj<StoryService>;
     mockToastService = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     mockTokenCountingService = TestBed.inject(TokenCountingService) as jasmine.SpyObj<TokenCountingService>;
 

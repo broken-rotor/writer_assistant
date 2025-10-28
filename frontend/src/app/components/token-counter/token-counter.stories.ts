@@ -2,9 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { TokenCounterComponent } from './token-counter.component';
 import {
   TokenCounterData,
-  TokenCounterConfig,
-  TokenCounterDisplayMode,
-  TokenCounterStatus
+  TokenCounterDisplayMode
 } from '../../models/token-counter.model';
 
 const meta: Meta<TokenCounterComponent> = {

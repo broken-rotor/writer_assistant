@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
-import { of, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import { WorldbuildingChatComponent } from './worldbuilding-chat.component';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
@@ -11,7 +11,6 @@ import { Story, ChatMessage, ConversationThread } from '../../models/story.model
 describe('WorldbuildingChatComponent', () => {
   let component: WorldbuildingChatComponent;
   let fixture: ComponentFixture<WorldbuildingChatComponent>;
-  let mockConversationService: jasmine.SpyObj<ConversationService>;
   let mockWorldbuildingSyncService: jasmine.SpyObj<WorldbuildingSyncService>;
 
   const mockStory: Story = {
@@ -221,7 +220,6 @@ describe('WorldbuildingChatComponent', () => {
       ]
     }).compileComponents();
 
-    mockConversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
     mockWorldbuildingSyncService = TestBed.inject(WorldbuildingSyncService) as jasmine.SpyObj<WorldbuildingSyncService>;
 
     fixture = TestBed.createComponent(WorldbuildingChatComponent);

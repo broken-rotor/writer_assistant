@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
 
 import { TokenCounterComponent } from './token-counter.component';
 import {
@@ -8,7 +7,6 @@ import {
   TokenCounterConfig,
   TokenCounterDisplayMode,
   TokenCounterStatus,
-  TokenCounterEvent,
   TokenCounterUtils
 } from '../../models/token-counter.model';
 

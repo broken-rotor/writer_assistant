@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, of, timer, throwError } from 'rxjs';
-import { map, catchError, switchMap, startWith, retry, delay, retryWhen, mergeMap } from 'rxjs/operators';
+import { map, catchError, retryWhen, mergeMap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { TokenLimits, RecommendedLimits, TokenStrategiesResponse } from '../models/token-limits.model';
 import { 

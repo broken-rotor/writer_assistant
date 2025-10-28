@@ -13,13 +13,11 @@ import { ReviewService } from '../../services/review.service';
 import { StoryService } from '../../services/story.service';
 import { ToastService } from '../../services/toast.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
-import { Story, FinalEditPhase, ReviewItem, ChatMessage } from '../../models/story.model';
+import { Story, ReviewItem, ChatMessage } from '../../models/story.model';
 
 describe('FinalEditPhaseComponent', () => {
   let component: FinalEditPhaseComponent;
   let fixture: ComponentFixture<FinalEditPhaseComponent>;
-  let mockGenerationService: jasmine.SpyObj<GenerationService>;
-  let mockConversationService: jasmine.SpyObj<ConversationService>;
   let mockPhaseStateService: jasmine.SpyObj<PhaseStateService>;
   let mockReviewService: jasmine.SpyObj<ReviewService>;
   let mockStoryService: jasmine.SpyObj<StoryService>;
@@ -228,8 +226,6 @@ describe('FinalEditPhaseComponent', () => {
       ]
     }).compileComponents();
 
-    mockGenerationService = TestBed.inject(GenerationService) as jasmine.SpyObj<GenerationService>;
-    mockConversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
     mockPhaseStateService = TestBed.inject(PhaseStateService) as jasmine.SpyObj<PhaseStateService>;
     mockReviewService = TestBed.inject(ReviewService) as jasmine.SpyObj<ReviewService>;
     mockStoryService = TestBed.inject(StoryService) as jasmine.SpyObj<StoryService>;

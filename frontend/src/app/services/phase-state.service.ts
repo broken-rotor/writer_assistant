@@ -2,16 +2,10 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { 
-  ChapterComposeState, 
+import {
+  ChapterComposeState,
   PhaseTransition,
-  PlotOutlinePhase,
-  ChapterDetailerPhase,
-  FinalEditPhase,
   ConversationThread,
-  ChatMessage,
-  OutlineItem,
-  EnhancedFeedbackItem,
   PhaseTransitionRequest,
   PhaseTransitionResponse,
   Story

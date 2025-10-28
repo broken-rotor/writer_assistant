@@ -1,14 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, forkJoin, map, catchError, of } from 'rxjs';
 
-import { 
-  ReviewItem, 
-  EnhancedFeedbackItem, 
-  Character,
-  Rater,
+import {
+  ReviewItem,
   Story,
   EditorSuggestion,
-  FinalEditPhase,
   ChapterComposeState,
   ConversationThread
 } from '../models/story.model';
@@ -250,7 +246,7 @@ export class ReviewService {
       const messageContent = this.formatReviewsForChat(selectedReviews, userComment);
       
       // Send message to conversation service
-      const message = this.conversationService.sendMessage(
+      this.conversationService.sendMessage(
         messageContent,
         'user',
         {

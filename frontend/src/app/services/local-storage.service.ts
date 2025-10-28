@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Story, StoryListItem, ChapterComposeState } from '../models/story.model';
+import { Story, StoryListItem } from '../models/story.model';
 
 export interface StorageQuota {
   used: number;

@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, throwError, timer, EMPTY } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, throwError, EMPTY } from 'rxjs';
 import {
   debounceTime,
   distinctUntilChanged,
-  switchMap,
   mergeMap,
   catchError,
-  retry,
   retryWhen,
-  delay,
   take,
   shareReplay,
   tap,
@@ -31,8 +28,7 @@ import {
   DEFAULT_TOKEN_COUNTING_CONFIG,
   ContentType,
   CountingStrategy,
-  BatchProcessingOptions,
-  BatchProgress
+  BatchProcessingOptions
 } from '../models/token.model';
 
 /**
@@ -214,7 +210,6 @@ export class TokenCountingService {
   countTokensBatched(
     text: string,
     contentType?: ContentType,
-    strategy: CountingStrategy = CountingStrategy.EXACT,
     options?: BatchProcessingOptions
   ): Observable<TokenCountResultItem> {
     return new Observable(observer => {

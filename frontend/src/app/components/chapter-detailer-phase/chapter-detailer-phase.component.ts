@@ -1,17 +1,14 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { 
-  Story, 
-  ChapterDetailerPhase,
+import {
+  Story,
   OutlineItem,
   ChatMessage,
-  EnhancedFeedbackItem,
-  CharacterFeedback,
-  RaterFeedback
+  EnhancedFeedbackItem
 } from '../../models/story.model';
 import { ChatInterfaceComponent, ChatInterfaceConfig, MessageActionEvent } from '../chat-interface/chat-interface.component';
 import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent, AddToChatEvent } from '../feedback-sidebar/feedback-sidebar.component';
@@ -477,7 +474,6 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
 
   private updatePhaseState(): void {
     // Update the phase state with current progress
-    const canAdvance = this.canAdvancePhase();
     // Implementation would update PhaseStateService with validation results
   }
 

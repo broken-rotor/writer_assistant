@@ -8,11 +8,9 @@ import {
 } from './token-validation.service';
 import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit } from './token-limits.service';
 import { TokenCountingService } from './token-counting.service';
-import { 
-  TokenValidationResult, 
-  TokenValidationStatus, 
-  TokenValidationConfig,
-  DEFAULT_VALIDATION_CONFIG 
+import {
+  TokenValidationStatus,
+  TokenValidationConfig
 } from '../models/token-validation.model';
 import { TokenCountResultItem, ContentType, CountingStrategy } from '../models/token.model';
 import { TokenCounterStatus } from '../models/token-counter.model';

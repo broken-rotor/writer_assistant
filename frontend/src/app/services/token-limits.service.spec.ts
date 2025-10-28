@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit, TokenLimitsState } from './token-limits.service';
-import { TokenStrategiesResponse, TokenLimits } from '../models/token-limits.model';
+import { TokenLimitsService, SystemPromptFieldType } from './token-limits.service';
+import { TokenStrategiesResponse } from '../models/token-limits.model';
 
 describe('TokenLimitsService', () => {
   let service: TokenLimitsService;

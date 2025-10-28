@@ -3,10 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
-import { 
-  EnhancedFeedbackItem, 
-  CharacterFeedback, 
-  RaterFeedback,
+import {
+  EnhancedFeedbackItem,
   Character,
   Rater,
   Story

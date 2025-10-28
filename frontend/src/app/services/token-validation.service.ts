@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, combineLatest, of, timer, throwError } from 'rxjs';
-import { map, catchError, retryWhen, mergeMap, tap } from 'rxjs/operators';
+import { map, catchError, retryWhen, mergeMap } from 'rxjs/operators';
 import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit } from './token-limits.service';
 import { TokenCountingService } from './token-counting.service';
 import { 
@@ -259,8 +259,7 @@ export class TokenValidationService {
           tokenResult.token_count,
           fieldLimit,
           validationConfig,
-          fieldType,
-          text
+          fieldType
         );
       }),
       catchError(error => {
@@ -310,8 +309,7 @@ export class TokenValidationService {
           tokenResult.token_count,
           fieldLimit,
           validationConfig,
-          fieldType,
-          text
+          fieldType
         );
       }),
       catchError(error => {
@@ -369,8 +367,7 @@ export class TokenValidationService {
     tokenCount: number,
     fieldLimit: FieldTokenLimit,
     config: TokenValidationConfig,
-    fieldType: SystemPromptFieldType,
-    text: string
+    fieldType: SystemPromptFieldType
   ): TokenValidationResult {
     const status = TokenValidationUtils.calculateStatus(
       tokenCount,

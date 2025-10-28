@@ -2,15 +2,12 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TokenCountingService } from './token-counting.service';
 import {
-  TokenCountRequest,
   TokenCountResponse,
-  TokenCountResultItem,
   ContentType,
   CountingStrategy,
   TokenCountError,
   DEFAULT_TOKEN_COUNTING_CONFIG
 } from '../models/token.model';
-import { of, throwError } from 'rxjs';
 
 describe('TokenCountingService', () => {
   let service: TokenCountingService;

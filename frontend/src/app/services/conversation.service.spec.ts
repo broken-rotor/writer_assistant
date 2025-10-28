@@ -3,7 +3,7 @@ import { ConversationService, ConversationConfig } from './conversation.service'
 import { LocalStorageService } from './local-storage.service';
 import { PhaseStateService } from './phase-state.service';
 import { ApiService } from './api.service';
-import { ChatMessage, ConversationThread } from '../models/story.model';
+// ChatMessage and ConversationThread imported but not used in tests
 
 describe('ConversationService', () => {
   let service: ConversationService;
