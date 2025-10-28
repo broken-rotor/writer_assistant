@@ -48,7 +48,7 @@
     <div class="chat-panel" *ngIf="showChat">
       <h3>💬 AI Chat Assistant</h3>
       
-      <div class="chat-messages">
+      <div class="chat-messages" #chatMessages>
         <div *ngFor="let message of story.plotOutline.chatHistory" 
              class="chat-message"
              [class.user-message]="message.type === 'user'"
@@ -57,9 +57,20 @@
           <div class="message-timestamp">{{ message.timestamp | date:'short' }}</div>
         </div>
         
-        <div *ngIf="story.plotOutline.chatHistory.length === 0" class="empty-chat">
+        <div *ngIf="isChatGenerating" class="chat-message ai-message generating">
+          <div class="message-content">
+            <span class="typing-indicator">AI is thinking...</span>
+          </div>
+        </div>
+        
+        <div *ngIf="story.plotOutline.chatHistory.length === 0 && !isChatGenerating" class="empty-chat">
           Start a conversation about your plot outline...
         </div>
+      </div>
+      
+      <div class="chat-error" *ngIf="chatError">
+        <span class="error-message">{{ chatError }}</span>
+        <button class="retry-button" (click)="chatError = null">✕</button>
       </div>
       
       <div class="chat-input-area">
@@ -68,22 +79,46 @@
           placeholder="Type your message..."
           rows="3"
           class="chat-input"
-          [disabled]="disabled">
+          [disabled]="disabled || isChatGenerating"
+          (keydown.ctrl.enter)="sendChatMessage()"
+          (keydown.meta.enter)="sendChatMessage()">
         </textarea>
         <div class="chat-actions">
-          <button class="primary-button" (click)="sendChatMessage()" [disabled]="!chatInput.trim() || disabled">Send</button>
-          <button class="secondary-button" (click)="clearChat()" [disabled]="disabled">Clear Chat</button>
+          <button 
+            class="primary-button" 
+            (click)="sendChatMessage()" 
+            [disabled]="!chatInput.trim() || disabled || isChatGenerating">
+            <span *ngIf="!isChatGenerating">Send</span>
+            <span *ngIf="isChatGenerating">⏳ Sending...</span>
+          </button>
+          <button 
+            class="secondary-button" 
+            (click)="clearChat()" 
+            [disabled]="disabled || story.plotOutline.chatHistory.length === 0">
+            Clear Chat
+          </button>
+        </div>
+        <div class="chat-hint">
+          <small>Tip: Press Ctrl+Enter (Cmd+Enter on Mac) to send</small>
         </div>
       </div>
       
       <div class="quick-actions">
         <h4>Quick Actions</h4>
-        <ul>
-          <li>• Suggest plot structure</li>
-          <li>• Identify plot holes</li>
-          <li>• Generate character arcs</li>
-          <li>• Check pacing</li>
-        </ul>
+        <div class="quick-action-buttons">
+          <button class="quick-action-btn" (click)="suggestPlotStructure()" [disabled]="disabled || isChatGenerating">
+            📋 Suggest Structure
+          </button>
+          <button class="quick-action-btn" (click)="identifyPlotHoles()" [disabled]="disabled || isChatGenerating">
+            🔍 Find Plot Holes
+          </button>
+          <button class="quick-action-btn" (click)="generateCharacterArcs()" [disabled]="disabled || isChatGenerating">
+            👥 Character Arcs
+          </button>
+          <button class="quick-action-btn" (click)="checkPacing()" [disabled]="disabled || isChatGenerating">
+            ⏱️ Check Pacing
+          </button>
+        </div>
       </div>
     </div>
   </div>
