@@ -297,7 +297,7 @@ class ContextDataGenerator:
         # Generate system context
         system_context = ContextItem(
             content="You are a creative writing assistant helping to craft an engaging story.",
-            context_type=ContextType.SYSTEM,
+            context_type=ContextType.SYSTEM_PROMPT,
             priority=10,
             layer_type=LayerType.WORKING_MEMORY,
             metadata={"source": "system", "immutable": True}
@@ -308,7 +308,7 @@ class ContextDataGenerator:
         for i, chapter in enumerate(story_data.chapters[:3]):  # Use first 3 chapters
             chapter_context = ContextItem(
                 content=chapter,
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=8 - i,  # Recent chapters have higher priority
                 layer_type=LayerType.EPISODIC_MEMORY,
                 metadata={"chapter": i + 1, "type": "chapter"}
@@ -319,7 +319,7 @@ class ContextDataGenerator:
         for char in story_data.characters[:5]:  # Use first 5 characters
             char_context = ContextItem(
                 content=f"Character: {char['name']}, Age: {char['age']}, Traits: {', '.join(char['traits'])}, Background: {char['background']}",
-                context_type=ContextType.CHARACTER,
+                context_type=ContextType.CHARACTER_PROFILE,
                 priority=random.randint(5, 8),
                 layer_type=LayerType.SEMANTIC_MEMORY,
                 metadata={"character_name": char['name'], "type": "character"}
@@ -329,7 +329,7 @@ class ContextDataGenerator:
         # Generate world building context
         world_context = ContextItem(
             content=story_data.world_building,
-            context_type=ContextType.WORLD,
+            context_type=ContextType.WORLD_BUILDING,
             priority=6,
             layer_type=LayerType.SEMANTIC_MEMORY,
             metadata={"type": "world_building"}

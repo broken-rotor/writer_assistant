@@ -24,7 +24,7 @@ class TestFullContextPipeline:
         self.settings = Settings()
         self.generator = ContextDataGenerator(seed=42)
     
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_end_to_end_context_processing(self, mock_get_llm):
         """Test complete end-to-end context processing pipeline."""
         mock_get_llm.return_value = Mock()
@@ -32,11 +32,8 @@ class TestFullContextPipeline:
         # Generate realistic test scenario
         scenario = self.generator.generate_context_scenario("e2e_test", StoryComplexity.MODERATE)
         
-        # Initialize context manager with configuration
-        context_manager = ContextManager(
-            max_context_tokens=self.settings.CONTEXT_MAX_TOKENS,
-            distillation_threshold=self.settings.CONTEXT_SUMMARIZATION_THRESHOLD
-        )
+        # Initialize context manager
+        context_manager = ContextManager()
         
         # Initialize token allocator
         allocator = TokenAllocator(
@@ -75,7 +72,7 @@ class TestFullContextPipeline:
         assert len(optimized_items) > 0
         assert analysis.total_tokens > 0
     
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_configuration_driven_pipeline(self, mock_get_llm):
         """Test that pipeline behavior is properly driven by configuration."""
         mock_get_llm.return_value = Mock()
@@ -133,7 +130,7 @@ class TestFullContextPipeline:
                 assert context_manager.max_context_tokens == settings.CONTEXT_MAX_TOKENS
                 assert len(optimized_items) > 0
     
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_layer_allocation_integration(self, mock_get_llm):
         """Test integration between context manager and token allocation layers."""
         mock_get_llm.return_value = Mock()
@@ -187,7 +184,7 @@ class TestFullContextPipeline:
         assert total_allocated <= self.settings.CONTEXT_MAX_TOKENS - self.settings.CONTEXT_BUFFER_TOKENS
         assert len(allocation_results) > 0
     
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_overflow_handling_integration(self, mock_get_llm):
         """Test integration of overflow handling across the pipeline."""
         mock_get_llm.return_value = Mock()
@@ -233,19 +230,19 @@ class TestFullContextPipeline:
         # Original should be larger than final (optimization occurred)
         assert analysis.total_tokens >= final_tokens
     
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_priority_and_layer_interaction(self, mock_get_llm):
         """Test interaction between priority-based filtering and layer allocation."""
         mock_get_llm.return_value = Mock()
         
         # Create items with varying priorities across different layers
         mixed_items = [
-            ContextItem("Critical system", ContextType.SYSTEM, 10, LayerType.WORKING_MEMORY, {}),
-            ContextItem("Important story", ContextType.STORY, 9, LayerType.EPISODIC_MEMORY, {}),
-            ContextItem("Key character", ContextType.CHARACTER, 8, LayerType.SEMANTIC_MEMORY, {}),
-            ContextItem("Useful world info", ContextType.WORLD, 6, LayerType.SEMANTIC_MEMORY, {}),
-            ContextItem("Background detail", ContextType.MEMORY, 4, LayerType.LONG_TERM_MEMORY, {}),
-            ContextItem("Minor detail", ContextType.MEMORY, 2, LayerType.LONG_TERM_MEMORY, {})
+            ContextItem("Critical system", ContextType.SYSTEM_PROMPT, 10, LayerType.WORKING_MEMORY, {}),
+            ContextItem("Important story", ContextType.STORY_SUMMARY, 9, LayerType.EPISODIC_MEMORY, {}),
+            ContextItem("Key character", ContextType.CHARACTER_PROFILE, 8, LayerType.SEMANTIC_MEMORY, {}),
+            ContextItem("Useful world info", ContextType.WORLD_BUILDING, 6, LayerType.SEMANTIC_MEMORY, {}),
+            ContextItem("Background detail", ContextType.CHARACTER_MEMORY, 4, LayerType.LONG_TERM_MEMORY, {}),
+            ContextItem("Minor detail", ContextType.CHARACTER_MEMORY, 2, LayerType.LONG_TERM_MEMORY, {})
         ]
         
         context_manager = ContextManager(
@@ -269,7 +266,7 @@ class TestFullContextPipeline:
             assert metadata["optimization_applied"] == True
     
 
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_feature_toggle_integration(self, mock_get_llm):
         """Test integration with feature toggles from configuration."""
         mock_get_llm.return_value = Mock()
@@ -321,7 +318,7 @@ class TestFullContextPipeline:
                     # Restore original setting
                     context_manager.enable_compression = original_compression
     
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_error_recovery_integration(self, mock_get_llm):
         """Test error recovery across the integrated pipeline."""
         mock_get_llm.return_value = Mock()
@@ -336,9 +333,9 @@ class TestFullContextPipeline:
         # Test error recovery by simulating problematic content
         # Create items with potentially problematic content
         problematic_items = [
-            ContextItem("", ContextType.STORY, 5, LayerType.EPISODIC_MEMORY, {}),  # Empty content
-            ContextItem("Valid content here", ContextType.CHARACTER, 8, LayerType.SEMANTIC_MEMORY, {}),
-            ContextItem("More valid content", ContextType.WORLD, 7, LayerType.SEMANTIC_MEMORY, {})
+            ContextItem("", ContextType.STORY_SUMMARY, 5, LayerType.EPISODIC_MEMORY, {}),  # Empty content
+            ContextItem("Valid content here", ContextType.CHARACTER_PROFILE, 8, LayerType.SEMANTIC_MEMORY, {}),
+            ContextItem("More valid content", ContextType.WORLD_BUILDING, 7, LayerType.SEMANTIC_MEMORY, {})
         ]
         
         # Test that the system handles problematic content gracefully
@@ -363,7 +360,7 @@ class TestFullContextPipeline:
             # In a real implementation, this would test actual error recovery
             assert False, f"Error recovery failed: {e}"
     
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_memory_efficiency_integration(self, mock_get_llm):
         """Test memory efficiency across the integrated pipeline."""
         mock_get_llm.return_value = Mock()

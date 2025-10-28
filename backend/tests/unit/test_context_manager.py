@@ -29,7 +29,7 @@ class TestContextManager:
         self.mock_distiller = Mock()
         self.mock_prioritizer = Mock()
     
-    @patch('app.services.context_manager.get_llm')
+    @patch('app.services.llm_inference.get_llm')
     def test_context_manager_initialization_with_config(self, mock_get_llm):
         """Test ContextManager initialization with configuration settings."""
         mock_get_llm.return_value = Mock()
@@ -47,14 +47,14 @@ class TestContextManager:
         # Test valid context item
         context_item = ContextItem(
             content="This is test content for the story.",
-            context_type=ContextType.STORY,
+            context_type=ContextType.STORY_SUMMARY,
             priority=8,
             layer_type=LayerType.EPISODIC_MEMORY,
             metadata={"chapter": 1, "scene": "opening"}
         )
         
         assert context_item.content == "This is test content for the story."
-        assert context_item.context_type == ContextType.STORY
+        assert context_item.context_type == ContextType.STORY_SUMMARY
         assert context_item.priority == 8
         assert context_item.layer_type == LayerType.EPISODIC_MEMORY
         assert context_item.metadata["chapter"] == 1
@@ -76,7 +76,7 @@ class TestContextManager:
             with patch.object(context_manager, 'analyze_context') as mock_analyze:
                 mock_analysis = ContextAnalysis(
                     total_tokens=5000,
-                    items_by_type={ContextType.SYSTEM: [], ContextType.STORY: [], ContextType.CHARACTER: []},
+                    items_by_type={ContextType.SYSTEM_PROMPT: [], ContextType.STORY_SUMMARY: [], ContextType.CHARACTER_PROFILE: []},
                     priority_distribution={10: 500, 8: 2000, 6: 1500, 4: 1000},
                     optimization_needed=True,
                     compression_ratio=0.7,
@@ -88,7 +88,7 @@ class TestContextManager:
                 
                 assert analysis.total_tokens == 5000
                 assert analysis.optimization_needed == True
-                assert ContextType.STORY in analysis.items_by_type
+                assert ContextType.STORY_SUMMARY in analysis.items_by_type
     
     def test_context_optimization_workflow(self):
         """Test the complete context optimization workflow."""
@@ -120,10 +120,10 @@ class TestContextManager:
         """Test context filtering based on priority thresholds."""
         # Create context items with different priorities
         context_items = [
-            ContextItem("High priority system", ContextType.SYSTEM, 10, LayerType.WORKING_MEMORY, {}),
-            ContextItem("Medium priority story", ContextType.STORY, 6, LayerType.EPISODIC_MEMORY, {}),
-            ContextItem("Low priority background", ContextType.WORLD, 3, LayerType.SEMANTIC_MEMORY, {}),
-            ContextItem("Very low priority detail", ContextType.MEMORY, 1, LayerType.LONG_TERM_MEMORY, {})
+            ContextItem("High priority system", ContextType.SYSTEM_PROMPT, 10, LayerType.WORKING_MEMORY, {}),
+            ContextItem("Medium priority story", ContextType.STORY_SUMMARY, 6, LayerType.EPISODIC_MEMORY, {}),
+            ContextItem("Low priority background", ContextType.WORLD_BUILDING, 3, LayerType.SEMANTIC_MEMORY, {}),
+            ContextItem("Very low priority detail", ContextType.CHARACTER_MEMORY, 1, LayerType.LONG_TERM_MEMORY, {})
         ]
         
         with patch('app.services.context_manager.get_llm') as mock_get_llm:
@@ -172,12 +172,12 @@ class TestContextManager:
     def test_context_type_categorization(self):
         """Test proper categorization of different context types."""
         context_items = [
-            ContextItem("System instruction", ContextType.SYSTEM, 10, LayerType.WORKING_MEMORY, {}),
-            ContextItem("Story content", ContextType.STORY, 8, LayerType.EPISODIC_MEMORY, {}),
-            ContextItem("Character description", ContextType.CHARACTER, 7, LayerType.SEMANTIC_MEMORY, {}),
-            ContextItem("World building", ContextType.WORLD, 6, LayerType.SEMANTIC_MEMORY, {}),
-            ContextItem("Feedback note", ContextType.FEEDBACK, 5, LayerType.WORKING_MEMORY, {}),
-            ContextItem("Memory fragment", ContextType.MEMORY, 4, LayerType.LONG_TERM_MEMORY, {})
+            ContextItem("System instruction", ContextType.SYSTEM_PROMPT, 10, LayerType.WORKING_MEMORY, {}),
+            ContextItem("Story content", ContextType.STORY_SUMMARY, 8, LayerType.EPISODIC_MEMORY, {}),
+            ContextItem("Character description", ContextType.CHARACTER_PROFILE, 7, LayerType.SEMANTIC_MEMORY, {}),
+            ContextItem("World building", ContextType.WORLD_BUILDING, 6, LayerType.SEMANTIC_MEMORY, {}),
+            ContextItem("Feedback note", ContextType.USER_FEEDBACK, 5, LayerType.WORKING_MEMORY, {}),
+            ContextItem("Memory fragment", ContextType.CHARACTER_MEMORY, 4, LayerType.LONG_TERM_MEMORY, {})
         ]
         
         # Test categorization
@@ -189,9 +189,9 @@ class TestContextManager:
         
         # Verify all context types are represented
         assert len(type_counts) == 6
-        assert type_counts[ContextType.SYSTEM] == 1
-        assert type_counts[ContextType.STORY] == 1
-        assert type_counts[ContextType.CHARACTER] == 1
+        assert type_counts[ContextType.SYSTEM_PROMPT] == 1
+        assert type_counts[ContextType.STORY_SUMMARY] == 1
+        assert type_counts[ContextType.CHARACTER_PROFILE] == 1
     
     def test_token_budget_enforcement(self):
         """Test enforcement of token budgets and limits."""
@@ -292,8 +292,8 @@ class TestContextManager:
             
             # Test with invalid context items
             invalid_items = [
-                ContextItem("", ContextType.SYSTEM, 10, LayerType.WORKING_MEMORY, {}),  # Empty content
-                ContextItem("Valid content", ContextType.STORY, -1, LayerType.EPISODIC_MEMORY, {}),  # Invalid priority
+                ContextItem("", ContextType.SYSTEM_PROMPT, 10, LayerType.WORKING_MEMORY, {}),  # Empty content
+                ContextItem("Valid content", ContextType.STORY_SUMMARY, -1, LayerType.EPISODIC_MEMORY, {}),  # Invalid priority
             ]
             
             # Test that the system handles invalid items gracefully through analysis

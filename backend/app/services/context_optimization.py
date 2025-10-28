@@ -112,7 +112,7 @@ class ContextOptimizationService:
             system_content = f"{system_prompts.mainPrefix}\n{system_prompts.assistantPrompt or ''}\n{system_prompts.mainSuffix}".strip()
             context_items.append(ContextItem(
                 content=system_content,
-                context_type=ContextType.SYSTEM,
+                context_type=ContextType.SYSTEM_PROMPT,
                 priority=10,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "system_prompts"}
@@ -121,7 +121,7 @@ class ContextOptimizationService:
             # Plot point (very high priority - this is the main task)
             context_items.append(ContextItem(
                 content=f"Plot point for this chapter: {plot_point}",
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=9,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "plot_point"}
@@ -185,7 +185,7 @@ class ContextOptimizationService:
             
             context_items.append(ContextItem(
                 content=f"Characters:\n{char_context}",
-                context_type=ContextType.CHARACTER,
+                context_type=ContextType.CHARACTER_PROFILE,
                 priority=8,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "characters", "count": len(characters)}
@@ -194,7 +194,7 @@ class ContextOptimizationService:
             # Story summary (medium-high priority)
             context_items.append(ContextItem(
                 content=f"Story: {story_summary}",
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=7,
                 layer_type=LayerType.EPISODIC_MEMORY,
                 metadata={"source": "story_summary"}
@@ -203,7 +203,7 @@ class ContextOptimizationService:
             # World building (medium priority, can be compressed significantly)
             context_items.append(ContextItem(
                 content=f"World: {worldbuilding}",
-                context_type=ContextType.WORLD,
+                context_type=ContextType.WORLD_BUILDING,
                 priority=6,
                 layer_type=LayerType.LONG_TERM_MEMORY,
                 metadata={"source": "worldbuilding"}
@@ -216,7 +216,7 @@ class ContextOptimizationService:
                 ])
                 context_items.append(ContextItem(
                     content=feedback_content,
-                    context_type=ContextType.FEEDBACK,
+                    context_type=ContextType.USER_FEEDBACK,
                     priority=5,
                     layer_type=LayerType.AGENT_SPECIFIC_MEMORY,
                     metadata={"source": "feedback", "count": len(incorporated_feedback)}
@@ -230,7 +230,7 @@ class ContextOptimizationService:
                 ])
                 context_items.append(ContextItem(
                     content=chapters_content,
-                    context_type=ContextType.MEMORY,
+                    context_type=ContextType.CHARACTER_MEMORY,
                     priority=3,
                     layer_type=LayerType.EPISODIC_MEMORY,
                     metadata={"source": "previous_chapters", "count": len(previous_chapters)}
@@ -286,7 +286,7 @@ You are embodying {character.name}, a character with the following traits:
             
             context_items.append(ContextItem(
                 content=character_system,
-                context_type=ContextType.SYSTEM,
+                context_type=ContextType.SYSTEM_PROMPT,
                 priority=10,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "character_system", "character": character.name}
@@ -295,7 +295,7 @@ You are embodying {character.name}, a character with the following traits:
             # Current situation (very high priority)
             context_items.append(ContextItem(
                 content=f"Current situation: {plot_point}",
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=9,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "plot_point"}
@@ -304,7 +304,7 @@ You are embodying {character.name}, a character with the following traits:
             # Story context (medium priority)
             context_items.append(ContextItem(
                 content=f"Story: {story_summary}",
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=7,
                 layer_type=LayerType.EPISODIC_MEMORY,
                 metadata={"source": "story_summary"}
@@ -313,7 +313,7 @@ You are embodying {character.name}, a character with the following traits:
             # World context (lower priority, compressible)
             context_items.append(ContextItem(
                 content=f"World: {worldbuilding}",
-                context_type=ContextType.WORLD,
+                context_type=ContextType.WORLD_BUILDING,
                 priority=6,
                 layer_type=LayerType.LONG_TERM_MEMORY,
                 metadata={"source": "worldbuilding"}
@@ -368,7 +368,7 @@ You are embodying {character.name}, a character with the following traits:
             rater_system = f"{system_prompts.mainPrefix}\n\n{rater_prompt}\n\n{system_prompts.mainSuffix}"
             context_items.append(ContextItem(
                 content=rater_system,
-                context_type=ContextType.SYSTEM,
+                context_type=ContextType.SYSTEM_PROMPT,
                 priority=10,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "rater_system"}
@@ -377,7 +377,7 @@ You are embodying {character.name}, a character with the following traits:
             # Plot point to evaluate (very high priority)
             context_items.append(ContextItem(
                 content=f"Plot point: {plot_point}",
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=9,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "plot_point"}
@@ -386,7 +386,7 @@ You are embodying {character.name}, a character with the following traits:
             # Story context (medium priority)
             context_items.append(ContextItem(
                 content=f"Story: {story_summary}",
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=7,
                 layer_type=LayerType.EPISODIC_MEMORY,
                 metadata={"source": "story_summary"}
@@ -395,7 +395,7 @@ You are embodying {character.name}, a character with the following traits:
             # World context (lower priority)
             context_items.append(ContextItem(
                 content=f"World: {worldbuilding}",
-                context_type=ContextType.WORLD,
+                context_type=ContextType.WORLD_BUILDING,
                 priority=6,
                 layer_type=LayerType.LONG_TERM_MEMORY,
                 metadata={"source": "worldbuilding"}
@@ -450,7 +450,7 @@ Review chapters and provide specific suggestions for improvement.
             
             context_items.append(ContextItem(
                 content=editor_system,
-                context_type=ContextType.SYSTEM,
+                context_type=ContextType.SYSTEM_PROMPT,
                 priority=10,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "editor_system"}
@@ -459,7 +459,7 @@ Review chapters and provide specific suggestions for improvement.
             # Chapter to review (very high priority - cannot be compressed)
             context_items.append(ContextItem(
                 content=f"Chapter to review:\n{chapter_to_review}",
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=9,
                 layer_type=LayerType.WORKING_MEMORY,
                 metadata={"source": "chapter_content"}
@@ -468,7 +468,7 @@ Review chapters and provide specific suggestions for improvement.
             # Story context (medium priority)
             context_items.append(ContextItem(
                 content=f"Story: {story_summary}",
-                context_type=ContextType.STORY,
+                context_type=ContextType.STORY_SUMMARY,
                 priority=7,
                 layer_type=LayerType.EPISODIC_MEMORY,
                 metadata={"source": "story_summary"}
@@ -477,7 +477,7 @@ Review chapters and provide specific suggestions for improvement.
             # World context (lower priority, compressible)
             context_items.append(ContextItem(
                 content=f"World: {worldbuilding}",
-                context_type=ContextType.WORLD,
+                context_type=ContextType.WORLD_BUILDING,
                 priority=6,
                 layer_type=LayerType.LONG_TERM_MEMORY,
                 metadata={"source": "worldbuilding"}
@@ -539,12 +539,12 @@ Review chapters and provide specific suggestions for improvement.
                     compression_ratio = optimization_result.compression_ratio
                     
                     # Extract optimized content
-                    system_content = optimization_result.optimized_content.get(ContextType.SYSTEM, "")
-                    story_content = optimization_result.optimized_content.get(ContextType.STORY, "")
-                    character_content = optimization_result.optimized_content.get(ContextType.CHARACTER, "")
-                    world_content = optimization_result.optimized_content.get(ContextType.WORLD, "")
-                    feedback_content = optimization_result.optimized_content.get(ContextType.FEEDBACK, "")
-                    memory_content = optimization_result.optimized_content.get(ContextType.MEMORY, "")
+                    system_content = optimization_result.optimized_content.get(ContextType.SYSTEM_PROMPT, "")
+                    story_content = optimization_result.optimized_content.get(ContextType.STORY_SUMMARY, "")
+                    character_content = optimization_result.optimized_content.get(ContextType.CHARACTER_PROFILE, "")
+                    world_content = optimization_result.optimized_content.get(ContextType.WORLD_BUILDING, "")
+                    feedback_content = optimization_result.optimized_content.get(ContextType.USER_FEEDBACK, "")
+                    memory_content = optimization_result.optimized_content.get(ContextType.CHARACTER_MEMORY, "")
                     
                     # Build optimized prompts
                     system_prompt = system_content
@@ -617,7 +617,7 @@ Review chapters and provide specific suggestions for improvement.
         user_parts = []
         
         for item in context_items:
-            if item.context_type == ContextType.SYSTEM:
+            if item.context_type == ContextType.SYSTEM_PROMPT:
                 system_parts.append(item.content)
             else:
                 user_parts.append(item.content)

@@ -496,7 +496,10 @@ class ContextFormatter:
         if character_elements:
             sections.append("=== CHARACTER CONTEXT ===")
             for element in character_elements:
-                sections.append(f"{element.type.value.replace('_', ' ').title()}: {element.content}")
+                char_info = f"{element.type.value.replace('_', ' ').title()}: {element.content}"
+                if hasattr(element, 'character_name') and element.character_name:
+                    char_info += f" (Character: {element.character_name})"
+                sections.append(char_info)
         
         # Story context relevant to character
         story_elements = [e for e in elements if e.type in [ContextType.WORLD_BUILDING, ContextType.STORY_SUMMARY]]
@@ -573,6 +576,10 @@ class ContextFormatter:
         
         for element in elements:
             sections.append(f"=== {element.type.value.upper().replace('_', ' ')} ===")
-            sections.append(element.content)
+            content = element.content
+            # Include character name for character elements
+            if isinstance(element, CharacterContextElement) and hasattr(element, 'character_name') and element.character_name:
+                content += f" (Character: {element.character_name})"
+            sections.append(content)
         
         return "\n".join(sections)

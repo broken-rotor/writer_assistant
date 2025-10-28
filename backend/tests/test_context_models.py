@@ -500,8 +500,8 @@ class TestStructuredContextContainer:
         container = StructuredContextContainer(elements=elements)
         total_tokens = container.calculate_total_tokens()
         
-        # 100 (estimated) + 12 (48 chars / 4) = 112
-        assert total_tokens == 112
+        # 100 (estimated) + 11 (46 chars / 4) = 111
+        assert total_tokens == 111
 
 
 class TestContextRelationship:
@@ -533,4 +533,3 @@ class TestContextRelationship:
         
         assert relationship.strength == 1.0
         assert relationship.description is None
-
