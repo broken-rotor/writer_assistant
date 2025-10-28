@@ -17,20 +17,18 @@ from app.services.worldbuilding_persistence import WorldbuildingPersistenceServi
 
 class TestWorldbuildingConversationEngine:
     """Test the complete worldbuilding conversation engine."""
-    
-    def setup_method(self):
-        """Set up test fixtures."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, temp_persistence_service):
+        """Set up test fixtures with temporary storage."""
         self.classifier = WorldbuildingTopicClassifier()
         self.prompts = WorldbuildingPromptService()
         self.followup = WorldbuildingFollowupGenerator()
-        self.persistence = WorldbuildingPersistenceService("test_data/worldbuilding")
+        self.persistence = temp_persistence_service
         self.state_machine = WorldbuildingStateMachine(self.persistence)
-        
+
         # Test data
         self.test_story_id = "test_story_123"
-        
-        # Clean up any existing test data
-        self.persistence.delete_conversation_state(self.test_story_id)
         self.test_messages = [
             ConversationMessage(
                 role="user",
@@ -377,12 +375,4 @@ class TestWorldbuildingConversationEngine:
         relevant_questions = [q for q in question_topics if q in developed_topics or q == 'general']
         assert len(relevant_questions) > 0
     
-    def teardown_method(self):
-        """Clean up test data."""
-        # Clean up test persistence data
-        import shutil
-        import os
-        
-        test_data_path = "test_data"
-        if os.path.exists(test_data_path):
-            shutil.rmtree(test_data_path)
+    # teardown is no longer needed as tmp_path is automatically cleaned up by pytest

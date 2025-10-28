@@ -44,8 +44,10 @@ class WorldbuildingPersistenceService:
             temp_path = f"{file_path}.tmp"
             with open(temp_path, 'w', encoding='utf-8') as f:
                 json.dump(state_dict, f, indent=2, ensure_ascii=False)
-            
-            # Atomic rename
+
+            # Atomic rename (on Windows, we need to remove the destination first)
+            if os.path.exists(file_path):
+                os.remove(file_path)
             os.rename(temp_path, file_path)
             
             return True
@@ -418,8 +420,10 @@ class WorldbuildingPersistenceService:
             temp_path = f"{file_path}.tmp"
             with open(temp_path, 'w', encoding='utf-8') as f:
                 json.dump(existing_records, f, indent=2, ensure_ascii=False)
-            
-            # Atomic rename
+
+            # Atomic rename (on Windows, we need to remove the destination first)
+            if os.path.exists(file_path):
+                os.remove(file_path)
             os.rename(temp_path, file_path)
             
             return True

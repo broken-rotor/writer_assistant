@@ -27,9 +27,10 @@ class TestWorldbuildingIntegration:
         return WorldbuildingValidator()
     
     @pytest.fixture
-    def persistence_service(self):
+    def persistence_service(self, tmp_path):
         """Create a persistence service for testing."""
-        return WorldbuildingPersistenceService(storage_path="test_data/worldbuilding_conversations")
+        storage_path = tmp_path / "worldbuilding_conversations"
+        return WorldbuildingPersistenceService(storage_path=str(storage_path))
     
     @pytest.fixture
     def sample_messages(self) -> List[ConversationMessage]:

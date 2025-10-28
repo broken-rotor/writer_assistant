@@ -3,6 +3,7 @@ from unittest.mock import Mock, MagicMock, patch
 from fastapi.testclient import TestClient
 from app.main import app
 from app.services.llm_inference import LLMInference
+from app.services.worldbuilding_persistence import WorldbuildingPersistenceService
 import json
 
 
@@ -252,3 +253,10 @@ def sample_generate_character_request():
         "basicBio": "A tough but fair detective with a mysterious past",
         "existingCharacters": []
     }
+
+
+@pytest.fixture
+def temp_persistence_service(tmp_path):
+    """Create a WorldbuildingPersistenceService with a temporary directory."""
+    storage_path = tmp_path / "worldbuilding"
+    return WorldbuildingPersistenceService(storage_path=str(storage_path))
