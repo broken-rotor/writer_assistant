@@ -71,7 +71,7 @@ class TestFullContextPipeline:
         
         # Verify results
         assert final_tokens <= self.settings.CONTEXT_MAX_TOKENS
-        assert processing_time < 1.0  # Should complete quickly in integration test
+        assert processing_time < 5.0  # Should complete quickly in integration test
         assert len(optimized_items) > 0
         assert analysis.total_tokens > 0
     

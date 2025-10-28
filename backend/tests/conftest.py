@@ -1,10 +1,20 @@
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 from fastapi.testclient import TestClient
+from pydantic import ConfigDict, Field
+import json
+
 from app.main import app
+from app.core.config import Settings
 from app.services.llm_inference import LLMInference
 from app.services.worldbuilding_persistence import WorldbuildingPersistenceService
-import json
+
+
+@pytest.fixture(autouse=True)
+def patch_settings():
+    Settings.model_config = ConfigDict(
+        case_sensitive=True,
+        env_file = ".env.example")
 
 
 @pytest.fixture(autouse=True)
