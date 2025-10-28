@@ -88,6 +88,30 @@ export interface EditorSuggestion {
   selected: boolean;
 }
 
+export interface PlotOutlineFeedback {
+  raterId: string;
+  raterName: string;
+  feedback: string;
+  status: 'pending' | 'generating' | 'complete' | 'error';
+  timestamp: Date;
+  userResponse?: 'accepted' | 'revision_requested' | 'discussed';
+  conversationId?: string; // For follow-up discussions
+}
+
+export interface PlotOutline {
+  content: string;
+  status: 'draft' | 'under_review' | 'approved' | 'needs_revision';
+  chatHistory: ChatMessage[];
+  raterFeedback: Map<string, PlotOutlineFeedback>; // Key: raterId
+  metadata: {
+    created: Date;
+    lastModified: Date;
+    approvedAt?: Date;
+    version: number;
+    lastFeedbackRequest?: Date;
+  };
+}
+
 // ============================================================================
 // THREE-PHASE CHAPTER COMPOSE DATA MODELS
 // ============================================================================
@@ -386,6 +410,7 @@ export interface Story {
     summary: string;
     chapters: Chapter[];
   };
+  plotOutline: PlotOutline;
   // Three-phase chapter compose system
   chapterCompose?: ChapterComposeState;
   // Legacy chapter creation (maintained for backward compatibility)
