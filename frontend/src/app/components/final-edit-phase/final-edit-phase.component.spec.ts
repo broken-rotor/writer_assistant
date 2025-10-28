@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 
 import { FinalEditPhaseComponent } from './final-edit-phase.component';
@@ -206,11 +207,12 @@ describe('FinalEditPhaseComponent', () => {
     })
   });
     const storyServiceSpy = jasmine.createSpyObj('StoryService', ['saveChapter', 'updateStory']);
-    const toastServiceSpy = jasmine.createSpyObj('ToastService', ['show']);
+    const toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'showSuccess', 'showError', 'showInfo', 'showWarning']);
 
     await TestBed.configureTestingModule({
       imports: [
         FormsModule,
+        HttpClientTestingModule,
         FinalEditPhaseComponent,
         ChatInterfaceComponent,
         ReviewFeedbackPanelComponent,

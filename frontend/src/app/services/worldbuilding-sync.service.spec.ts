@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 import { WorldbuildingSyncService, WorldbuildingSyncConfig } from './worldbuilding-sync.service';
 import { ConversationService } from './conversation.service';
@@ -53,6 +54,7 @@ describe('WorldbuildingSyncService', () => {
     ]);
 
     TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
       providers: [
         WorldbuildingSyncService,
         { provide: ConversationService, useValue: conversationServiceSpy },

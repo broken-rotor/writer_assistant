@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, BehaviorSubject } from 'rxjs';
 
 import { ChapterDetailerPhaseComponent } from './chapter-detailer-phase.component';
@@ -269,6 +270,7 @@ describe('ChapterDetailerPhaseComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         FormsModule,
+        HttpClientTestingModule,
         ChapterDetailerPhaseComponent,
         ChatInterfaceComponent,
         FeedbackSidebarComponent,

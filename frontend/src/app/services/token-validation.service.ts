@@ -105,8 +105,8 @@ export class TokenValidationService {
    * Calculate validation status based on token counts and limits
    */
   calculateStatus(
-    current: number, 
-    limit: number, 
+    current: number,
+    limit: number,
     thresholds: TokenValidationThresholds
   ): TokenValidationStatus {
     if (current < 0 || limit <= 0) {
@@ -115,6 +115,11 @@ export class TokenValidationService {
 
     if (current > limit) {
       return TokenValidationStatus.INVALID;
+    }
+
+    // Being at exactly the limit is valid, not critical
+    if (current === limit) {
+      return TokenValidationStatus.VALID;
     }
 
     const warningThreshold = limit * thresholds.warningThreshold;

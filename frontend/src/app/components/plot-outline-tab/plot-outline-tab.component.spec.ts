@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { PlotOutlineTabComponent } from './plot-outline-tab.component';
 import { Story } from '../../models/story.model';
 
@@ -10,7 +11,7 @@ describe('PlotOutlineTabComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PlotOutlineTabComponent, FormsModule]
+      imports: [PlotOutlineTabComponent, FormsModule, HttpClientTestingModule]
     })
     .compileComponents();
 

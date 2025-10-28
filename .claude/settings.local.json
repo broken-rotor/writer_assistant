@@ -18,7 +18,8 @@
       "Bash(ng generate component:*)",
       "Bash(npm run build:*)",
       "Bash(curl:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 
 import { PlotOutlinePhaseComponent } from './plot-outline-phase.component';
@@ -77,6 +78,7 @@ describe('PlotOutlinePhaseComponent', () => {
         PlotOutlinePhaseComponent,
         FormsModule,
         DragDropModule,
+        HttpClientTestingModule,
         NewlineToBrPipe
       ],
       providers: [
