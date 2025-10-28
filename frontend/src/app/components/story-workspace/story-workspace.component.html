@@ -323,9 +323,12 @@
 
     <!-- Plot Outline Tab -->
     <div *ngIf="activeTab === 'plot-outline'" class="tab-pane plot-outline-tab">
-      <h2>Plot Outline</h2>
-      <p>Plot outline component will be implemented in the next task.</p>
-      <!-- Placeholder for plot-outline-tab component -->
+      <app-plot-outline-tab
+        [story]="story"
+        [disabled]="loading"
+        (outlineUpdated)="onPlotOutlineUpdated($event)"
+        (outlineApproved)="onPlotOutlineApproved()">
+      </app-plot-outline-tab>
     </div>
 
     <!-- Story Tab -->
