@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PhaseStateService } from './phase-state.service';
 import { LocalStorageService } from './local-storage.service';
-// ChapterComposeState imported but not used in tests
+import { ChapterComposeState } from '../models/story.model';
 
 describe('PhaseStateService', () => {
   let service: PhaseStateService;

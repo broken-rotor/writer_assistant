@@ -595,7 +595,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.storyService.saveStory(this.story);
   }
 
-  insertChapterAfter() {
+  insertChapterAfter(index: number) {
     // Switch to chapter creation tab
     this.selectTab('chapter-creation');
   }
@@ -1062,22 +1062,22 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   /**
    * Handle token limits initialization error
    */
-  private handleTokenLimitsInitializationError() {
+  private handleTokenLimitsInitializationError(err: any) {
     this.tokenLimitsLoading = false;
     this.isTokenLimitsRetrying = false;
     this.tokenLimitsError = ERROR_MESSAGES.TOKEN_LIMITS_FAILED;
     this.tokenLimitsRetryCount++;
-    
+
     // Use fallback mode to keep app functional
     this.isTokenLimitsFallbackMode = true;
-    
+
     this.toastService.showTokenLimitsError(
       this.tokenLimitsError!,
       [RecoveryAction.RETRY, RecoveryAction.USE_FALLBACK],
       () => this.retryTokenLimits(),
       () => this.useTokenLimitsFallback()
     );
-    
+
     this.cdr.markForCheck();
   }
 

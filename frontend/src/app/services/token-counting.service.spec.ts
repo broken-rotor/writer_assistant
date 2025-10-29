@@ -477,7 +477,7 @@ describe('TokenCountingService', () => {
     it('should process batched requests', (done) => {
       const text = 'Batched text';
       
-      service.countTokensBatched(text, ContentType.NARRATIVE, CountingStrategy.EXACT, {
+      service.countTokensBatched(text, ContentType.NARRATIVE, {
         strategy: 'immediate'
       }).subscribe(result => {
         expect(result.text).toBe(text);
