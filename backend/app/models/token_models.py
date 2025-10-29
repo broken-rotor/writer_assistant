@@ -18,12 +18,16 @@ class TokenCountRequestItem(BaseModel):
     text: str = Field(
         ...,
         description="Text content to count tokens for",
-        example="You are a helpful writing assistant. Please help the user create engaging stories."
+        json_schema_extra={
+            'example': "You are a helpful writing assistant. Please help the user create engaging stories.",
+        }
     )
     content_type: Optional[ContentType] = Field(
         None,
         description="Content type for the text (auto-detected if not provided)",
-        example="system_prompt"
+        json_schema_extra={
+            'example': "system_prompt",
+        }
     )
     
     @field_validator('text')
