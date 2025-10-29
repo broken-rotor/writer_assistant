@@ -3,7 +3,7 @@ Tests for context manager service.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.services.context_manager import ContextManager, ContextSummarizer, ContextFormatter
 from app.models.context_models import (
@@ -118,7 +118,7 @@ class TestContextManager:
             metadata=ContextMetadata(
                 target_agents=[AgentType.WRITER],
                 relevant_phases=[ComposePhase.CHAPTER_DETAIL],
-                expires_at=datetime.utcnow() - timedelta(hours=1)  # Expired
+                expires_at=datetime.now(timezone.utc) - timedelta(hours=1)  # Expired
             )
         )
         
@@ -555,4 +555,3 @@ class TestContextProcessingConfig:
         assert config.include_relationships is False
         assert config.summarization_threshold == 0.6
         assert config.custom_filters == {"min_priority": 0.5}
-
