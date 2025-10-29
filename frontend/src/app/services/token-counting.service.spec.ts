@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TokenCountingService } from './token-counting.service';
 import {
@@ -84,20 +84,30 @@ describe('TokenCountingService', () => {
       const req = httpMock.expectOne(`${baseUrl}/count`);
       expect(req.request.body.texts[0].content_type).toBe(ContentType.SYSTEM_PROMPT);
       expect(req.request.body.strategy).toBe(CountingStrategy.CONSERVATIVE);
-      
-      const response = { ...mockResponse };
-      response.results[0].content_type = ContentType.SYSTEM_PROMPT;
-      response.results[0].strategy = CountingStrategy.CONSERVATIVE;
+
+      // Deep copy to avoid mutating the shared mockResponse
+      const response: TokenCountResponse = {
+        success: true,
+        results: [{
+          text: 'System prompt',
+          token_count: 2,
+          content_type: ContentType.SYSTEM_PROMPT,
+          strategy: CountingStrategy.CONSERVATIVE,
+          overhead_applied: 1.0,
+          metadata: {}
+        }],
+        summary: { total_tokens: 2 }
+      };
       req.flush(response);
     });
 
     it('should return cached result on subsequent calls', (done) => {
       const text = 'Cached text';
-      
+
       // First call
       service.countTokens(text).subscribe(result => {
         expect(result.token_count).toBe(2);
-        
+
         // Second call should use cache (no HTTP request)
         service.countTokens(text).subscribe(cachedResult => {
           expect(cachedResult.token_count).toBe(2);
@@ -107,13 +117,27 @@ describe('TokenCountingService', () => {
       });
 
       const req = httpMock.expectOne(`${baseUrl}/count`);
-      req.flush(mockResponse);
-      
+      const cachedResponse: TokenCountResponse = {
+        success: true,
+        results: [{
+          text: text,
+          token_count: 2,
+          content_type: ContentType.UNKNOWN,
+          strategy: CountingStrategy.EXACT,
+          overhead_applied: 1.0,
+          metadata: {}
+        }],
+        summary: { total_tokens: 2 }
+      };
+      req.flush(cachedResponse);
+
       // No additional HTTP requests should be made
       httpMock.expectNone(`${baseUrl}/count`);
     });
 
     it('should handle API errors gracefully', (done) => {
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // Increase timeout for retry tests
+
       service.countTokens('Error text').subscribe({
         next: () => fail('Should have thrown an error'),
         error: (error: TokenCountError) => {
@@ -123,8 +147,19 @@ describe('TokenCountingService', () => {
         }
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/count`);
-      req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+      // Handle all retry attempts (initial + 3 retries at 1000ms intervals)
+      const handleRequests = () => {
+        const req = httpMock.expectOne(`${baseUrl}/count`);
+        req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+      };
+
+      // Initial request (immediate)
+      handleRequests();
+
+      // Handle retry attempts at proper intervals (slightly after each 1000ms delay)
+      setTimeout(() => handleRequests(), 1050);
+      setTimeout(() => handleRequests(), 2050);
+      setTimeout(() => handleRequests(), 3050);
     });
   });
 
@@ -287,10 +322,13 @@ describe('TokenCountingService', () => {
       });
 
       service.countTokens('Test text').subscribe(() => {
-        // Should have been loading during the request
-        expect(loadingStates).toContain(true);
-        expect(loadingStates[loadingStates.length - 1]).toBe(false);
-        done();
+        // Wait for finalize to complete and update loading state
+        setTimeout(() => {
+          // Should have been loading during the request
+          expect(loadingStates).toContain(true);
+          expect(loadingStates[loadingStates.length - 1]).toBe(false);
+          done();
+        }, 0);
       });
 
       const req = httpMock.expectOne(`${baseUrl}/count`);
@@ -431,6 +469,8 @@ describe('TokenCountingService', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors', (done) => {
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+
       service.countTokens('Network error text').subscribe({
         next: () => fail('Should have thrown an error'),
         error: (error: TokenCountError) => {
@@ -440,11 +480,20 @@ describe('TokenCountingService', () => {
         }
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/count`);
-      req.error(new ErrorEvent('Network error'));
+      const handleRequests = () => {
+        const req = httpMock.expectOne(`${baseUrl}/count`);
+        req.error(new ErrorEvent('Network error'));
+      };
+
+      handleRequests();
+      setTimeout(() => handleRequests(), 1050);
+      setTimeout(() => handleRequests(), 2050);
+      setTimeout(() => handleRequests(), 3050);
     });
 
     it('should handle validation errors', (done) => {
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+
       service.countTokens('Validation error text').subscribe({
         next: () => fail('Should have thrown an error'),
         error: (error: TokenCountError) => {
@@ -454,11 +503,20 @@ describe('TokenCountingService', () => {
         }
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/count`);
-      req.flush('Validation Error', { status: 422, statusText: 'Unprocessable Entity' });
+      const handleRequests = () => {
+        const req = httpMock.expectOne(`${baseUrl}/count`);
+        req.flush('Validation Error', { status: 422, statusText: 'Unprocessable Entity' });
+      };
+
+      handleRequests();
+      setTimeout(() => handleRequests(), 1050);
+      setTimeout(() => handleRequests(), 2050);
+      setTimeout(() => handleRequests(), 3050);
     });
 
     it('should handle bad request errors', (done) => {
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+
       service.countTokens('Bad request text').subscribe({
         next: () => fail('Should have thrown an error'),
         error: (error: TokenCountError) => {
@@ -468,8 +526,15 @@ describe('TokenCountingService', () => {
         }
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/count`);
-      req.flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+      const handleRequests = () => {
+        const req = httpMock.expectOne(`${baseUrl}/count`);
+        req.flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+      };
+
+      handleRequests();
+      setTimeout(() => handleRequests(), 1050);
+      setTimeout(() => handleRequests(), 2050);
+      setTimeout(() => handleRequests(), 3050);
     });
   });
 
