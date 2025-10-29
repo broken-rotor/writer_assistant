@@ -1,9 +1,12 @@
 """
 Pydantic models for generation API requests and responses.
 Based on the requirements in api_requirements.md and ui_requirements.md.
+
+Updated to support structured context data schema alongside legacy fields
+for backward compatibility during the transition period.
 """
 from typing import Dict, List, Optional, Any, Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 
@@ -63,16 +66,46 @@ class PhaseContext(BaseModel):
 
 # Character Feedback Request/Response
 class CharacterFeedbackRequest(BaseModel):
-    systemPrompts: SystemPrompts
-    worldbuilding: str
-    storySummary: str
+    # Legacy fields (maintained for backward compatibility)
+    systemPrompts: Optional[SystemPrompts] = None
+    worldbuilding: Optional[str] = ""
+    storySummary: Optional[str] = ""
+    
+    # Core request fields
     previousChapters: List[ChapterInfo]
     character: CharacterInfo
     plotPoint: str
     incorporatedFeedback: Optional[List[FeedbackItem]] = []
+    
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
+    
+    # New structured context fields
+    structured_context: Optional[Any] = Field(
+        default=None,
+        description="Structured context container (StructuredContextContainer)"
+    )
+    context_mode: Literal["legacy", "structured", "hybrid"] = Field(
+        default="legacy",
+        description="Which context format to use"
+    )
+    context_processing_config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Configuration for context processing (summarization, filtering, etc.)"
+    )
+    
+    @field_validator('structured_context', mode='before')
+    @classmethod
+    def validate_structured_context(cls, v, info):
+        """Validate structured context when in structured mode."""
+        data = info.data if hasattr(info, 'data') else {}
+        context_mode = data.get('context_mode', 'legacy')
+        
+        if context_mode == 'structured' and v is None:
+            raise ValueError("structured_context is required when context_mode is 'structured'")
+        
+        return v
 
 
 class CharacterFeedback(BaseModel):
@@ -90,16 +123,34 @@ class CharacterFeedbackResponse(BaseModel):
 
 # Rater Feedback Request/Response
 class RaterFeedbackRequest(BaseModel):
-    systemPrompts: SystemPrompts
+    # Legacy fields (maintained for backward compatibility)
+    systemPrompts: Optional[SystemPrompts] = None
     raterPrompt: str
-    worldbuilding: str
-    storySummary: str
+    worldbuilding: Optional[str] = ""
+    storySummary: Optional[str] = ""
+    
+    # Core request fields
     previousChapters: List[ChapterInfo]
     plotPoint: str
     incorporatedFeedback: Optional[List[FeedbackItem]] = []
+    
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
+    
+    # New structured context fields
+    structured_context: Optional[Any] = Field(
+        default=None,
+        description="Structured context container (StructuredContextContainer)"
+    )
+    context_mode: Literal["legacy", "structured", "hybrid"] = Field(
+        default="legacy",
+        description="Which context format to use"
+    )
+    context_processing_config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Configuration for context processing (summarization, filtering, etc.)"
+    )
 
 
 class RaterFeedback(BaseModel):
@@ -114,16 +165,34 @@ class RaterFeedbackResponse(BaseModel):
 
 # Chapter Generation Request/Response
 class GenerateChapterRequest(BaseModel):
-    systemPrompts: SystemPrompts
-    worldbuilding: str
-    storySummary: str
+    # Legacy fields (maintained for backward compatibility)
+    systemPrompts: Optional[SystemPrompts] = None
+    worldbuilding: Optional[str] = ""
+    storySummary: Optional[str] = ""
+    
+    # Core request fields
     previousChapters: List[ChapterInfo]
     characters: List[CharacterInfo]
     plotPoint: str
     incorporatedFeedback: List[FeedbackItem]
+    
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
+    
+    # New structured context fields
+    structured_context: Optional[Any] = Field(
+        default=None,
+        description="Structured context container (StructuredContextContainer)"
+    )
+    context_mode: Literal["legacy", "structured", "hybrid"] = Field(
+        default="legacy",
+        description="Which context format to use"
+    )
+    context_processing_config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Configuration for context processing (summarization, filtering, etc.)"
+    )
 
 
 class GenerateChapterResponse(BaseModel):
@@ -150,15 +219,33 @@ class ModifyChapterResponse(BaseModel):
 
 # Editor Review Request/Response
 class EditorReviewRequest(BaseModel):
-    systemPrompts: SystemPrompts
-    worldbuilding: str
-    storySummary: str
+    # Legacy fields (maintained for backward compatibility)
+    systemPrompts: Optional[SystemPrompts] = None
+    worldbuilding: Optional[str] = ""
+    storySummary: Optional[str] = ""
+    
+    # Core request fields
     previousChapters: List[ChapterInfo]
     characters: List[CharacterInfo]
     chapterToReview: str
+    
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
+    
+    # New structured context fields
+    structured_context: Optional[Any] = Field(
+        default=None,
+        description="Structured context container (StructuredContextContainer)"
+    )
+    context_mode: Literal["legacy", "structured", "hybrid"] = Field(
+        default="legacy",
+        description="Which context format to use"
+    )
+    context_processing_config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Configuration for context processing (summarization, filtering, etc.)"
+    )
 
 
 class EditorSuggestion(BaseModel):
