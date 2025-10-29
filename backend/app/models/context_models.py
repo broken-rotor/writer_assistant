@@ -14,7 +14,7 @@ The schema supports:
 
 from typing import Dict, List, Optional, Any, Literal, Union
 from pydantic import BaseModel, Field, field_validator
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -112,12 +112,12 @@ class ContextMetadata(BaseModel):
     )
     
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(tz=timezone.utc),
         description="When this context element was created"
     )
     
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(tz=timezone.utc),
         description="When this context element was last updated"
     )
     
@@ -347,7 +347,7 @@ class StructuredContextContainer(BaseModel):
     )
     
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(tz=timezone.utc),
         description="When this context container was created"
     )
     
