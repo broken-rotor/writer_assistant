@@ -34,8 +34,9 @@ describe('SystemPromptFieldComponent', () => {
 
   beforeEach(async () => {
     const validationServiceSpy = jasmine.createSpyObj('TokenValidationService', [
-      'validateField', 
-      'createLoadingResult'
+      'validateField',
+      'createLoadingResult',
+      'createFallbackResult'
     ]);
     const cdrSpy = jasmine.createSpyObj('ChangeDetectorRef', ['markForCheck']);
 
@@ -64,6 +65,12 @@ describe('SystemPromptFieldComponent', () => {
       status: TokenValidationStatus.LOADING,
       message: 'Counting tokens...',
       isValid: false
+    });
+    mockTokenValidationService.createFallbackResult.and.returnValue({
+      ...mockValidationResult,
+      status: TokenValidationStatus.VALID,
+      message: 'Using fallback validation',
+      isValid: true
     });
   });
 

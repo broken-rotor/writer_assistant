@@ -280,7 +280,7 @@ describe('ReviewFeedbackPanelComponent', () => {
       'addReviewsToChat',
       'calculateQualityScore'
     ], {
-      reviewsUpdated$: of(undefined),
+      reviewsUpdated$: new BehaviorSubject<void>(undefined),
       requestStatus$: new BehaviorSubject<ReviewRequestStatus>({
         pendingRequests: [],
         completedRequests: [],

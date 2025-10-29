@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
+import { of } from 'rxjs';
 
 import { WorldbuildingChatComponent } from './worldbuilding-chat.component';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
@@ -176,11 +177,19 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     const conversationServiceSpy = jasmine.createSpyObj('ConversationService', [
       'initializeConversation',
       'getCurrentThread',
-      'sendMessage'
-    ]);
+      'sendMessage',
+      'getCurrentBranchMessages',
+      'getAvailableBranches'
+    ], {
+      currentThread$: of(null),
+      branchNavigation$: of({ currentBranchId: 'main', availableBranches: ['main'], branchHistory: [], canNavigateBack: false, canNavigateForward: false }),
+      isProcessing$: of(false)
+    });
     const worldbuildingSyncServiceSpy = jasmine.createSpyObj('WorldbuildingSyncService', [
       'syncWorldbuildingFromConversation'
-    ]);
+    ], {
+      worldbuildingUpdated$: of('')
+    });
 
     await TestBed.configureTestingModule({
       imports: [CommonModule, WorldbuildingChatComponent, ChatInterfaceComponent],
@@ -193,6 +202,10 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     fixture = TestBed.createComponent(WorldbuildingChatComponent);
     component = fixture.componentInstance;
     component.story = mockStory;
+
+    // Setup conversation service spy return values
+    conversationServiceSpy.getCurrentBranchMessages.and.returnValue([]);
+    conversationServiceSpy.getAvailableBranches.and.returnValue(['main']);
   });
 
   describe('ARIA Attributes and Roles', () => {
@@ -262,8 +275,8 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     it('should have skip links for navigation', () => {
       const skipLinks = fixture.debugElement.queryAll(By.css('.skip-link'));
       expect(skipLinks.length).toBe(2);
-      expect(skipLinks[0].nativeElement.textContent).toBe('Skip to worldbuilding summary');
-      expect(skipLinks[1].nativeElement.textContent).toBe('Skip to chat interface');
+      expect(skipLinks[0].nativeElement.textContent.trim()).toBe('Skip to worldbuilding summary');
+      expect(skipLinks[1].nativeElement.textContent.trim()).toBe('Skip to chat interface');
     });
 
     it('should have proper empty state announcements', () => {
@@ -464,13 +477,18 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
   });
 
   describe('Screen Reader Announcements', () => {
-    it('should announce panel switches', () => {
+    it('should announce panel switches', fakeAsync(() => {
       spyOn(component as any, 'announceToScreenReader');
-      
+
+      // Mock the ViewChild ElementRefs
+      (component as any).summaryPanel = { nativeElement: { focus: jasmine.createSpy('focus') } };
+      (component as any).chatPanel = { nativeElement: { focus: jasmine.createSpy('focus') } };
+
       component.switchToPanel('summary');
-      
+      tick(100);
+
       expect((component as any).announceToScreenReader).toHaveBeenCalledWith('Switched to summary panel');
-    });
+    }));
 
     it('should announce sync actions', () => {
       spyOn(component as any, 'announceToScreenReader');
