@@ -232,6 +232,10 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     });
 
     it('should have proper aria-live regions', () => {
+      // Set worldbuilding content to trigger aria-live="polite"
+      component.currentWorldbuilding = 'Test worldbuilding content';
+      fixture.detectChanges();
+
       const worldbuildingContent = fixture.debugElement.query(By.css('.worldbuilding-content'));
       expect(worldbuildingContent.nativeElement.getAttribute('aria-live')).toBe('polite');
 
@@ -510,6 +514,10 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
   });
 
   describe('Responsive Accessibility', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
     it('should update mobile view state on window resize', () => {
       spyOn(component, 'updateMobileView' as any);
       
