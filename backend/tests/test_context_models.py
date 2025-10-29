@@ -3,7 +3,7 @@ Tests for structured context models.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import ValidationError
 
 from app.models.context_models import (
@@ -56,7 +56,7 @@ class TestContextMetadata:
     
     def test_custom_values(self):
         """Test custom metadata values."""
-        expires_at = datetime.utcnow() + timedelta(days=1)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=1)
         
         metadata = ContextMetadata(
             priority=0.8,

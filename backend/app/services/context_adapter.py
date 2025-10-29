@@ -14,7 +14,7 @@ Handles:
 
 from typing import Dict, List, Optional, Any, Tuple
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.models.context_models import (
     StructuredContextContainer,
@@ -91,7 +91,7 @@ class ContextAdapter:
             elements=elements,
             global_metadata={
                 "converted_from_legacy": True,
-                "conversion_timestamp": datetime.utcnow().isoformat(),
+                "conversion_timestamp": datetime.now(timezone.utc).isoformat(),
                 "legacy_compose_phase": compose_phase
             }
         )
@@ -131,7 +131,7 @@ class ContextAdapter:
         """
         Enhance existing PhaseContext with structured context data.
         """
-        enhanced_context = phase_context.copy(deep=True) if phase_context else PhaseContext()
+        enhanced_context = phase_context.model_copy(deep=True) if phase_context else PhaseContext()
         
         # Add structured context elements as additional context
         phase_elements = structured_context.get_elements_by_type(ContextType.PHASE_INSTRUCTION)
@@ -486,9 +486,8 @@ class ContextAdapter:
         # Add migration metadata
         container.global_metadata.update({
             "migration_source": "legacy_data",
-            "migration_timestamp": datetime.utcnow().isoformat(),
+            "migration_timestamp": datetime.now(timezone.utc).isoformat(),
             "original_data_keys": list(legacy_data.keys())
         })
         
         return container
-

@@ -11,7 +11,7 @@ This service handles:
 """
 
 from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
@@ -141,7 +141,7 @@ class ContextManager:
                 continue
             
             # Check if element has expired
-            if element.metadata.expires_at and element.metadata.expires_at < datetime.utcnow():
+            if element.metadata.expires_at and element.metadata.expires_at < datetime.now(timezone.utc):
                 continue
             
             filtered_elements.append(element)
@@ -352,7 +352,7 @@ class ContextManager:
             "was_summarized": was_summarized,
             "target_agent": target_agent.value,
             "current_phase": current_phase.value,
-            "processing_timestamp": datetime.utcnow().isoformat(),
+            "processing_timestamp": datetime.now(timezone.utc).isoformat(),
             "reduction_ratio": final_count / original_count if original_count > 0 else 0
         }
 
@@ -380,7 +380,7 @@ class ContextSummarizer:
             compressed_content = element.content[:target_chars - 3] + "..."
             
             # Create compressed copy
-            compressed_element = element.copy(deep=True)
+            compressed_element = element.model_copy(deep=True)
             compressed_element.content = compressed_content
             compressed_element.metadata.estimated_tokens = target_tokens
             compressed_element.metadata.tags.append("compressed")
@@ -404,7 +404,7 @@ class ContextSummarizer:
         key_points = f"{sentences[0]}. ... {sentences[-1]}"
         
         # Create key points copy
-        key_points_element = element.copy(deep=True)
+        key_points_element = element.model_copy(deep=True)
         key_points_element.content = key_points
         key_points_element.metadata.estimated_tokens = len(key_points) // 4
         key_points_element.metadata.tags.append("key_points")
