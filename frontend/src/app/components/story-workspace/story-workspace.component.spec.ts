@@ -28,7 +28,8 @@ describe('StoryWorkspaceComponent', () => {
       'deleteRater',
       'toggleRater',
       'addChapter',
-      'deleteChapter'
+      'deleteChapter',
+      'migrateStoryForPlotOutline'
     ]);
 
     activatedRoute = {
