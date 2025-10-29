@@ -105,15 +105,20 @@ export class TokenValidationUtils {
     if (currentTokens > maxTokens) {
       return TokenValidationStatus.INVALID;
     }
-    
+
+    // Being at exactly the limit is valid, not critical
+    if (currentTokens === maxTokens) {
+      return TokenValidationStatus.VALID;
+    }
+
     if (currentTokens >= criticalThreshold) {
       return TokenValidationStatus.CRITICAL;
     }
-    
+
     if (currentTokens >= warningThreshold) {
       return TokenValidationStatus.WARNING;
     }
-    
+
     return TokenValidationStatus.VALID;
   }
 

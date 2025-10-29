@@ -190,20 +190,57 @@ describe('FinalEditPhaseComponent', () => {
 
   beforeEach(async () => {
     const generationServiceSpy = jasmine.createSpyObj('GenerationService', ['generateContent']);
-    const conversationServiceSpy = jasmine.createSpyObj('ConversationService', ['addMessage', 'getConversation']);
+    const conversationServiceSpy = jasmine.createSpyObj('ConversationService', [
+      'addMessage',
+      'getConversation',
+      'initializeConversation',
+      'getCurrentThread',
+      'sendMessage',
+      'getCurrentBranchMessages',
+      'getAvailableBranches'
+    ], {
+      currentThread$: of(null),
+      branchNavigation$: of({
+        currentBranchId: 'main',
+        availableBranches: ['main'],
+        branchHistory: [],
+        canNavigateBack: false,
+        canNavigateForward: false
+      }),
+      isProcessing$: of(false)
+    });
+    conversationServiceSpy.getCurrentBranchMessages.and.returnValue([]);
+    conversationServiceSpy.getAvailableBranches.and.returnValue(['main']);
+
     const phaseStateServiceSpy = jasmine.createSpyObj('PhaseStateService', ['updatePhaseData', 'getPhaseData']);
-    const reviewServiceSpy = jasmine.createSpyObj('ReviewService', ['getReviews'], {
-    qualityScore$: of({
-      overall: 85,
-      categories: {
-        plot: 90,
-        character: 80,
-        pacing: 85,
-        dialogue: 88
-      },
-      feedback: 'Good chapter overall'
-    })
-  });
+    const reviewServiceSpy = jasmine.createSpyObj('ReviewService', [
+      'getReviews',
+      'getAvailableReviews',
+      'requestComprehensiveReviews',
+      'addReviewsToChat'
+    ], {
+      qualityScore$: of({
+        overall: 75,
+        categories: {
+          plot: 75,
+          character: 75,
+          pacing: 75,
+          dialogue: 75
+        },
+        feedback: 'Good chapter overall'
+      }),
+      reviewsUpdated$: of(undefined),
+      requestStatus$: of({
+        pendingRequests: [],
+        completedRequests: [],
+        failedRequests: [],
+        totalRequests: 0,
+        completedCount: 0
+      })
+    });
+    // Configure getAvailableReviews to return empty array (not Observable)
+    reviewServiceSpy.getAvailableReviews.and.returnValue([]);
+
     const storyServiceSpy = jasmine.createSpyObj('StoryService', ['saveChapter', 'updateStory']);
     const toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'showSuccess', 'showError', 'showInfo', 'showWarning']);
 
@@ -269,6 +306,9 @@ describe('FinalEditPhaseComponent', () => {
   });
 
   it('should handle review selection changes', () => {
+    component.ngOnInit();
+    fixture.detectChanges();
+
     const selectionEvent = {
       selectedItems: mockReviewItems,
       totalSelected: 2
@@ -291,7 +331,7 @@ describe('FinalEditPhaseComponent', () => {
 
     component.onReviewRequested(requestEvent);
 
-    expect(mockToastService.show).toHaveBeenCalledWith('Requesting comprehensive review...', 'info');
+    expect(mockToastService.showInfo).toHaveBeenCalledWith('Requesting comprehensive review...');
   });
 
   it('should handle add to chat events', () => {
@@ -302,7 +342,7 @@ describe('FinalEditPhaseComponent', () => {
 
     component.onAddToChat(addToChatEvent);
 
-    expect(mockToastService.show).toHaveBeenCalledWith('Added 2 reviews to chat', 'success');
+    expect(mockToastService.showSuccess).toHaveBeenCalledWith('Added 2 reviews to chat');
   });
 
   it('should handle empty review selection for add to chat', () => {
@@ -313,7 +353,7 @@ describe('FinalEditPhaseComponent', () => {
 
     component.onAddToChat(addToChatEvent);
 
-    expect(mockToastService.show).toHaveBeenCalledWith('Please select reviews to add to chat', 'warning');
+    expect(mockToastService.showWarning).toHaveBeenCalledWith('Please select reviews to add to chat');
   });
 
   it('should handle chat message sent', () => {
@@ -339,7 +379,7 @@ describe('FinalEditPhaseComponent', () => {
 
     expect(component.revisions.length).toBe(initialRevisionCount + 1);
     expect(component.appliedReviewIds.size).toBe(2);
-    expect(mockToastService.show).toHaveBeenCalledWith('New revision created', 'success');
+    expect(mockToastService.showSuccess).toHaveBeenCalledWith('New revision created');
   });
 
   it('should toggle revision history', () => {
@@ -354,8 +394,10 @@ describe('FinalEditPhaseComponent', () => {
 
   it('should select revision', () => {
     component.ngOnInit();
+    fixture.detectChanges();
+
     component['createNewRevision']('Test revision');
-    
+
     const newRevisionId = component.revisions[1].id;
     component.selectRevision(newRevisionId);
 
@@ -366,7 +408,7 @@ describe('FinalEditPhaseComponent', () => {
   it('should handle rollback to revision', () => {
     component.ngOnInit();
     component['createNewRevision']('Test revision');
-    
+
     spyOn(window, 'confirm').and.returnValue(true);
     spyOn(component, 'createNewRevision' as any);
 
@@ -374,7 +416,7 @@ describe('FinalEditPhaseComponent', () => {
     component.rollbackToRevision(revisionId);
 
     expect(component['createNewRevision']).toHaveBeenCalledWith('Rolled back to Initial Draft');
-    expect(mockToastService.show).toHaveBeenCalledWith('Rolled back to Initial Draft', 'info');
+    expect(mockToastService.showInfo).toHaveBeenCalledWith('Rolled back to Initial Draft');
   });
 
   it('should not rollback if user cancels', () => {
@@ -492,7 +534,7 @@ describe('FinalEditPhaseComponent', () => {
     component.finalizeChapter();
 
     expect(mockStoryService.saveChapter).toHaveBeenCalled();
-    expect(mockToastService.show).toHaveBeenCalledWith('Chapter finalized successfully!', 'success');
+    expect(mockToastService.showSuccess).toHaveBeenCalledWith('Chapter finalized successfully!');
   });
 
   it('should not finalize chapter if not ready', () => {
@@ -501,7 +543,7 @@ describe('FinalEditPhaseComponent', () => {
     component.finalizeChapter();
 
     expect(mockStoryService.saveChapter).not.toHaveBeenCalled();
-    expect(mockToastService.show).toHaveBeenCalledWith('Chapter is not ready for finalization', 'warning');
+    expect(mockToastService.showWarning).toHaveBeenCalledWith('Chapter is not ready for finalization');
   });
 
   it('should not finalize chapter if user cancels', () => {
@@ -521,7 +563,7 @@ describe('FinalEditPhaseComponent', () => {
 
     component.finalizeChapter();
 
-    expect(mockToastService.show).toHaveBeenCalledWith('Error finalizing chapter', 'error');
+    expect(mockToastService.showError).toHaveBeenCalledWith('Error finalizing chapter');
   });
 
   it('should get progress percentage', () => {

@@ -326,12 +326,17 @@ export class TokenValidationService {
     fields: { text: string; fieldType: SystemPromptFieldType }[],
     config: Partial<TokenValidationConfig> = {}
   ): Observable<TokenValidationResult[]> {
+    // Handle empty array case - combineLatest never emits for empty arrays
+    if (fields.length === 0) {
+      return of([]);
+    }
+
     const validationConfig = { ...DEFAULT_VALIDATION_CONFIG, ...config };
-    
-    const validations = fields.map(field => 
+
+    const validations = fields.map(field =>
       this.validateField(field.text, field.fieldType, validationConfig)
     );
-    
+
     return combineLatest(validations);
   }
 

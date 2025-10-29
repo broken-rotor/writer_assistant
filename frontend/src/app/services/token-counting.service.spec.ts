@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick, flushMicrotasks } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TokenCountingService } from './token-counting.service';
 import {
@@ -135,32 +135,39 @@ describe('TokenCountingService', () => {
       httpMock.expectNone(`${baseUrl}/count`);
     });
 
-    it('should handle API errors gracefully', (done) => {
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // Increase timeout for retry tests
+    it('should handle API errors gracefully', fakeAsync(() => {
+      let errorReceived = false;
 
       service.countTokens('Error text').subscribe({
         next: () => fail('Should have thrown an error'),
         error: (error: TokenCountError) => {
           expect(error.message).toContain('Server error occurred');
           expect(error.code).toBe('SERVER_ERROR');
-          done();
+          errorReceived = true;
         }
       });
 
-      // Handle all retry attempts (initial + 3 retries at 1000ms intervals)
-      const handleRequests = () => {
-        const req = httpMock.expectOne(`${baseUrl}/count`);
-        req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
-      };
+      // Handle all retry attempts by responding to pending requests then advancing time
+      // Service makes 4 total requests (initial + 3 retries)
+      const delays = [1000, 2000, 4000]; // delays between retries
 
-      // Initial request (immediate)
-      handleRequests();
+      for (let i = 0; i < 4; i++) {
+        // Find and respond to the current pending request
+        const pending = httpMock.match(`${baseUrl}/count`);
+        if (pending.length > 0 && !pending[0].cancelled) {
+          pending[0].flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+        }
 
-      // Handle retry attempts at proper intervals (slightly after each 1000ms delay)
-      setTimeout(() => handleRequests(), 1050);
-      setTimeout(() => handleRequests(), 2050);
-      setTimeout(() => handleRequests(), 3050);
-    });
+        // Advance time for the next retry (except after the last one)
+        if (i < 3) {
+          tick(delays[i]);
+          flushMicrotasks();
+        }
+      }
+
+      flushMicrotasks(); // Allow final error to propagate
+      expect(errorReceived).toBe(true);
+    }));
   });
 
   describe('countTokensBatch', () => {
@@ -468,74 +475,98 @@ describe('TokenCountingService', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle network errors', (done) => {
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+    it('should handle network errors', fakeAsync(() => {
+      let errorReceived = false;
 
       service.countTokens('Network error text').subscribe({
         next: () => fail('Should have thrown an error'),
         error: (error: TokenCountError) => {
           expect(error.code).toBe('NETWORK_ERROR');
           expect(error.message).toContain('Network error');
-          done();
+          errorReceived = true;
         }
       });
 
-      const handleRequests = () => {
-        const req = httpMock.expectOne(`${baseUrl}/count`);
-        req.error(new ErrorEvent('Network error'));
-      };
+      // Handle all retry attempts by responding to pending requests then advancing time
+      const delays = [1000, 2000, 4000]; // delays between retries
 
-      handleRequests();
-      setTimeout(() => handleRequests(), 1050);
-      setTimeout(() => handleRequests(), 2050);
-      setTimeout(() => handleRequests(), 3050);
-    });
+      for (let i = 0; i < 4; i++) {
+        const pending = httpMock.match(`${baseUrl}/count`);
+        if (pending.length > 0 && !pending[0].cancelled) {
+          pending[0].error(new ErrorEvent('Network error'));
+        }
 
-    it('should handle validation errors', (done) => {
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+        if (i < 3) {
+          tick(delays[i]);
+          flushMicrotasks();
+        }
+      }
+
+      flushMicrotasks();
+      expect(errorReceived).toBe(true);
+    }));
+
+    it('should handle validation errors', fakeAsync(() => {
+      let errorReceived = false;
 
       service.countTokens('Validation error text').subscribe({
         next: () => fail('Should have thrown an error'),
         error: (error: TokenCountError) => {
           expect(error.code).toBe('VALIDATION_ERROR');
           expect(error.message).toContain('Validation error');
-          done();
+          errorReceived = true;
         }
       });
 
-      const handleRequests = () => {
-        const req = httpMock.expectOne(`${baseUrl}/count`);
-        req.flush('Validation Error', { status: 422, statusText: 'Unprocessable Entity' });
-      };
+      // Handle all retry attempts by responding to pending requests then advancing time
+      const delays = [1000, 2000, 4000]; // delays between retries
 
-      handleRequests();
-      setTimeout(() => handleRequests(), 1050);
-      setTimeout(() => handleRequests(), 2050);
-      setTimeout(() => handleRequests(), 3050);
-    });
+      for (let i = 0; i < 4; i++) {
+        const pending = httpMock.match(`${baseUrl}/count`);
+        if (pending.length > 0 && !pending[0].cancelled) {
+          pending[0].flush('Validation Error', { status: 422, statusText: 'Unprocessable Entity' });
+        }
 
-    it('should handle bad request errors', (done) => {
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+        if (i < 3) {
+          tick(delays[i]);
+          flushMicrotasks();
+        }
+      }
+
+      flushMicrotasks();
+      expect(errorReceived).toBe(true);
+    }));
+
+    it('should handle bad request errors', fakeAsync(() => {
+      let errorReceived = false;
 
       service.countTokens('Bad request text').subscribe({
         next: () => fail('Should have thrown an error'),
         error: (error: TokenCountError) => {
           expect(error.code).toBe('BAD_REQUEST');
           expect(error.message).toContain('Invalid request format');
-          done();
+          errorReceived = true;
         }
       });
 
-      const handleRequests = () => {
-        const req = httpMock.expectOne(`${baseUrl}/count`);
-        req.flush('Bad Request', { status: 400, statusText: 'Bad Request' });
-      };
+      // Handle all retry attempts by responding to pending requests then advancing time
+      const delays = [1000, 2000, 4000]; // delays between retries
 
-      handleRequests();
-      setTimeout(() => handleRequests(), 1050);
-      setTimeout(() => handleRequests(), 2050);
-      setTimeout(() => handleRequests(), 3050);
-    });
+      for (let i = 0; i < 4; i++) {
+        const pending = httpMock.match(`${baseUrl}/count`);
+        if (pending.length > 0 && !pending[0].cancelled) {
+          pending[0].flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+        }
+
+        if (i < 3) {
+          tick(delays[i]);
+          flushMicrotasks();
+        }
+      }
+
+      flushMicrotasks();
+      expect(errorReceived).toBe(true);
+    }));
   });
 
   describe('Batch Processing', () => {

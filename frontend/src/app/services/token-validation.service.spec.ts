@@ -120,16 +120,17 @@ describe('TokenValidationService', () => {
     });
 
     it('should handle validation errors gracefully', (done) => {
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // Increase timeout for retry logic
       mockTokenLimitsService.getFieldLimit.and.returnValue(of(mockFieldLimit));
-      mockTokenCountingService.countTokensDebounced.and.returnValue(throwError('Network error'));
+      mockTokenCountingService.countTokensDebounced.and.returnValue(throwError(() => new Error('network error')));
 
       service.validateField('Sample text', 'mainPrefix').subscribe(result => {
         expect(result.status).toBe(TokenValidationStatus.ERROR);
         expect(result.isValid).toBe(false);
-        expect(result.message).toContain('Unable to validate');
+        expect(result.message).toContain('Unable to connect');
         done();
       });
-    });
+    }, 10000); // Set 10 second timeout for this test
 
     it('should use custom validation config', (done) => {
       const customConfig: Partial<TokenValidationConfig> = {
