@@ -181,10 +181,10 @@
         "technology",
         "politics"
       ],
-      "sync_timestamp": "2025-10-28T21:09:27.485976+00:00",
+      "sync_timestamp": "2025-10-29T09:50:59.133876+00:00",
       "quality_score": 0.5895030303030303
     },
-    "created_at": "2025-10-28T21:09:27.486018+00:00"
+    "created_at": "2025-10-29T09:50:59.133896+00:00"
   },
   {
     "story_id": "test_story_001",
@@ -198,10 +198,10 @@
         "technology",
         "politics"
       ],
-      "sync_timestamp": "2025-10-28T21:20:07.417043+00:00",
+      "sync_timestamp": "2025-10-29T09:54:36.170325+00:00",
       "quality_score": 0.5895030303030303
     },
-    "created_at": "2025-10-28T21:20:07.417098+00:00"
+    "created_at": "2025-10-29T09:54:36.170345+00:00"
   },
   {
     "story_id": "test_story_001",
@@ -215,26 +215,9 @@
         "technology",
         "politics"
       ],
-      "sync_timestamp": "2025-10-28T22:37:23.605724+00:00",
+      "sync_timestamp": "2025-10-29T09:59:47.219509+00:00",
       "quality_score": 0.5895030303030303
     },
-    "created_at": "2025-10-28T22:37:23.605766+00:00"
-  },
-  {
-    "story_id": "test_story_001",
-    "worldbuilding_content": "## Politics\n\nThe Crystal Keepers rule through a council called the Luminous Assembly. They make all major decisions about crystal usage and island positioning\n\n## Magic System\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals\n\n## Technology\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\n\nHow do people travel between the islands? Are there sky ships or magical bridges?",
-    "metadata": {
-      "story_id": "test_story_001",
-      "messages_processed": 5,
-      "content_length": 648,
-      "topics_identified": [
-        "magic_system",
-        "technology",
-        "politics"
-      ],
-      "sync_timestamp": "2025-10-28T22:58:15.253856+00:00",
-      "quality_score": 0.5895030303030303
-    },
-    "created_at": "2025-10-28T22:58:15.253897+00:00"
+    "created_at": "2025-10-29T09:59:47.219529+00:00"
   }
 ]

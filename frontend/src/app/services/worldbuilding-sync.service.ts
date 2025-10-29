@@ -417,7 +417,7 @@ export class WorldbuildingSyncService {
    */
   clearWorldbuildingSync(storyId: string): void {
     try {
-      localStorage.removeItem(`worldbuilding_sync_${storyId}`);
+      this.localStorageService.removeItem(`worldbuilding_sync_${storyId}`);
       this.worldbuildingUpdatedSubject.next('');
     } catch (error) {
       console.error('Failed to clear worldbuilding sync data:', error);

@@ -17,9 +17,9 @@ class TestWorldbuildingIntegration:
     """Integration tests for worldbuilding sync pipeline."""
     
     @pytest.fixture
-    def sync_service(self):
+    def sync_service(self, persistence_service):
         """Create a worldbuilding sync service for testing."""
-        return WorldbuildingSyncService()
+        return WorldbuildingSyncService(persistence=persistence_service)
     
     @pytest.fixture
     def validator(self):

@@ -267,10 +267,10 @@
       "messages_processed": 0,
       "content_length": 16,
       "topics_identified": [],
-      "sync_timestamp": "2025-10-28T21:09:27.560091+00:00",
+      "sync_timestamp": "2025-10-29T09:50:59.204243+00:00",
       "quality_score": 0.0
     },
-    "created_at": "2025-10-28T21:09:27.560105+00:00"
+    "created_at": "2025-10-29T09:50:59.204248+00:00"
   },
   {
     "story_id": "test_story_005",
@@ -280,10 +280,10 @@
       "messages_processed": 1,
       "content_length": 0,
       "topics_identified": [],
-      "sync_timestamp": "2025-10-28T21:09:27.565383+00:00",
+      "sync_timestamp": "2025-10-29T09:50:59.211027+00:00",
       "quality_score": 0.0
     },
-    "created_at": "2025-10-28T21:09:27.565397+00:00"
+    "created_at": "2025-10-29T09:50:59.211030+00:00"
   },
   {
     "story_id": "test_story_005",
@@ -293,10 +293,10 @@
       "messages_processed": 0,
       "content_length": 16,
       "topics_identified": [],
-      "sync_timestamp": "2025-10-28T21:20:07.487684+00:00",
+      "sync_timestamp": "2025-10-29T09:54:36.228690+00:00",
       "quality_score": 0.0
     },
-    "created_at": "2025-10-28T21:20:07.487695+00:00"
+    "created_at": "2025-10-29T09:54:36.228694+00:00"
   },
   {
     "story_id": "test_story_005",
@@ -306,10 +306,10 @@
       "messages_processed": 1,
       "content_length": 0,
       "topics_identified": [],
-      "sync_timestamp": "2025-10-28T21:20:07.492247+00:00",
+      "sync_timestamp": "2025-10-29T09:54:36.235213+00:00",
       "quality_score": 0.0
     },
-    "created_at": "2025-10-28T21:20:07.492259+00:00"
+    "created_at": "2025-10-29T09:54:36.235216+00:00"
   },
   {
     "story_id": "test_story_005",
@@ -319,10 +319,10 @@
       "messages_processed": 0,
       "content_length": 16,
       "topics_identified": [],
-      "sync_timestamp": "2025-10-28T22:37:23.664556+00:00",
+      "sync_timestamp": "2025-10-29T09:59:47.281081+00:00",
       "quality_score": 0.0
     },
-    "created_at": "2025-10-28T22:37:23.664565+00:00"
+    "created_at": "2025-10-29T09:59:47.281085+00:00"
   },
   {
     "story_id": "test_story_005",
@@ -332,35 +332,9 @@
       "messages_processed": 1,
       "content_length": 0,
       "topics_identified": [],
-      "sync_timestamp": "2025-10-28T22:37:23.667891+00:00",
+      "sync_timestamp": "2025-10-29T09:59:47.287433+00:00",
       "quality_score": 0.0
     },
-    "created_at": "2025-10-28T22:37:23.667900+00:00"
-  },
-  {
-    "story_id": "test_story_005",
-    "worldbuilding_content": "Existing content",
-    "metadata": {
-      "story_id": "test_story_005",
-      "messages_processed": 0,
-      "content_length": 16,
-      "topics_identified": [],
-      "sync_timestamp": "2025-10-28T22:58:15.328757+00:00",
-      "quality_score": 0.0
-    },
-    "created_at": "2025-10-28T22:58:15.328766+00:00"
-  },
-  {
-    "story_id": "test_story_005",
-    "worldbuilding_content": "",
-    "metadata": {
-      "story_id": "test_story_005",
-      "messages_processed": 1,
-      "content_length": 0,
-      "topics_identified": [],
-      "sync_timestamp": "2025-10-28T22:58:15.333995+00:00",
-      "quality_score": 0.0
-    },
-    "created_at": "2025-10-28T22:58:15.334005+00:00"
+    "created_at": "2025-10-29T09:59:47.287436+00:00"
   }
 ]

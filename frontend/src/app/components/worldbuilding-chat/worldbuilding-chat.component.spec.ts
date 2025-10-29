@@ -192,10 +192,18 @@ describe('WorldbuildingChatComponent', () => {
       'getCurrentBranchMessages',
       'createBranch',
       'switchToBranch',
-      'clearConversation'
+      'clearConversation',
+      'getAvailableBranches'
     ], {
       currentThread$: new BehaviorSubject<ConversationThread | null>(mockThread),
-      isProcessing$: new BehaviorSubject<boolean>(false)
+      isProcessing$: new BehaviorSubject<boolean>(false),
+      branchNavigation$: new BehaviorSubject<any>({
+        currentBranchId: 'main',
+        availableBranches: ['main'],
+        branchHistory: [],
+        canNavigateBack: false,
+        canNavigateForward: false
+      })
     });
 
     const worldbuildingSyncServiceSpy = jasmine.createSpyObj('WorldbuildingSyncService', [
@@ -204,7 +212,7 @@ describe('WorldbuildingChatComponent', () => {
       'getCurrentWorldbuilding',
       'isSyncInProgress'
     ], {
-      worldbuildingUpdated$: new BehaviorSubject<string>(''),
+      worldbuildingUpdated$: new BehaviorSubject<string>('Initial worldbuilding content'),
       syncInProgress$: new BehaviorSubject<boolean>(false)
     });
 
@@ -221,6 +229,9 @@ describe('WorldbuildingChatComponent', () => {
     }).compileComponents();
 
     mockWorldbuildingSyncService = TestBed.inject(WorldbuildingSyncService) as jasmine.SpyObj<WorldbuildingSyncService>;
+    const conversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
+    conversationService.getCurrentBranchMessages.and.returnValue([]);
+    conversationService.getAvailableBranches.and.returnValue([]);
 
     fixture = TestBed.createComponent(WorldbuildingChatComponent);
     component = fixture.componentInstance;
@@ -272,7 +283,7 @@ describe('WorldbuildingChatComponent', () => {
     });
   });
 
-  it('should handle message sent event', () => {
+  it('should handle message sent event', (done) => {
     component.story = mockStory;
     fixture.detectChanges();
 
@@ -293,10 +304,11 @@ describe('WorldbuildingChatComponent', () => {
     component.onMessageSent(mockMessage);
 
     expect(component.conversationStarted.emit).toHaveBeenCalled();
-    
+
     // Check that sync is called after delay
     setTimeout(() => {
       expect(component['syncWorldbuildingFromConversation']).toHaveBeenCalled();
+      done();
     }, 1100);
   });
 
@@ -314,7 +326,7 @@ describe('WorldbuildingChatComponent', () => {
     expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith(updatedWorldbuilding);
   });
 
-  it('should handle message actions', () => {
+  it('should handle message actions', (done) => {
     component.story = mockStory;
     fixture.detectChanges();
 
@@ -340,10 +352,11 @@ describe('WorldbuildingChatComponent', () => {
     // Check that sync is called after delay for edit actions
     setTimeout(() => {
       expect(component['syncWorldbuildingFromConversation']).toHaveBeenCalled();
+      done();
     }, 600);
   });
 
-  it('should handle branch changes', () => {
+  it('should handle branch changes', (done) => {
     component.story = mockStory;
     fixture.detectChanges();
 
@@ -354,6 +367,7 @@ describe('WorldbuildingChatComponent', () => {
     // Check that sync is called after delay
     setTimeout(() => {
       expect(component['syncWorldbuildingFromConversation']).toHaveBeenCalled();
+      done();
     }, 600);
   });
 
@@ -420,18 +434,13 @@ describe('WorldbuildingChatComponent', () => {
     spyOn(component.errorOccurred, 'emit');
     spyOn(console, 'error');
 
-    // Simulate error in sync service
-    mockWorldbuildingSyncService.syncWorldbuildingFromConversation.and.returnValue(
-      Promise.reject(new Error('Sync failed'))
-    );
+    // Simulate error by throwing in the sync service
+    mockWorldbuildingSyncService.syncWorldbuildingFromConversation.and.throwError('Sync failed');
 
     component.syncWorldbuilding();
 
-    // Wait for promise to reject
-    setTimeout(() => {
-      expect(console.error).toHaveBeenCalled();
-      expect(component.errorOccurred.emit).toHaveBeenCalledWith('Failed to sync worldbuilding data');
-    }, 100);
+    expect(console.error).toHaveBeenCalled();
+    expect(component.errorOccurred.emit).toHaveBeenCalledWith('Failed to sync worldbuilding data');
   });
 
   it('should handle disabled state', () => {
@@ -465,7 +474,13 @@ describe('WorldbuildingChatComponent', () => {
   });
 
   it('should render loading state when not initialized', () => {
+    // Don't call fixture.detectChanges() yet to avoid ngOnInit
+    // Set isInitialized to false before initialization
     component.story = mockStory;
+
+    // Manually detect changes without triggering ngOnInit
+    // by setting isInitialized after first change detection
+    fixture.detectChanges();
     component.isInitialized = false;
     fixture.detectChanges();
 
@@ -505,6 +520,10 @@ describe('WorldbuildingChatComponent', () => {
   it('should render empty state when no worldbuilding content', () => {
     const storyWithoutWorldbuilding = { ...mockStory };
     storyWithoutWorldbuilding.general.worldbuilding = '';
+
+    // Update the mock BehaviorSubject to emit empty string
+    (mockWorldbuildingSyncService.worldbuildingUpdated$ as BehaviorSubject<string>).next('');
+
     component.story = storyWithoutWorldbuilding;
     fixture.detectChanges();
 

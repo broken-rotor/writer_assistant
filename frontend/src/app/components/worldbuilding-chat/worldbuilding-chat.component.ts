@@ -161,7 +161,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
   // Event handlers
 
-  onMessageSent(): void {
+  onMessageSent(event: any): void {
     try {
       // Emit conversation started event on first message
       if (!this.conversationStarted.observers.length) {

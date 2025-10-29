@@ -11,7 +11,8 @@ import {
   shareReplay,
   tap,
   map,
-  finalize
+  finalize,
+  delay
 } from 'rxjs/operators';
 // Note: Using simple hash function for browser compatibility
 // In production, consider using a more robust hashing library

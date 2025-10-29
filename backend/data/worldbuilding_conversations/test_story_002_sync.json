@@ -413,10 +413,10 @@
         "magic_system",
         "technology"
       ],
-      "sync_timestamp": "2025-10-28T21:09:27.502708+00:00",
+      "sync_timestamp": "2025-10-29T09:50:59.148072+00:00",
       "quality_score": 0.6192
     },
-    "created_at": "2025-10-28T21:09:27.502730+00:00"
+    "created_at": "2025-10-29T09:50:59.148084+00:00"
   },
   {
     "story_id": "test_story_002",
@@ -428,10 +428,10 @@
       "topics_identified": [
         "politics"
       ],
-      "sync_timestamp": "2025-10-28T21:09:27.508683+00:00",
+      "sync_timestamp": "2025-10-29T09:50:59.156603+00:00",
       "quality_score": 0.5212
     },
-    "created_at": "2025-10-28T21:09:27.508711+00:00"
+    "created_at": "2025-10-29T09:50:59.156612+00:00"
   },
   {
     "story_id": "test_story_002",
@@ -444,10 +444,10 @@
         "magic_system",
         "technology"
       ],
-      "sync_timestamp": "2025-10-28T21:20:07.430887+00:00",
+      "sync_timestamp": "2025-10-29T09:54:36.184341+00:00",
       "quality_score": 0.6192
     },
-    "created_at": "2025-10-28T21:20:07.430909+00:00"
+    "created_at": "2025-10-29T09:54:36.184349+00:00"
   },
   {
     "story_id": "test_story_002",
@@ -459,10 +459,10 @@
       "topics_identified": [
         "politics"
       ],
-      "sync_timestamp": "2025-10-28T21:20:07.437560+00:00",
+      "sync_timestamp": "2025-10-29T09:54:36.191803+00:00",
       "quality_score": 0.5212
     },
-    "created_at": "2025-10-28T21:20:07.437579+00:00"
+    "created_at": "2025-10-29T09:54:36.191812+00:00"
   },
   {
     "story_id": "test_story_002",
@@ -475,10 +475,10 @@
         "magic_system",
         "technology"
       ],
-      "sync_timestamp": "2025-10-28T22:37:23.616473+00:00",
+      "sync_timestamp": "2025-10-29T09:59:47.233383+00:00",
       "quality_score": 0.6192
     },
-    "created_at": "2025-10-28T22:37:23.616494+00:00"
+    "created_at": "2025-10-29T09:59:47.233392+00:00"
   },
   {
     "story_id": "test_story_002",
@@ -490,40 +490,9 @@
       "topics_identified": [
         "politics"
       ],
-      "sync_timestamp": "2025-10-28T22:37:23.621559+00:00",
+      "sync_timestamp": "2025-10-29T09:59:47.241859+00:00",
       "quality_score": 0.5212
     },
-    "created_at": "2025-10-28T22:37:23.621581+00:00"
-  },
-  {
-    "story_id": "test_story_002",
-    "worldbuilding_content": "## Magic System\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals\n\n## Technology\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\n\nHow do people travel between the islands? Are there sky ships or magical bridges?",
-    "metadata": {
-      "story_id": "test_story_002",
-      "messages_processed": 3,
-      "content_length": 488,
-      "topics_identified": [
-        "magic_system",
-        "technology"
-      ],
-      "sync_timestamp": "2025-10-28T22:58:15.269256+00:00",
-      "quality_score": 0.6192
-    },
-    "created_at": "2025-10-28T22:58:15.269279+00:00"
-  },
-  {
-    "story_id": "test_story_002",
-    "worldbuilding_content": "## Politics\n\nThe Crystal Keepers rule through a council called the Luminous Assembly. They make all major decisions about crystal usage and island positioning\n\nThe main city, Nimbusgarde, is built around the largest crystal formation. The society is divided into three castes: the Crystal Keepers who maintain the magic, the Sky Sailors who handle transportation, and the Cloud Farmers who grow crops in floating gardens\nHow do people travel between the islands? Are there sky ships or magical bridges?\n\nMy world is called Aethermoor. It's a floating island kingdom suspended in the clouds by ancient magic crystals",
-    "metadata": {
-      "story_id": "test_story_002",
-      "messages_processed": 2,
-      "content_length": 615,
-      "topics_identified": [
-        "politics"
-      ],
-      "sync_timestamp": "2025-10-28T22:58:15.276051+00:00",
-      "quality_score": 0.5212
-    },
-    "created_at": "2025-10-28T22:58:15.276067+00:00"
+    "created_at": "2025-10-29T09:59:47.241868+00:00"
   }
 ]

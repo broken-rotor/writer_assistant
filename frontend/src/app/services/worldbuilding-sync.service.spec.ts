@@ -4,12 +4,14 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { WorldbuildingSyncService, WorldbuildingSyncConfig } from './worldbuilding-sync.service';
 import { ConversationService } from './conversation.service';
 import { LocalStorageService } from './local-storage.service';
+import { WorldbuildingValidatorService } from './worldbuilding-validator.service';
 import { ChatMessage } from '../models/story.model';
 
 describe('WorldbuildingSyncService', () => {
   let service: WorldbuildingSyncService;
   let mockConversationService: jasmine.SpyObj<ConversationService>;
   let mockLocalStorageService: jasmine.SpyObj<LocalStorageService>;
+  let mockValidatorService: jasmine.SpyObj<WorldbuildingValidatorService>;
 
   const mockMessages: ChatMessage[] = [
     {
@@ -53,18 +55,31 @@ describe('WorldbuildingSyncService', () => {
       'removeItem'
     ]);
 
+    const validatorServiceSpy = jasmine.createSpyObj('WorldbuildingValidatorService', [
+      'validateContent',
+      'sanitizeContent',
+      'suggestImprovements',
+      'getContentStatistics'
+    ]);
+
+    // Set up default validator returns
+    validatorServiceSpy.validateContent.and.returnValue({ isValid: true, errors: [], warnings: [] });
+    validatorServiceSpy.sanitizeContent.and.callFake((content: string) => content);
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
         WorldbuildingSyncService,
         { provide: ConversationService, useValue: conversationServiceSpy },
-        { provide: LocalStorageService, useValue: localStorageServiceSpy }
+        { provide: LocalStorageService, useValue: localStorageServiceSpy },
+        { provide: WorldbuildingValidatorService, useValue: validatorServiceSpy }
       ]
     });
 
     service = TestBed.inject(WorldbuildingSyncService);
     mockConversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
     mockLocalStorageService = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
+    mockValidatorService = TestBed.inject(WorldbuildingValidatorService) as jasmine.SpyObj<WorldbuildingValidatorService>;
   });
 
   it('should be created', () => {
@@ -82,9 +97,9 @@ describe('WorldbuildingSyncService', () => {
 
     it('should extract worldbuilding from messages', async () => {
       mockConversationService.getCurrentBranchMessages.and.returnValue(mockMessages);
-      
-      const result = await service.syncWorldbuildingFromConversation('story-1', '');
-      
+
+      const result = await service.syncWorldbuildingFromConversation('story-1', '', { enableBackendSync: false });
+
       expect(result).toContain('Tell me about the magic system');
       expect(result).toContain('magic system is based on elemental forces');
       expect(result).toContain('political structure');
@@ -93,19 +108,19 @@ describe('WorldbuildingSyncService', () => {
 
     it('should merge with existing worldbuilding content', async () => {
       mockConversationService.getCurrentBranchMessages.and.returnValue(mockMessages);
-      
+
       const existingContent = 'Existing worldbuilding content';
-      const result = await service.syncWorldbuildingFromConversation('story-1', existingContent);
-      
+      const result = await service.syncWorldbuildingFromConversation('story-1', existingContent, { enableBackendSync: false });
+
       expect(result).toContain(existingContent);
       expect(result).toContain('--- Recent Conversation ---');
     });
 
     it('should store sync data', async () => {
       mockConversationService.getCurrentBranchMessages.and.returnValue(mockMessages);
-      
-      await service.syncWorldbuildingFromConversation('story-1', '');
-      
+
+      await service.syncWorldbuildingFromConversation('story-1', '', { enableBackendSync: false });
+
       expect(mockLocalStorageService.setItem).toHaveBeenCalledWith(
         'worldbuilding_sync_story-1',
         jasmine.objectContaining({
@@ -115,34 +130,36 @@ describe('WorldbuildingSyncService', () => {
       );
     });
 
-    it('should emit worldbuilding update', async () => {
+    it('should emit worldbuilding update', (done) => {
       mockConversationService.getCurrentBranchMessages.and.returnValue(mockMessages);
-      
+
       let emittedValue: string | undefined;
       service.worldbuildingUpdated$.subscribe(value => {
         emittedValue = value;
       });
-      
-      await service.syncWorldbuildingFromConversation('story-1', '');
-      
-      // Wait for debounce
-      setTimeout(() => {
-        expect(emittedValue).toBeDefined();
-        expect(emittedValue).toContain('magic system');
-      }, 2100);
+
+      service.syncWorldbuildingFromConversation('story-1', '', { enableBackendSync: false }).then(() => {
+        // Wait for debounce
+        setTimeout(() => {
+          expect(emittedValue).toBeDefined();
+          expect(emittedValue).toContain('magic system');
+          done();
+        }, 2100);
+      });
     });
 
     it('should handle custom config', async () => {
       mockConversationService.getCurrentBranchMessages.and.returnValue(mockMessages);
-      
+
       const config: Partial<WorldbuildingSyncConfig> = {
         maxSummaryLength: 100,
         includeUserMessages: false,
-        includeAssistantMessages: true
+        includeAssistantMessages: true,
+        enableBackendSync: false
       };
-      
+
       const result = await service.syncWorldbuildingFromConversation('story-1', '', config);
-      
+
       // Should only include assistant messages
       expect(result).not.toContain('Tell me about the magic system');
       expect(result).toContain('magic system is based on elemental forces');
@@ -151,9 +168,9 @@ describe('WorldbuildingSyncService', () => {
 
     it('should handle errors gracefully', async () => {
       mockConversationService.getCurrentBranchMessages.and.throwError('Service error');
-      
+
       await expectAsync(
-        service.syncWorldbuildingFromConversation('story-1', '')
+        service.syncWorldbuildingFromConversation('story-1', '', { enableBackendSync: false })
       ).toBeRejectedWithError('Service error');
     });
   });
