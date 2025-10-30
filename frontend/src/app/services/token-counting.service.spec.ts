@@ -161,11 +161,10 @@ describe('TokenCountingService', () => {
         // Advance time for the next retry (except after the last one)
         if (i < 3) {
           tick(delays[i]);
-          flushMicrotasks();
         }
       }
 
-      tick(); // Allow final error to propagate after all retries exhausted
+      tick(1000); // Allow final error to propagate after all retries exhausted
       flushMicrotasks();
       expect(errorReceived).toBe(true);
     }));
@@ -499,11 +498,10 @@ describe('TokenCountingService', () => {
 
         if (i < 3) {
           tick(delays[i]);
-          flushMicrotasks();
         }
       }
 
-      tick(); // Allow final error to propagate after all retries exhausted
+      tick(1000); // Allow final error to propagate after all retries exhausted
       flushMicrotasks();
       expect(errorReceived).toBe(true);
     }));
@@ -531,11 +529,10 @@ describe('TokenCountingService', () => {
 
         if (i < 3) {
           tick(delays[i]);
-          flushMicrotasks();
         }
       }
 
-      tick(); // Allow final error to propagate after all retries exhausted
+      tick(1000); // Allow final error to propagate after all retries exhausted
       flushMicrotasks();
       expect(errorReceived).toBe(true);
     }));
@@ -563,11 +560,10 @@ describe('TokenCountingService', () => {
 
         if (i < 3) {
           tick(delays[i]);
-          flushMicrotasks();
         }
       }
 
-      tick(); // Allow final error to propagate after all retries exhausted
+      tick(1000); // Allow final error to propagate after all retries exhausted
       flushMicrotasks();
       expect(errorReceived).toBe(true);
     }));

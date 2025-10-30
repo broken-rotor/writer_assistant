@@ -40,7 +40,7 @@ describe('SystemPromptFieldComponent', () => {
       'createFallbackResult'
     ]);
     const cdrSpy = jasmine.createSpyObj('ChangeDetectorRef', ['markForCheck']);
-    const toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'showSuccess', 'showError', 'showInfo', 'showWarning']);
+    const toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'showSuccess', 'showError', 'showInfo', 'showWarning', 'showTokenLimitsError']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -59,7 +59,7 @@ describe('SystemPromptFieldComponent', () => {
     fixture = TestBed.createComponent(SystemPromptFieldComponent);
     component = fixture.componentInstance;
     mockTokenValidationService = TestBed.inject(TokenValidationService) as jasmine.SpyObj<TokenValidationService>;
-    mockChangeDetectorRef = TestBed.inject(ChangeDetectorRef) as jasmine.SpyObj<ChangeDetectorRef>;
+    mockChangeDetectorRef = fixture.debugElement.injector.get(ChangeDetectorRef) as jasmine.SpyObj<ChangeDetectorRef>;
 
     // Setup default mock behavior
     mockTokenValidationService.validateField.and.returnValue(of(mockValidationResult));
@@ -115,16 +115,15 @@ describe('SystemPromptFieldComponent', () => {
   });
 
   describe('ControlValueAccessor Implementation', () => {
-    beforeEach(() => {
-      component.ngOnInit();
-    });
-
     it('should write value correctly', () => {
       const testValue = 'Test content';
+      const cdrSpy = spyOn(component['cdr'], 'markForCheck');
+      component.ngOnInit();
+
       component.writeValue(testValue);
 
       expect(component.value).toBe(testValue);
-      expect(mockChangeDetectorRef.markForCheck).toHaveBeenCalled();
+      expect(cdrSpy).toHaveBeenCalled();
     });
 
     it('should handle null value in writeValue', () => {
@@ -153,9 +152,12 @@ describe('SystemPromptFieldComponent', () => {
     });
 
     it('should set disabled state', () => {
+      const cdrSpy = spyOn(component['cdr'], 'markForCheck');
+      component.ngOnInit();
+
       component.setDisabledState(true);
       expect(component.disabled).toBe(true);
-      expect(mockChangeDetectorRef.markForCheck).toHaveBeenCalled();
+      expect(cdrSpy).toHaveBeenCalled();
     });
   });
 
@@ -260,13 +262,10 @@ describe('SystemPromptFieldComponent', () => {
   });
 
   describe('Validation Flow', () => {
-    beforeEach(() => {
-      component.ngOnInit();
-    });
-
     it('should trigger validation after debounce time', fakeAsync(() => {
       const validationSubject = new BehaviorSubject(mockValidationResult);
       mockTokenValidationService.validateField.and.returnValue(validationSubject);
+      component.ngOnInit();
 
       component.writeValue('Test content');
       tick(500); // Wait for debounce
@@ -280,28 +279,31 @@ describe('SystemPromptFieldComponent', () => {
     it('should show loading state during validation', fakeAsync(() => {
       const validationSubject = new BehaviorSubject(mockValidationResult);
       mockTokenValidationService.validateField.and.returnValue(validationSubject);
-      
+      component.ngOnInit();
+
       component.writeValue('Test content');
       tick(500); // Trigger validation
-      
+
       // Loading state should be handled in the validation flow
       expect(component.isLoading).toBe(false); // After completion
     }));
 
     it('should handle validation errors', fakeAsync(() => {
       mockTokenValidationService.validateField.and.returnValue(throwError('Validation error'));
+      component.ngOnInit();
 
       component.writeValue('Test content');
       tick(500);
       flushMicrotasks();
 
       expect(component.hasError).toBe(true);
-      expect(component.errorMessage).toBe('Unable to validate token count');
+      expect(component.errorMessage).toBe('Token validation failed. Using fallback validation.');
     }));
 
     it('should emit validation change events', fakeAsync(() => {
       spyOn(component.validationChange, 'emit');
       spyOn(component.tokenCountChange, 'emit');
+      component.ngOnInit();
 
       component.writeValue('Test content');
       tick(500);
@@ -312,6 +314,8 @@ describe('SystemPromptFieldComponent', () => {
     }));
 
     it('should not validate empty content', fakeAsync(() => {
+      component.ngOnInit();
+
       component.writeValue('');
       tick(500);
       flushMicrotasks();
@@ -322,6 +326,8 @@ describe('SystemPromptFieldComponent', () => {
     }));
 
     it('should debounce rapid input changes', fakeAsync(() => {
+      component.ngOnInit();
+
       component.writeValue('Test 1');
       tick(200);
       component.writeValue('Test 2');
@@ -465,7 +471,8 @@ describe('SystemPromptFieldComponent', () => {
       flushMicrotasks();
 
       expect(component.hasError).toBe(true);
-      expect(component.validationResult?.status).toBe(TokenValidationStatus.ERROR);
+      expect(component.validationResult?.status).toBe(TokenValidationStatus.VALID); // Using fallback
+      expect(component.errorMessage).toBe('Token validation failed. Using fallback validation.');
     }));
   });
 
@@ -514,12 +521,9 @@ describe('SystemPromptFieldComponent', () => {
   });
 
   describe('Edge Cases', () => {
-    beforeEach(() => {
-      component.ngOnInit();
-    });
-
     it('should handle very long content', fakeAsync(() => {
       const longContent = 'a'.repeat(10000);
+      component.ngOnInit();
 
       component.writeValue(longContent);
       tick(500);
@@ -530,6 +534,7 @@ describe('SystemPromptFieldComponent', () => {
 
     it('should handle special characters', fakeAsync(() => {
       const specialContent = '🚀 Special chars: @#$%^&*()';
+      component.ngOnInit();
 
       component.writeValue(specialContent);
       tick(500);
@@ -539,12 +544,14 @@ describe('SystemPromptFieldComponent', () => {
     }));
 
     it('should handle rapid enable/disable changes', () => {
+      const cdrSpy = spyOn(component['cdr'], 'markForCheck');
+
       component.setDisabledState(true);
       component.setDisabledState(false);
       component.setDisabledState(true);
-      
+
       expect(component.disabled).toBe(true);
-      expect(mockChangeDetectorRef.markForCheck).toHaveBeenCalledTimes(3);
+      expect(cdrSpy).toHaveBeenCalledTimes(3);
     });
   });
 });

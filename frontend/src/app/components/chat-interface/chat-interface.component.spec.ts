@@ -224,7 +224,7 @@ describe('ChatInterfaceComponent', () => {
   it('should disable send button when processing', () => {
     component.ngOnInit();
     component.messageText = 'Test message';
-    component.isProcessing = true;
+    (conversationService.isProcessing$ as BehaviorSubject<boolean>).next(true);
     fixture.detectChanges();
 
     const sendButton = fixture.debugElement.query(By.css('.send-button'));
