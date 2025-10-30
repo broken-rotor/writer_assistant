@@ -217,7 +217,8 @@ describe('FinalEditPhaseComponent', () => {
       'getReviews',
       'getAvailableReviews',
       'requestComprehensiveReviews',
-      'addReviewsToChat'
+      'addReviewsToChat',
+      'calculateQualityScore'
     ], {
       qualityScore$: of({
         overall: 75,
@@ -227,6 +228,7 @@ describe('FinalEditPhaseComponent', () => {
           pacing: 75,
           dialogue: 75
         },
+        improvements: [],
         feedback: 'Good chapter overall'
       }),
       reviewsUpdated$: of(undefined),
@@ -240,6 +242,17 @@ describe('FinalEditPhaseComponent', () => {
     });
     // Configure getAvailableReviews to return empty array (not Observable)
     reviewServiceSpy.getAvailableReviews.and.returnValue([]);
+    reviewServiceSpy.calculateQualityScore.and.returnValue({
+      overall: 75,
+      categories: {
+        plot: 75,
+        character: 75,
+        pacing: 75,
+        dialogue: 75
+      },
+      improvements: [],
+      feedback: 'Good chapter overall'
+    });
 
     const storyServiceSpy = jasmine.createSpyObj('StoryService', ['saveChapter', 'updateStory']);
     const toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'showSuccess', 'showError', 'showInfo', 'showWarning']);

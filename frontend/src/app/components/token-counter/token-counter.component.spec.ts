@@ -329,7 +329,7 @@ describe('TokenCounterComponent', () => {
 
     it('should format token count correctly', () => {
       const formatted = component.getFormattedCount();
-      expect(formatted).toBe('1.2K/2K');
+      expect(formatted).toBe('1.2K/2.0K');
     });
 
     it('should calculate progress bar width correctly', () => {

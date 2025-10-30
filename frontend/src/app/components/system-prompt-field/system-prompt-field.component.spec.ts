@@ -1,13 +1,14 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flushMicrotasks } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import { SystemPromptFieldComponent } from './system-prompt-field.component';
 import { TokenValidationService } from '../../services/token-validation.service';
+import { ToastService } from '../../services/toast.service';
 import { TokenCounterComponent } from '../token-counter/token-counter.component';
-import { 
-  TokenValidationResult, 
-  TokenValidationStatus 
+import {
+  TokenValidationResult,
+  TokenValidationStatus
 } from '../../models/token-validation.model';
 import { SystemPromptFieldType } from '../../services/token-limits.service';
 
@@ -39,6 +40,7 @@ describe('SystemPromptFieldComponent', () => {
       'createFallbackResult'
     ]);
     const cdrSpy = jasmine.createSpyObj('ChangeDetectorRef', ['markForCheck']);
+    const toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'showSuccess', 'showError', 'showInfo', 'showWarning']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -49,7 +51,8 @@ describe('SystemPromptFieldComponent', () => {
       ],
       providers: [
         { provide: TokenValidationService, useValue: validationServiceSpy },
-        { provide: ChangeDetectorRef, useValue: cdrSpy }
+        { provide: ChangeDetectorRef, useValue: cdrSpy },
+        { provide: ToastService, useValue: toastServiceSpy }
       ]
     }).compileComponents();
 
@@ -264,10 +267,11 @@ describe('SystemPromptFieldComponent', () => {
     it('should trigger validation after debounce time', fakeAsync(() => {
       const validationSubject = new BehaviorSubject(mockValidationResult);
       mockTokenValidationService.validateField.and.returnValue(validationSubject);
-      
+
       component.writeValue('Test content');
       tick(500); // Wait for debounce
-      
+      flushMicrotasks(); // Ensure all async operations complete
+
       expect(mockTokenValidationService.validateField).toHaveBeenCalledWith('Test content', 'mainPrefix');
       expect(component.validationResult).toEqual(mockValidationResult);
       expect(component.isLoading).toBe(false);
@@ -286,10 +290,11 @@ describe('SystemPromptFieldComponent', () => {
 
     it('should handle validation errors', fakeAsync(() => {
       mockTokenValidationService.validateField.and.returnValue(throwError('Validation error'));
-      
+
       component.writeValue('Test content');
       tick(500);
-      
+      flushMicrotasks();
+
       expect(component.hasError).toBe(true);
       expect(component.errorMessage).toBe('Unable to validate token count');
     }));
@@ -297,10 +302,11 @@ describe('SystemPromptFieldComponent', () => {
     it('should emit validation change events', fakeAsync(() => {
       spyOn(component.validationChange, 'emit');
       spyOn(component.tokenCountChange, 'emit');
-      
+
       component.writeValue('Test content');
       tick(500);
-      
+      flushMicrotasks();
+
       expect(component.validationChange.emit).toHaveBeenCalledWith(mockValidationResult);
       expect(component.tokenCountChange.emit).toHaveBeenCalledWith(100);
     }));
@@ -308,7 +314,8 @@ describe('SystemPromptFieldComponent', () => {
     it('should not validate empty content', fakeAsync(() => {
       component.writeValue('');
       tick(500);
-      
+      flushMicrotasks();
+
       expect(mockTokenValidationService.validateField).not.toHaveBeenCalled();
       expect(component.validationResult?.status).toBe(TokenValidationStatus.VALID);
       expect(component.validationResult?.currentTokens).toBe(0);
@@ -321,7 +328,8 @@ describe('SystemPromptFieldComponent', () => {
       tick(200);
       component.writeValue('Test 3');
       tick(500);
-      
+      flushMicrotasks();
+
       expect(mockTokenValidationService.validateField).toHaveBeenCalledTimes(1);
       expect(mockTokenValidationService.validateField).toHaveBeenCalledWith('Test 3', 'mainPrefix');
     }));
@@ -451,10 +459,11 @@ describe('SystemPromptFieldComponent', () => {
     it('should handle validation service errors gracefully', fakeAsync(() => {
       component.ngOnInit();
       mockTokenValidationService.validateField.and.returnValue(throwError('Service error'));
-      
+
       component.writeValue('Test content');
       tick(500);
-      
+      flushMicrotasks();
+
       expect(component.hasError).toBe(true);
       expect(component.validationResult?.status).toBe(TokenValidationStatus.ERROR);
     }));
@@ -514,16 +523,18 @@ describe('SystemPromptFieldComponent', () => {
 
       component.writeValue(longContent);
       tick(500);
+      flushMicrotasks();
 
       expect(mockTokenValidationService.validateField).toHaveBeenCalledWith(longContent, 'mainPrefix');
     }));
 
     it('should handle special characters', fakeAsync(() => {
       const specialContent = '🚀 Special chars: @#$%^&*()';
-      
+
       component.writeValue(specialContent);
       tick(500);
-      
+      flushMicrotasks();
+
       expect(mockTokenValidationService.validateField).toHaveBeenCalledWith(specialContent, 'mainPrefix');
     }));
 
