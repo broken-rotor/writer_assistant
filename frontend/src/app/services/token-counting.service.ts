@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, throwError, EMPTY } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, throwError, EMPTY, of } from 'rxjs';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -12,7 +12,8 @@ import {
   tap,
   map,
   finalize,
-  delay
+  delay,
+  scan
 } from 'rxjs/operators';
 // Note: Using simple hash function for browser compatibility
 // In production, consider using a more robust hashing library
@@ -298,8 +299,14 @@ export class TokenCountingService {
       }),
       retryWhen(errors =>
         errors.pipe(
-          tap(error => console.log('🔄 TokenCountingService: Retrying after error', error)),
-          take(this.config.maxRetries),
+          scan((retryCount, error) => {
+            retryCount++;
+            if (retryCount > this.config.maxRetries) {
+              throw error;
+            }
+            console.log('🔄 TokenCountingService: Retrying after error', error);
+            return retryCount;
+          }, 0),
           delay(this.config.retryDelayMs)
         )
       ),
@@ -310,8 +317,7 @@ export class TokenCountingService {
       finalize(() => {
         console.log('🏁 TokenCountingService: Request completed, updating loading state to false');
         this.updateLoadingState(false);
-      }),
-      shareReplay(1)
+      })
     );
   }
 
@@ -322,7 +328,11 @@ export class TokenCountingService {
     let errorMessage = 'An error occurred while counting tokens';
     let errorCode = 'UNKNOWN_ERROR';
 
-    if (error.error instanceof ErrorEvent) {
+    // Check status first, as network errors (status 0) can also have ErrorEvent
+    if (error.status === 0) {
+      errorMessage = 'Network error - please check your connection';
+      errorCode = 'NETWORK_ERROR';
+    } else if (error.error instanceof ErrorEvent) {
       // Client-side error
       errorMessage = `Client error: ${error.error.message}`;
       errorCode = 'CLIENT_ERROR';
@@ -340,10 +350,6 @@ export class TokenCountingService {
         case 500:
           errorMessage = 'Server error occurred';
           errorCode = 'SERVER_ERROR';
-          break;
-        case 0:
-          errorMessage = 'Network error - please check your connection';
-          errorCode = 'NETWORK_ERROR';
           break;
         default:
           errorMessage = `Server returned error code: ${error.status}`;
