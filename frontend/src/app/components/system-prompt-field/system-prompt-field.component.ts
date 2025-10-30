@@ -1,13 +1,14 @@
-import { 
-  Component, 
-  Input, 
-  Output, 
-  EventEmitter, 
-  OnInit, 
-  OnDestroy, 
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnDestroy,
   forwardRef,
   ChangeDetectionStrategy,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  inject
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -112,11 +113,10 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
   public readonly ValidationUtils = TokenValidationUtils;
   public readonly DisplayMode = TokenCounterDisplayMode;
 
-  constructor(
-    private tokenValidationService: TokenValidationService,
-    private toastService: ToastService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  // Dependency injection
+  private tokenValidationService = inject(TokenValidationService);
+  private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
     console.log('🔧 SystemPromptField ngOnInit:', { 

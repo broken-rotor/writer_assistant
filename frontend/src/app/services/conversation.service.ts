@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -54,11 +54,9 @@ export class ConversationService {
   private config: ConversationConfig | null = null;
   private storageKey = '';
 
-  constructor(
-    private localStorageService: LocalStorageService,
-    private phaseStateService: PhaseStateService,
-    private apiService: ApiService
-  ) {}
+  private localStorageService = inject(LocalStorageService);
+  private phaseStateService = inject(PhaseStateService);
+  private apiService = inject(ApiService);
 
   /**
    * Initialize conversation for a specific phase and story

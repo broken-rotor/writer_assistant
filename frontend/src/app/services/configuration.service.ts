@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { LocalStorageService } from './local-storage.service';
 
@@ -99,7 +99,9 @@ export class ConfigurationService {
   private defaultConfigSubject = new BehaviorSubject<StoryConfiguration>(this.getDefaultConfiguration());
   public defaultConfig$ = this.defaultConfigSubject.asObservable();
 
-  constructor(private localStorageService: LocalStorageService) {
+  private localStorageService = inject(LocalStorageService);
+
+  constructor() {
     this.loadDefaultConfiguration();
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -97,19 +97,18 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private route: ActivatedRoute,
-    private storyService: StoryService,
-    private generationService: GenerationService,
-    public loadingService: LoadingService,
-    private cdr: ChangeDetectorRef,
-    private archiveService: ArchiveService,
-    private tokenLimitsService: TokenLimitsService,
-    private tokenValidationService: TokenValidationService,
-    private toastService: ToastService,
-    private phaseStateService: PhaseStateService,
-    private feedbackService: FeedbackService
-  ) {}
+  // Dependency injection
+  private route = inject(ActivatedRoute);
+  private storyService = inject(StoryService);
+  private generationService = inject(GenerationService);
+  public loadingService = inject(LoadingService);
+  private cdr = inject(ChangeDetectorRef);
+  private archiveService = inject(ArchiveService);
+  private tokenLimitsService = inject(TokenLimitsService);
+  private tokenValidationService = inject(TokenValidationService);
+  private toastService = inject(ToastService);
+  private phaseStateService = inject(PhaseStateService);
+  private feedbackService = inject(FeedbackService);
 
   ngOnInit() {
     this.route.params

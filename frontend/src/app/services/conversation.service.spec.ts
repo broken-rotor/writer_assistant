@@ -119,8 +119,18 @@ describe('ConversationService', () => {
     });
 
     it('should throw error when conversation not initialized', () => {
-      const uninitializedService = new ConversationService(localStorageService, phaseStateService, apiService);
-      
+      // Reset and create a completely fresh TestBed with a new service instance
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          ConversationService,
+          { provide: LocalStorageService, useValue: localStorageService },
+          { provide: PhaseStateService, useValue: phaseStateService },
+          { provide: ApiService, useValue: apiService }
+        ]
+      });
+      const uninitializedService = TestBed.inject(ConversationService);
+
       expect(() => {
         uninitializedService.sendMessage('test', 'user');
       }).toThrowError('Conversation not initialized');
@@ -150,8 +160,18 @@ describe('ConversationService', () => {
     });
 
     it('should throw error when no active conversation thread', () => {
-      const uninitializedService = new ConversationService(localStorageService, phaseStateService, apiService);
-      
+      // Reset and create a completely fresh TestBed with a new service instance
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          ConversationService,
+          { provide: LocalStorageService, useValue: localStorageService },
+          { provide: PhaseStateService, useValue: phaseStateService },
+          { provide: ApiService, useValue: apiService }
+        ]
+      });
+      const uninitializedService = TestBed.inject(ConversationService);
+
       expect(() => {
         uninitializedService.createBranch('Test Branch');
       }).toThrowError('No active conversation thread');
@@ -236,7 +256,17 @@ describe('ConversationService', () => {
     });
 
     it('should return zero stats when no conversation', () => {
-      const uninitializedService = new ConversationService(localStorageService, phaseStateService, apiService);
+      // Reset and create a completely fresh TestBed with a new service instance
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          ConversationService,
+          { provide: LocalStorageService, useValue: localStorageService },
+          { provide: PhaseStateService, useValue: phaseStateService },
+          { provide: ApiService, useValue: apiService }
+        ]
+      });
+      const uninitializedService = TestBed.inject(ConversationService);
       const stats = uninitializedService.getConversationStats();
 
       expect(stats.totalMessages).toBe(0);
@@ -344,7 +374,17 @@ describe('ConversationService', () => {
     });
 
     it('should return null when no conversation', () => {
-      const uninitializedService = new ConversationService(localStorageService, phaseStateService, apiService);
+      // Reset and create a completely fresh TestBed with a new service instance
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          ConversationService,
+          { provide: LocalStorageService, useValue: localStorageService },
+          { provide: PhaseStateService, useValue: phaseStateService },
+          { provide: ApiService, useValue: apiService }
+        ]
+      });
+      const uninitializedService = TestBed.inject(ConversationService);
       const exportData = uninitializedService.exportConversation();
 
       expect(exportData).toBeNull();

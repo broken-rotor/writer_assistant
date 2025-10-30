@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, combineLatest, of, timer, throwError } from 'rxjs';
 import { map, catchError, retryWhen, mergeMap } from 'rxjs/operators';
 import { TokenLimitsService, SystemPromptFieldType, FieldTokenLimit } from './token-limits.service';
@@ -56,11 +56,9 @@ export const DEFAULT_VALIDATION_THRESHOLDS: TokenValidationThresholds = {
   providedIn: 'root'
 })
 export class TokenValidationService {
-  
-  constructor(
-    private tokenLimitsService: TokenLimitsService,
-    private tokenCountingService: TokenCountingService
-  ) {}
+
+  private tokenLimitsService = inject(TokenLimitsService);
+  private tokenCountingService = inject(TokenCountingService);
 
   /**
    * Validate token count against limits with configurable thresholds

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { GenerationService } from './generation.service';
@@ -9,10 +9,8 @@ import { Story, PlotOutlineFeedback, Rater } from '../models/story.model';
   providedIn: 'root'
 })
 export class PlotOutlineService {
-  constructor(
-    private generationService: GenerationService,
-    private storyService: StoryService
-  ) {}
+  private generationService = inject(GenerationService);
+  private storyService = inject(StoryService);
 
   requestPlotOutlineFeedback(
     storyId: string, 

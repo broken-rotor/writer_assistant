@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Story, ChatMessage, Rater } from '../../models/story.model';
@@ -37,12 +37,11 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   generatingFeedback = new Set<string>();
   feedbackError: string | null = null;
 
-  constructor(
-    private generationService: GenerationService,
-    private loadingService: LoadingService,
-    private toastService: ToastService,
-    private plotOutlineService: PlotOutlineService
-  ) {}
+  // Dependency injection
+  private generationService = inject(GenerationService);
+  private loadingService = inject(LoadingService);
+  private toastService = inject(ToastService);
+  private plotOutlineService = inject(PlotOutlineService);
 
   ngOnInit(): void {
     // Initialize component

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, BehaviorSubject, of, timer, throwError } from 'rxjs';
 import { map, catchError, retryWhen, mergeMap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -82,7 +82,9 @@ export class TokenLimitsService {
   // Use fallback limits from constants
   private readonly defaultLimits: RecommendedLimits = FALLBACK_FIELD_LIMITS;
 
-  constructor(private http: HttpClient) {
+  private http = inject(HttpClient);
+
+  constructor() {
     this.loadTokenLimits();
   }
 

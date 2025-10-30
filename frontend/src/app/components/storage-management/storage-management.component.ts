@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -28,10 +28,9 @@ export class StorageManagementComponent implements OnInit, OnDestroy {
   isImporting = false;
   importResult: { success: number; errors: string[] } | null = null;
 
-  constructor(
-    private localStorageService: LocalStorageService,
-    private storyService: StoryService
-  ) {}
+  // Dependency injection
+  private localStorageService = inject(LocalStorageService);
+  private storyService = inject(StoryService);
 
   ngOnInit(): void {
     // Subscribe to storage updates

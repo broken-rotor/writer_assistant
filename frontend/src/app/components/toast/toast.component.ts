@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable, Subject } from 'rxjs';
 import { ToastService, ToastMessage, ToastType } from '../../services/toast.service';
@@ -21,7 +21,10 @@ export class ToastComponent implements OnInit, OnDestroy {
   // Expose enum to template
   readonly ToastType = ToastType;
 
-  constructor(private toastService: ToastService) {
+  // Dependency injection
+  private toastService = inject(ToastService);
+
+  constructor() {
     this.toasts$ = this.toastService.getToasts();
   }
 

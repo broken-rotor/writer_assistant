@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, throwError, EMPTY, of } from 'rxjs';
 import {
@@ -74,12 +74,12 @@ export class TokenCountingService {
     observer: any;
     timestamp: number;
   }[] = [];
-  
+
   private batchTimer?: any;
 
-  constructor(
-    private http: HttpClient
-  ) {
+  private http = inject(HttpClient);
+
+  constructor() {
     this.config = { ...DEFAULT_TOKEN_COUNTING_CONFIG };
     this.setupDebouncedCounting();
   }

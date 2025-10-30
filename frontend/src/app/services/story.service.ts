@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { Story, StoryListItem, Character, Rater, Chapter } from '../models/story.model';
 import { LocalStorageService } from './local-storage.service';
@@ -10,7 +10,9 @@ export class StoryService {
   private currentStorySubject = new BehaviorSubject<Story | null>(null);
   public currentStory$ = this.currentStorySubject.asObservable();
 
-  constructor(private localStorageService: LocalStorageService) {
+  private localStorageService = inject(LocalStorageService);
+
+  constructor() {
     // Subscribe to story list changes
     this.localStorageService.getStoryList().subscribe(list => {
       // Handle list updates if needed

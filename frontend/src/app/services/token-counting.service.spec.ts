@@ -38,10 +38,8 @@ describe('TokenCountingService', () => {
       expect(loadingState).toBeDefined();
     });
 
-    it('should accept custom configuration', () => {
-      const customService = new TokenCountingService(
-        TestBed.inject(HttpClientTestingModule) as any
-      );
+    it('should be injectable via TestBed', () => {
+      const customService = TestBed.inject(TokenCountingService);
       expect(customService).toBeTruthy();
     });
   });

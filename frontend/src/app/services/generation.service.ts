@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
@@ -33,7 +33,7 @@ import {
   providedIn: 'root'
 })
 export class GenerationService {
-  constructor(private apiService: ApiService) {}
+  private apiService = inject(ApiService);
 
   // Character Feedback
   requestCharacterFeedback(

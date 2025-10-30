@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -36,7 +36,7 @@ import { TokenStrategiesResponse } from '../models/token-limits.model';
 export class ApiService {
   private readonly baseUrl = 'http://localhost:8000/api/v1';
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   // Character Feedback
   requestCharacterFeedback(request: CharacterFeedbackRequest): Observable<CharacterFeedbackResponse> {

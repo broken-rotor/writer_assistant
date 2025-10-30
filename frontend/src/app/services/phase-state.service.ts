@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -41,10 +41,8 @@ export class PhaseStateService {
   public chapterComposeState$ = this.chapterComposeStateSubject.asObservable();
   public validationResult$ = this.validationResultSubject.asObservable();
 
-  constructor(
-    private localStorageService: LocalStorageService,
-    private apiService: ApiService
-  ) {}
+  private localStorageService = inject(LocalStorageService);
+  private apiService = inject(ApiService);
 
   /**
    * Initialize chapter compose state for a story
