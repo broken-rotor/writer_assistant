@@ -111,12 +111,12 @@
             <!-- Item Content (Edit Mode) -->
             <div class="item-edit-form" *ngIf="item.isEditing">
               <div class="edit-field">
-                <label>Title:</label>
-                <input type="text" [(ngModel)]="editingTitle" class="edit-title-input">
+                <label for="edit-title-input">Title:</label>
+                <input type="text" id="edit-title-input" [(ngModel)]="editingTitle" class="edit-title-input">
               </div>
               <div class="edit-field">
-                <label>Description:</label>
-                <textarea [(ngModel)]="editingDescription" rows="3" class="edit-description-input"></textarea>
+                <label for="edit-description-input">Description:</label>
+                <textarea id="edit-description-input" [(ngModel)]="editingDescription" rows="3" class="edit-description-input"></textarea>
               </div>
               <div class="edit-actions">
                 <button class="primary-button small" (click)="saveItemEdit()">Save</button>
