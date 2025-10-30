@@ -396,15 +396,16 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
       expect(component.focusedPanel).toBe('chat');
     });
 
-    it('should manage focus when switching panels in mobile view', () => {
+    it('should manage focus when switching panels in mobile view', (done) => {
       component.isMobileView = true;
       const chatPanel = fixture.debugElement.query(By.css('.chat-panel'));
       spyOn(chatPanel.nativeElement, 'focus');
-      
+
       component.switchToPanel('chat');
-      
+
       setTimeout(() => {
         expect(chatPanel.nativeElement.focus).toHaveBeenCalled();
+        done();
       }, 150);
     });
   });

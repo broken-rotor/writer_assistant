@@ -112,10 +112,14 @@ describe('SystemPromptFieldComponent', () => {
   });
 
   describe('ControlValueAccessor Implementation', () => {
+    beforeEach(() => {
+      component.ngOnInit();
+    });
+
     it('should write value correctly', () => {
       const testValue = 'Test content';
       component.writeValue(testValue);
-      
+
       expect(component.value).toBe(testValue);
       expect(mockChangeDetectorRef.markForCheck).toHaveBeenCalled();
     });
@@ -501,12 +505,16 @@ describe('SystemPromptFieldComponent', () => {
   });
 
   describe('Edge Cases', () => {
+    beforeEach(() => {
+      component.ngOnInit();
+    });
+
     it('should handle very long content', fakeAsync(() => {
       const longContent = 'a'.repeat(10000);
-      
+
       component.writeValue(longContent);
       tick(500);
-      
+
       expect(mockTokenValidationService.validateField).toHaveBeenCalledWith(longContent, 'mainPrefix');
     }));
 

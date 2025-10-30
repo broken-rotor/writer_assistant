@@ -165,7 +165,8 @@ describe('TokenCountingService', () => {
         }
       }
 
-      flushMicrotasks(); // Allow final error to propagate
+      tick(); // Allow final error to propagate after all retries exhausted
+      flushMicrotasks();
       expect(errorReceived).toBe(true);
     }));
   });

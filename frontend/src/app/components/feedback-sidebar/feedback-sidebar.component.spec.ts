@@ -359,7 +359,7 @@ describe('FeedbackSidebarComponent', () => {
     const incorporatedItem: EnhancedFeedbackItem = { ...mockFeedbackItems[0], status: 'incorporated' };
     const dismissedItem: EnhancedFeedbackItem = { ...mockFeedbackItems[0], status: 'dismissed' };
 
-    expect(component.getFeedbackStatusIcon(pendingItem)).toBe('📝');
+    expect(component.getFeedbackStatusIcon(pendingItem)).toBe('⏳');
     expect(component.getFeedbackStatusIcon(incorporatedItem)).toBe('✅');
     expect(component.getFeedbackStatusIcon(dismissedItem)).toBe('❌');
   });

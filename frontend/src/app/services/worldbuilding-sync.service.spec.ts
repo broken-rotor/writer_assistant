@@ -251,8 +251,10 @@ describe('WorldbuildingSyncService', () => {
 
   describe('storage operations', () => {
     it('should store worldbuilding sync data', () => {
+      mockConversationService.getCurrentBranchMessages.and.returnValue(mockMessages);
+
       service['storeWorldbuildingSync']('story-1', 'worldbuilding content');
-      
+
       expect(mockLocalStorageService.setItem).toHaveBeenCalledWith(
         'worldbuilding_sync_story-1',
         jasmine.objectContaining({
