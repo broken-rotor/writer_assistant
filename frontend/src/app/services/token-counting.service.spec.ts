@@ -147,25 +147,25 @@ describe('TokenCountingService', () => {
         }
       });
 
-      // Handle all retry attempts by responding to pending requests then advancing time
-      // Service makes 4 total requests (initial + 3 retries)
-      const delays = [1000, 2000, 4000]; // delays between retries
-
+      // Respond to initial request and all retries
+      // The service will make 4 attempts total (initial + 3 retries)
       for (let i = 0; i < 4; i++) {
-        // Find and respond to the current pending request
-        const pending = httpMock.match(`${baseUrl}/count`);
-        if (pending.length > 0 && !pending[0].cancelled) {
-          pending[0].flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+        if (i > 0) {
+          tick(1000); // Advance time for retry delay
         }
-
-        // Advance time for the next retry (except after the last one)
-        if (i < 3) {
-          tick(delays[i]);
+        const reqs = httpMock.match(`${baseUrl}/count`);
+        // Only respond to non-cancelled requests
+        if (reqs.length > 0) {
+          try {
+            reqs[0].flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+          } catch (e) {
+            // Request was cancelled, which is expected for retries
+          }
         }
       }
 
-      tick(1000); // Allow final error to propagate after all retries exhausted
-      flushMicrotasks();
+      // Allow error to propagate
+      tick();
       expect(errorReceived).toBe(true);
     }));
   });
@@ -487,22 +487,25 @@ describe('TokenCountingService', () => {
         }
       });
 
-      // Handle all retry attempts by responding to pending requests then advancing time
-      const delays = [1000, 2000, 4000]; // delays between retries
-
+      // Respond to initial request and all retries
+      // The service will make 4 attempts total (initial + 3 retries)
       for (let i = 0; i < 4; i++) {
-        const pending = httpMock.match(`${baseUrl}/count`);
-        if (pending.length > 0 && !pending[0].cancelled) {
-          pending[0].error(new ErrorEvent('Network error'));
+        if (i > 0) {
+          tick(1000); // Advance time for retry delay
         }
-
-        if (i < 3) {
-          tick(delays[i]);
+        const reqs = httpMock.match(`${baseUrl}/count`);
+        // Only respond to non-cancelled requests
+        if (reqs.length > 0) {
+          try {
+            reqs[0].error(new ErrorEvent('Network error'));
+          } catch (e) {
+            // Request was cancelled, which is expected for retries
+          }
         }
       }
 
-      tick(1000); // Allow final error to propagate after all retries exhausted
-      flushMicrotasks();
+      // Allow error to propagate
+      tick();
       expect(errorReceived).toBe(true);
     }));
 
@@ -518,22 +521,25 @@ describe('TokenCountingService', () => {
         }
       });
 
-      // Handle all retry attempts by responding to pending requests then advancing time
-      const delays = [1000, 2000, 4000]; // delays between retries
-
+      // Respond to initial request and all retries
+      // The service will make 4 attempts total (initial + 3 retries)
       for (let i = 0; i < 4; i++) {
-        const pending = httpMock.match(`${baseUrl}/count`);
-        if (pending.length > 0 && !pending[0].cancelled) {
-          pending[0].flush('Validation Error', { status: 422, statusText: 'Unprocessable Entity' });
+        if (i > 0) {
+          tick(1000); // Advance time for retry delay
         }
-
-        if (i < 3) {
-          tick(delays[i]);
+        const reqs = httpMock.match(`${baseUrl}/count`);
+        // Only respond to non-cancelled requests
+        if (reqs.length > 0) {
+          try {
+            reqs[0].flush('Validation Error', { status: 422, statusText: 'Unprocessable Entity' });
+          } catch (e) {
+            // Request was cancelled, which is expected for retries
+          }
         }
       }
 
-      tick(1000); // Allow final error to propagate after all retries exhausted
-      flushMicrotasks();
+      // Allow error to propagate
+      tick();
       expect(errorReceived).toBe(true);
     }));
 
@@ -549,22 +555,25 @@ describe('TokenCountingService', () => {
         }
       });
 
-      // Handle all retry attempts by responding to pending requests then advancing time
-      const delays = [1000, 2000, 4000]; // delays between retries
-
+      // Respond to initial request and all retries
+      // The service will make 4 attempts total (initial + 3 retries)
       for (let i = 0; i < 4; i++) {
-        const pending = httpMock.match(`${baseUrl}/count`);
-        if (pending.length > 0 && !pending[0].cancelled) {
-          pending[0].flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+        if (i > 0) {
+          tick(1000); // Advance time for retry delay
         }
-
-        if (i < 3) {
-          tick(delays[i]);
+        const reqs = httpMock.match(`${baseUrl}/count`);
+        // Only respond to non-cancelled requests
+        if (reqs.length > 0) {
+          try {
+            reqs[0].flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+          } catch (e) {
+            // Request was cancelled, which is expected for retries
+          }
         }
       }
 
-      tick(1000); // Allow final error to propagate after all retries exhausted
-      flushMicrotasks();
+      // Allow error to propagate
+      tick();
       expect(errorReceived).toBe(true);
     }));
   });

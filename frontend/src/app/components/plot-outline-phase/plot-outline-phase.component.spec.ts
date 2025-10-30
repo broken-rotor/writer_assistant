@@ -24,46 +24,48 @@ describe('PlotOutlinePhaseComponent', () => {
   let mockStoryService: jasmine.SpyObj<StoryService>;
   let mockToastService: jasmine.SpyObj<ToastService>;
 
-  const mockStory: Story = {
-    id: 'test-story-1',
-    general: {
-      title: 'Test Story',
-      systemPrompts: {
-        mainPrefix: '',
-        mainSuffix: '',
-        assistantPrompt: '',
-        editorPrompt: ''
+  function createMockStory(): Story {
+    return {
+      id: 'test-story-1',
+      general: {
+        title: 'Test Story',
+        systemPrompts: {
+          mainPrefix: '',
+          mainSuffix: '',
+          assistantPrompt: '',
+          editorPrompt: ''
+        },
+        worldbuilding: 'Test worldbuilding'
       },
-      worldbuilding: 'Test worldbuilding'
-    },
-    characters: new Map(),
-    raters: new Map(),
-    story: {
-      summary: 'Test summary',
-      chapters: []
-    },
-    plotOutline: {
-      content: 'Test plot outline content',
-      status: 'approved',
-      chatHistory: [],
-      raterFeedback: new Map(),
+      characters: new Map(),
+      raters: new Map(),
+      story: {
+        summary: 'Test summary',
+        chapters: []
+      },
+      plotOutline: {
+        content: 'Test plot outline content',
+        status: 'approved',
+        chatHistory: [],
+        raterFeedback: new Map(),
+        metadata: {
+          created: new Date(),
+          lastModified: new Date(),
+          version: 1
+        }
+      },
+      chapterCreation: {
+        plotPoint: 'Test plot point',
+        incorporatedFeedback: [],
+        feedbackRequests: new Map()
+      },
       metadata: {
+        version: '1.0.0',
         created: new Date(),
-        lastModified: new Date(),
-        version: 1
+        lastModified: new Date()
       }
-    },
-    chapterCreation: {
-      plotPoint: 'Test plot point',
-      incorporatedFeedback: [],
-      feedbackRequests: new Map()
-    },
-    metadata: {
-      version: '1.0.0',
-      created: new Date(),
-      lastModified: new Date()
-    }
-  };
+    };
+  }
 
   beforeEach(async () => {
     const generationServiceSpy = jasmine.createSpyObj('GenerationService', ['fleshOut']);
@@ -93,7 +95,7 @@ describe('PlotOutlinePhaseComponent', () => {
 
     fixture = TestBed.createComponent(PlotOutlinePhaseComponent);
     component = fixture.componentInstance;
-    component.story = mockStory;
+    component.story = createMockStory();
     component.chapterNumber = 1;
 
     mockGenerationService = TestBed.inject(GenerationService) as jasmine.SpyObj<GenerationService>;
