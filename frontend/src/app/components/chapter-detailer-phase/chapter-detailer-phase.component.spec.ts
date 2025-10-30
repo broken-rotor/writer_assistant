@@ -492,11 +492,11 @@ describe('ChapterDetailerPhaseComponent', () => {
       const mockResponse: GenerateChapterResponse = {
         chapterText: 'Generated chapter content'
       };
-      mockGenerationService.generateChapter.and.returnValue(of(mockResponse));
-      
+      mockGenerationService.generateChapterFromOutline.and.returnValue(of(mockResponse));
+
       await component.generateInitialChapter();
-      
-      expect(mockGenerationService.generateChapter).toHaveBeenCalledWith(mockStory);
+
+      expect(mockGenerationService.generateChapterFromOutline).toHaveBeenCalled();
       expect(component.draftVersions).toHaveSize(1);
       expect(component.draftVersions[0].content).toBe('Generated chapter content');
       expect(component.draftVersions[0].sourceType).toBe('initial');
@@ -517,17 +517,17 @@ describe('ChapterDetailerPhaseComponent', () => {
       // Set up existing version
       const versionId = component.createNewVersion('Existing content', 'Test Chapter', 'initial');
       component.switchToVersion(versionId);
-      
+
       const mockResponse: ModifyChapterResponse = {
         modifiedChapter: 'Existing content\n\nContinued content',
         wordCount: 200,
         changesSummary: 'Added continuation'
       };
-      mockGenerationService.modifyChapter.and.returnValue(of(mockResponse));
-      
+      mockGenerationService.continueChapter.and.returnValue(of(mockResponse));
+
       await component.continueWriting();
-      
-      expect(mockGenerationService.modifyChapter).toHaveBeenCalled();
+
+      expect(mockGenerationService.continueChapter).toHaveBeenCalled();
       expect(component.draftVersions).toHaveSize(2);
       expect(component.draftVersions[1].sourceType).toBe('continuation');
       expect(mockToastService.showSuccess).toHaveBeenCalledWith('Chapter continued successfully');
@@ -651,19 +651,19 @@ describe('ChapterDetailerPhaseComponent', () => {
         wordCount: 180,
         changesSummary: 'Incorporated feedback'
       };
-      mockGenerationService.modifyChapter.and.returnValue(of(mockResponse));
-      
+      mockGenerationService.regenerateChapterWithFeedback.and.returnValue(of(mockResponse));
+
       const event = {
         selectedFeedback: mockFeedbackItems,
         userComment: 'Please focus on emotional depth'
       };
-      
+
       component.onAddFeedbackToChat(event);
-      
+
       // Wait for async processing
       await fixture.whenStable();
-      
-      expect(mockGenerationService.modifyChapter).toHaveBeenCalled();
+
+      expect(mockGenerationService.regenerateChapterWithFeedback).toHaveBeenCalled();
       expect(component.completionCriteria.hasFeedbackIncorporated).toBe(true);
       expect(mockToastService.showSuccess).toHaveBeenCalledWith('Feedback incorporated successfully');
     });

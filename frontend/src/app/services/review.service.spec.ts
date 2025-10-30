@@ -163,6 +163,13 @@ describe('ReviewService', () => {
     feedbackServiceSpy = TestBed.inject(FeedbackService) as jasmine.SpyObj<FeedbackService>;
     conversationServiceSpy = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
     localStorageServiceSpy = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
+
+    // Reset mockStory to clean state for each test
+    if (mockStory.chapterCompose) {
+      mockStory.chapterCompose.phases.finalEdit.reviewSelection.availableReviews = [];
+      mockStory.chapterCompose.phases.finalEdit.reviewSelection.selectedReviews = [];
+      mockStory.chapterCompose.phases.finalEdit.reviewSelection.appliedReviews = [];
+    }
   });
 
   it('should be created', () => {
@@ -171,9 +178,9 @@ describe('ReviewService', () => {
 
   describe('getAvailableReviews', () => {
     it('should return reviews from cache if available', () => {
-      // Setup cache
+      // Setup cache with correct key format (final-edit with hyphen)
       const reviews = [mockReviewItem];
-      service['reviewCache'].set('test-story-1_1_final_edit', reviews);
+      service['reviewCache'].set('test-story-1_1_final-edit', reviews);
 
       const result = service.getAvailableReviews('test-story-1', 1);
 
@@ -342,30 +349,30 @@ describe('ReviewService', () => {
 
   describe('clearReviewCache', () => {
     it('should clear specific cache entry when story and chapter provided', () => {
-      service['reviewCache'].set('test-story-1_1_final_edit', [mockReviewItem]);
-      service['reviewCache'].set('test-story-1_2_final_edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_1_final-edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_2_final-edit', [mockReviewItem]);
 
       service.clearReviewCache('test-story-1', 1);
 
-      expect(service['reviewCache'].has('test-story-1_1_final_edit')).toBe(false);
-      expect(service['reviewCache'].has('test-story-1_2_final_edit')).toBe(true);
+      expect(service['reviewCache'].has('test-story-1_1_final-edit')).toBe(false);
+      expect(service['reviewCache'].has('test-story-1_2_final-edit')).toBe(true);
     });
 
     it('should clear all story cache entries when only story provided', () => {
-      service['reviewCache'].set('test-story-1_1_final_edit', [mockReviewItem]);
-      service['reviewCache'].set('test-story-1_2_final_edit', [mockReviewItem]);
-      service['reviewCache'].set('test-story-2_1_final_edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_1_final-edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_2_final-edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-2_1_final-edit', [mockReviewItem]);
 
       service.clearReviewCache('test-story-1');
 
-      expect(service['reviewCache'].has('test-story-1_1_final_edit')).toBe(false);
-      expect(service['reviewCache'].has('test-story-1_2_final_edit')).toBe(false);
-      expect(service['reviewCache'].has('test-story-2_1_final_edit')).toBe(true);
+      expect(service['reviewCache'].has('test-story-1_1_final-edit')).toBe(false);
+      expect(service['reviewCache'].has('test-story-1_2_final-edit')).toBe(false);
+      expect(service['reviewCache'].has('test-story-2_1_final-edit')).toBe(true);
     });
 
     it('should clear entire cache when no parameters provided', () => {
-      service['reviewCache'].set('test-story-1_1_final_edit', [mockReviewItem]);
-      service['reviewCache'].set('test-story-2_1_final_edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-1_1_final-edit', [mockReviewItem]);
+      service['reviewCache'].set('test-story-2_1_final-edit', [mockReviewItem]);
 
       service.clearReviewCache();
 
