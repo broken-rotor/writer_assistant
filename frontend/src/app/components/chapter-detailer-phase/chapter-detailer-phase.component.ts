@@ -301,8 +301,7 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
       
       const response = await this.generationService.generateChapterFromOutline(
         this.story,
-        outlineItems,
-        this.chapterNumber
+        outlineItems
       ).toPromise();
       
       if (response?.chapterText) {

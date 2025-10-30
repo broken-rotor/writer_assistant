@@ -255,11 +255,9 @@ describe('TokenLimitsService', () => {
       initialReq.flush(mockTokenStrategiesResponse);
       tick();
 
-      let emissionCount = 0;
       let finalLimits: any;
       // Refresh with error
       service.refreshLimits().subscribe(limits => {
-        emissionCount++;
         finalLimits = limits;
       });
 

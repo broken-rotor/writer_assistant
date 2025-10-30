@@ -11,7 +11,6 @@ describe('WorldbuildingSyncService', () => {
   let service: WorldbuildingSyncService;
   let mockConversationService: jasmine.SpyObj<ConversationService>;
   let mockLocalStorageService: jasmine.SpyObj<LocalStorageService>;
-  let mockValidatorService: jasmine.SpyObj<WorldbuildingValidatorService>;
 
   const mockMessages: ChatMessage[] = [
     {
@@ -79,7 +78,6 @@ describe('WorldbuildingSyncService', () => {
     service = TestBed.inject(WorldbuildingSyncService);
     mockConversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
     mockLocalStorageService = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
-    mockValidatorService = TestBed.inject(WorldbuildingValidatorService) as jasmine.SpyObj<WorldbuildingValidatorService>;
   });
 
   it('should be created', () => {

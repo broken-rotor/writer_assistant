@@ -361,7 +361,7 @@
               <h4>Chapter {{ chapter.number }}: {{ chapter.title }}</h4>
               <div class="chapter-actions">
                 <button class="secondary-button" (click)="editChapter(chapter.id)">Edit</button>
-                <button class="secondary-button" (click)="insertChapterAfter(i)">Insert After</button>
+                <button class="secondary-button" (click)="insertChapterAfter()">Insert After</button>
                 <button class="danger-button" (click)="deleteChapter(chapter.id)">Delete</button>
               </div>
             </div>

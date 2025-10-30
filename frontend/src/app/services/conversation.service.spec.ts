@@ -221,7 +221,7 @@ describe('ConversationService', () => {
 
     it('should return messages up to branch point plus branch messages', () => {
       const msg1 = service.sendMessage('Message 1', 'user');
-      const msg2 = service.sendMessage('Message 2', 'assistant');
+      service.sendMessage('Message 2', 'assistant');
       const branch = service.createBranch('Test Branch', msg1.id);
       
       service.switchToBranch(branch.id);
@@ -336,7 +336,6 @@ describe('ConversationService', () => {
       service.switchToBranch(branch.id);
       service.sendMessage('Branch message', 'user');
 
-      const messageCountBefore = service.getCurrentBranchMessages().length;
       service.deleteBranch(branch.id);
 
       const branches = service.getAvailableBranches();

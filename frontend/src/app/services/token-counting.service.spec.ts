@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick, flushMicrotasks } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TokenCountingService } from './token-counting.service';
 import {
@@ -156,7 +156,7 @@ describe('TokenCountingService', () => {
         if (reqs.length > 0) {
           try {
             reqs[0].flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
-          } catch (e) {
+          } catch {
             // Request was cancelled, which is expected for retries
           }
         }
@@ -496,7 +496,7 @@ describe('TokenCountingService', () => {
         if (reqs.length > 0) {
           try {
             reqs[0].error(new ErrorEvent('Network error'));
-          } catch (e) {
+          } catch {
             // Request was cancelled, which is expected for retries
           }
         }
@@ -530,7 +530,7 @@ describe('TokenCountingService', () => {
         if (reqs.length > 0) {
           try {
             reqs[0].flush('Validation Error', { status: 422, statusText: 'Unprocessable Entity' });
-          } catch (e) {
+          } catch {
             // Request was cancelled, which is expected for retries
           }
         }
@@ -564,7 +564,7 @@ describe('TokenCountingService', () => {
         if (reqs.length > 0) {
           try {
             reqs[0].flush('Bad Request', { status: 400, statusText: 'Bad Request' });
-          } catch (e) {
+          } catch {
             // Request was cancelled, which is expected for retries
           }
         }

@@ -162,7 +162,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
         success = await this.advanceToPhase(targetPhase);
       } else {
         // Moving backward - can jump directly to completed phases
-        success = await this.revertToPhase(targetPhase);
+        success = await this.revertToPhase();
       }
 
       if (success) {
@@ -228,7 +228,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
   /**
    * Revert to target phase
    */
-  private async revertToPhase(targetPhase: PhaseType): Promise<boolean> {
+  private async revertToPhase(): Promise<boolean> {
     // For now, we'll implement simple reversion
     // In a more complex implementation, we might need to handle multiple steps
     return await this.phaseStateService.revertToPrevious();

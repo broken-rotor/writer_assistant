@@ -8,8 +8,6 @@ import { skip, take } from 'rxjs/operators';
 
 describe('PhaseStateService', () => {
   let service: PhaseStateService;
-  let localStorageServiceSpy: jasmine.SpyObj<LocalStorageService>;
-  let apiServiceSpy: jasmine.SpyObj<ApiService>;
 
   beforeEach(() => {
     const localStorageSpy = jasmine.createSpyObj('LocalStorageService', ['saveStory', 'loadStory']);
@@ -33,8 +31,6 @@ describe('PhaseStateService', () => {
     });
 
     service = TestBed.inject(PhaseStateService);
-    localStorageServiceSpy = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
-    apiServiceSpy = TestBed.inject(ApiService) as jasmine.SpyObj<ApiService>;
   });
 
   it('should be created', () => {

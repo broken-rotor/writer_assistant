@@ -276,8 +276,7 @@ export class GenerationService {
   // Generate Chapter from Plot Outline
   generateChapterFromOutline(
     story: Story,
-    outlineItems: {title: string, description: string}[],
-    chapterNumber: number
+    outlineItems: {title: string, description: string}[]
   ): Observable<GenerateChapterResponse> {
     const plotPoint = outlineItems.map(item => `${item.title}: ${item.description}`).join('\n\n');
     
@@ -754,7 +753,7 @@ export class GenerationService {
   /**
    * Build chapter generation prompt with plot outline context
    */
-  buildChapterGenerationPrompt(story: Story, plotPoint: string, additionalContext?: any): string {
+  buildChapterGenerationPrompt(story: Story, plotPoint: string): string {
     const prompt = `${story.general.systemPrompts.mainPrefix}
 
 STORY CONTEXT:

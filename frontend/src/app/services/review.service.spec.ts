@@ -208,11 +208,9 @@ describe('ReviewService', () => {
 
   describe('requestComprehensiveReviews', () => {
     it('should request reviews from all agents by default', () => {
-      const mockCharacterResponse = { feedback: { actions: ['Test action'] } };
-      const mockRaterResponse = { feedback: { opinion: 'Test opinion', suggestions: ['Test suggestion'] } };
-      const mockEditorResponse = { 
+      const mockEditorResponse = {
         overallAssessment: 'Test assessment',
-        suggestions: [{ issue: 'Test issue', suggestion: 'Test fix', priority: 'high' as 'high' | 'medium' | 'low', selected: false }] 
+        suggestions: [{ issue: 'Test issue', suggestion: 'Test fix', priority: 'high' as 'high' | 'medium' | 'low', selected: false }]
       };
 
       feedbackServiceSpy.requestCharacterFeedback.and.returnValue(of(true));

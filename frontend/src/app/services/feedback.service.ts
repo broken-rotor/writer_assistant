@@ -165,10 +165,10 @@ export class FeedbackService {
     try {
       // Create chat message content
       const messageContent = this.formatFeedbackForChat(selectedFeedback, userComment);
-      
+
       // Send message to conversation service
-      const message = this.conversationService.sendMessage(
-        messageContent, 
+      this.conversationService.sendMessage(
+        messageContent,
         'user',
         {
           metadata: {

@@ -287,21 +287,10 @@ describe('WorldbuildingChatComponent', () => {
     component.story = mockStory;
     fixture.detectChanges();
 
-    const mockMessage: ChatMessage = {
-      id: 'test-message',
-      type: 'user',
-      content: 'Test message',
-      timestamp: new Date(),
-      metadata: {
-        phase: 'plot_outline',
-        messageIndex: 0
-      }
-    };
-
     spyOn(component.conversationStarted, 'emit');
     spyOn(component, 'syncWorldbuildingFromConversation' as any);
 
-    component.onMessageSent(mockMessage);
+    component.onMessageSent();
 
     expect(component.conversationStarted.emit).toHaveBeenCalled();
 

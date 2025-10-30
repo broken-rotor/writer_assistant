@@ -692,7 +692,7 @@ export class ReviewService {
         );
 
         // Store reviews with phase context
-        this.storeReviewsWithPhase(story.id, chapterNumber, reviews, chapterComposeState);
+        this.storeReviewsWithPhase(story.id, chapterNumber, reviews);
         this.completeRequest(requestId);
         this.notifyReviewsUpdated();
 
@@ -902,7 +902,7 @@ export class ReviewService {
     }
 
     // Store reviews with phase context
-    this.storeReviewsWithPhase(storyId, chapterNumber, reviews, chapterComposeState);
+    this.storeReviewsWithPhase(storyId, chapterNumber, reviews);
     
     // Calculate quality score
     this.calculateQualityScore(reviews);
@@ -1028,8 +1028,7 @@ export class ReviewService {
   private storeReviewsWithPhase(
     storyId: string,
     chapterNumber: number,
-    reviews: ReviewItem[],
-    chapterComposeState?: ChapterComposeState
+    reviews: ReviewItem[]
   ): void {
     // Use existing storage method - phase context is already in metadata
     this.storeReviews(storyId, chapterNumber, reviews);

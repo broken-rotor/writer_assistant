@@ -16,7 +16,6 @@ describe('SystemPromptFieldComponent', () => {
   let component: SystemPromptFieldComponent;
   let fixture: ComponentFixture<SystemPromptFieldComponent>;
   let mockTokenValidationService: jasmine.SpyObj<TokenValidationService>;
-  let mockChangeDetectorRef: jasmine.SpyObj<ChangeDetectorRef>;
 
   const mockValidationResult: TokenValidationResult = {
     status: TokenValidationStatus.VALID,
@@ -59,7 +58,6 @@ describe('SystemPromptFieldComponent', () => {
     fixture = TestBed.createComponent(SystemPromptFieldComponent);
     component = fixture.componentInstance;
     mockTokenValidationService = TestBed.inject(TokenValidationService) as jasmine.SpyObj<TokenValidationService>;
-    mockChangeDetectorRef = fixture.debugElement.injector.get(ChangeDetectorRef) as jasmine.SpyObj<ChangeDetectorRef>;
 
     // Setup default mock behavior
     mockTokenValidationService.validateField.and.returnValue(of(mockValidationResult));

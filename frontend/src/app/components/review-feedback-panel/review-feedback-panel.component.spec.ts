@@ -11,7 +11,6 @@ describe('ReviewFeedbackPanelComponent', () => {
   let component: ReviewFeedbackPanelComponent;
   let fixture: ComponentFixture<ReviewFeedbackPanelComponent>;
   let reviewServiceSpy: jasmine.SpyObj<ReviewService>;
-  let phaseStateServiceSpy: jasmine.SpyObj<PhaseStateService>;
 
   const mockConfig: ReviewFeedbackPanelConfig = {
     storyId: 'test-story-1',
@@ -304,7 +303,6 @@ describe('ReviewFeedbackPanelComponent', () => {
     fixture = TestBed.createComponent(ReviewFeedbackPanelComponent);
     component = fixture.componentInstance;
     reviewServiceSpy = TestBed.inject(ReviewService) as jasmine.SpyObj<ReviewService>;
-    phaseStateServiceSpy = TestBed.inject(PhaseStateService) as jasmine.SpyObj<PhaseStateService>;
 
     // Setup component inputs
     component.config = mockConfig;

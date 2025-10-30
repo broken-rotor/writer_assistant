@@ -594,7 +594,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.storyService.saveStory(this.story);
   }
 
-  insertChapterAfter(index: number) {
+  insertChapterAfter() {
     // Switch to chapter creation tab
     this.selectTab('chapter-creation');
   }
@@ -1041,7 +1041,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Failed to load token limits:', err);
-          this.handleTokenLimitsInitializationError(err);
+          this.handleTokenLimitsInitializationError();
         }
       });
   }
@@ -1061,7 +1061,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   /**
    * Handle token limits initialization error
    */
-  private handleTokenLimitsInitializationError(err: any) {
+  private handleTokenLimitsInitializationError() {
     this.tokenLimitsLoading = false;
     this.isTokenLimitsRetrying = false;
     this.tokenLimitsError = ERROR_MESSAGES.TOKEN_LIMITS_FAILED;

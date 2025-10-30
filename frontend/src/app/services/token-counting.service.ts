@@ -1,14 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, throwError, EMPTY, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, throwError, EMPTY } from 'rxjs';
 import {
   debounceTime,
   distinctUntilChanged,
   mergeMap,
   catchError,
   retryWhen,
-  take,
-  shareReplay,
   tap,
   map,
   finalize,

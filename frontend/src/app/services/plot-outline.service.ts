@@ -44,7 +44,7 @@ export class PlotOutlineService {
         };
         return feedback;
       }),
-      catchError(error => {
+      catchError(() => {
         const errorFeedback: PlotOutlineFeedback = {
           raterId: raterId,
           raterName: rater.name,

@@ -14,7 +14,7 @@ export class StoryService {
 
   constructor() {
     // Subscribe to story list changes
-    this.localStorageService.getStoryList().subscribe(list => {
+    this.localStorageService.getStoryList().subscribe(() => {
       // Handle list updates if needed
     });
   }
