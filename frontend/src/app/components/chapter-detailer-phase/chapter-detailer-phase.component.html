@@ -18,7 +18,7 @@
       
       <!-- Plot Outline Reference (Read-Only) -->
       <div class="section plot-outline-reference">
-        <div class="section-header" (click)="toggleOutlineDetails()">
+        <div class="section-header" (click)="toggleOutlineDetails()" (keyup.enter)="toggleOutlineDetails()" (keyup.space)="toggleOutlineDetails()" tabindex="0">
           <h3>📋 Plot Outline Reference</h3>
           <span class="toggle-icon">{{ showOutlineDetails ? '▼' : '▶' }}</span>
           <span class="item-count">({{ getOutlineItemsCount() }} items)</span>

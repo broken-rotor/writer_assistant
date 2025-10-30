@@ -1,10 +1,12 @@
 <!-- TokenCounter Component Template -->
-<div 
+<div
   [class]="getComponentClasses().join(' ')"
   [attr.aria-label]="getAriaLabel()"
   [attr.role]="computedConfig.disabled ? null : 'button'"
   [attr.tabindex]="computedConfig.disabled ? null : '0'"
   (click)="onComponentClick($event)"
+  (keyup.enter)="onComponentClick($event)"
+  (keyup.space)="onComponentClick($event)"
   (mouseenter)="onComponentHover($event)"
   (focus)="onComponentFocus($event)">
 

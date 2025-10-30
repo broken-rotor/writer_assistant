@@ -60,8 +60,6 @@ export class ToastService {
   private toasts$ = new BehaviorSubject<ToastMessage[]>([]);
   private nextId = 1;
 
-  constructor() {}
-
   /**
    * Get observable of current toasts
    */

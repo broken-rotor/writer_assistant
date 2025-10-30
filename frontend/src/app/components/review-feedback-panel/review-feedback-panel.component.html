@@ -145,7 +145,7 @@
 
     <!-- Character Reviews Section -->
     <div class="review-section character-section" *ngIf="characterReviews.length > 0">
-      <div class="section-header" (click)="toggleCharacterSection()">
+      <div class="section-header" (click)="toggleCharacterSection()" (keyup.enter)="toggleCharacterSection()" (keyup.space)="toggleCharacterSection()" tabindex="0">
         <span class="section-toggle" [class.collapsed]="!showCharacterSection">▼</span>
         <span class="section-icon">👤</span>
         <h4>Character Reviews</h4>
@@ -210,7 +210,7 @@
 
     <!-- Rater Reviews Section -->
     <div class="review-section rater-section" *ngIf="raterReviews.length > 0">
-      <div class="section-header" (click)="toggleRaterSection()">
+      <div class="section-header" (click)="toggleRaterSection()" (keyup.enter)="toggleRaterSection()" (keyup.space)="toggleRaterSection()" tabindex="0">
         <span class="section-toggle" [class.collapsed]="!showRaterSection">▼</span>
         <span class="section-icon">⭐</span>
         <h4>Rater Reviews</h4>
@@ -275,7 +275,7 @@
 
     <!-- Editor Reviews Section -->
     <div class="review-section editor-section" *ngIf="editorReviews.length > 0">
-      <div class="section-header" (click)="toggleEditorSection()">
+      <div class="section-header" (click)="toggleEditorSection()" (keyup.enter)="toggleEditorSection()" (keyup.space)="toggleEditorSection()" tabindex="0">
         <span class="section-toggle" [class.collapsed]="!showEditorSection">▼</span>
         <span class="section-icon">✏️</span>
         <h4>Editor Reviews</h4>

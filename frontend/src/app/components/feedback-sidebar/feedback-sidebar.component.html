@@ -42,7 +42,7 @@
 
     <!-- Character Feedback Section -->
     <div class="feedback-section character-section" *ngIf="characterFeedback.length > 0 || config.showRequestButtons">
-      <div class="section-header" (click)="toggleCharacterSection()">
+      <div class="section-header" (click)="toggleCharacterSection()" (keyup.enter)="toggleCharacterSection()" (keyup.space)="toggleCharacterSection()" tabindex="0">
         <span class="section-toggle" [class.collapsed]="!showCharacterSection">▼</span>
         <h4>Characters</h4>
         <span class="section-count">({{ characterFeedback.length }})</span>
@@ -130,7 +130,7 @@
 
     <!-- Rater Feedback Section -->
     <div class="feedback-section rater-section" *ngIf="raterFeedback.length > 0 || config.showRequestButtons">
-      <div class="section-header" (click)="toggleRaterSection()">
+      <div class="section-header" (click)="toggleRaterSection()" (keyup.enter)="toggleRaterSection()" (keyup.space)="toggleRaterSection()" tabindex="0">
         <span class="section-toggle" [class.collapsed]="!showRaterSection">▼</span>
         <h4>Raters</h4>
         <span class="section-count">({{ raterFeedback.length }})</span>

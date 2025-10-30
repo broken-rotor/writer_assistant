@@ -304,13 +304,14 @@ export class FinalEditPhaseComponent implements OnInit, OnDestroy {
       `- ${review.title}: ${review.suggestion}`
     ).join('\n');
 
-    const chatMessage = `Please apply the following reviews to the chapter:\n\n${reviewSummary}`;
-    
+    let chatMessage = `Please apply the following reviews to the chapter:\n\n${reviewSummary}`;
+
     if (event.userComment) {
-      chatMessage + `\n\nAdditional notes: ${event.userComment}`;
+      chatMessage += `\n\nAdditional notes: ${event.userComment}`;
     }
 
-    // Add message to chat (this would be handled by the chat interface)
+    // TODO: Add message to chat (this would be handled by the chat interface)
+    console.log('Chat message prepared:', chatMessage);
     this.toastService.showSuccess(`Added ${event.selectedReviews.length} reviews to chat`);
   }
 

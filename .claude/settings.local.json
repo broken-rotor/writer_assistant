@@ -23,7 +23,8 @@
       "Bash(npx ng lint)",
       "Bash(awk:*)",
       "Bash(npx ng lint:*)",
-      "Bash(1)"
+      "Bash(1)",
+      "Read(//c/**)"
     ],
     "deny": [],
     "ask": []

@@ -139,5 +139,5 @@
   </div>
 
   <!-- Modal Backdrop -->
-  <div class="modal-backdrop" *ngIf="showCleanupDialog || showExportDialog" (click)="closeCleanupDialog(); closeExportDialog()"></div>
+  <div class="modal-backdrop" *ngIf="showCleanupDialog || showExportDialog" (click)="closeCleanupDialog(); closeExportDialog()" (keyup.enter)="closeCleanupDialog(); closeExportDialog()" (keyup.escape)="closeCleanupDialog(); closeExportDialog()" tabindex="0"></div>
 </div>

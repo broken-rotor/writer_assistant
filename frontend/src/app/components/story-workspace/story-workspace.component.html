@@ -165,7 +165,10 @@
             <div *ngFor="let character of activeCharacters"
                  class="list-item"
                  [class.selected]="selectedCharacterId === character.id"
-                 (click)="selectCharacter(character.id)">
+                 (click)="selectCharacter(character.id)"
+                 (keyup.enter)="selectCharacter(character.id)"
+                 (keyup.space)="selectCharacter(character.id)"
+                 tabindex="0">
               <div class="item-name">{{ character.name || 'Unnamed' }}</div>
               <div class="item-actions">
                 <button class="icon-button" (click)="hideCharacter(character.id); $event.stopPropagation()" title="Hide">👁️</button>
@@ -283,7 +286,10 @@
             <div *ngFor="let rater of ratersArray"
                  class="list-item"
                  [class.selected]="selectedRaterId === rater.id"
-                 (click)="selectRater(rater.id)">
+                 (click)="selectRater(rater.id)"
+                 (keyup.enter)="selectRater(rater.id)"
+                 (keyup.space)="selectRater(rater.id)"
+                 tabindex="0">
               <div class="item-name">{{ rater.name || 'Unnamed Rater' }}</div>
               <div class="item-actions">
                 <label class="toggle">
@@ -705,7 +711,7 @@
 
             <!-- Sources for this response -->
             <div class="message-sources" *ngIf="message.sources && message.sources.length > 0">
-              <div class="sources-toggle" (click)="message.showSources = !message.showSources">
+              <div class="sources-toggle" (click)="message.showSources = !message.showSources" (keyup.enter)="message.showSources = !message.showSources" (keyup.space)="message.showSources = !message.showSources" tabindex="0">
                 <span>📖 {{ message.sources.length }} sources</span>
                 <span class="toggle-icon">{{ message.showSources ? '▼' : '▶' }}</span>
               </div>
