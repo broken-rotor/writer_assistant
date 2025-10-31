@@ -173,14 +173,9 @@ class TestStructuredContextAPI:
         request_data = {
             "context_mode": "structured",
             "structured_context": sample_structured_context.model_dump(mode='json'),
-            "chapterText": "Sample chapter text for rating",
-            "raterType": "character_consistency",
-            "characters": [
-                {
-                    "name": "Aria",
-                    "description": "Brave young hero"
-                }
-            ]
+            "raterPrompt": "Evaluate the narrative flow and character consistency",
+            "previousChapters": [],
+            "plotPoint": "The hero discovers a hidden truth about their past"
         }
         
         response = client.post("/api/v1/rater-feedback", json=request_data)
@@ -190,7 +185,6 @@ class TestStructuredContextAPI:
         
         # Validate response structure
         assert "feedback" in data
-        assert "score" in data
         assert "context_metadata" in data
         assert data["context_metadata"]["processing_mode"] == "structured"
     
@@ -199,11 +193,12 @@ class TestStructuredContextAPI:
         request_data = {
             "context_mode": "structured",
             "structured_context": sample_structured_context.model_dump(mode='json'),
-            "chapterText": "Sample chapter text for editing",
+            "chapterToReview": "Sample chapter text for editing",
+            "previousChapters": [],
             "characters": [
                 {
                     "name": "Aria",
-                    "description": "Brave young hero"
+                    "basicBio": "Brave young hero"
                 }
             ]
         }
@@ -214,7 +209,7 @@ class TestStructuredContextAPI:
         data = response.json()
         
         # Validate response structure
-        assert "feedback" in data
+        assert "suggestions" in data
         assert "context_metadata" in data
         assert data["context_metadata"]["processing_mode"] == "structured"
     

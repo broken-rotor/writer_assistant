@@ -381,7 +381,7 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.EDITOR,
-                    compose_phase=compose_phase or ComposePhase.EDITING,
+                    compose_phase=compose_phase or ComposePhase.FINAL_EDIT,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="review_focused_filtering"
                 )
@@ -470,7 +470,7 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.RATER,
-                    compose_phase=compose_phase or ComposePhase.FEEDBACK,
+                    compose_phase=compose_phase or ComposePhase.FINAL_EDIT,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="rater_specific_preparation"
                 )
@@ -741,6 +741,7 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=metadata.get("original_element_count", 0),
                 processing_applied=metadata.get("was_summarized", False),
+                processing_mode="structured",
                 optimization_level="moderate" if metadata.get("was_summarized", False) else "none",
                 compression_ratio=metadata.get("reduction_ratio"),
                 processing_time_ms=metadata.get("processing_time_ms", 0)
@@ -838,6 +839,7 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=len(characters) + len(incorporated_feedback) + (1 if previous_chapters else 0),
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
                 processing_time_ms=0  # Not tracked in legacy system
@@ -883,6 +885,7 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=3,  # system_prompts, worldbuilding, story_summary
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
                 processing_time_ms=0  # Not tracked in legacy system
@@ -928,6 +931,7 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=len(previous_chapters) + 3,  # chapters + system_prompts, worldbuilding, story_summary
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
                 processing_time_ms=0  # Not tracked in legacy system
@@ -975,6 +979,7 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=4,  # system_prompts, rater_prompt, worldbuilding, story_summary, plot_point
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
                 processing_time_ms=0  # Not tracked in legacy system
@@ -1022,6 +1027,7 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=len(characters) + 5,  # + system_prompts, worldbuilding, story_summary, original_chapter, modification_request
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
                 processing_time_ms=0  # Not tracked in legacy system
@@ -1067,6 +1073,7 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=4,  # system_prompts, worldbuilding, story_summary, context, text_to_flesh_out
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
                 processing_time_ms=0  # Not tracked in legacy system
