@@ -8,7 +8,7 @@ from app.models.generation_models import (
     CharacterFeedback
 )
 from app.services.llm_inference import get_llm
-from app.services.context_optimization import get_context_optimization_service
+from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
 import logging
 
@@ -19,74 +19,47 @@ router = APIRouter()
 
 @router.post("/character-feedback", response_model=CharacterFeedbackResponse)
 async def character_feedback(request: CharacterFeedbackRequest):
-    """Generate character feedback for a plot point using LLM."""
+    """Generate character feedback for a plot point using LLM with structured context support."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        character_name = request.character.name or "Character"
+        character_name = request.character.name if request.character else "Character"
 
-        # Get context optimization service
-        context_service = get_context_optimization_service()
+        # Get unified context processor
+        context_processor = get_unified_context_processor()
 
-        # Optimize context transparently
-        try:
-            optimized_context = context_service.optimize_character_feedback_context(
-                system_prompts=request.systemPrompts,
-                worldbuilding=request.worldbuilding,
-                story_summary=request.storySummary,
-                character=request.character,
-                plot_point=request.plotPoint,
-                # Pass phase context for optimization
-                compose_phase=request.compose_phase,
-                phase_context=request.phase_context
-            )
+        # Process context using unified processor (supports both legacy and structured contexts)
+        context_result = context_processor.process_character_feedback_context(
+            # Legacy fields
+            system_prompts=request.systemPrompts,
+            worldbuilding=request.worldbuilding,
+            story_summary=request.storySummary,
+            character=request.character,
+            plot_point=request.plotPoint,
+            # Phase context
+            compose_phase=request.compose_phase,
+            phase_context=request.phase_context,
+            # Structured context
+            structured_context=request.structured_context,
+            context_mode=request.context_mode,
+            context_processing_config=request.context_processing_config
+        )
 
-            system_prompt = optimized_context.system_prompt
-            user_message = optimized_context.user_message
+        # Log context processing results
+        if context_result.optimization_applied:
+            logger.info(f"Character feedback context processing applied ({context_result.processing_mode} mode): "
+                       f"{context_result.total_tokens} tokens, "
+                       f"compression ratio: {context_result.compression_ratio:.2f}")
+        else:
+            logger.debug(f"No character feedback context optimization needed ({context_result.processing_mode} mode): "
+                        f"{context_result.total_tokens} tokens")
 
-            # Log context optimization results
-            if optimized_context.optimization_applied:
-                logger.info(f"Character feedback context optimization applied: {optimized_context.total_tokens} tokens, "
-                            f"compression ratio: {optimized_context.compression_ratio:.2f}")
-            else:
-                logger.debug(f"No character feedback context optimization needed: {optimized_context.total_tokens} tokens")
-
-        except Exception as e:
-            logger.warning(f"Character feedback context optimization failed, using fallback: {str(e)}")
-            # Fallback to original context building
-            system_prompt = f"""{request.systemPrompts.mainPrefix}
-
-You are embodying {character_name}, a character with the following traits:
-- Bio: {request.character.basicBio}
-- Personality: {request.character.personality}
-- Motivations: {request.character.motivations}
-- Fears: {request.character.fears}
-
-{request.systemPrompts.mainSuffix}"""
-
-            # Build phase-specific context
-            phase_context_str = ""
-            if request.compose_phase and request.phase_context:
-                phase_context_str = f"\nCompose Phase: {request.compose_phase}"
-
-                if request.phase_context.phase_specific_instructions:
-                    phase_context_str += f"\nPhase Instructions: {request.phase_context.phase_specific_instructions}"
-
-                if request.phase_context.conversation_history:
-                    conv_context = "\n".join([
-                        f"{msg.role}: {msg.content}"
-                        for msg in request.phase_context.conversation_history[-2:]  # Last 2 messages
-                    ])
-                    phase_context_str += f"\nRecent conversation:\n{conv_context}"
-
-            user_message = f"""Context:
-- World: {request.worldbuilding}
-- Story: {request.storySummary}
-- Current situation: {request.plotPoint}
-{phase_context_str}
-
+        # For character feedback, we need to ensure the user message includes the JSON format instruction
+        # if it's not already included in the structured context
+        if not any("JSON format" in context_result.user_message for _ in [1]):
+            json_instruction = f"""
 Respond in JSON format with exactly these keys:
 {{
   "actions": ["3-5 physical actions {character_name} takes"],
@@ -95,12 +68,17 @@ Respond in JSON format with exactly these keys:
   "emotions": ["3-5 emotions {character_name} feels"],
   "internalMonologue": ["3-5 thoughts in {character_name}'s mind"]
 }}"""
+            user_message = context_result.user_message + json_instruction
+        else:
+            user_message = context_result.user_message
 
+        # Prepare messages for LLM
         messages = [
-            {"role": "system", "content": system_prompt.strip()},
+            {"role": "system", "content": context_result.system_prompt.strip()},
             {"role": "user", "content": user_message.strip()}
         ]
 
+        # Generate character feedback using LLM
         response_text = llm.chat_completion(messages, max_tokens=800, temperature=0.8)
         parsed = parse_json_response(response_text)
 
@@ -117,7 +95,12 @@ Respond in JSON format with exactly these keys:
                 internalMonologue=lines[12:15] if len(lines) > 12 else ["What now?"]
             )
 
-        return CharacterFeedbackResponse(characterName=character_name, feedback=feedback)
+        # Create response with context metadata
+        return CharacterFeedbackResponse(
+            characterName=character_name,
+            feedback=feedback,
+            context_metadata=context_result.context_metadata
+        )
     except Exception as e:
         logger.error(f"Error in character_feedback: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating character feedback: {str(e)}")

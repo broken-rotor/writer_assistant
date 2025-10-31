@@ -8,7 +8,7 @@ from app.models.generation_models import (
     EditorSuggestion
 )
 from app.services.llm_inference import get_llm
-from app.services.context_optimization import get_context_optimization_service
+from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
 import logging
 
@@ -19,69 +19,43 @@ router = APIRouter()
 
 @router.post("/editor-review", response_model=EditorReviewResponse)
 async def editor_review(request: EditorReviewRequest):
-    """Generate editor review using LLM."""
+    """Generate editor review using LLM with structured context support."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        # Get context optimization service
-        context_service = get_context_optimization_service()
+        # Get unified context processor
+        context_processor = get_unified_context_processor()
 
-        # Optimize context transparently
-        try:
-            optimized_context = context_service.optimize_editor_review_context(
-                system_prompts=request.systemPrompts,
-                worldbuilding=request.worldbuilding,
-                story_summary=request.storySummary,
-                chapter_to_review=request.chapterToReview,
-                # Pass phase context for optimization
-                compose_phase=request.compose_phase,
-                phase_context=request.phase_context
-            )
+        # Process context using unified processor (supports both legacy and structured contexts)
+        context_result = context_processor.process_editor_review_context(
+            # Legacy fields
+            system_prompts=request.systemPrompts,
+            worldbuilding=request.worldbuilding,
+            story_summary=request.storySummary,
+            previous_chapters=[],  # Editor review doesn't use previous chapters in current implementation
+            plot_point=getattr(request, 'chapterToReview', '')[:200],  # Use first 200 chars as plot point
+            # Phase context
+            compose_phase=request.compose_phase,
+            phase_context=request.phase_context,
+            # Structured context
+            structured_context=request.structured_context,
+            context_mode=request.context_mode,
+            context_processing_config=request.context_processing_config
+        )
 
-            system_prompt = optimized_context.system_prompt
-            user_message = optimized_context.user_message
+        # Log context processing results
+        if context_result.optimization_applied:
+            logger.info(f"Editor review context processing applied ({context_result.processing_mode} mode): "
+                       f"{context_result.total_tokens} tokens, "
+                       f"compression ratio: {context_result.compression_ratio:.2f}")
+        else:
+            logger.debug(f"No editor review context optimization needed ({context_result.processing_mode} mode): "
+                        f"{context_result.total_tokens} tokens")
 
-            # Log context optimization results
-            if optimized_context.optimization_applied:
-                logger.info(f"Editor review context optimization applied: {optimized_context.total_tokens} tokens, "
-                            f"compression ratio: {optimized_context.compression_ratio:.2f}")
-            else:
-                logger.debug(f"No editor review context optimization needed: {optimized_context.total_tokens} tokens")
-
-        except Exception as e:
-            logger.warning(f"Editor review context optimization failed, using fallback: {str(e)}")
-            # Fallback to original context building
-            system_prompt = f"""{request.systemPrompts.mainPrefix}
-{request.systemPrompts.editorPrompt or 'You are an expert editor.'}
-
-Review chapters and provide specific suggestions for improvement.
-
-{request.systemPrompts.mainSuffix}"""
-
-            # Build phase-specific context
-            phase_context_str = ""
-            if request.compose_phase and request.phase_context:
-                phase_context_str = f"\nCompose Phase: {request.compose_phase}"
-
-                phase_guidance = {
-                    'plot_outline': "Focus on plot structure, story beats, and narrative coherence.",
-                    'chapter_detail': "Focus on scene development, character interactions, and pacing.",
-                    'final_edit': "Focus on prose quality, consistency, and final polish."
-                }
-
-                if request.compose_phase in phase_guidance:
-                    phase_context_str += f"\nPhase Focus: {phase_guidance[request.compose_phase]}"
-
-                if request.phase_context.phase_specific_instructions:
-                    phase_context_str += f"\nPhase Instructions: {request.phase_context.phase_specific_instructions}"
-
-            user_message = f"""Story context:
-- World: {request.worldbuilding}
-- Story: {request.storySummary}
-{phase_context_str}
-
+        # For editor review, we need to ensure the user message includes the chapter to review and JSON format instruction
+        chapter_review_content = f"""
 Chapter to review:
 {request.chapterToReview}
 
@@ -92,11 +66,19 @@ Provide 4-6 suggestions in JSON format:
   ]
 }}"""
 
+        # Combine context result with chapter review specific content
+        if "Chapter to review:" not in context_result.user_message:
+            user_message = context_result.user_message + chapter_review_content
+        else:
+            user_message = context_result.user_message
+
+        # Prepare messages for LLM
         messages = [
-            {"role": "system", "content": system_prompt.strip()},
+            {"role": "system", "content": context_result.system_prompt.strip()},
             {"role": "user", "content": user_message.strip()}
         ]
 
+        # Generate editor review using LLM
         response_text = llm.chat_completion(messages, max_tokens=800, temperature=0.6)
         parsed = parse_json_response(response_text)
 
@@ -128,7 +110,11 @@ Provide 4-6 suggestions in JSON format:
                 priority="medium"
             ))
 
-        return EditorReviewResponse(suggestions=suggestions)
+        # Create response with context metadata
+        return EditorReviewResponse(
+            suggestions=suggestions,
+            context_metadata=context_result.context_metadata
+        )
     except Exception as e:
         logger.error(f"Error in editor_review: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating editor review: {str(e)}")
