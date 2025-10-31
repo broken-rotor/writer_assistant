@@ -28,6 +28,7 @@ import { PlotOutlineTabComponent } from '../plot-outline-tab/plot-outline-tab.co
 import { FinalEditPhaseComponent } from '../final-edit-phase/final-edit-phase.component';
 import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent, FeedbackRequestEvent, AddToChatEvent } from '../feedback-sidebar/feedback-sidebar.component';
 import { FeedbackService } from '../../services/feedback.service';
+import { ContextBuilderService } from '../../services/context-builder.service';
 import { WorldbuildingChatComponent } from '../worldbuilding-chat/worldbuilding-chat.component';
 
 interface ResearchChatMessage {
@@ -109,6 +110,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   private toastService = inject(ToastService);
   private phaseStateService = inject(PhaseStateService);
   private feedbackService = inject(FeedbackService);
+  private contextBuilderService = inject(ContextBuilderService);
 
   ngOnInit() {
     this.route.params
@@ -779,7 +781,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.generatingChapter = true;
     this.loadingService.show('Generating chapter...', 'generate-chapter');
 
-    this.generationService.generateChapter(this.story)
+    this.generationService.generateChapterStructured(this.story)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {

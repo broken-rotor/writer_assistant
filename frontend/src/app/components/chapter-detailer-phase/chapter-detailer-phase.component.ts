@@ -19,6 +19,7 @@ import { FeedbackService } from '../../services/feedback.service';
 import { StoryService } from '../../services/story.service';
 import { ToastService } from '../../services/toast.service';
 import { TokenCountingService } from '../../services/token-counting.service';
+import { ContextBuilderService } from '../../services/context-builder.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
 
 interface ChapterDraftVersion {
@@ -111,6 +112,7 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
   private storyService = inject(StoryService);
   private toastService = inject(ToastService);
   private tokenCountingService = inject(TokenCountingService);
+  private contextBuilderService = inject(ContextBuilderService);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
@@ -422,7 +424,7 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
         type: item.type
       }));
 
-      const response = await this.generationService.regenerateChapterWithFeedback(
+      const response = await this.generationService.regenerateChapterWithFeedbackStructured(
         this.story,
         currentVersion.content,
         feedbackForService,
