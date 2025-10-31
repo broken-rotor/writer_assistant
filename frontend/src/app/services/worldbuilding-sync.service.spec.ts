@@ -80,6 +80,14 @@ describe('WorldbuildingSyncService', () => {
     mockLocalStorageService = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
   });
 
+  afterEach(() => {
+    // Reset all spies to prevent test interference
+    mockConversationService.getCurrentBranchMessages.and.stub();
+    mockLocalStorageService.setItem.and.stub();
+    mockLocalStorageService.getItem.and.stub();
+    mockLocalStorageService.removeItem.and.stub();
+  });
+
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
@@ -165,11 +173,16 @@ describe('WorldbuildingSyncService', () => {
     });
 
     it('should handle errors gracefully', async () => {
+      // Reset spy to clean state first, then configure error
+      mockConversationService.getCurrentBranchMessages.and.stub();
       mockConversationService.getCurrentBranchMessages.and.throwError('Service error');
 
       await expectAsync(
         service.syncWorldbuildingFromConversation('story-1', '', { enableBackendSync: false })
       ).toBeRejectedWithError('Service error');
+      
+      // Immediately reset spy after test to prevent interference
+      mockConversationService.getCurrentBranchMessages.and.stub();
     });
   });
 

@@ -236,6 +236,7 @@ describe('ChapterDetailerPhaseComponent', () => {
       'generateChapterFromOutline',
       'continueChapter',
       'regenerateChapterWithFeedback',
+      'regenerateChapterWithFeedbackStructured',
       'generateChapterVariation',
       'refineChapterSection',
       'requestCharacterFeedbackWithPhase',
@@ -651,7 +652,7 @@ describe('ChapterDetailerPhaseComponent', () => {
         wordCount: 180,
         changesSummary: 'Incorporated feedback'
       };
-      mockGenerationService.regenerateChapterWithFeedback.and.returnValue(of(mockResponse));
+      mockGenerationService.regenerateChapterWithFeedbackStructured.and.returnValue(of(mockResponse));
 
       const event = {
         selectedFeedback: mockFeedbackItems,
@@ -663,7 +664,7 @@ describe('ChapterDetailerPhaseComponent', () => {
       // Wait for async processing
       await fixture.whenStable();
 
-      expect(mockGenerationService.regenerateChapterWithFeedback).toHaveBeenCalled();
+      expect(mockGenerationService.regenerateChapterWithFeedbackStructured).toHaveBeenCalled();
       expect(component.completionCriteria.hasFeedbackIncorporated).toBe(true);
       expect(mockToastService.showSuccess).toHaveBeenCalledWith('Feedback incorporated successfully');
     });

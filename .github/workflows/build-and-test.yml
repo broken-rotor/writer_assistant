@@ -85,7 +85,11 @@ jobs:
     - name: Install Chrome for testing
       run: |
         sudo apt-get update
-        sudo apt-get install -y chromium-browser
+        sudo apt-get install -y wget gnupg
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
       
     - name: Run linting
       run: npm run lint
@@ -93,7 +97,7 @@ jobs:
       continue-on-error: true
       
     - name: Run tests
-      run: CHROME_BIN=/snap/bin/chromium npm run test -- --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox
+      run: CHROME_BIN=/usr/bin/google-chrome npm run test -- --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox
       working-directory: frontend
       
     - name: Build production
