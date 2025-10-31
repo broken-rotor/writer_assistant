@@ -1,0 +1,848 @@
+{
+  "dependency_graph": {
+    "backend/tests/conftest.py": [
+      "backend/app/main.py",
+      "backend/app/core/config.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/worldbuilding_persistence.py"
+    ],
+    "backend/app/main.py": [
+      "backend/app/api/v1/api.py",
+      "backend/app/core/config.py",
+      "backend/app/services/llm_inference.py"
+    ],
+    "backend/app/cli/llm_test.py": [
+      "backend/app/services/llm_inference.py"
+    ],
+    "backend/app/models/token_models.py": [
+      "backend/app/services/token_management/__init__.py"
+    ],
+    "backend/app/services/worldbuilding_classifier.py": [
+      "backend/app/models/worldbuilding_models.py"
+    ],
+    "backend/app/services/unified_context_processor.py": [
+      "backend/app/services/context_manager.py",
+      "backend/app/services/context_optimization.py",
+      "backend/app/services/context_adapter.py",
+      "backend/app/models/context_models.py",
+      "backend/app/models/generation_models.py"
+    ],
+    "backend/app/services/context_manager.py": [
+      "backend/app/models/context_models.py",
+      "backend/app/services/token_management/layers.py",
+      "backend/app/services/context_session_manager.py"
+    ],
+    "backend/app/services/context_optimization.py": [
+      "backend/app/services/context_manager.py",
+      "backend/app/models/context_models.py",
+      "backend/app/services/token_management/layers.py",
+      "backend/app/services/content_prioritization/__init__.py",
+      "backend/app/services/context_distillation/__init__.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/utils/relevance_calculator.py",
+      "backend/app/models/generation_models.py",
+      "backend/app/models/context_models.py"
+    ],
+    "backend/app/services/worldbuilding_sync.py": [
+      "backend/app/models/worldbuilding_models.py",
+      "backend/app/models/generation_models.py",
+      "backend/app/services/worldbuilding_state_machine.py",
+      "backend/app/services/worldbuilding_classifier.py",
+      "backend/app/services/worldbuilding_persistence.py",
+      "backend/app/services/worldbuilding_validator.py"
+    ],
+    "backend/app/services/worldbuilding_prompts.py": [
+      "backend/app/models/worldbuilding_models.py"
+    ],
+    "backend/app/services/rag_service.py": [
+      "backend/app/services/archive_service.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/query_analyzer.py",
+      "backend/app/services/archive_service.py"
+    ],
+    "backend/app/services/worldbuilding_persistence.py": [
+      "backend/app/models/worldbuilding_models.py"
+    ],
+    "backend/app/services/context_adapter.py": [
+      "backend/app/models/context_models.py",
+      "backend/app/models/generation_models.py"
+    ],
+    "backend/app/services/worldbuilding_state_machine.py": [
+      "backend/app/models/worldbuilding_models.py",
+      "backend/app/models/generation_models.py",
+      "backend/app/services/worldbuilding_persistence.py"
+    ],
+    "backend/app/services/context_session_manager.py": [
+      "backend/app/models/context_models.py"
+    ],
+    "backend/app/services/worldbuilding_followup.py": [
+      "backend/app/models/worldbuilding_models.py",
+      "backend/app/models/generation_models.py"
+    ],
+    "backend/app/services/archive_service.py": [
+      "backend/app/core/config.py"
+    ],
+    "backend/app/utils/context_converters.py": [
+      "backend/app/models/generation_models.py"
+    ],
+    "backend/app/api/v1/api.py": [
+      "backend/app/api/v1/endpoints/__init__.py",
+      "backend/app/api/v1/endpoints/__init__.py",
+      "backend/app/api/v1/endpoints/__init__.py",
+      "backend/app/api/v1/endpoints/__init__.py",
+      "backend/app/api/v1/endpoints/__init__.py",
+      "backend/app/api/v1/endpoints/__init__.py"
+    ],
+    "backend/app/api/v1/endpoints/generate_character_details.py": [
+      "backend/app/models/generation_models.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/api/v1/endpoints/shared_utils.py"
+    ],
+    "backend/app/api/v1/endpoints/phase_validation.py": [
+      "backend/app/models/phase_models.py"
+    ],
+    "backend/app/api/v1/endpoints/modify_chapter.py": [
+      "backend/app/models/generation_models.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/unified_context_processor.py"
+    ],
+    "backend/app/api/v1/endpoints/worldbuilding_sync.py": [
+      "backend/app/models/generation_models.py",
+      "backend/app/services/worldbuilding_sync.py"
+    ],
+    "backend/app/api/v1/endpoints/rater_feedback.py": [
+      "backend/app/models/generation_models.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/unified_context_processor.py",
+      "backend/app/api/v1/endpoints/shared_utils.py"
+    ],
+    "backend/app/api/v1/endpoints/flesh_out.py": [
+      "backend/app/models/generation_models.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/unified_context_processor.py"
+    ],
+    "backend/app/api/v1/endpoints/editor_review.py": [
+      "backend/app/models/generation_models.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/unified_context_processor.py",
+      "backend/app/api/v1/endpoints/shared_utils.py"
+    ],
+    "backend/app/api/v1/endpoints/character_feedback.py": [
+      "backend/app/models/generation_models.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/unified_context_processor.py",
+      "backend/app/api/v1/endpoints/shared_utils.py"
+    ],
+    "backend/app/api/v1/endpoints/archive.py": [
+      "backend/app/services/archive_service.py",
+      "backend/app/services/rag_service.py",
+      "backend/app/main.py"
+    ],
+    "backend/app/api/v1/endpoints/ai_generation.py": [
+      "backend/app/api/v1/endpoints/character_feedback.py",
+      "backend/app/api/v1/endpoints/rater_feedback.py",
+      "backend/app/api/v1/endpoints/generate_chapter.py",
+      "backend/app/api/v1/endpoints/modify_chapter.py",
+      "backend/app/api/v1/endpoints/editor_review.py",
+      "backend/app/api/v1/endpoints/flesh_out.py",
+      "backend/app/api/v1/endpoints/generate_character_details.py"
+    ],
+    "backend/app/api/v1/endpoints/llm_chat.py": [
+      "backend/app/models/chat_models.py",
+      "backend/app/models/worldbuilding_models.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/worldbuilding_classifier.py",
+      "backend/app/services/worldbuilding_prompts.py",
+      "backend/app/services/worldbuilding_followup.py",
+      "backend/app/services/worldbuilding_state_machine.py"
+    ],
+    "backend/app/api/v1/endpoints/tokens.py": [
+      "backend/app/models/token_models.py",
+      "backend/app/services/token_management/__init__.py",
+      "backend/app/core/config.py"
+    ],
+    "backend/app/api/v1/endpoints/generate_chapter.py": [
+      "backend/app/models/generation_models.py",
+      "backend/app/services/llm_inference.py",
+      "backend/app/services/unified_context_processor.py"
+    ]
+  },
+  "component_dependencies": [
+    {
+      "component_name": "main.py",
+      "file_path": "backend/app/main.py",
+      "depends_on": [
+        "backend/app/services/llm_inference.py",
+        "backend/app/core/config.py",
+        "backend/app/api/v1/api.py"
+      ],
+      "used_by": [
+        "backend/tests/conftest.py",
+        "backend/app/api/v1/endpoints/archive.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "llm_inference.py",
+      "file_path": "backend/app/services/llm_inference.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/tests/conftest.py",
+        "backend/app/services/context_optimization.py",
+        "backend/app/api/v1/endpoints/rater_feedback.py",
+        "backend/app/api/v1/endpoints/generate_character_details.py",
+        "backend/app/api/v1/endpoints/flesh_out.py",
+        "backend/app/cli/llm_test.py",
+        "backend/app/api/v1/endpoints/generate_chapter.py",
+        "backend/app/api/v1/endpoints/editor_review.py",
+        "backend/app/main.py",
+        "backend/app/services/rag_service.py",
+        "backend/app/api/v1/endpoints/character_feedback.py",
+        "backend/app/api/v1/endpoints/llm_chat.py",
+        "backend/app/api/v1/endpoints/modify_chapter.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "api.py",
+      "file_path": "backend/app/api/v1/api.py",
+      "depends_on": [
+        "backend/app/api/v1/endpoints/__init__.py"
+      ],
+      "used_by": [
+        "backend/app/main.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "__init__.py",
+      "file_path": "backend/app/services/token_management/__init__.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/models/token_models.py",
+        "backend/app/api/v1/endpoints/tokens.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "unified_context_processor.py",
+      "file_path": "backend/app/services/unified_context_processor.py",
+      "depends_on": [
+        "backend/app/services/context_optimization.py",
+        "backend/app/models/context_models.py",
+        "backend/app/services/context_adapter.py",
+        "backend/app/services/context_manager.py",
+        "backend/app/models/generation_models.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/rater_feedback.py",
+        "backend/app/api/v1/endpoints/flesh_out.py",
+        "backend/app/api/v1/endpoints/generate_chapter.py",
+        "backend/app/api/v1/endpoints/editor_review.py",
+        "backend/app/api/v1/endpoints/character_feedback.py",
+        "backend/app/api/v1/endpoints/modify_chapter.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "context_manager.py",
+      "file_path": "backend/app/services/context_manager.py",
+      "depends_on": [
+        "backend/app/services/token_management/layers.py",
+        "backend/app/models/context_models.py",
+        "backend/app/services/context_session_manager.py"
+      ],
+      "used_by": [
+        "backend/app/services/unified_context_processor.py",
+        "backend/app/services/context_optimization.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "generation_models.py",
+      "file_path": "backend/app/models/generation_models.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/utils/context_converters.py",
+        "backend/app/services/context_optimization.py",
+        "backend/app/api/v1/endpoints/rater_feedback.py",
+        "backend/app/api/v1/endpoints/flesh_out.py",
+        "backend/app/api/v1/endpoints/generate_character_details.py",
+        "backend/app/api/v1/endpoints/generate_chapter.py",
+        "backend/app/api/v1/endpoints/editor_review.py",
+        "backend/app/services/worldbuilding_state_machine.py",
+        "backend/app/services/context_adapter.py",
+        "backend/app/api/v1/endpoints/worldbuilding_sync.py",
+        "backend/app/services/worldbuilding_followup.py",
+        "backend/app/services/unified_context_processor.py",
+        "backend/app/api/v1/endpoints/character_feedback.py",
+        "backend/app/services/worldbuilding_sync.py",
+        "backend/app/api/v1/endpoints/modify_chapter.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "__init__.py",
+      "file_path": "backend/app/services/content_prioritization/__init__.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/services/context_optimization.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "__init__.py",
+      "file_path": "backend/app/services/context_distillation/__init__.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/services/context_optimization.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "__init__.py",
+      "file_path": "backend/app/api/v1/endpoints/__init__.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/api/v1/api.py"
+      ],
+      "impact_score": 1.0,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "worldbuilding_models.py",
+      "file_path": "backend/app/models/worldbuilding_models.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/services/worldbuilding_persistence.py",
+        "backend/app/services/worldbuilding_state_machine.py",
+        "backend/app/services/worldbuilding_classifier.py",
+        "backend/app/services/worldbuilding_followup.py",
+        "backend/app/services/worldbuilding_sync.py",
+        "backend/app/api/v1/endpoints/llm_chat.py",
+        "backend/app/services/worldbuilding_prompts.py"
+      ],
+      "impact_score": 0.7000000000000001,
+      "removal_risk": "high"
+    },
+    {
+      "component_name": "context_models.py",
+      "file_path": "backend/app/models/context_models.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/services/context_optimization.py",
+        "backend/app/services/context_adapter.py",
+        "backend/app/services/context_session_manager.py",
+        "backend/app/services/context_manager.py",
+        "backend/app/services/unified_context_processor.py"
+      ],
+      "impact_score": 0.5,
+      "removal_risk": "medium"
+    },
+    {
+      "component_name": "config.py",
+      "file_path": "backend/app/core/config.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/tests/conftest.py",
+        "backend/app/services/archive_service.py",
+        "backend/app/main.py",
+        "backend/app/api/v1/endpoints/tokens.py"
+      ],
+      "impact_score": 0.4,
+      "removal_risk": "medium"
+    },
+    {
+      "component_name": "shared_utils.py",
+      "file_path": "backend/app/api/v1/endpoints/shared_utils.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/api/v1/endpoints/editor_review.py",
+        "backend/app/api/v1/endpoints/rater_feedback.py",
+        "backend/app/api/v1/endpoints/character_feedback.py",
+        "backend/app/api/v1/endpoints/generate_character_details.py"
+      ],
+      "impact_score": 0.4,
+      "removal_risk": "medium"
+    },
+    {
+      "component_name": "layers.py",
+      "file_path": "backend/app/services/token_management/layers.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/services/context_manager.py",
+        "backend/app/services/context_optimization.py"
+      ],
+      "impact_score": 0.2,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "archive_service.py",
+      "file_path": "backend/app/services/archive_service.py",
+      "depends_on": [
+        "backend/app/core/config.py"
+      ],
+      "used_by": [
+        "backend/app/services/rag_service.py",
+        "backend/app/api/v1/endpoints/archive.py"
+      ],
+      "impact_score": 0.2,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "worldbuilding_persistence.py",
+      "file_path": "backend/app/services/worldbuilding_persistence.py",
+      "depends_on": [
+        "backend/app/models/worldbuilding_models.py"
+      ],
+      "used_by": [
+        "backend/tests/conftest.py",
+        "backend/app/services/worldbuilding_state_machine.py",
+        "backend/app/services/worldbuilding_sync.py"
+      ],
+      "impact_score": 0.15000000000000002,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "token_models.py",
+      "file_path": "backend/app/models/token_models.py",
+      "depends_on": [
+        "backend/app/services/token_management/__init__.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/tokens.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "worldbuilding_classifier.py",
+      "file_path": "backend/app/services/worldbuilding_classifier.py",
+      "depends_on": [
+        "backend/app/models/worldbuilding_models.py"
+      ],
+      "used_by": [
+        "backend/app/services/worldbuilding_sync.py",
+        "backend/app/api/v1/endpoints/llm_chat.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "context_adapter.py",
+      "file_path": "backend/app/services/context_adapter.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/models/context_models.py"
+      ],
+      "used_by": [
+        "backend/app/services/unified_context_processor.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "context_session_manager.py",
+      "file_path": "backend/app/services/context_session_manager.py",
+      "depends_on": [
+        "backend/app/models/context_models.py"
+      ],
+      "used_by": [
+        "backend/app/services/context_manager.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "relevance_calculator.py",
+      "file_path": "backend/app/utils/relevance_calculator.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/services/context_optimization.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "worldbuilding_state_machine.py",
+      "file_path": "backend/app/services/worldbuilding_state_machine.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/models/worldbuilding_models.py",
+        "backend/app/services/worldbuilding_persistence.py"
+      ],
+      "used_by": [
+        "backend/app/services/worldbuilding_sync.py",
+        "backend/app/api/v1/endpoints/llm_chat.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "rag_service.py",
+      "file_path": "backend/app/services/rag_service.py",
+      "depends_on": [
+        "backend/app/services/llm_inference.py",
+        "backend/app/services/query_analyzer.py",
+        "backend/app/services/archive_service.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/archive.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "query_analyzer.py",
+      "file_path": "backend/app/services/query_analyzer.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/services/rag_service.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "generate_character_details.py",
+      "file_path": "backend/app/api/v1/endpoints/generate_character_details.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/services/llm_inference.py",
+        "backend/app/api/v1/endpoints/shared_utils.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/ai_generation.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "phase_models.py",
+      "file_path": "backend/app/models/phase_models.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/api/v1/endpoints/phase_validation.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "modify_chapter.py",
+      "file_path": "backend/app/api/v1/endpoints/modify_chapter.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/services/llm_inference.py",
+        "backend/app/services/unified_context_processor.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/ai_generation.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "rater_feedback.py",
+      "file_path": "backend/app/api/v1/endpoints/rater_feedback.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/services/llm_inference.py",
+        "backend/app/services/unified_context_processor.py",
+        "backend/app/api/v1/endpoints/shared_utils.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/ai_generation.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "flesh_out.py",
+      "file_path": "backend/app/api/v1/endpoints/flesh_out.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/services/llm_inference.py",
+        "backend/app/services/unified_context_processor.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/ai_generation.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "editor_review.py",
+      "file_path": "backend/app/api/v1/endpoints/editor_review.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/services/llm_inference.py",
+        "backend/app/services/unified_context_processor.py",
+        "backend/app/api/v1/endpoints/shared_utils.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/ai_generation.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "character_feedback.py",
+      "file_path": "backend/app/api/v1/endpoints/character_feedback.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/services/llm_inference.py",
+        "backend/app/services/unified_context_processor.py",
+        "backend/app/api/v1/endpoints/shared_utils.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/ai_generation.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "generate_chapter.py",
+      "file_path": "backend/app/api/v1/endpoints/generate_chapter.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/services/llm_inference.py",
+        "backend/app/services/unified_context_processor.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/ai_generation.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "chat_models.py",
+      "file_path": "backend/app/models/chat_models.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/api/v1/endpoints/llm_chat.py"
+      ],
+      "impact_score": 0.1,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "context_optimization.py",
+      "file_path": "backend/app/services/context_optimization.py",
+      "depends_on": [
+        "backend/app/services/llm_inference.py",
+        "backend/app/models/context_models.py",
+        "backend/app/services/content_prioritization/__init__.py",
+        "backend/app/utils/relevance_calculator.py",
+        "backend/app/services/token_management/layers.py",
+        "backend/app/services/context_distillation/__init__.py",
+        "backend/app/services/context_manager.py",
+        "backend/app/models/generation_models.py"
+      ],
+      "used_by": [
+        "backend/app/services/unified_context_processor.py"
+      ],
+      "impact_score": 0.05,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "worldbuilding_sync.py",
+      "file_path": "backend/app/services/worldbuilding_sync.py",
+      "depends_on": [
+        "backend/app/models/worldbuilding_models.py",
+        "backend/app/services/worldbuilding_persistence.py",
+        "backend/app/services/worldbuilding_validator.py",
+        "backend/app/services/worldbuilding_state_machine.py",
+        "backend/app/services/worldbuilding_classifier.py",
+        "backend/app/models/generation_models.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/worldbuilding_sync.py"
+      ],
+      "impact_score": 0.05,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "worldbuilding_validator.py",
+      "file_path": "backend/app/services/worldbuilding_validator.py",
+      "depends_on": [],
+      "used_by": [
+        "backend/app/services/worldbuilding_sync.py"
+      ],
+      "impact_score": 0.05,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "worldbuilding_prompts.py",
+      "file_path": "backend/app/services/worldbuilding_prompts.py",
+      "depends_on": [
+        "backend/app/models/worldbuilding_models.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/llm_chat.py"
+      ],
+      "impact_score": 0.05,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "worldbuilding_followup.py",
+      "file_path": "backend/app/services/worldbuilding_followup.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/models/worldbuilding_models.py"
+      ],
+      "used_by": [
+        "backend/app/api/v1/endpoints/llm_chat.py"
+      ],
+      "impact_score": 0.05,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "conftest.py",
+      "file_path": "backend/tests/conftest.py",
+      "depends_on": [
+        "backend/app/services/llm_inference.py",
+        "backend/app/services/worldbuilding_persistence.py",
+        "backend/app/main.py",
+        "backend/app/core/config.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "llm_test.py",
+      "file_path": "backend/app/cli/llm_test.py",
+      "depends_on": [
+        "backend/app/services/llm_inference.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "context_converters.py",
+      "file_path": "backend/app/utils/context_converters.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "phase_validation.py",
+      "file_path": "backend/app/api/v1/endpoints/phase_validation.py",
+      "depends_on": [
+        "backend/app/models/phase_models.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "worldbuilding_sync.py",
+      "file_path": "backend/app/api/v1/endpoints/worldbuilding_sync.py",
+      "depends_on": [
+        "backend/app/models/generation_models.py",
+        "backend/app/services/worldbuilding_sync.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "archive.py",
+      "file_path": "backend/app/api/v1/endpoints/archive.py",
+      "depends_on": [
+        "backend/app/services/rag_service.py",
+        "backend/app/services/archive_service.py",
+        "backend/app/main.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "ai_generation.py",
+      "file_path": "backend/app/api/v1/endpoints/ai_generation.py",
+      "depends_on": [
+        "backend/app/api/v1/endpoints/rater_feedback.py",
+        "backend/app/api/v1/endpoints/flesh_out.py",
+        "backend/app/api/v1/endpoints/generate_chapter.py",
+        "backend/app/api/v1/endpoints/generate_character_details.py",
+        "backend/app/api/v1/endpoints/editor_review.py",
+        "backend/app/api/v1/endpoints/character_feedback.py",
+        "backend/app/api/v1/endpoints/modify_chapter.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "llm_chat.py",
+      "file_path": "backend/app/api/v1/endpoints/llm_chat.py",
+      "depends_on": [
+        "backend/app/services/llm_inference.py",
+        "backend/app/models/worldbuilding_models.py",
+        "backend/app/services/worldbuilding_state_machine.py",
+        "backend/app/services/worldbuilding_classifier.py",
+        "backend/app/models/chat_models.py",
+        "backend/app/services/worldbuilding_followup.py",
+        "backend/app/services/worldbuilding_prompts.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    },
+    {
+      "component_name": "tokens.py",
+      "file_path": "backend/app/api/v1/endpoints/tokens.py",
+      "depends_on": [
+        "backend/app/services/token_management/__init__.py",
+        "backend/app/models/token_models.py",
+        "backend/app/core/config.py"
+      ],
+      "used_by": [],
+      "impact_score": 0.0,
+      "removal_risk": "low"
+    }
+  ],
+  "circular_dependencies": [],
+  "removal_order": [
+    "backend/app/api/v1/endpoints/worldbuilding_sync.py",
+    "backend/app/services/worldbuilding_prompts.py",
+    "backend/app/services/worldbuilding_followup.py",
+    "backend/app/services/worldbuilding_sync.py",
+    "backend/app/services/worldbuilding_validator.py",
+    "backend/app/services/worldbuilding_state_machine.py",
+    "backend/app/services/worldbuilding_classifier.py",
+    "backend/app/services/context_optimization.py",
+    "backend/app/services/worldbuilding_persistence.py"
+  ],
+  "high_impact_components": [
+    "backend/app/core/config.py",
+    "backend/app/services/llm_inference.py",
+    "backend/app/models/worldbuilding_models.py",
+    "backend/app/services/unified_context_processor.py",
+    "backend/app/models/context_models.py",
+    "backend/app/models/generation_models.py",
+    "backend/app/api/v1/endpoints/shared_utils.py"
+  ],
+  "safe_to_remove": [
+    "backend/app/services/worldbuilding_classifier.py",
+    "backend/app/services/context_optimization.py",
+    "backend/app/services/worldbuilding_sync.py",
+    "backend/app/services/worldbuilding_state_machine.py",
+    "backend/app/services/worldbuilding_validator.py",
+    "backend/app/services/worldbuilding_prompts.py",
+    "backend/app/services/worldbuilding_followup.py",
+    "backend/app/api/v1/endpoints/worldbuilding_sync.py"
+  ]
+}
