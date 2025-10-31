@@ -28,6 +28,16 @@ import {
   PhaseTransitionRequest,
   PhaseTransitionResponse
 } from '../models/story.model';
+import {
+  StructuredCharacterFeedbackRequest,
+  StructuredRaterFeedbackRequest,
+  StructuredGenerateChapterRequest,
+  StructuredEditorReviewRequest,
+  StructuredCharacterFeedbackResponse,
+  StructuredRaterFeedbackResponse,
+  StructuredGenerateChapterResponse,
+  StructuredEditorReviewResponse
+} from '../models/structured-request.model';
 import { TokenStrategiesResponse } from '../models/token-limits.model';
 
 @Injectable({
@@ -110,5 +120,29 @@ export class ApiService {
   // Phase Transition Validation
   validatePhaseTransition(request: PhaseTransitionRequest): Observable<PhaseTransitionResponse> {
     return this.http.post<PhaseTransitionResponse>(`${this.baseUrl}/validate/phase-transition`, request);
+  }
+
+  // ============================================================================
+  // NEW STRUCTURED REQUEST METHODS (WRI-72)
+  // ============================================================================
+
+  // Structured Character Feedback
+  requestCharacterFeedbackStructured(request: StructuredCharacterFeedbackRequest): Observable<StructuredCharacterFeedbackResponse> {
+    return this.http.post<StructuredCharacterFeedbackResponse>(`${this.baseUrl}/character-feedback/structured`, request);
+  }
+
+  // Structured Rater Feedback
+  requestRaterFeedbackStructured(request: StructuredRaterFeedbackRequest): Observable<StructuredRaterFeedbackResponse> {
+    return this.http.post<StructuredRaterFeedbackResponse>(`${this.baseUrl}/rater-feedback/structured`, request);
+  }
+
+  // Structured Chapter Generation
+  generateChapterStructured(request: StructuredGenerateChapterRequest): Observable<StructuredGenerateChapterResponse> {
+    return this.http.post<StructuredGenerateChapterResponse>(`${this.baseUrl}/generate-chapter/structured`, request);
+  }
+
+  // Structured Editor Review
+  requestEditorReviewStructured(request: StructuredEditorReviewRequest): Observable<StructuredEditorReviewResponse> {
+    return this.http.post<StructuredEditorReviewResponse>(`${this.baseUrl}/editor-review/structured`, request);
   }
 }
