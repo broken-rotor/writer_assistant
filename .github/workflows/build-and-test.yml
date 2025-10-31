@@ -85,7 +85,7 @@ jobs:
     - name: Install Chrome for testing
       run: |
         sudo apt-get update
-        sudo apt-get install -y google-chrome-stable
+        sudo apt-get install -y chromium-browser
       
     - name: Run linting
       run: npm run lint
@@ -93,7 +93,7 @@ jobs:
       continue-on-error: true
       
     - name: Run tests
-      run: npm run test -- --watch=false --code-coverage --browsers=ChromeHeadless
+      run: CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox
       working-directory: frontend
       
     - name: Build production
