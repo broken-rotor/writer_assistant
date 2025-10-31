@@ -7,7 +7,7 @@ from app.models.generation_models import (
     GenerateChapterResponse
 )
 from app.services.llm_inference import get_llm
-from app.services.context_optimization import get_context_optimization_service
+from app.services.unified_context_processor import get_unified_context_processor
 from datetime import datetime, UTC
 import logging
 
@@ -18,108 +18,68 @@ router = APIRouter()
 
 @router.post("/generate-chapter", response_model=GenerateChapterResponse)
 async def generate_chapter(request: GenerateChapterRequest):
-    """Generate a complete chapter using LLM."""
+    """Generate a complete chapter using LLM with structured context support."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        # Get context optimization service
-        context_service = get_context_optimization_service()
+        # Get unified context processor
+        context_processor = get_unified_context_processor()
 
-        # Optimize context transparently
-        try:
-            optimized_context = context_service.optimize_chapter_generation_context(
-                system_prompts=request.systemPrompts,
-                worldbuilding=request.worldbuilding,
-                story_summary=request.storySummary,
-                characters=request.characters,
-                plot_point=request.plotPoint,
-                incorporated_feedback=request.incorporatedFeedback,
-                previous_chapters=request.previousChapters,
-                # Pass phase context for optimization
-                compose_phase=request.compose_phase,
-                phase_context=request.phase_context
-            )
+        # Process context using unified processor (supports both legacy and structured contexts)
+        context_result = context_processor.process_generate_chapter_context(
+            # Legacy fields
+            system_prompts=request.systemPrompts,
+            worldbuilding=request.worldbuilding,
+            story_summary=request.storySummary,
+            characters=request.characters,
+            plot_point=request.plotPoint,
+            incorporated_feedback=request.incorporatedFeedback,
+            previous_chapters=request.previousChapters,
+            # Phase context
+            compose_phase=request.compose_phase,
+            phase_context=request.phase_context,
+            # Structured context
+            structured_context=request.structured_context,
+            context_mode=request.context_mode,
+            context_processing_config=request.context_processing_config
+        )
 
-            system_prompt = optimized_context.system_prompt
-            user_message = optimized_context.user_message
+        # Log context processing results
+        if context_result.optimization_applied:
+            logger.info(f"Context processing applied ({context_result.processing_mode} mode): "
+                       f"{context_result.total_tokens} tokens, "
+                       f"compression ratio: {context_result.compression_ratio:.2f}")
+        else:
+            logger.debug(f"No context optimization needed ({context_result.processing_mode} mode): "
+                        f"{context_result.total_tokens} tokens")
 
-            # Log context optimization results
-            if optimized_context.optimization_applied:
-                logger.info(f"Context optimization applied: {optimized_context.total_tokens} tokens, "
-                            f"compression ratio: {optimized_context.compression_ratio:.2f}")
-            else:
-                logger.debug(f"No context optimization needed: {optimized_context.total_tokens} tokens")
-
-        except Exception as e:
-            logger.warning(f"Context optimization failed, using fallback: {str(e)}")
-            # Fallback to original context building
-            char_context = "\n".join([
-                f"- {c.name}: {c.basicBio} (Personality: {c.personality})"
-                for c in request.characters[:3]  # Limit to avoid context overflow
-            ])
-
-            feedback_context = ""
-            if request.incorporatedFeedback:
-                feedback_items = [f"- {f.content}" for f in request.incorporatedFeedback[:5]]
-                feedback_context = "Incorporated feedback:\n" + "\n".join(feedback_items)
-
-            system_prompt = f"""{request.systemPrompts.mainPrefix}
-{request.systemPrompts.assistantPrompt or ''}
-
-{request.systemPrompts.mainSuffix}"""
-
-            # Build phase-specific instructions
-            phase_instructions = ""
-            if request.compose_phase and request.phase_context:
-                if request.phase_context.phase_specific_instructions:
-                    phase_instructions = f"\nPhase-specific instructions: {request.phase_context.phase_specific_instructions}"
-
-                if request.phase_context.previous_phase_output:
-                    phase_instructions += f"\nPrevious phase output: {request.phase_context.previous_phase_output}"
-
-                if request.phase_context.conversation_history:
-                    conv_context = "\n".join([
-                        f"{msg.role}: {msg.content}"
-                        for msg in request.phase_context.conversation_history[-3:]  # Last 3 messages
-                    ])
-                    phase_instructions += f"\nRecent conversation:\n{conv_context}"
-
-            user_message = f"""Write a chapter for this story:
-
-World: {request.worldbuilding}
-Story: {request.storySummary}
-
-Characters:
-{char_context}
-
-Plot point for this chapter: {request.plotPoint}
-
-{feedback_context}
-
-{phase_instructions}
-
-Write an engaging chapter (800-1500 words) that brings this plot point to life with vivid prose, "
-        "authentic dialogue, and character development."""
-
+        # Prepare messages for LLM
         messages = [
-            {"role": "system", "content": system_prompt.strip()},
-            {"role": "user", "content": user_message.strip()}
+            {"role": "system", "content": context_result.system_prompt.strip()},
+            {"role": "user", "content": context_result.user_message.strip()}
         ]
 
+        # Generate chapter using LLM
         response_text = llm.chat_completion(messages, max_tokens=2000, temperature=0.8)
         word_count = len(response_text.split())
 
+        # Create response with context metadata
         return GenerateChapterResponse(
             chapterText=response_text.strip(),
             wordCount=word_count,
+            context_metadata=context_result.context_metadata,
             metadata={
                 "generatedAt": datetime.now(UTC).isoformat(),
                 "plotPoint": request.plotPoint,
-                "feedbackItemsIncorporated": len(request.incorporatedFeedback),
+                "feedbackItemsIncorporated": len(request.incorporatedFeedback or []),
                 "composePhase": request.compose_phase,
-                "phaseContextProvided": bool(request.phase_context)
+                "phaseContextProvided": bool(request.phase_context),
+                "contextMode": request.context_mode,
+                "structuredContextProvided": bool(request.structured_context),
+                "processingMode": context_result.processing_mode,
+                "contextOptimizationApplied": context_result.optimization_applied
             }
         )
     except Exception as e:
