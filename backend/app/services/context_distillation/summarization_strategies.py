@@ -188,13 +188,18 @@ class PlotSummaryStrategy(SummarizationStrategy):
         """Summarize plot content preserving key story beats."""
 
         specific_instructions = """Focus on:
-- Main plot events and story progression
+- Main plot events and story progression - HIGHEST PRIORITY
+- Story arc structure (setup, conflict, climax, resolution)
 - Key conflicts and their resolutions
-- Important character actions and decisions
+- Critical plot points and story beats
+- Important character actions and decisions that drive the plot
 - Cause-and-effect relationships between events
 - Story turning points and climactic moments
+- Plot twists and revelations
+- Character development milestones within the plot
+- Foreshadowing and setup elements
 
-Preserve the narrative flow while condensing descriptions and minor details."""
+Preserve the narrative flow and story coherence while condensing descriptions and minor details. Maintain plot causality and story logic."""
 
         try:
             prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
@@ -238,10 +243,22 @@ Preserve the narrative flow while condensing descriptions and minor details."""
         elements = []
 
         # Look for story structure elements
-        structure_words = ["beginning", "middle", "end", "climax", "resolution", "conflict"]
+        structure_words = ["beginning", "middle", "end", "climax", "resolution", "conflict", "setup", "rising action", "falling action"]
         for word in structure_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Story structure: {word}")
+
+        # Look for plot devices
+        plot_devices = ["foreshadowing", "twist", "revelation", "turning point", "catalyst", "inciting incident"]
+        for device in plot_devices:
+            if device in content.lower() and device in summary.lower():
+                elements.append(f"Plot device: {device}")
+
+        # Look for story beats
+        story_beats = ["hook", "plot point", "midpoint", "crisis", "climax", "denouement"]
+        for beat in story_beats:
+            if beat in content.lower() and beat in summary.lower():
+                elements.append(f"Story beat: {beat}")
 
         return elements
 
@@ -259,14 +276,16 @@ class CharacterDevelopmentStrategy(SummarizationStrategy):
         """Summarize character content preserving development arcs."""
 
         specific_instructions = """Focus on:
-- Character growth and development arcs
-- Key personality traits and changes
-- Important relationships and dynamics
-- Character motivations and goals
+- Character growth and development arcs - HIGHEST PRIORITY
+- Core personality traits and their evolution
+- Key relationships and their dynamics
+- Character motivations, goals, and internal conflicts
 - Emotional states and psychological changes
-- Character-defining moments and decisions
+- Character-defining moments and pivotal decisions
+- Relationship mapping between characters
+- Character backstory elements that affect current behavior
 
-Preserve character authenticity while condensing physical descriptions and minor interactions."""
+Preserve character authenticity and relationship coherence while condensing physical descriptions and minor interactions. Maintain character voice consistency and relationship dynamics."""
 
         try:
             prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
@@ -310,6 +329,18 @@ Preserve character authenticity while condensing physical descriptions and minor
         for word in development_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Character development: {word}")
+
+        # Look for relationship keywords
+        relationship_words = ["relationship", "friendship", "romance", "conflict", "alliance", "rivalry"]
+        for word in relationship_words:
+            if word in content.lower() and word in summary.lower():
+                elements.append(f"Character relationship: {word}")
+
+        # Look for personality traits
+        trait_words = ["personality", "trait", "characteristic", "behavior", "motivation", "goal"]
+        for word in trait_words:
+            if word in content.lower() and word in summary.lower():
+                elements.append(f"Character trait: {word}")
 
         return elements
 
@@ -528,14 +559,19 @@ class WorldBuildingStrategy(SummarizationStrategy):
         """Summarize world-building content preserving key setting details."""
 
         specific_instructions = """Focus on:
-- Key locations and their significance
-- World rules and systems
-- Cultural and social elements
-- Historical background relevant to the story
-- Environmental details that affect the plot
-- Unique aspects of the fictional world
+- Essential world rules and systems - HIGHEST PRIORITY
+- Key locations and their significance to the story
+- Cultural and social elements that affect character behavior
+- Historical background relevant to current events
+- Environmental details that impact the plot
+- Unique aspects of the fictional world that differentiate it
+- Magic systems, technology, or special abilities
+- Political structures and power dynamics
+- Economic systems and trade relationships
+- Religious or philosophical systems
+- Laws, customs, and social norms
 
-Preserve essential world-building while condensing excessive descriptive detail."""
+Preserve essential world-building elements that affect story logic while condensing excessive descriptive detail. Maintain world consistency and internal logic."""
 
         try:
             prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
@@ -575,9 +611,298 @@ Preserve essential world-building while condensing excessive descriptive detail.
         elements = []
 
         # Look for setting keywords
-        setting_words = ["kingdom", "city", "forest", "mountain", "castle", "village", "realm"]
+        setting_words = ["kingdom", "city", "forest", "mountain", "castle", "village", "realm", "empire", "nation"]
         for word in setting_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Setting: {word}")
 
+        # Look for world systems
+        system_words = ["magic", "technology", "politics", "religion", "economy", "government", "law"]
+        for word in system_words:
+            if word in content.lower() and word in summary.lower():
+                elements.append(f"World system: {word}")
+
+        # Look for cultural elements
+        culture_words = ["culture", "tradition", "custom", "ritual", "ceremony", "belief", "value"]
+        for word in culture_words:
+            if word in content.lower() and word in summary.lower():
+                elements.append(f"Cultural element: {word}")
+
+        # Look for world rules
+        rule_words = ["rule", "law", "principle", "constraint", "limitation", "power", "ability"]
+        for word in rule_words:
+            if word in content.lower() and word in summary.lower():
+                elements.append(f"World rule: {word}")
+
         return elements
+
+
+class FeedbackSummaryStrategy(SummarizationStrategy):
+    """Strategy for summarizing user feedback while prioritizing unaddressed feedback."""
+
+    def summarize(
+        self,
+        content: str,
+        target_tokens: int,
+        context: Dict[str, Any],
+        preserve_key_info: bool = True
+    ) -> SummaryResult:
+        """Summarize feedback content prioritizing unaddressed feedback."""
+
+        specific_instructions = """Focus on:
+- Unaddressed feedback (incorporated=false) - HIGHEST PRIORITY
+- Recent feedback and suggestions
+- Critical user requests and requirements
+- Feedback categorization (positive, negative, suggestions)
+- Actionable feedback items
+- User preferences and constraints
+
+Preserve all unaddressed feedback in full detail. Compress repetitive or less important feedback while maintaining the essence of user input."""
+
+        try:
+            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+
+            summary = self.llm_service.generate(
+                prompt=prompt,
+                max_tokens=target_tokens + 100,
+                temperature=0.2  # Very low temperature for consistency with feedback
+            )
+
+            key_info = self._extract_key_information(content, summary)
+            if preserve_key_info:
+                key_info.extend(self._extract_feedback_elements(content, summary, context))
+
+            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+
+            return SummaryResult(
+                summary=summary,
+                key_information=key_info,
+                quality_score=quality_score,
+                metadata={
+                    "strategy": "feedback_summary",
+                    "target_tokens": target_tokens,
+                    "actual_tokens": len(summary.split()),
+                    "unaddressed_feedback_preserved": self._count_unaddressed_feedback(context)
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"Feedback summarization failed: {e}")
+            return SummaryResult(
+                summary="",
+                warnings=[f"Summarization failed: {str(e)}"]
+            )
+
+    def _extract_feedback_elements(self, content: str, summary: str, context: Dict[str, Any]) -> List[str]:
+        """Extract feedback-specific elements."""
+        elements = []
+
+        # Check for feedback types
+        feedback_types = ["positive", "negative", "suggestion", "request", "constraint"]
+        for feedback_type in feedback_types:
+            if feedback_type in content.lower() and feedback_type in summary.lower():
+                elements.append(f"Feedback type: {feedback_type}")
+
+        # Check for unaddressed feedback indicators
+        unaddressed_indicators = ["not incorporated", "unaddressed", "pending", "todo"]
+        for indicator in unaddressed_indicators:
+            if indicator in content.lower():
+                elements.append(f"Unaddressed feedback: {indicator}")
+
+        # Add context-specific information
+        if context.get("unaddressed_count", 0) > 0:
+            elements.append(f"Unaddressed feedback count: {context['unaddressed_count']}")
+
+        return elements
+
+    def _count_unaddressed_feedback(self, context: Dict[str, Any]) -> int:
+        """Count unaddressed feedback items from context."""
+        return context.get("unaddressed_count", 0)
+
+
+class SystemPromptOptimizationStrategy(SummarizationStrategy):
+    """Strategy for optimizing system prompts while preserving core instructions."""
+
+    def summarize(
+        self,
+        content: str,
+        target_tokens: int,
+        context: Dict[str, Any],
+        preserve_key_info: bool = True
+    ) -> SummaryResult:
+        """Optimize system prompt content preserving core instructions."""
+
+        specific_instructions = """Focus on:
+- Core agent role and identity - NEVER REMOVE
+- Essential behavioral constraints and guidelines
+- Output format requirements
+- Key functional instructions
+- Critical safety and quality guidelines
+- Agent-specific capabilities and limitations
+
+Remove or consolidate:
+- Redundant instructions
+- Verbose explanations that can be simplified
+- Repetitive behavioral guidelines
+- Non-essential examples
+- Overly detailed formatting instructions
+
+Preserve the functional integrity of the system prompt while making it more concise."""
+
+        try:
+            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+
+            summary = self.llm_service.generate(
+                prompt=prompt,
+                max_tokens=target_tokens + 100,
+                temperature=0.1  # Very low temperature for system prompt consistency
+            )
+
+            key_info = self._extract_key_information(content, summary)
+            if preserve_key_info:
+                key_info.extend(self._extract_system_prompt_elements(content, summary))
+
+            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+
+            return SummaryResult(
+                summary=summary,
+                key_information=key_info,
+                quality_score=quality_score,
+                metadata={
+                    "strategy": "system_prompt_optimization",
+                    "target_tokens": target_tokens,
+                    "actual_tokens": len(summary.split()),
+                    "core_instructions_preserved": self._count_core_instructions(content, summary)
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"System prompt optimization failed: {e}")
+            return SummaryResult(
+                summary="",
+                warnings=[f"Optimization failed: {str(e)}"]
+            )
+
+    def _extract_system_prompt_elements(self, content: str, summary: str) -> List[str]:
+        """Extract system prompt specific elements."""
+        elements = []
+
+        # Check for core instruction keywords
+        core_keywords = ["you are", "your role", "always", "never", "must", "required", "format"]
+        for keyword in core_keywords:
+            if keyword in content.lower() and keyword in summary.lower():
+                elements.append(f"Core instruction: {keyword}")
+
+        # Check for agent types
+        agent_types = ["writer", "editor", "character", "rater", "worldbuilding"]
+        for agent_type in agent_types:
+            if agent_type in content.lower() and agent_type in summary.lower():
+                elements.append(f"Agent type: {agent_type}")
+
+        return elements
+
+    def _count_core_instructions(self, content: str, summary: str) -> int:
+        """Count preserved core instructions."""
+        core_patterns = ["you are", "your role", "always", "never", "must", "required"]
+        preserved_count = 0
+        
+        for pattern in core_patterns:
+            if pattern in content.lower() and pattern in summary.lower():
+                preserved_count += 1
+                
+        return preserved_count
+
+
+class ConversationHistorySummaryStrategy(SummarizationStrategy):
+    """Strategy for summarizing conversation history while maintaining context flow."""
+
+    def summarize(
+        self,
+        content: str,
+        target_tokens: int,
+        context: Dict[str, Any],
+        preserve_key_info: bool = True
+    ) -> SummaryResult:
+        """Summarize conversation history preserving context flow and key decisions."""
+
+        specific_instructions = """Focus on:
+- Recent conversation context - HIGHEST PRIORITY
+- Key user decisions and preferences
+- Important context transitions
+- Decision points and their outcomes
+- User requests and their resolutions
+- Conversation flow and continuity
+- Topic changes and their reasons
+
+Use sliding window approach:
+- Keep recent exchanges in full detail
+- Summarize older conversations while preserving key decisions
+- Maintain conversational coherence and flow
+- Preserve user preferences and established context"""
+
+        try:
+            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+
+            summary = self.llm_service.generate(
+                prompt=prompt,
+                max_tokens=target_tokens + 100,
+                temperature=0.3  # Moderate temperature for natural conversation flow
+            )
+
+            key_info = self._extract_key_information(content, summary)
+            if preserve_key_info:
+                key_info.extend(self._extract_conversation_elements(content, summary, context))
+
+            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+
+            return SummaryResult(
+                summary=summary,
+                key_information=key_info,
+                quality_score=quality_score,
+                metadata={
+                    "strategy": "conversation_history_summary",
+                    "target_tokens": target_tokens,
+                    "actual_tokens": len(summary.split()),
+                    "conversation_turns_preserved": self._count_conversation_turns(content, summary)
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"Conversation history summarization failed: {e}")
+            return SummaryResult(
+                summary="",
+                warnings=[f"Summarization failed: {str(e)}"]
+            )
+
+    def _extract_conversation_elements(self, content: str, summary: str, context: Dict[str, Any]) -> List[str]:
+        """Extract conversation-specific elements."""
+        elements = []
+
+        # Check for conversation markers
+        conversation_markers = ["user:", "assistant:", "human:", "ai:", "question:", "answer:"]
+        for marker in conversation_markers:
+            if marker in content.lower() and marker in summary.lower():
+                elements.append(f"Conversation marker: {marker}")
+
+        # Check for decision indicators
+        decision_indicators = ["decided", "chose", "selected", "agreed", "confirmed"]
+        for indicator in decision_indicators:
+            if indicator in content.lower() and indicator in summary.lower():
+                elements.append(f"Decision point: {indicator}")
+
+        # Add context-specific information
+        if context.get("recent_turns_count", 0) > 0:
+            elements.append(f"Recent turns preserved: {context['recent_turns_count']}")
+
+        return elements
+
+    def _count_conversation_turns(self, content: str, summary: str) -> int:
+        """Count conversation turns preserved in summary."""
+        # Simple heuristic: count conversation markers
+        markers = ["user:", "assistant:", "human:", "ai:"]
+        turn_count = 0
+        
+        for marker in markers:
+            turn_count += summary.lower().count(marker)
+            
+        return turn_count
