@@ -803,6 +803,192 @@ Provide 4-6 suggestions in JSON format:
             compression_ratio=1.0,
             metadata={"fallback": True}
         )
+    
+    def optimize_flesh_out_context(
+        self,
+        system_prompts: SystemPrompts,
+        worldbuilding: str,
+        story_summary: str,
+        context: str,
+        text_to_flesh_out: str
+    ) -> OptimizedContext:
+        """
+        Optimize context for flesh out endpoint.
+        
+        Args:
+            system_prompts: System prompts configuration
+            worldbuilding: World building information
+            story_summary: Story summary
+            context: Context type
+            text_to_flesh_out: Text to expand
+            
+        Returns:
+            OptimizedContext with optimized prompts and metadata
+        """
+        try:
+            # Build context items for analysis
+            context_items = []
+            
+            # System prompts (high priority)
+            if system_prompts.mainPrefix:
+                context_items.append(ContextItem(
+                    content=system_prompts.mainPrefix,
+                    context_type=ContextType.SYSTEM_PROMPT,
+                    priority=10,
+                    layer_type=LayerType.LAYER_A,
+                    metadata={'source': 'main_prefix'}
+                ))
+            
+            if system_prompts.mainSuffix:
+                context_items.append(ContextItem(
+                    content=system_prompts.mainSuffix,
+                    context_type=ContextType.SYSTEM_PROMPT,
+                    priority=10,
+                    layer_type=LayerType.LAYER_A,
+                    metadata={'source': 'main_suffix'}
+                ))
+            
+            # Story context (medium priority)
+            if worldbuilding:
+                context_items.append(ContextItem(
+                    content=worldbuilding,
+                    context_type=ContextType.WORLD_BUILDING,
+                    priority=7,
+                    layer_type=LayerType.LAYER_B,
+                    metadata={'source': 'worldbuilding'}
+                ))
+            
+            if story_summary:
+                context_items.append(ContextItem(
+                    content=story_summary,
+                    context_type=ContextType.STORY_SUMMARY,
+                    priority=6,
+                    layer_type=LayerType.LAYER_B,
+                    metadata={'source': 'story_summary'}
+                ))
+            
+            # Text to flesh out (highest priority)
+            context_items.append(ContextItem(
+                content=text_to_flesh_out,
+                context_type=ContextType.USER_REQUEST,
+                priority=10,
+                layer_type=LayerType.LAYER_A,
+                metadata={'source': 'text_to_flesh_out'}
+            ))
+            
+            # Context type information
+            if context:
+                context_items.append(ContextItem(
+                    content=f"Context type: {context}",
+                    context_type=ContextType.USER_INSTRUCTION,
+                    priority=8,
+                    layer_type=LayerType.LAYER_A,
+                    metadata={'source': 'context_type'}
+                ))
+            
+            # Calculate total tokens
+            total_tokens = sum(len(item.content) // 4 for item in context_items)
+            
+            # Check if optimization is needed
+            optimization_applied = False
+            compression_ratio = 1.0
+            
+            if total_tokens > self.optimization_threshold:
+                logger.info(f"Optimizing flesh_out context: {total_tokens} tokens > {self.optimization_threshold} threshold")
+                
+                # Apply context optimization
+                analysis = self.context_manager.analyze_context(context_items)
+                
+                optimization_result = self.context_manager.optimize_context(
+                    context_items,
+                    target_tokens=self.max_context_tokens // 2,  # Conservative target
+                    preserve_high_priority=True
+                )
+                
+                if optimization_result:
+                    context_items = optimization_result
+                    new_total_tokens = sum(len(item.content) // 4 for item in context_items)
+                    compression_ratio = new_total_tokens / total_tokens if total_tokens > 0 else 1.0
+                    total_tokens = new_total_tokens
+                    optimization_applied = True
+                    
+                    logger.info(f"Flesh_out context optimized: {total_tokens} tokens (compression: {compression_ratio:.2f})")
+            
+            # Build optimized prompts
+            system_parts = []
+            story_parts = []
+            user_parts = []
+            
+            for item in context_items:
+                if item.context_type == ContextType.SYSTEM_PROMPT:
+                    system_parts.append(item.content)
+                elif item.context_type in [ContextType.WORLD_BUILDING, ContextType.STORY_SUMMARY]:
+                    story_parts.append(f"- {item.context_type.value.replace('_', ' ').title()}: {item.content}")
+                elif item.context_type in [ContextType.USER_REQUEST, ContextType.USER_INSTRUCTION]:
+                    user_parts.append(item.content)
+            
+            # Construct system prompt
+            system_prompt_parts = system_parts + [
+                "Expand and flesh out brief text with rich detail, adding depth, sensory details, and narrative richness."
+            ]
+            system_prompt = "\n\n".join(system_prompt_parts)
+            
+            # Construct user message
+            user_message_parts = []
+            if story_parts:
+                user_message_parts.append("Story context:")
+                user_message_parts.extend(story_parts)
+                user_message_parts.append("")
+            
+            user_message_parts.extend(user_parts)
+            user_message_parts.append("Provide a detailed, atmospheric expansion (200-400 words).")
+            
+            user_message = "\n".join(user_message_parts)
+            
+            metadata = {
+                'original_token_count': sum(len(item.content) // 4 for item in context_items),
+                'optimization_applied': optimization_applied,
+                'compression_ratio': compression_ratio,
+                'context_items_count': len(context_items)
+            }
+            
+            return OptimizedContext(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                total_tokens=total_tokens,
+                optimization_applied=optimization_applied,
+                compression_ratio=compression_ratio,
+                metadata=metadata
+            )
+            
+        except Exception as e:
+            logger.error(f"Error optimizing flesh_out context: {str(e)}")
+            # Return fallback context
+            system_prompt = f"""{system_prompts.mainPrefix}
+
+Expand and flesh out brief text with rich detail, adding depth, sensory details, and narrative richness.
+
+{system_prompts.mainSuffix}"""
+
+            user_message = f"""Story context:
+- World: {worldbuilding}
+- Story: {story_summary}
+- Context type: {context}
+
+Text to expand: {text_to_flesh_out}
+
+Provide a detailed, atmospheric expansion (200-400 words)."""
+
+            total_tokens = (len(system_prompt) + len(user_message)) // 4
+            
+            return OptimizedContext(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                total_tokens=total_tokens,
+                optimization_applied=False,
+                compression_ratio=1.0,
+                metadata={'fallback_used': True, 'error': str(e)}
+            )
 
 
 # Global service instance

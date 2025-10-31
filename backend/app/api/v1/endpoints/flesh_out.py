@@ -7,6 +7,7 @@ from app.models.generation_models import (
     FleshOutResponse
 )
 from app.services.llm_inference import get_llm
+from app.services.context_optimization import get_context_optimization_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,13 +23,39 @@ async def flesh_out(request: FleshOutRequest):
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        system_prompt = f"""{request.systemPrompts.mainPrefix}
+        # Get context optimization service
+        context_service = get_context_optimization_service()
+        
+        # Optimize context transparently
+        try:
+            optimized_context = context_service.optimize_flesh_out_context(
+                system_prompts=request.systemPrompts,
+                worldbuilding=request.worldbuilding,
+                story_summary=request.storySummary,
+                context=request.context,
+                text_to_flesh_out=request.textToFleshOut
+            )
+            
+            system_prompt = optimized_context.system_prompt
+            user_message = optimized_context.user_message
+            
+            # Log context optimization results
+            if optimized_context.optimization_applied:
+                logger.info(f"Context optimization applied for flesh_out: {optimized_context.total_tokens} tokens, "
+                           f"compression ratio: {optimized_context.compression_ratio:.2f}")
+            else:
+                logger.debug(f"No context optimization needed for flesh_out: {optimized_context.total_tokens} tokens")
+                
+        except Exception as e:
+            logger.warning(f"Context optimization failed for flesh_out, using fallback: {str(e)}")
+            # Fallback to original context building
+            system_prompt = f"""{request.systemPrompts.mainPrefix}
 
 Expand and flesh out brief text with rich detail, adding depth, sensory details, and narrative richness.
 
 {request.systemPrompts.mainSuffix}"""
 
-        user_message = f"""Story context:
+            user_message = f"""Story context:
 - World: {request.worldbuilding}
 - Story: {request.storySummary}
 - Context type: {request.context}
