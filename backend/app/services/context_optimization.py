@@ -110,10 +110,7 @@ class ContextOptimizationService:
             context_items = []
 
             # System prompts (highest priority)
-            system_content = f"{
-                system_prompts.mainPrefix}\n{
-                system_prompts.assistantPrompt or ''}\n{
-                system_prompts.mainSuffix}".strip()
+            system_content = f"{system_prompts.mainPrefix}\n{system_prompts.assistantPrompt or ''}\n{system_prompts.mainSuffix}".strip()
             context_items.append(ContextItem(
                 content=system_content,
                 context_type=ContextType.SYSTEM_PROMPT,
