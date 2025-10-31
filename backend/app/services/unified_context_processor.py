@@ -871,16 +871,14 @@ class UnifiedContextProcessor:
                 rater_prompt=rater_prompt,
                 worldbuilding=worldbuilding or "",
                 story_summary=story_summary or "",
-                previous_chapters=previous_chapters,
                 plot_point=plot_point,
-                incorporated_feedback=incorporated_feedback,
                 compose_phase=compose_phase,
                 phase_context=phase_context
             )
 
             # Create context metadata for legacy processing
             context_metadata = ContextMetadata(
-                total_elements=len(previous_chapters) + len(incorporated_feedback) + 4,  # + system_prompts, rater_prompt, worldbuilding, story_summary
+                total_elements=4,  # system_prompts, rater_prompt, worldbuilding, story_summary, plot_point
                 processing_applied=optimized.optimization_applied,
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
@@ -964,15 +962,15 @@ class UnifiedContextProcessor:
                 system_prompts=system_prompts or SystemPrompts(),
                 worldbuilding=worldbuilding or "",
                 story_summary=story_summary or "",
-                characters=characters,
-                outline_section=outline_section,
+                context="flesh_out",  # Fixed parameter name
+                text_to_flesh_out=outline_section,  # Fixed parameter name
                 compose_phase=compose_phase,
                 phase_context=phase_context
             )
 
             # Create context metadata for legacy processing
             context_metadata = ContextMetadata(
-                total_elements=len(characters) + 4,  # + system_prompts, worldbuilding, story_summary, outline_section
+                total_elements=4,  # system_prompts, worldbuilding, story_summary, context, text_to_flesh_out
                 processing_applied=optimized.optimization_applied,
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
