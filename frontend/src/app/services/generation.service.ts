@@ -42,6 +42,7 @@ import {
   StructuredGenerateChapterResponse,
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';
+import { StructuredCharacter } from '../models/context-builder.model';
 
 @Injectable({
   providedIn: 'root'
@@ -1254,7 +1255,7 @@ ${story.plotOutline.content}`;
       const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
       const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
       const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
-      const charactersResult = this.contextBuilderService.buildCharactersContext(story);
+      const charactersResult = this.contextBuilderService.buildCharacterContext(story);
 
       // Check if context building was successful
       if (!systemPromptsResult.success || !worldbuildingResult.success || 
@@ -1267,7 +1268,7 @@ ${story.plotOutline.content}`;
         systemPrompts: {
           mainPrefix: systemPromptsResult.data!.mainPrefix,
           mainSuffix: systemPromptsResult.data!.mainSuffix,
-          editorPrompt: systemPromptsResult.data!.editorPrompt
+          editorPrompt: systemPromptsResult.data!.assistantPrompt
         },
         worldbuilding: {
           content: worldbuildingResult.data!.content,
@@ -1285,7 +1286,7 @@ ${story.plotOutline.content}`;
           content: ch.content,
           wordCount: ch.content.split(/\s+/).length
         })),
-        characters: charactersResult.data!.characters.map(c => ({
+        characters: charactersResult.data!.characters.map((c: StructuredCharacter) => ({
           name: c.name,
           basicBio: c.basicBio,
           sex: c.sex,

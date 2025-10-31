@@ -115,7 +115,7 @@ export class RequestOptimizerService {
   ): OptimizationResult<StructuredRaterFeedbackRequest> {
     const originalTokenCount = this.estimateTokenCount(request);
     const optimizationsApplied: string[] = [];
-    let optimizedRequest = { ...request };
+    const optimizedRequest = { ...request };
 
     const maxTokens = options.maxTokens || this.DEFAULT_MAX_TOKENS;
 
@@ -164,7 +164,7 @@ export class RequestOptimizerService {
   ): OptimizationResult<StructuredGenerateChapterRequest> {
     const originalTokenCount = this.estimateTokenCount(request);
     const optimizationsApplied: string[] = [];
-    let optimizedRequest = { ...request };
+    const optimizedRequest = { ...request };
 
     const maxTokens = options.maxTokens || this.DEFAULT_MAX_TOKENS;
 
@@ -225,7 +225,7 @@ export class RequestOptimizerService {
   ): OptimizationResult<StructuredEditorReviewRequest> {
     const originalTokenCount = this.estimateTokenCount(request);
     const optimizationsApplied: string[] = [];
-    let optimizedRequest = { ...request };
+    const optimizedRequest = { ...request };
 
     const maxTokens = options.maxTokens || this.DEFAULT_MAX_TOKENS;
 
