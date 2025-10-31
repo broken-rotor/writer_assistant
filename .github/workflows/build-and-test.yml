@@ -93,7 +93,7 @@ jobs:
       continue-on-error: true
       
     - name: Run tests
-      run: CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox
+      run: CHROME_BIN=/snap/bin/chromium npm run test -- --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox
       working-directory: frontend
       
     - name: Build production
