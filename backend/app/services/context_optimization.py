@@ -21,7 +21,7 @@ from app.services.content_prioritization import (
 from app.services.context_distillation import (
     AdaptiveSummarizationEngine, AdaptiveSummarizationConfig, GenerationType
 )
-from app.services.llm_inference import get_llm_service
+from app.services.llm_inference import get_llm
 from app.utils.relevance_calculator import ContentCategory, ContentItem
 from app.models.generation_models import (
     SystemPrompts, CharacterInfo, ChapterInfo, FeedbackItem
@@ -84,7 +84,7 @@ class ContextOptimizationService:
 
         # Initialize adaptive summarization engine
         try:
-            llm_service = get_llm_service()
+            llm_service = get_llm()
             self.adaptive_summarizer = AdaptiveSummarizationEngine(
                 llm_service=llm_service,
                 config=AdaptiveSummarizationConfig()
