@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import { ContextBuilderService } from './context-builder.service';
 import {
   Story,
   Character,
@@ -34,6 +35,7 @@ import {
 })
 export class GenerationService {
   private apiService = inject(ApiService);
+  private contextBuilderService = inject(ContextBuilderService);
 
   // Character Feedback
   requestCharacterFeedback(
@@ -134,6 +136,64 @@ export class GenerationService {
     };
 
     return this.apiService.generateChapter(request);
+  }
+
+  /**
+   * Generate chapter using ContextBuilderService
+   * This is the new structured approach that replaces manual context building
+   */
+  generateChapterStructured(story: Story): Observable<GenerateChapterResponse> {
+    try {
+      // Build structured context using ContextBuilderService
+      const contextResult = this.contextBuilderService.buildChapterGenerationContext(
+        story,
+        story.chapterCreation.plotPoint,
+        story.chapterCreation.incorporatedFeedback
+      );
+
+      // Check if context building was successful
+      if (!contextResult.success || !contextResult.data) {
+        throw new Error('Failed to build required context for chapter generation');
+      }
+
+      const context = contextResult.data;
+
+      // Build request using structured context
+      const request: GenerateChapterRequest = {
+        systemPrompts: {
+          mainPrefix: context.systemPrompts.mainPrefix,
+          mainSuffix: context.systemPrompts.mainSuffix,
+          assistantPrompt: this.buildChapterGenerationPrompt(story, context.plotPoint.plotPoint)
+        },
+        worldbuilding: context.worldbuilding.content,
+        storySummary: context.storySummary.summary,
+        previousChapters: context.previousChapters.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content
+        })),
+        characters: context.characters.characters.map(c => ({
+          name: c.name,
+          basicBio: c.basicBio,
+          sex: c.sex,
+          gender: c.gender,
+          sexualPreference: c.sexualPreference,
+          age: c.age,
+          physicalAppearance: c.physicalAppearance,
+          usualClothing: c.usualClothing,
+          personality: c.personality,
+          motivations: c.motivations,
+          fears: c.fears,
+          relationships: c.relationships
+        })),
+        plotPoint: context.plotPoint.plotPoint,
+        incorporatedFeedback: context.feedback.incorporatedFeedback
+      };
+
+      return this.apiService.generateChapter(request);
+    } catch (error) {
+      throw new Error(`Failed to generate chapter with structured context: ${error}`);
+    }
   }
 
   // Modify Chapter
@@ -384,6 +444,68 @@ export class GenerationService {
     };
 
     return this.apiService.modifyChapter(request);
+  }
+
+  /**
+   * Regenerate chapter with feedback using ContextBuilderService
+   * This is the new structured approach that replaces manual context building
+   */
+  regenerateChapterWithFeedbackStructured(
+    story: Story,
+    currentChapterContent: string,
+    feedbackItems: {source: string, content: string, type: string}[],
+    userInstructions?: string
+  ): Observable<ModifyChapterResponse> {
+    try {
+      // Build structured context using ContextBuilderService
+      const systemPromptsResult = this.contextBuilderService.buildSystemPromptsContext(story);
+      const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
+      const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
+      const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
+
+      // Check if context building was successful
+      if (!systemPromptsResult.success || !worldbuildingResult.success || 
+          !storySummaryResult.success || !chaptersResult.success) {
+        throw new Error('Failed to build required context for chapter modification');
+      }
+
+      // Build feedback text
+      const feedbackText = feedbackItems.map(item => 
+        `${item.source} (${item.type}): ${item.content}`
+      ).join('\n');
+      
+      const incorporationPrompt = [
+        'Please revise this chapter by incorporating the following feedback:',
+        '',
+        feedbackText,
+        '',
+        userInstructions ? `Additional instructions: ${userInstructions}` : '',
+        '',
+        'Maintain the overall narrative flow while addressing the feedback points.'
+      ].filter(line => line !== undefined).join('\n');
+
+      // Build request using structured context
+      const request: ModifyChapterRequest = {
+        systemPrompts: {
+          mainPrefix: systemPromptsResult.data!.mainPrefix,
+          mainSuffix: systemPromptsResult.data!.mainSuffix,
+          assistantPrompt: systemPromptsResult.data!.assistantPrompt
+        },
+        worldbuilding: worldbuildingResult.data!.content,
+        storySummary: storySummaryResult.data!.summary,
+        previousChapters: chaptersResult.data!.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content
+        })),
+        currentChapter: currentChapterContent,
+        userRequest: incorporationPrompt
+      };
+
+      return this.apiService.modifyChapter(request);
+    } catch (error) {
+      throw new Error(`Failed to regenerate chapter with structured context: ${error}`);
+    }
   }
 
   // Generate Chapter Variation
