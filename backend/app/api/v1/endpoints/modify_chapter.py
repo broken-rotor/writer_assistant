@@ -7,7 +7,7 @@ from app.models.generation_models import (
     ModifyChapterResponse
 )
 from app.services.llm_inference import get_llm
-from app.services.context_optimization import get_context_optimization_service
+
 import logging
 
 logger = logging.getLogger(__name__)

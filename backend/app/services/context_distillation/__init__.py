@@ -29,13 +29,13 @@ from .summarization_strategies import (
 
 __all__ = [
     "ContextDistiller",
-    "DistillationConfig", 
+    "DistillationConfig",
     "DistillationResult",
     "ContentType",
     "DistillationTrigger",
     "SummarizationStrategy",
     "PlotSummaryStrategy",
-    "CharacterDevelopmentStrategy", 
+    "CharacterDevelopmentStrategy",
     "DialogueSummaryStrategy",
     "EventSequenceStrategy",
     "EmotionalMomentStrategy",

@@ -6,7 +6,7 @@ Usage: python -m app.cli.llm_test --model-path /path/to/model.gguf
 import argparse
 import sys
 import logging
-from pathlib import Path
+
 
 from app.services.llm_inference import (
     LLMInference,
@@ -159,7 +159,7 @@ Examples:
 
     # Create config and initialize model
     print(f"\nInitializing model from: {args.model_path}")
-    print(f"Settings:")
+    print("Settings:")
     print(f"  Context size: {args.n_ctx}")
     print(f"  GPU layers: {args.n_gpu_layers}")
     print(f"  Temperature: {args.temperature}")

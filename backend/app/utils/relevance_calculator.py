@@ -40,7 +40,7 @@ class ContentItem:
     character_names: Set[str] = None
     location_names: Set[str] = None
     metadata: Dict[str, Any] = None
-    
+
     def __post_init__(self):
         if self.importance_tags is None:
             self.importance_tags = set()
@@ -59,11 +59,11 @@ class ScoringWeights:
     relevance_weight: float = 0.4
     importance_weight: float = 0.3
     access_frequency_weight: float = 0.1
-    
+
     def __post_init__(self):
         """Normalize weights to sum to 1.0."""
-        total = (self.recency_weight + self.relevance_weight + 
-                self.importance_weight + self.access_frequency_weight)
+        total = (self.recency_weight + self.relevance_weight +
+                 self.importance_weight + self.access_frequency_weight)
         if total > 0:
             self.recency_weight /= total
             self.relevance_weight /= total
@@ -86,19 +86,19 @@ class RelevanceScore:
 class RelevanceCalculator:
     """
     Calculates relevance scores for content items based on multiple factors.
-    
+
     Scoring components:
     1. Recency: How recently the content was created or accessed
     2. Relevance: Semantic similarity to current context
     3. Importance: Intrinsic importance based on content type and tags
     4. Access Frequency: How often the content has been accessed
     """
-    
+
     def __init__(self, weights: Optional[ScoringWeights] = None):
         """Initialize the relevance calculator with scoring weights."""
         self.weights = weights or ScoringWeights()
         self.logger = logging.getLogger(__name__)
-    
+
     def calculate_score(
         self,
         content_item: ContentItem,
@@ -107,24 +107,24 @@ class RelevanceCalculator:
     ) -> RelevanceScore:
         """
         Calculate comprehensive relevance score for a content item.
-        
+
         Args:
             content_item: The content to score
             context: Current context including active characters, scenes, etc.
             current_time: Current timestamp (defaults to now)
-            
+
         Returns:
             RelevanceScore with component scores and explanation
         """
         if current_time is None:
             current_time = datetime.now()
-        
+
         # Calculate component scores
         recency_score = self._calculate_recency_score(content_item, current_time)
         relevance_score = self._calculate_relevance_score(content_item, context)
         importance_score = self._calculate_importance_score(content_item, context)
         access_frequency_score = self._calculate_access_frequency_score(content_item)
-        
+
         # Calculate weighted total score
         total_score = (
             recency_score * self.weights.recency_weight +
@@ -132,13 +132,13 @@ class RelevanceCalculator:
             importance_score * self.weights.importance_weight +
             access_frequency_score * self.weights.access_frequency_weight
         )
-        
+
         # Generate explanation
         explanation = self._generate_explanation(
-            content_item, recency_score, relevance_score, 
+            content_item, recency_score, relevance_score,
             importance_score, access_frequency_score
         )
-        
+
         return RelevanceScore(
             content_id=content_item.id,
             total_score=total_score,
@@ -148,91 +148,91 @@ class RelevanceCalculator:
             access_frequency_score=access_frequency_score,
             explanation=explanation
         )
-    
+
     def _calculate_recency_score(
-        self, 
-        content_item: ContentItem, 
+        self,
+        content_item: ContentItem,
         current_time: datetime
     ) -> float:
         """
         Calculate recency score using exponential decay.
-        
+
         More recent content gets higher scores with exponential decay.
         """
         # Use the more recent of created_at or last_accessed
         most_recent = max(content_item.created_at, content_item.last_accessed)
         time_diff = current_time - most_recent
-        
+
         # Exponential decay with half-life of 7 days
         half_life_days = 7.0
         decay_constant = math.log(2) / half_life_days
         days_old = time_diff.total_seconds() / (24 * 3600)
-        
+
         # Score ranges from 0 to 1, with 1 being most recent
         score = math.exp(-decay_constant * days_old)
         return min(1.0, max(0.0, score))
-    
+
     def _calculate_relevance_score(
-        self, 
-        content_item: ContentItem, 
+        self,
+        content_item: ContentItem,
         context: Dict[str, Any]
     ) -> float:
         """
         Calculate relevance score based on context matching.
-        
+
         Uses keyword matching and entity overlap as a proxy for semantic similarity.
         """
         score = 0.0
-        
+
         # Get context elements
         active_characters = set(context.get('active_characters', []))
         active_locations = set(context.get('active_locations', []))
         current_scene_type = context.get('current_scene_type', '')
         active_keywords = set(context.get('keywords', []))
-        
+
         # Character relevance (high weight)
         character_overlap = len(content_item.character_names & active_characters)
         if active_characters:
             character_score = character_overlap / len(active_characters)
             score += character_score * 0.4
-        
+
         # Location relevance (medium weight)
         location_overlap = len(content_item.location_names & active_locations)
         if active_locations:
             location_score = location_overlap / len(active_locations)
             score += location_score * 0.3
-        
+
         # Keyword relevance (medium weight)
         if active_keywords:
             content_words = set(re.findall(r'\b\w+\b', content_item.content.lower()))
             keyword_overlap = len(content_words & active_keywords)
             keyword_score = keyword_overlap / len(active_keywords)
             score += keyword_score * 0.2
-        
+
         # Category relevance (low weight)
         if current_scene_type:
             category_match = self._category_matches_scene_type(
                 content_item.category, current_scene_type
             )
             score += category_match * 0.1
-        
+
         return min(1.0, max(0.0, score))
-    
+
     def _calculate_importance_score(
-        self, 
-        content_item: ContentItem, 
+        self,
+        content_item: ContentItem,
         context: Dict[str, Any]
     ) -> float:
         """
         Calculate importance score based on content type and tags.
         """
         base_importance = self._get_base_importance(content_item.category)
-        
+
         # Boost for importance tags
         importance_boost = 0.0
         high_importance_tags = {'main_character', 'plot_critical', 'climax', 'resolution'}
         medium_importance_tags = {'character_development', 'world_building', 'conflict'}
-        
+
         for tag in content_item.importance_tags:
             if tag in high_importance_tags:
                 importance_boost += 0.3
@@ -240,7 +240,7 @@ class RelevanceCalculator:
                 importance_boost += 0.2
             else:
                 importance_boost += 0.1
-        
+
         # Context-specific importance
         context_boost = 0.0
         current_agent = context.get('current_agent', '')
@@ -250,21 +250,21 @@ class RelevanceCalculator:
             ContentCategory.PLOT_POINT, ContentCategory.NARRATIVE
         ]:
             context_boost += 0.2
-        
+
         total_score = base_importance + importance_boost + context_boost
         return min(1.0, max(0.0, total_score))
-    
+
     def _calculate_access_frequency_score(self, content_item: ContentItem) -> float:
         """
         Calculate score based on how frequently content has been accessed.
         """
         if content_item.access_count == 0:
             return 0.0
-        
+
         # Logarithmic scaling to prevent over-weighting frequently accessed items
         score = math.log(content_item.access_count + 1) / math.log(10)  # log base 10
         return min(1.0, max(0.0, score))
-    
+
     def _get_base_importance(self, category: ContentCategory) -> float:
         """Get base importance score for content category."""
         importance_map = {
@@ -277,15 +277,15 @@ class RelevanceCalculator:
             ContentCategory.METADATA: 0.3
         }
         return importance_map.get(category, 0.5)
-    
+
     def _category_matches_scene_type(
-        self, 
-        category: ContentCategory, 
+        self,
+        category: ContentCategory,
         scene_type: str
     ) -> float:
         """Check if content category matches current scene type."""
         scene_type_lower = scene_type.lower()
-        
+
         if category == ContentCategory.CHARACTER and 'character' in scene_type_lower:
             return 1.0
         elif category == ContentCategory.DIALOGUE and 'dialogue' in scene_type_lower:
@@ -294,9 +294,9 @@ class RelevanceCalculator:
             return 1.0
         elif category == ContentCategory.WORLD_BUILDING and 'world' in scene_type_lower:
             return 1.0
-        
+
         return 0.0
-    
+
     def _generate_explanation(
         self,
         content_item: ContentItem,
@@ -307,7 +307,7 @@ class RelevanceCalculator:
     ) -> str:
         """Generate human-readable explanation of the scoring."""
         explanations = []
-        
+
         if recency_score > 0.8:
             explanations.append("very recent")
         elif recency_score > 0.5:
@@ -316,7 +316,7 @@ class RelevanceCalculator:
             explanations.append("somewhat old")
         else:
             explanations.append("old")
-        
+
         if relevance_score > 0.7:
             explanations.append("highly relevant to current context")
         elif relevance_score > 0.4:
@@ -325,23 +325,23 @@ class RelevanceCalculator:
             explanations.append("somewhat relevant")
         else:
             explanations.append("low relevance")
-        
+
         if importance_score > 0.8:
             explanations.append("high importance")
         elif importance_score > 0.5:
             explanations.append("moderate importance")
         else:
             explanations.append("low importance")
-        
+
         if access_frequency_score > 0.5:
             explanations.append("frequently accessed")
         elif access_frequency_score > 0.2:
             explanations.append("occasionally accessed")
         else:
             explanations.append("rarely accessed")
-        
+
         return f"{content_item.category.value}: {', '.join(explanations)}"
-    
+
     def batch_calculate_scores(
         self,
         content_items: List[ContentItem],
@@ -350,12 +350,12 @@ class RelevanceCalculator:
     ) -> List[RelevanceScore]:
         """
         Calculate relevance scores for multiple content items efficiently.
-        
+
         Args:
             content_items: List of content items to score
             context: Current context for relevance calculation
             current_time: Current timestamp (defaults to now)
-            
+
         Returns:
             List of RelevanceScore objects sorted by total_score descending
         """
@@ -376,8 +376,7 @@ class RelevanceCalculator:
                     access_frequency_score=0.0,
                     explanation=f"Error calculating score: {e}"
                 ))
-        
+
         # Sort by total score descending
         scores.sort(key=lambda x: x.total_score, reverse=True)
         return scores
-

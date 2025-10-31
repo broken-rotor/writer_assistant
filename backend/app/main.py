@@ -69,6 +69,7 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+
 @app.get("/")
 async def root():
     llm = get_llm()
@@ -86,6 +87,7 @@ async def root():
         "version": "1.0.0",
         "llm_status": llm_status
     }
+
 
 @app.get("/health")
 async def health_check():

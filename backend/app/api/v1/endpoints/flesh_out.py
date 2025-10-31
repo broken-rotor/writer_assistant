@@ -25,7 +25,7 @@ async def flesh_out(request: FleshOutRequest):
     try:
         # Get context optimization service
         context_service = get_context_optimization_service()
-        
+
         # Optimize context transparently
         try:
             optimized_context = context_service.optimize_flesh_out_context(
@@ -35,17 +35,17 @@ async def flesh_out(request: FleshOutRequest):
                 context=request.context,
                 text_to_flesh_out=request.textToFleshOut
             )
-            
+
             system_prompt = optimized_context.system_prompt
             user_message = optimized_context.user_message
-            
+
             # Log context optimization results
             if optimized_context.optimization_applied:
                 logger.info(f"Context optimization applied for flesh_out: {optimized_context.total_tokens} tokens, "
-                           f"compression ratio: {optimized_context.compression_ratio:.2f}")
+                            f"compression ratio: {optimized_context.compression_ratio:.2f}")
             else:
                 logger.debug(f"No context optimization needed for flesh_out: {optimized_context.total_tokens} tokens")
-                
+
         except Exception as e:
             logger.warning(f"Context optimization failed for flesh_out, using fallback: {str(e)}")
             # Fallback to original context building

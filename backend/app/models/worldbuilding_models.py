@@ -4,13 +4,13 @@ Handles conversation state, topic classification, and context management.
 """
 from typing import Dict, List, Optional, Any, Literal
 from pydantic import BaseModel
-from datetime import datetime
+
 from .generation_models import ConversationMessage
 
 
 # Worldbuilding topic categories
 WorldbuildingTopic = Literal[
-    'geography', 'culture', 'magic_system', 'politics', 'history', 
+    'geography', 'culture', 'magic_system', 'politics', 'history',
     'technology', 'economy', 'religion', 'characters', 'languages',
     'conflicts', 'organizations', 'general'
 ]
@@ -48,19 +48,19 @@ class WorldbuildingConversationState(BaseModel):
     current_state: ConversationState = 'initial'
     current_branch_id: str = 'main'
     current_topic: WorldbuildingTopic = 'general'
-    
+
     # Conversation branches
     branches: Dict[str, ConversationBranch] = {}
-    
+
     # Global worldbuilding context
     accumulated_worldbuilding: str = ""
     topic_priorities: Dict[WorldbuildingTopic, float] = {}
-    
+
     # Conversation flow
     conversation_history: List[str] = []  # Topic transition history
     suggested_topics: List[WorldbuildingTopic] = []
     pending_questions: List[str] = []
-    
+
     # Metadata
     created_at: str
     last_updated: str
@@ -81,16 +81,16 @@ class WorldbuildingChatContext(BaseModel):
     story_id: str
     current_topic: WorldbuildingTopic = 'general'
     conversation_state: ConversationState = 'initial'
-    
+
     # Topic-specific context
     active_topics: List[WorldbuildingTopic] = []
     topic_contexts: Dict[WorldbuildingTopic, TopicContext] = {}
-    
+
     # Conversation flow
     recent_messages: List[ConversationMessage] = []
     suggested_followups: List[str] = []
     topic_transitions: List[TopicTransition] = []
-    
+
     # Integration with existing system
     story_context: Dict[str, Any] = {}
     accumulated_worldbuilding: str = ""

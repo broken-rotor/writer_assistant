@@ -27,7 +27,7 @@ async def editor_review(request: EditorReviewRequest):
     try:
         # Get context optimization service
         context_service = get_context_optimization_service()
-        
+
         # Optimize context transparently
         try:
             optimized_context = context_service.optimize_editor_review_context(
@@ -39,17 +39,17 @@ async def editor_review(request: EditorReviewRequest):
                 compose_phase=request.compose_phase,
                 phase_context=request.phase_context
             )
-            
+
             system_prompt = optimized_context.system_prompt
             user_message = optimized_context.user_message
-            
+
             # Log context optimization results
             if optimized_context.optimization_applied:
                 logger.info(f"Editor review context optimization applied: {optimized_context.total_tokens} tokens, "
-                           f"compression ratio: {optimized_context.compression_ratio:.2f}")
+                            f"compression ratio: {optimized_context.compression_ratio:.2f}")
             else:
                 logger.debug(f"No editor review context optimization needed: {optimized_context.total_tokens} tokens")
-                
+
         except Exception as e:
             logger.warning(f"Editor review context optimization failed, using fallback: {str(e)}")
             # Fallback to original context building
@@ -64,16 +64,16 @@ Review chapters and provide specific suggestions for improvement.
             phase_context_str = ""
             if request.compose_phase and request.phase_context:
                 phase_context_str = f"\nCompose Phase: {request.compose_phase}"
-                
+
                 phase_guidance = {
                     'plot_outline': "Focus on plot structure, story beats, and narrative coherence.",
                     'chapter_detail': "Focus on scene development, character interactions, and pacing.",
                     'final_edit': "Focus on prose quality, consistency, and final polish."
                 }
-                
+
                 if request.compose_phase in phase_guidance:
                     phase_context_str += f"\nPhase Focus: {phase_guidance[request.compose_phase]}"
-                
+
                 if request.phase_context.phase_specific_instructions:
                     phase_context_str += f"\nPhase Instructions: {request.phase_context.phase_specific_instructions}"
 

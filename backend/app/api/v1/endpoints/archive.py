@@ -7,7 +7,7 @@ plus RAG-based question answering.
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 import logging
 
 from app.services.archive_service import get_archive_service
@@ -78,7 +78,8 @@ async def search_archive(request: SearchRequest):
         if not archive_service.is_enabled():
             raise HTTPException(
                 status_code=503,
-                detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. See ARCHIVE_SETUP.md for instructions."
+                detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. "
+                       "See ARCHIVE_SETUP.md for instructions."
             )
 
         # Build filter if file name is provided
@@ -137,7 +138,8 @@ async def list_files():
         if not archive_service.is_enabled():
             raise HTTPException(
                 status_code=503,
-                detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. See ARCHIVE_SETUP.md for instructions."
+                detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. "
+                       "See ARCHIVE_SETUP.md for instructions."
             )
 
         files = archive_service.get_file_list()
@@ -180,7 +182,8 @@ async def get_file_content(
         if not archive_service.is_enabled():
             raise HTTPException(
                 status_code=503,
-                detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. See ARCHIVE_SETUP.md for instructions."
+                detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. "
+                       "See ARCHIVE_SETUP.md for instructions."
             )
 
         content = archive_service.get_file_content(file_path)
@@ -216,7 +219,8 @@ async def get_archive_stats():
         if not archive_service.is_enabled():
             raise HTTPException(
                 status_code=503,
-                detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. See ARCHIVE_SETUP.md for instructions."
+                detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. "
+                       "See ARCHIVE_SETUP.md for instructions."
             )
 
         stats = archive_service.get_stats()
@@ -279,7 +283,8 @@ class RAGResponse(BaseModel):
     answer: str = Field(..., description="Generated answer")
     sources: List[RAGSource] = Field(..., description="Source chunks used for context")
     total_sources: int = Field(..., description="Total number of sources used")
-    info_message: Optional[str] = Field(None, description="Informational message about retrieval status (not included in future prompts)")
+    info_message: Optional[str] = Field(
+        None, description="Informational message about retrieval status (not included in future prompts)")
 
 
 class RAGStatusResponse(BaseModel):
