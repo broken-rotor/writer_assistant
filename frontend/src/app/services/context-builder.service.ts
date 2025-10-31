@@ -6,9 +6,9 @@
  */
 
 import { Injectable, inject } from '@angular/core';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
-import { Story, Character, FeedbackItem, ChatMessage, ConversationThread, ChapterComposeState } from '../models/story.model';
+import { Story, FeedbackItem, ConversationThread, ChapterComposeState } from '../models/story.model';
 import {
   SystemPromptsContext,
   WorldbuildingContext,
@@ -23,15 +23,12 @@ import {
   StructuredMessage,
   PhaseContext,
   ChapterGenerationContext,
-  ChapterModificationContext,
-  FeedbackRequestContext,
   ContextValidationResult,
   ContextValidationError,
   ContextValidationWarning,
   ContextBuildOptions,
   ContextCacheEntry,
-  ContextBuilderResponse,
-  ContextOptimizationSettings
+  ContextBuilderResponse
 } from '../models/context-builder.model';
 
 import { TokenCountingService } from './token-counting.service';
@@ -43,7 +40,7 @@ export class ContextBuilderService {
   private tokenCountingService = inject(TokenCountingService);
 
   // Cache for context elements
-  private contextCache = new Map<string, ContextCacheEntry<any>>();
+  private contextCache = new Map<string, ContextCacheEntry<unknown>>();
   private readonly DEFAULT_CACHE_AGE = 5 * 60 * 1000; // 5 minutes
 
   // Context update notifications
@@ -362,7 +359,7 @@ export class ContextBuilderService {
    */
   buildPlotContext(
     plotPoint: string,
-    options: ContextBuildOptions = {}
+    _options: ContextBuildOptions = {}
   ): ContextBuilderResponse<PlotContext> {
     try {
       const wordCount = this.tokenCountingService.countWords(plotPoint);
@@ -401,7 +398,7 @@ export class ContextBuilderService {
   buildFeedbackContext(
     incorporatedFeedback: FeedbackItem[] = [],
     selectedFeedback: FeedbackItem[] = [],
-    options: ContextBuildOptions = {}
+    _options: ContextBuildOptions = {}
   ): ContextBuilderResponse<FeedbackContext> {
     try {
       const context: FeedbackContext = {
@@ -437,8 +434,8 @@ export class ContextBuilderService {
    */
   buildConversationContext(
     conversationThread?: ConversationThread,
-    maxMessages: number = 10,
-    options: ContextBuildOptions = {}
+    maxMessages = 10,
+    _options: ContextBuildOptions = {}
   ): ContextBuilderResponse<ConversationContext> {
     try {
       if (!conversationThread) {
@@ -500,7 +497,7 @@ export class ContextBuilderService {
     chapterComposeState?: ChapterComposeState,
     conversationThread?: ConversationThread,
     additionalInstructions?: string,
-    options: ContextBuildOptions = {}
+    _options: ContextBuildOptions = {}
   ): ContextBuilderResponse<PhaseContext> {
     try {
       if (!chapterComposeState) {

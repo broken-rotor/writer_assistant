@@ -6,7 +6,7 @@
  * components and the backend API.
  */
 
-import { Character, FeedbackItem, ChatMessage } from './story.model';
+import { FeedbackItem } from './story.model';
 
 // ============================================================================
 // CORE CONTEXT ELEMENT INTERFACES
