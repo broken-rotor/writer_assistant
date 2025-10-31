@@ -235,6 +235,10 @@ class SystemInstruction(BaseModel):
         None,
         description="Conditions under which this instruction applies"
     )
+    metadata: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Additional metadata for the instruction"
+    )
 
 
 class ContextMetadata(BaseModel):
@@ -334,23 +338,16 @@ class CharacterFeedbackRequest(BaseModel):
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
 
-    @field_validator('structured_context', mode='before')
-    @classmethod
-    def validate_structured_context(cls, v, info):
-        """Validate structured context when in structured mode."""
-        data = info.data if hasattr(info, 'data') else {}
-        context_mode = data.get('context_mode', 'legacy')
-
-        if context_mode == 'structured' and v is None:
-            raise ValueError("structured_context is required when context_mode is 'structured'")
-
-        return v
-
     @model_validator(mode='after')
     def validate_context_consistency(self):
         """Validate consistency between context modes and available data."""
+        # In structured mode, ensure we have structured context
+        if self.context_mode == 'structured':
+            if self.structured_context is None:
+                raise ValueError("structured_context is required when context_mode is 'structured'")
+
         # In hybrid mode, ensure we have both legacy and structured data
-        if self.context_mode == 'hybrid':
+        elif self.context_mode == 'hybrid':
             has_legacy = bool(self.systemPrompts or self.worldbuilding or self.storySummary)
             has_structured = bool(self.structured_context)
 

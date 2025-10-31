@@ -117,7 +117,8 @@ class ContextConverter:
                     type="behavior",
                     content=system_prompts.mainPrefix,
                     scope="global",
-                    priority="high"
+                    priority="high",
+                    metadata={"source": "mainPrefix"}
                 ))
 
             if system_prompts.mainSuffix and system_prompts.mainSuffix.strip():
@@ -125,7 +126,8 @@ class ContextConverter:
                     type="behavior",
                     content=system_prompts.mainSuffix,
                     scope="global",
-                    priority="high"
+                    priority="high",
+                    metadata={"source": "mainSuffix"}
                 ))
 
             if system_prompts.assistantPrompt and system_prompts.assistantPrompt.strip():
@@ -181,7 +183,13 @@ class ContextConverter:
         for instruction in structured_context.system_instructions:
             if instruction.type == "behavior":
                 if instruction.scope == "global":
-                    if instruction.priority == "high":
+                    # Use metadata to distinguish between prefix and suffix
+                    if instruction.metadata and instruction.metadata.get("source") == "mainPrefix":
+                        main_prefix_parts.append(instruction.content)
+                    elif instruction.metadata and instruction.metadata.get("source") == "mainSuffix":
+                        main_suffix_parts.append(instruction.content)
+                    elif instruction.priority == "high":
+                        # Fallback for instructions without metadata
                         main_prefix_parts.append(instruction.content)
                     else:
                         main_suffix_parts.append(instruction.content)
