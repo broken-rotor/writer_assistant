@@ -265,6 +265,14 @@ class ContextMetadata(BaseModel):
         None,
         description="Time taken for context processing in milliseconds"
     )
+    created_at: Optional[str] = Field(
+        None,
+        description="Timestamp when context processing was performed"
+    )
+    version: str = Field(
+        default="1.0",
+        description="Context processing version"
+    )
 
 
 class StructuredContextContainer(BaseModel):

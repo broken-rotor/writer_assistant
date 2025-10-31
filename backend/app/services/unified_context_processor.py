@@ -200,7 +200,7 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
-                    compose_phase=compose_phase or ComposePhase.CHAPTER_WRITING,
+                    compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="full_narrative_assembly"
                 )
@@ -744,7 +744,8 @@ class UnifiedContextProcessor:
                 processing_mode="structured",
                 optimization_level="moderate" if metadata.get("was_summarized", False) else "none",
                 compression_ratio=metadata.get("reduction_ratio"),
-                processing_time_ms=metadata.get("processing_time_ms", 0)
+                processing_time_ms=metadata.get("processing_time_ms", 0),
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -800,7 +801,7 @@ class UnifiedContextProcessor:
             return self._process_structured_context(
                 structured_context=merged_container,
                 agent_type=agent_type,
-                compose_phase=legacy_params.get("compose_phase", ComposePhase.CHAPTER_WRITING),
+                compose_phase=legacy_params.get("compose_phase", ComposePhase.CHAPTER_DETAIL),
                 context_processing_config=context_processing_config,
                 endpoint_strategy=endpoint_strategy
             )
@@ -842,7 +843,8 @@ class UnifiedContextProcessor:
                 processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -888,7 +890,8 @@ class UnifiedContextProcessor:
                 processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -934,7 +937,8 @@ class UnifiedContextProcessor:
                 processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -982,7 +986,8 @@ class UnifiedContextProcessor:
                 processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -1030,7 +1035,8 @@ class UnifiedContextProcessor:
                 processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -1076,7 +1082,8 @@ class UnifiedContextProcessor:
                 processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(

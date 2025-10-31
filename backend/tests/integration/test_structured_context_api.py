@@ -239,7 +239,15 @@ class TestStructuredContextAPI:
         request_data = {
             "context_mode": "structured",
             "structured_context": sample_structured_context.model_dump(mode='json'),
-            "plotPoint": "Test plot point"
+            "plotPoint": "Test plot point",
+            "previousChapters": [],
+            "characters": [
+                {
+                    "name": "Aria",
+                    "basicBio": "Brave young hero"
+                }
+            ],
+            "incorporatedFeedback": []
         }
         
         response = client.post("/api/v1/generate-chapter", json=request_data)
@@ -292,7 +300,15 @@ class TestStructuredContextAPI:
         request_data = {
             "context_mode": "structured",
             "structured_context": structured_context.model_dump(mode='json'),
-            "plotPoint": "Test prioritization"
+            "plotPoint": "Test prioritization",
+            "previousChapters": [],
+            "characters": [
+                {
+                    "name": "Aria",
+                    "basicBio": "Brave young hero"
+                }
+            ],
+            "incorporatedFeedback": []
         }
         
         response = client.post("/api/v1/generate-chapter", json=request_data)
@@ -330,8 +346,10 @@ class TestStructuredContextAPI:
             "structured_context": structured_context.model_dump(mode='json'),
             "character": {
                 "name": "Aria",
-                "description": "Test character"
-            }
+                "basicBio": "Test character"
+            },
+            "previousChapters": [],
+            "plotPoint": "Test plot point for character feedback"
         }
         
         response = client.post("/api/v1/character-feedback", json=request_data)
@@ -367,7 +385,15 @@ class TestStructuredContextAPI:
         request_data = {
             "context_mode": "structured",
             "structured_context": large_context.model_dump(mode='json'),
-            "plotPoint": "Performance test"
+            "plotPoint": "Performance test",
+            "previousChapters": [],
+            "characters": [
+                {
+                    "name": "Aria",
+                    "basicBio": "Brave young hero"
+                }
+            ],
+            "incorporatedFeedback": []
         }
         
         import time
@@ -423,17 +449,30 @@ class TestStructuredContextAPI:
             "structured_context": {
                 "plot_elements": [
                     {
-                        "type": "plot_outline",
+                        "type": "scene",
                         "content": "Structured plot element",
                         "priority": "high"
                     }
                 ],
-                "context_metadata": {
+                "character_contexts": [],
+                "user_requests": [],
+                "system_instructions": [],
+                "metadata": {
                     "total_elements": 1,
-                    "processing_mode": "structured"
+                    "processing_applied": False,
+                    "processing_mode": "structured",
+                    "optimization_level": "none"
                 }
             },
-            "plotPoint": "Compatibility test"
+            "plotPoint": "Compatibility test",
+            "previousChapters": [],
+            "characters": [
+                {
+                    "name": "Aria",
+                    "basicBio": "Brave young hero"
+                }
+            ],
+            "incorporatedFeedback": []
         }
         
         response = client.post("/api/v1/generate-chapter", json=mixed_request)
