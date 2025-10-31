@@ -544,7 +544,7 @@ export class ContextBuilderService {
         context.conversationBranchId = conversationThread.currentBranchId;
       }
 
-      const validation = this.validatePhaseContext(context);
+      const validation = this.validatePhaseContext(context, chapterComposeState);
 
       return {
         success: true,
@@ -852,7 +852,7 @@ export class ContextBuilderService {
     return { isValid: errors.length === 0, errors, warnings };
   }
 
-  private validatePhaseContext(context: PhaseContext): ContextValidationResult {
+  private validatePhaseContext(context: PhaseContext, chapterComposeState?: ChapterComposeState): ContextValidationResult {
     const errors: ContextValidationError[] = [];
     const warnings: ContextValidationWarning[] = [];
 
@@ -862,6 +862,42 @@ export class ContextBuilderService {
         message: 'Current phase is required',
         severity: 'error'
       });
+    }
+
+    // Validate phase consistency with state
+    if (chapterComposeState && context.currentPhase) {
+      const currentPhase = context.currentPhase;
+      const phases = chapterComposeState.phases;
+
+      // Check if current phase is inconsistent with completed phases
+      if (currentPhase === 'plot_outline' && phases.plotOutline?.status === 'completed') {
+        errors.push({
+          field: 'currentPhase',
+          message: 'Cannot be in plot_outline phase when plot outline is already completed',
+          severity: 'error'
+        });
+      } else if (currentPhase === 'chapter_detail' && phases.chapterDetailer?.status === 'completed') {
+        errors.push({
+          field: 'currentPhase',
+          message: 'Cannot be in chapter_detail phase when chapter detailing is already completed',
+          severity: 'error'
+        });
+      }
+
+      // Check if current phase has prerequisites
+      if (currentPhase === 'chapter_detail' && phases.plotOutline?.status !== 'completed') {
+        warnings.push({
+          field: 'currentPhase',
+          message: 'Chapter detail phase should wait for plot outline completion',
+          suggestion: 'Complete the plot outline phase first'
+        });
+      } else if (currentPhase === 'final_edit' && phases.chapterDetailer?.status !== 'completed') {
+        warnings.push({
+          field: 'currentPhase',
+          message: 'Final edit phase should wait for chapter detailing completion',
+          suggestion: 'Complete the chapter detailing phase first'
+        });
+      }
     }
 
     return { isValid: errors.length === 0, errors, warnings };

@@ -46,6 +46,20 @@ module.exports = function (config) {
           '--disable-gpu',
           '--no-sandbox',
           '--disable-dev-shm-usage',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--remote-debugging-port=9222'
+        ]
+      },
+      ChromeHeadlessNoSandbox: {
+        base: 'Chrome',
+        flags: [
+          '--headless',
+          '--disable-gpu',
+          '--no-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
           '--remote-debugging-port=9222'
         ]
       }

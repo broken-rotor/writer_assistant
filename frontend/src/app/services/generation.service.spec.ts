@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { GenerationService } from './generation.service';
 import { ApiService } from './api.service';
+import { ContextBuilderService } from './context-builder.service';
+import { TokenCountingService } from './token-counting.service';
 import { Story, Character, Rater } from '../models/story.model';
 import { of } from 'rxjs';
 
@@ -19,10 +22,31 @@ describe('GenerationService', () => {
       'generateCharacterDetails'
     ]);
 
+    const contextBuilderSpy = jasmine.createSpyObj('ContextBuilderService', [
+      'buildSystemPromptsContext',
+      'buildWorldbuildingContext',
+      'buildStorySummaryContext',
+      'buildCharacterContext',
+      'buildChaptersContext',
+      'buildPlotContext',
+      'buildFeedbackContext',
+      'buildConversationContext',
+      'buildPhaseContext',
+      'buildChapterGenerationContext'
+    ]);
+
+    const tokenCountingSpy = jasmine.createSpyObj('TokenCountingService', [
+      'countWords',
+      'countTokens'
+    ]);
+
     TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
       providers: [
         GenerationService,
-        { provide: ApiService, useValue: spy }
+        { provide: ApiService, useValue: spy },
+        { provide: ContextBuilderService, useValue: contextBuilderSpy },
+        { provide: TokenCountingService, useValue: tokenCountingSpy }
       ]
     });
 
