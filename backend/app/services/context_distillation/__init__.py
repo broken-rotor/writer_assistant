@@ -24,7 +24,17 @@ from .summarization_strategies import (
     DialogueSummaryStrategy,
     EventSequenceStrategy,
     EmotionalMomentStrategy,
-    WorldBuildingStrategy
+    WorldBuildingStrategy,
+    FeedbackSummaryStrategy,
+    SystemPromptOptimizationStrategy,
+    ConversationHistorySummaryStrategy
+)
+from .adaptive_summarizer import (
+    AdaptiveSummarizationEngine,
+    AdaptiveSummarizationConfig,
+    AdaptiveSummaryResult,
+    GenerationType,
+    StrategyWeight
 )
 
 __all__ = [
@@ -39,5 +49,13 @@ __all__ = [
     "DialogueSummaryStrategy",
     "EventSequenceStrategy",
     "EmotionalMomentStrategy",
-    "WorldBuildingStrategy"
+    "WorldBuildingStrategy",
+    "FeedbackSummaryStrategy",
+    "SystemPromptOptimizationStrategy",
+    "ConversationHistorySummaryStrategy",
+    "AdaptiveSummarizationEngine",
+    "AdaptiveSummarizationConfig",
+    "AdaptiveSummaryResult",
+    "GenerationType",
+    "StrategyWeight"
 ]

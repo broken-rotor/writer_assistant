@@ -18,10 +18,15 @@ from app.services.content_prioritization import (
     LayeredPrioritizer, RAGRetriever, RetrievalStrategy, RetrievalMode,
     PrioritizationConfig, AgentType
 )
+from app.services.context_distillation import (
+    AdaptiveSummarizationEngine, AdaptiveSummarizationConfig, GenerationType
+)
+from app.services.llm_inference import get_llm_service
 from app.utils.relevance_calculator import ContentCategory, ContentItem
 from app.models.generation_models import (
     SystemPrompts, CharacterInfo, ChapterInfo, FeedbackItem
 )
+from app.models.context_models import AgentType as ContextAgentType, ComposePhase
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +82,72 @@ class ContextOptimizationService:
 
         self.rag_retriever = RAGRetriever()
 
+        # Initialize adaptive summarization engine
+        try:
+            llm_service = get_llm_service()
+            self.adaptive_summarizer = AdaptiveSummarizationEngine(
+                llm_service=llm_service,
+                config=AdaptiveSummarizationConfig()
+            )
+        except Exception as e:
+            logger.warning(f"Failed to initialize adaptive summarizer: {e}")
+            self.adaptive_summarizer = None
+
         logger.info(
             f"ContextOptimizationService initialized: max_tokens={max_context_tokens}, threshold={optimization_threshold}")
+
+    def _apply_adaptive_summarization(
+        self,
+        content: str,
+        target_tokens: int,
+        generation_type: GenerationType,
+        context_type: Optional[ContextType] = None,
+        agent_type: Optional[ContextAgentType] = None,
+        compose_phase: Optional[ComposePhase] = None,
+        additional_context: Optional[Dict[str, Any]] = None
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Apply adaptive summarization to content using the appropriate strategy.
+        
+        Returns:
+            Tuple of (summarized_content, metadata)
+        """
+        if not self.adaptive_summarizer:
+            # Fallback to simple truncation if adaptive summarizer is not available
+            words = content.split()
+            if len(words) > target_tokens:
+                truncated = " ".join(words[:target_tokens])
+                return truncated, {"fallback_truncation": True, "original_tokens": len(words)}
+            return content, {"no_summarization_needed": True}
+        
+        try:
+            result = self.adaptive_summarizer.summarize_adaptively(
+                content=content,
+                target_tokens=target_tokens,
+                generation_type=generation_type,
+                context_type=context_type,
+                agent_type=agent_type,
+                compose_phase=compose_phase,
+                additional_context=additional_context or {}
+            )
+            
+            return result.summary, {
+                "adaptive_summarization": True,
+                "strategies_used": result.strategies_used,
+                "quality_score": result.quality_score,
+                "compression_ratio": result.compression_ratio,
+                "key_information": result.key_information,
+                "warnings": result.warnings
+            }
+            
+        except Exception as e:
+            logger.error(f"Adaptive summarization failed: {e}")
+            # Fallback to simple truncation
+            words = content.split()
+            if len(words) > target_tokens:
+                truncated = " ".join(words[:target_tokens])
+                return truncated, {"fallback_after_error": True, "error": str(e)}
+            return content, {"error_but_no_truncation_needed": True, "error": str(e)}
 
     def optimize_chapter_generation_context(
         self,
@@ -242,7 +311,10 @@ class ContextOptimizationService:
             # Analyze and optimize context
             return self._optimize_context_items(
                 context_items=context_items,
-                task_description="Write an engaging chapter (800-1500 words) that brings this plot point to life with vivid prose, authentic dialogue, and character development."
+                task_description="Write an engaging chapter (800-1500 words) that brings this plot point to life with vivid prose, authentic dialogue, and character development.",
+                generation_type=GenerationType.CHAPTER_GENERATION,
+                agent_type=ContextAgentType.WRITER,
+                compose_phase=compose_phase
             )
 
         except Exception as e:
@@ -336,7 +408,10 @@ You are embodying {character.name}, a character with the following traits:
 
             return self._optimize_context_items(
                 context_items=context_items,
-                task_description=task_content
+                task_description=task_content,
+                generation_type=GenerationType.CHARACTER_FEEDBACK,
+                agent_type=ContextAgentType.CHARACTER,
+                compose_phase=compose_phase
             )
 
         except Exception as e:
@@ -416,7 +491,10 @@ You are embodying {character.name}, a character with the following traits:
 
             return self._optimize_context_items(
                 context_items=context_items,
-                task_description=task_content
+                task_description=task_content,
+                generation_type=GenerationType.RATER_FEEDBACK,
+                agent_type=ContextAgentType.RATER,
+                compose_phase=compose_phase
             )
 
         except Exception as e:
@@ -505,7 +583,10 @@ Review chapters and provide specific suggestions for improvement.
 
             return self._optimize_context_items(
                 context_items=context_items,
-                task_description=task_content
+                task_description=task_content,
+                generation_type=GenerationType.EDITOR_REVIEW,
+                agent_type=ContextAgentType.EDITOR,
+                compose_phase=compose_phase
             )
 
         except Exception as e:
@@ -517,7 +598,10 @@ Review chapters and provide specific suggestions for improvement.
     def _optimize_context_items(
         self,
         context_items: List[ContextItem],
-        task_description: str
+        task_description: str,
+        generation_type: GenerationType = GenerationType.CHAPTER_GENERATION,
+        agent_type: Optional[ContextAgentType] = None,
+        compose_phase: Optional[ComposePhase] = None
     ) -> OptimizedContext:
         """
         Internal method to optimize context items and build final prompts.
@@ -525,23 +609,84 @@ Review chapters and provide specific suggestions for improvement.
         Args:
             context_items: List of context items to optimize
             task_description: Description of the task for the user message
+            generation_type: Type of generation for adaptive summarization
+            agent_type: Target agent type
+            compose_phase: Current compose phase
 
         Returns:
             OptimizedContext with optimized prompts
         """
         try:
-            # For now, skip complex optimization and just build original context
-            # TODO: Implement proper context analysis and optimization integration
-            system_prompt, user_message, final_tokens = self._build_original_context(context_items, task_description)
+            # First, build original context to check if optimization is needed
+            system_prompt, user_message, original_tokens = self._build_original_context(context_items, task_description)
             
             optimization_applied = False
             compression_ratio = 1.0
+            optimization_metadata = {}
+
+            # Check if optimization is needed
+            if original_tokens > self.optimization_threshold:
+                logger.info(f"Context optimization needed: {original_tokens} > {self.optimization_threshold}")
+                
+                # Apply adaptive summarization to compressible content
+                optimized_items = []
+                total_compression_metadata = {}
+                
+                for item in context_items:
+                    if item.context_type in [ContextType.WORLD_BUILDING, ContextType.CHARACTER_PROFILE, 
+                                           ContextType.STORY_SUMMARY, ContextType.USER_FEEDBACK]:
+                        # Calculate target tokens for this item (proportional reduction)
+                        item_tokens = len(item.content.split())
+                        if item_tokens > 200:  # Only summarize if substantial content
+                            target_tokens = max(100, int(item_tokens * 0.6))  # 40% compression
+                            
+                            summarized_content, metadata = self._apply_adaptive_summarization(
+                                content=item.content,
+                                target_tokens=target_tokens,
+                                generation_type=generation_type,
+                                context_type=item.context_type,
+                                agent_type=agent_type,
+                                compose_phase=compose_phase,
+                                additional_context=item.metadata
+                            )
+                            
+                            # Create optimized item
+                            optimized_item = ContextItem(
+                                content=summarized_content,
+                                context_type=item.context_type,
+                                priority=item.priority,
+                                layer_type=item.layer_type,
+                                metadata={**item.metadata, "summarized": True, "summarization_metadata": metadata}
+                            )
+                            optimized_items.append(optimized_item)
+                            total_compression_metadata[item.context_type.value] = metadata
+                        else:
+                            optimized_items.append(item)
+                    else:
+                        # Keep system prompts and high-priority items unchanged
+                        optimized_items.append(item)
+                
+                # Build optimized context
+                system_prompt, user_message, final_tokens = self._build_original_context(optimized_items, task_description)
+                optimization_applied = True
+                compression_ratio = final_tokens / original_tokens if original_tokens > 0 else 1.0
+                optimization_metadata = {
+                    "adaptive_summarization_applied": True,
+                    "compression_details": total_compression_metadata
+                }
+                
+                logger.info(f"Context optimized: {original_tokens} -> {final_tokens} tokens (ratio: {compression_ratio:.2f})")
+            else:
+                final_tokens = original_tokens
 
             metadata = {
-                "original_tokens": final_tokens,
+                "original_tokens": original_tokens,
+                "final_tokens": final_tokens,
                 "optimization_threshold": self.optimization_threshold,
-                "optimization_needed": False,
-                "recommendations": []
+                "optimization_needed": original_tokens > self.optimization_threshold,
+                "optimization_applied": optimization_applied,
+                "compression_ratio": compression_ratio,
+                **optimization_metadata
             }
 
             return OptimizedContext(
