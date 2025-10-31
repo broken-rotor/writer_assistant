@@ -2,6 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
+import { RequestConverterService } from './request-converter.service';
+import { RequestValidatorService } from './request-validator.service';
+import { RequestOptimizerService } from './request-optimizer.service';
 import {
   Story,
   Character,
@@ -29,6 +32,17 @@ import {
   ChapterComposeState,
   ConversationThread
 } from '../models/story.model';
+import {
+  StructuredCharacterFeedbackRequest,
+  StructuredRaterFeedbackRequest,
+  StructuredGenerateChapterRequest,
+  StructuredEditorReviewRequest,
+  StructuredCharacterFeedbackResponse,
+  StructuredRaterFeedbackResponse,
+  StructuredGenerateChapterResponse,
+  StructuredEditorReviewResponse
+} from '../models/structured-request.model';
+import { StructuredCharacter } from '../models/context-builder.model';
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +50,9 @@ import {
 export class GenerationService {
   private apiService = inject(ApiService);
   private contextBuilderService = inject(ContextBuilderService);
+  private requestConverterService = inject(RequestConverterService);
+  private requestValidatorService = inject(RequestValidatorService);
+  private requestOptimizerService = inject(RequestOptimizerService);
 
   // Character Feedback
   requestCharacterFeedback(
@@ -957,5 +974,357 @@ ${story.plotOutline.content}`;
       .map(c => `- ${c.name}: ${c.basicBio}`)
       .join('\n');
     return characters || 'No characters defined yet.';
+  }
+
+  // ============================================================================
+  // NEW STRUCTURED REQUEST METHODS (WRI-72)
+  // ============================================================================
+
+  /**
+   * Request character feedback using structured context
+   */
+  requestCharacterFeedbackStructured(
+    story: Story,
+    character: Character,
+    plotPoint: string,
+    options: { validate?: boolean; optimize?: boolean } = {}
+  ): Observable<StructuredCharacterFeedbackResponse> {
+    try {
+      // Build structured request using ContextBuilderService
+      const systemPromptsResult = this.contextBuilderService.buildSystemPromptsContext(story);
+      const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
+      const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
+      const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
+
+      // Check if context building was successful
+      if (!systemPromptsResult.success || !worldbuildingResult.success || 
+          !storySummaryResult.success || !chaptersResult.success) {
+        throw new Error('Failed to build required context for structured character feedback request');
+      }
+
+      // Build structured request
+      let structuredRequest: StructuredCharacterFeedbackRequest = {
+        systemPrompts: {
+          mainPrefix: systemPromptsResult.data!.mainPrefix,
+          mainSuffix: systemPromptsResult.data!.mainSuffix
+        },
+        worldbuilding: {
+          content: worldbuildingResult.data!.content,
+          lastModified: new Date(),
+          wordCount: worldbuildingResult.data!.content.split(/\s+/).length
+        },
+        storySummary: {
+          summary: storySummaryResult.data!.summary,
+          lastModified: new Date(),
+          wordCount: storySummaryResult.data!.summary.split(/\s+/).length
+        },
+        previousChapters: chaptersResult.data!.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content,
+          wordCount: ch.content.split(/\s+/).length
+        })),
+        character: {
+          name: character.name,
+          basicBio: character.basicBio,
+          sex: character.sex,
+          gender: character.gender,
+          sexualPreference: character.sexualPreference,
+          age: character.age,
+          physicalAppearance: character.physicalAppearance,
+          usualClothing: character.usualClothing,
+          personality: character.personality,
+          motivations: character.motivations,
+          fears: character.fears,
+          relationships: character.relationships,
+          isHidden: character.isHidden
+        },
+        plotContext: {
+          plotPoint: plotPoint,
+          plotOutline: story.plotOutline?.content,
+          plotOutlineStatus: story.plotOutline?.status
+        },
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
+        }
+      };
+
+      // Validate request if requested
+      if (options.validate !== false) {
+        const validationResult = this.requestValidatorService.validateCharacterFeedbackRequest(structuredRequest);
+        if (!validationResult.isValid) {
+          throw new Error(`Request validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
+        }
+      }
+
+      // Optimize request if requested
+      if (options.optimize !== false) {
+        const optimizationResult = this.requestOptimizerService.optimizeCharacterFeedbackRequest(structuredRequest);
+        structuredRequest = optimizationResult.optimizedRequest;
+      }
+
+      return this.apiService.requestCharacterFeedbackStructured(structuredRequest);
+    } catch (error) {
+      throw new Error(`Failed to request structured character feedback: ${error}`);
+    }
+  }
+
+  /**
+   * Request rater feedback using structured context
+   */
+  requestRaterFeedbackStructured(
+    story: Story,
+    rater: Rater,
+    plotPoint: string,
+    options: { validate?: boolean; optimize?: boolean } = {}
+  ): Observable<StructuredRaterFeedbackResponse> {
+    try {
+      // Build structured request using ContextBuilderService
+      const systemPromptsResult = this.contextBuilderService.buildSystemPromptsContext(story);
+      const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
+      const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
+      const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
+
+      // Check if context building was successful
+      if (!systemPromptsResult.success || !worldbuildingResult.success || 
+          !storySummaryResult.success || !chaptersResult.success) {
+        throw new Error('Failed to build required context for structured rater feedback request');
+      }
+
+      // Build structured request
+      let structuredRequest: StructuredRaterFeedbackRequest = {
+        systemPrompts: {
+          mainPrefix: systemPromptsResult.data!.mainPrefix,
+          mainSuffix: systemPromptsResult.data!.mainSuffix
+        },
+        worldbuilding: {
+          content: worldbuildingResult.data!.content,
+          lastModified: new Date(),
+          wordCount: worldbuildingResult.data!.content.split(/\s+/).length
+        },
+        storySummary: {
+          summary: storySummaryResult.data!.summary,
+          lastModified: new Date(),
+          wordCount: storySummaryResult.data!.summary.split(/\s+/).length
+        },
+        previousChapters: chaptersResult.data!.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content,
+          wordCount: ch.content.split(/\s+/).length
+        })),
+        raterPrompt: rater.systemPrompt,
+        raterName: rater.name,
+        plotContext: {
+          plotPoint: plotPoint,
+          plotOutline: story.plotOutline?.content,
+          plotOutlineStatus: story.plotOutline?.status
+        },
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
+        }
+      };
+
+      // Validate request if requested
+      if (options.validate !== false) {
+        const validationResult = this.requestValidatorService.validateRaterFeedbackRequest(structuredRequest);
+        if (!validationResult.isValid) {
+          throw new Error(`Request validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
+        }
+      }
+
+      // Optimize request if requested
+      if (options.optimize !== false) {
+        const optimizationResult = this.requestOptimizerService.optimizeRaterFeedbackRequest(structuredRequest);
+        structuredRequest = optimizationResult.optimizedRequest;
+      }
+
+      return this.apiService.requestRaterFeedbackStructured(structuredRequest);
+    } catch (error) {
+      throw new Error(`Failed to request structured rater feedback: ${error}`);
+    }
+  }
+
+  /**
+   * Generate chapter using structured context
+   */
+  generateChapterStructuredNew(
+    story: Story,
+    options: { validate?: boolean; optimize?: boolean } = {}
+  ): Observable<StructuredGenerateChapterResponse> {
+    try {
+      // Build structured request using ContextBuilderService
+      const contextResult = this.contextBuilderService.buildChapterGenerationContext(
+        story,
+        story.chapterCreation.plotPoint,
+        story.chapterCreation.incorporatedFeedback
+      );
+
+      // Check if context building was successful
+      if (!contextResult.success || !contextResult.data) {
+        throw new Error('Failed to build required context for structured chapter generation');
+      }
+
+      const context = contextResult.data;
+
+      // Build structured request
+      let structuredRequest: StructuredGenerateChapterRequest = {
+        systemPrompts: {
+          mainPrefix: context.systemPrompts.mainPrefix,
+          mainSuffix: context.systemPrompts.mainSuffix,
+          assistantPrompt: context.systemPrompts.assistantPrompt
+        },
+        worldbuilding: {
+          content: context.worldbuilding.content,
+          lastModified: new Date(),
+          wordCount: context.worldbuilding.content.split(/\s+/).length
+        },
+        storySummary: {
+          summary: context.storySummary.summary,
+          lastModified: new Date(),
+          wordCount: context.storySummary.summary.split(/\s+/).length
+        },
+        previousChapters: context.previousChapters.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content,
+          wordCount: ch.content.split(/\s+/).length
+        })),
+        characters: context.characters.characters.map(c => ({
+          name: c.name,
+          basicBio: c.basicBio,
+          sex: c.sex,
+          gender: c.gender,
+          sexualPreference: c.sexualPreference,
+          age: c.age,
+          physicalAppearance: c.physicalAppearance,
+          usualClothing: c.usualClothing,
+          personality: c.personality,
+          motivations: c.motivations,
+          fears: c.fears,
+          relationships: c.relationships,
+          isHidden: c.isHidden
+        })),
+        plotContext: {
+          plotPoint: context.plotPoint.plotPoint,
+          plotOutline: story.plotOutline?.content,
+          plotOutlineStatus: story.plotOutline?.status
+        },
+        feedbackContext: {
+          incorporatedFeedback: context.feedback.incorporatedFeedback
+        },
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
+        }
+      };
+
+      // Validate request if requested
+      if (options.validate !== false) {
+        const validationResult = this.requestValidatorService.validateGenerateChapterRequest(structuredRequest);
+        if (!validationResult.isValid) {
+          throw new Error(`Request validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
+        }
+      }
+
+      // Optimize request if requested
+      if (options.optimize !== false) {
+        const optimizationResult = this.requestOptimizerService.optimizeGenerateChapterRequest(structuredRequest);
+        structuredRequest = optimizationResult.optimizedRequest;
+      }
+
+      return this.apiService.generateChapterStructured(structuredRequest);
+    } catch (error) {
+      throw new Error(`Failed to generate chapter with structured context: ${error}`);
+    }
+  }
+
+  /**
+   * Request editor review using structured context
+   */
+  requestEditorReviewStructured(
+    story: Story,
+    chapterText: string,
+    options: { validate?: boolean; optimize?: boolean } = {}
+  ): Observable<StructuredEditorReviewResponse> {
+    try {
+      // Build structured request using ContextBuilderService
+      const systemPromptsResult = this.contextBuilderService.buildSystemPromptsContext(story);
+      const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
+      const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
+      const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
+      const charactersResult = this.contextBuilderService.buildCharacterContext(story);
+
+      // Check if context building was successful
+      if (!systemPromptsResult.success || !worldbuildingResult.success || 
+          !storySummaryResult.success || !chaptersResult.success || !charactersResult.success) {
+        throw new Error('Failed to build required context for structured editor review request');
+      }
+
+      // Build structured request
+      let structuredRequest: StructuredEditorReviewRequest = {
+        systemPrompts: {
+          mainPrefix: systemPromptsResult.data!.mainPrefix,
+          mainSuffix: systemPromptsResult.data!.mainSuffix,
+          editorPrompt: systemPromptsResult.data!.assistantPrompt
+        },
+        worldbuilding: {
+          content: worldbuildingResult.data!.content,
+          lastModified: new Date(),
+          wordCount: worldbuildingResult.data!.content.split(/\s+/).length
+        },
+        storySummary: {
+          summary: storySummaryResult.data!.summary,
+          lastModified: new Date(),
+          wordCount: storySummaryResult.data!.summary.split(/\s+/).length
+        },
+        previousChapters: chaptersResult.data!.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content,
+          wordCount: ch.content.split(/\s+/).length
+        })),
+        characters: charactersResult.data!.characters.map((c: StructuredCharacter) => ({
+          name: c.name,
+          basicBio: c.basicBio,
+          sex: c.sex,
+          gender: c.gender,
+          sexualPreference: c.sexualPreference,
+          age: c.age,
+          physicalAppearance: c.physicalAppearance,
+          usualClothing: c.usualClothing,
+          personality: c.personality,
+          motivations: c.motivations,
+          fears: c.fears,
+          relationships: c.relationships,
+          isHidden: c.isHidden
+        })),
+        chapterToReview: chapterText,
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
+        }
+      };
+
+      // Validate request if requested
+      if (options.validate !== false) {
+        const validationResult = this.requestValidatorService.validateEditorReviewRequest(structuredRequest);
+        if (!validationResult.isValid) {
+          throw new Error(`Request validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
+        }
+      }
+
+      // Optimize request if requested
+      if (options.optimize !== false) {
+        const optimizationResult = this.requestOptimizerService.optimizeEditorReviewRequest(structuredRequest);
+        structuredRequest = optimizationResult.optimizedRequest;
+      }
+
+      return this.apiService.requestEditorReviewStructured(structuredRequest);
+    } catch (error) {
+      throw new Error(`Failed to request structured editor review: ${error}`);
+    }
   }
 }
