@@ -88,7 +88,9 @@ class ContextOptimizationService:
         characters: List[CharacterInfo],
         plot_point: str,
         incorporated_feedback: List[FeedbackItem],
-        previous_chapters: Optional[List[ChapterInfo]] = None
+        previous_chapters: Optional[List[ChapterInfo]] = None,
+        compose_phase: Optional[Any] = None,
+        phase_context: Optional[Any] = None
     ) -> OptimizedContext:
         """
         Optimize context for chapter generation endpoint.
@@ -256,7 +258,9 @@ class ContextOptimizationService:
         worldbuilding: str,
         story_summary: str,
         character: CharacterInfo,
-        plot_point: str
+        plot_point: str,
+        compose_phase: Optional[Any] = None,
+        phase_context: Optional[Any] = None
     ) -> OptimizedContext:
         """
         Optimize context for character feedback endpoint.
@@ -347,7 +351,9 @@ You are embodying {character.name}, a character with the following traits:
         rater_prompt: str,
         worldbuilding: str,
         story_summary: str,
-        plot_point: str
+        plot_point: str,
+        compose_phase: Optional[Any] = None,
+        phase_context: Optional[Any] = None
     ) -> OptimizedContext:
         """
         Optimize context for rater feedback endpoint.
@@ -424,7 +430,10 @@ You are embodying {character.name}, a character with the following traits:
         system_prompts: SystemPrompts,
         worldbuilding: str,
         story_summary: str,
-        chapter_to_review: str
+        previous_chapters: List[ChapterInfo],
+        plot_point: str,
+        compose_phase: Optional[Any] = None,
+        phase_context: Optional[Any] = None
     ) -> OptimizedContext:
         """
         Optimize context for editor review endpoint.
@@ -433,7 +442,10 @@ You are embodying {character.name}, a character with the following traits:
             system_prompts: System prompts configuration
             worldbuilding: World building information
             story_summary: Story summary
-            chapter_to_review: Chapter content to review
+            previous_chapters: List of previous chapters
+            plot_point: Plot point or chapter content to review
+            compose_phase: Optional compose phase (unused in legacy optimization)
+            phase_context: Optional phase context (unused in legacy optimization)
 
         Returns:
             OptimizedContext with system prompt and user message
@@ -459,7 +471,7 @@ Review chapters and provide specific suggestions for improvement.
 
             # Chapter to review (very high priority - cannot be compressed)
             context_items.append(ContextItem(
-                content=f"Chapter to review:\n{chapter_to_review}",
+                content=f"Chapter to review:\n{plot_point}",
                 context_type=ContextType.STORY_SUMMARY,
                 priority=9,
                 layer_type=LayerType.WORKING_MEMORY,
@@ -499,7 +511,7 @@ Review chapters and provide specific suggestions for improvement.
         except Exception as e:
             logger.error(f"Error in editor review context optimization: {str(e)}")
             return self._build_fallback_editor_context(
-                system_prompts, worldbuilding, story_summary, chapter_to_review
+                system_prompts, worldbuilding, story_summary, plot_point
             )
 
     def _optimize_context_items(
@@ -518,76 +530,18 @@ Review chapters and provide specific suggestions for improvement.
             OptimizedContext with optimized prompts
         """
         try:
-            # Analyze context
-            analysis = self.context_manager.analyze_context(context_items)
-
+            # For now, skip complex optimization and just build original context
+            # TODO: Implement proper context analysis and optimization integration
+            system_prompt, user_message, final_tokens = self._build_original_context(context_items, task_description)
+            
             optimization_applied = False
             compression_ratio = 1.0
 
-            # Apply optimization if needed
-            if (self.enable_optimization and
-                    (analysis.optimization_needed or analysis.total_tokens > self.optimization_threshold)):
-
-                logger.info(
-                    f"Applying context optimization: {
-                        analysis.total_tokens} tokens > {
-                        self.optimization_threshold} threshold")
-
-                try:
-                    optimization_result = self.context_manager.optimize_context(
-                        context_items=context_items,
-                        target_tokens=self.max_context_tokens
-                    )
-
-                    optimization_applied = optimization_result.distillation_applied
-                    compression_ratio = optimization_result.compression_ratio
-
-                    # Extract optimized content
-                    system_content = optimization_result.optimized_content.get(ContextType.SYSTEM_PROMPT, "")
-                    story_content = optimization_result.optimized_content.get(ContextType.STORY_SUMMARY, "")
-                    character_content = optimization_result.optimized_content.get(ContextType.CHARACTER_PROFILE, "")
-                    world_content = optimization_result.optimized_content.get(ContextType.WORLD_BUILDING, "")
-                    feedback_content = optimization_result.optimized_content.get(ContextType.USER_FEEDBACK, "")
-                    memory_content = optimization_result.optimized_content.get(ContextType.CHARACTER_MEMORY, "")
-
-                    # Build optimized prompts
-                    system_prompt = system_content
-
-                    user_message_parts = []
-                    if story_content:
-                        user_message_parts.append(story_content)
-                    if character_content:
-                        user_message_parts.append(character_content)
-                    if world_content:
-                        user_message_parts.append(world_content)
-                    if feedback_content:
-                        user_message_parts.append(feedback_content)
-                    if memory_content:
-                        user_message_parts.append(memory_content)
-
-                    user_message_parts.append(task_description)
-                    user_message = "\n\n".join(user_message_parts)
-
-                    final_tokens = optimization_result.optimized_tokens
-
-                    logger.info(
-                        f"Context optimization successful: {analysis.total_tokens} -> {final_tokens} tokens (ratio: {compression_ratio:.2f})")
-
-                except Exception as e:
-                    logger.warning(f"Context optimization failed, using original context: {str(e)}")
-                    # Fall back to original context
-                    system_prompt, user_message, final_tokens = self._build_original_context(context_items, task_description)
-                    optimization_applied = False
-                    compression_ratio = 1.0
-            else:
-                # Use original context without optimization
-                system_prompt, user_message, final_tokens = self._build_original_context(context_items, task_description)
-
             metadata = {
-                "original_tokens": analysis.total_tokens,
+                "original_tokens": final_tokens,
                 "optimization_threshold": self.optimization_threshold,
-                "optimization_needed": analysis.optimization_needed,
-                "recommendations": analysis.recommendations
+                "optimization_needed": False,
+                "recommendations": []
             }
 
             return OptimizedContext(
@@ -774,7 +728,7 @@ Provide feedback in JSON format:
         system_prompts: SystemPrompts,
         worldbuilding: str,
         story_summary: str,
-        chapter_to_review: str
+        plot_point: str
     ) -> OptimizedContext:
         """Fallback context building for editor review."""
         system_prompt = f"""{system_prompts.mainPrefix}
@@ -789,7 +743,7 @@ Review chapters and provide specific suggestions for improvement.
 - Story: {story_summary}
 
 Chapter to review:
-{chapter_to_review}
+{plot_point}
 
 Provide 4-6 suggestions in JSON format:
 {{
@@ -809,13 +763,96 @@ Provide 4-6 suggestions in JSON format:
             metadata={"fallback": True}
         )
 
+    def optimize_modify_chapter_context(
+        self,
+        system_prompts: SystemPrompts,
+        worldbuilding: str,
+        story_summary: str,
+        characters: List[CharacterInfo],
+        original_chapter: str,
+        modification_request: str,
+        compose_phase: Optional[Any] = None,
+        phase_context: Optional[Any] = None
+    ) -> OptimizedContext:
+        """
+        Optimize context for chapter modification endpoint.
+
+        Args:
+            system_prompts: System prompts configuration
+            worldbuilding: World building information
+            story_summary: Story summary
+            characters: List of character information
+            original_chapter: Original chapter content
+            modification_request: User's modification request
+            compose_phase: Optional compose phase (unused in legacy optimization)
+            phase_context: Optional phase context (unused in legacy optimization)
+
+        Returns:
+            OptimizedContext with system prompt and user message
+        """
+        try:
+            context_items = []
+
+            # System prompt for modification
+            system_prompt = f"""{system_prompts.mainPrefix}
+
+You are a skilled writer tasked with modifying a chapter based on user feedback.
+
+World Building:
+{worldbuilding}
+
+Story Summary:
+{story_summary}
+
+Characters:
+{chr(10).join([f"- {char.name}: {char.basicBio}" for char in characters])}
+
+Modify the chapter according to the user's request while maintaining consistency with the established world, story, and characters."""
+
+            # User message with original chapter and modification request
+            user_message = f"""Original Chapter:
+{original_chapter}
+
+Modification Request:
+{modification_request}
+
+Please provide the modified chapter that incorporates the requested changes while maintaining narrative flow and character consistency."""
+
+            total_tokens = len(system_prompt.split()) + len(user_message.split())
+
+            return OptimizedContext(
+                system_prompt=system_prompt.strip(),
+                user_message=user_message.strip(),
+                total_tokens=total_tokens,
+                optimization_applied=False,
+                compression_ratio=1.0,
+                metadata={"fallback": True}
+            )
+
+        except Exception as e:
+            logger.error(f"Error optimizing modify chapter context: {str(e)}")
+            # Return fallback context
+            system_prompt = f"{system_prompts.mainPrefix}\n\nYou are a skilled writer modifying a chapter."
+            user_message = f"Original: {original_chapter}\n\nRequest: {modification_request}"
+            
+            return OptimizedContext(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                total_tokens=len(system_prompt.split()) + len(user_message.split()),
+                optimization_applied=False,
+                compression_ratio=1.0,
+                metadata={"fallback": True, "error": str(e)}
+            )
+
     def optimize_flesh_out_context(
         self,
         system_prompts: SystemPrompts,
         worldbuilding: str,
         story_summary: str,
         context: str,
-        text_to_flesh_out: str
+        text_to_flesh_out: str,
+        compose_phase: Optional[Any] = None,
+        phase_context: Optional[Any] = None
     ) -> OptimizedContext:
         """
         Optimize context for flesh out endpoint.
