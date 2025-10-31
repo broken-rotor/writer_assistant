@@ -7,14 +7,14 @@ supporting batch processing, content type detection, and comprehensive metadata.
 
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator
-from enum import Enum
+
 
 from app.services.token_management import ContentType, CountingStrategy
 
 
 class TokenCountRequestItem(BaseModel):
     """Individual text item for token counting."""
-    
+
     text: str = Field(
         ...,
         description="Text content to count tokens for",
@@ -29,7 +29,7 @@ class TokenCountRequestItem(BaseModel):
             'example': "system_prompt",
         }
     )
-    
+
     @field_validator('text')
     @classmethod
     def validate_text(cls, v):
@@ -40,7 +40,7 @@ class TokenCountRequestItem(BaseModel):
 
 class TokenCountRequest(BaseModel):
     """Request model for batch token counting."""
-    
+
     texts: List[TokenCountRequestItem] = Field(
         ...,
         description="List of text items to count tokens for",
@@ -55,7 +55,7 @@ class TokenCountRequest(BaseModel):
         True,
         description="Whether to include detailed metadata in response"
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -78,7 +78,7 @@ class TokenCountRequest(BaseModel):
 
 class TokenCountResultItem(BaseModel):
     """Individual token count result."""
-    
+
     text: str = Field(..., description="Original text content")
     token_count: int = Field(..., description="Number of tokens in the text")
     content_type: ContentType = Field(..., description="Detected or specified content type")
@@ -92,7 +92,7 @@ class TokenCountResultItem(BaseModel):
 
 class TokenCountResponse(BaseModel):
     """Response model for batch token counting."""
-    
+
     success: bool = Field(True, description="Whether the request was successful")
     results: List[TokenCountResultItem] = Field(
         ...,
@@ -102,7 +102,7 @@ class TokenCountResponse(BaseModel):
         ...,
         description="Summary statistics for the batch"
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -136,7 +136,7 @@ class TokenCountResponse(BaseModel):
 
 class TokenValidationRequest(BaseModel):
     """Request model for token budget validation."""
-    
+
     texts: List[str] = Field(
         ...,
         description="List of text contents to validate against budget",
@@ -152,7 +152,7 @@ class TokenValidationRequest(BaseModel):
         CountingStrategy.CONSERVATIVE,
         description="Token counting strategy to use for validation"
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -170,7 +170,7 @@ class TokenValidationRequest(BaseModel):
 
 class TokenValidationResponse(BaseModel):
     """Response model for token budget validation."""
-    
+
     success: bool = Field(True, description="Whether the request was successful")
     fits_budget: bool = Field(..., description="Whether all texts fit within the budget")
     total_tokens: int = Field(..., description="Total tokens used by all texts")
@@ -179,7 +179,7 @@ class TokenValidationResponse(BaseModel):
     remaining_tokens: int = Field(..., description="Remaining tokens in budget")
     overflow_tokens: int = Field(..., description="Tokens over budget (0 if within budget)")
     strategy_used: CountingStrategy = Field(..., description="Counting strategy used")
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -198,14 +198,14 @@ class TokenValidationResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model."""
-    
+
     success: bool = Field(False, description="Always false for error responses")
     error: str = Field(..., description="Error message")
     details: Optional[Dict[str, Any]] = Field(
         None,
         description="Additional error details"
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {

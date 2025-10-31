@@ -11,12 +11,12 @@ from app.models.worldbuilding_models import (
 
 class WorldbuildingTopicClassifier:
     """Classifies messages into worldbuilding topics using keyword matching and patterns."""
-    
+
     def __init__(self):
         self.topic_keywords = self._initialize_topic_keywords()
         self.topic_patterns = self._initialize_topic_patterns()
         self.transition_triggers = self._initialize_transition_triggers()
-    
+
     def _initialize_topic_keywords(self) -> Dict[WorldbuildingTopic, Set[str]]:
         """Initialize keyword sets for each worldbuilding topic."""
         return {
@@ -109,7 +109,7 @@ class WorldbuildingTopicClassifier:
                 'mood', 'tone', 'theme', 'concept', 'idea', 'vision', 'inspiration'
             }
         }
-    
+
     def _initialize_topic_patterns(self) -> Dict[WorldbuildingTopic, List[str]]:
         """Initialize regex patterns for topic detection."""
         return {
@@ -144,7 +144,7 @@ class WorldbuildingTopicClassifier:
                 r'\b(?:before|after|during|since)\b.*\b(?:war|age|era|period)\b'
             ]
         }
-    
+
     def _initialize_transition_triggers(self) -> Dict[str, WorldbuildingTopic]:
         """Initialize phrases that suggest topic transitions."""
         return {
@@ -157,36 +157,36 @@ class WorldbuildingTopicClassifier:
             'changing topics': 'general',
             'moving on': 'general'
         }
-    
+
     def classify_message(self, message: str, current_topic: WorldbuildingTopic = 'general') -> TopicClassificationResult:
         """Classify a message into worldbuilding topics."""
         message_lower = message.lower()
         topic_scores = {}
         keywords_found = []
-        
+
         # Score each topic based on keyword matches
         for topic, keywords in self.topic_keywords.items():
             score = 0
             topic_keywords = []
-            
+
             for keyword in keywords:
                 if keyword in message_lower:
                     score += 1
                     topic_keywords.append(keyword)
-            
+
             # Apply pattern matching bonus
             if topic in self.topic_patterns:
                 for pattern in self.topic_patterns[topic]:
                     if re.search(pattern, message_lower):
                         score += 2  # Pattern matches are weighted higher
-            
+
             # Apply contextual bonuses for better classification
             score = self._apply_contextual_bonuses(message_lower, topic, score)
-            
+
             if score > 0:
                 topic_scores[topic] = score
                 keywords_found.extend(topic_keywords)
-        
+
         # Determine primary topic
         if not topic_scores:
             primary_topic = current_topic  # Stay with current topic if no clear match
@@ -195,7 +195,7 @@ class WorldbuildingTopicClassifier:
             primary_topic = max(topic_scores, key=topic_scores.get)
             max_score = topic_scores[primary_topic]
             total_score = sum(topic_scores.values())
-            
+
             # Improved confidence calculation
             if total_score == max_score:
                 # Only one topic matched
@@ -209,13 +209,13 @@ class WorldbuildingTopicClassifier:
                 # Additional boost for topic transitions with strong indicators
                 elif max_score >= 3 and confidence > 0.5:
                     confidence = min(confidence * 1.1, 0.9)
-        
+
         # Find secondary topics
         secondary_topics = [
-            topic for topic, score in topic_scores.items() 
+            topic for topic, score in topic_scores.items()
             if topic != primary_topic and score >= max(topic_scores.get(primary_topic, 0) * 0.5, 1)
         ]
-        
+
         # Check for topic transition (lower threshold for better detection)
         suggested_transition = None
         if primary_topic != current_topic and confidence > 0.4:
@@ -226,7 +226,7 @@ class WorldbuildingTopicClassifier:
                 confidence=confidence,
                 suggested_questions=self._get_topic_questions(primary_topic)
             )
-        
+
         return TopicClassificationResult(
             primary_topic=primary_topic,
             confidence=confidence,
@@ -234,7 +234,7 @@ class WorldbuildingTopicClassifier:
             keywords_found=list(set(keywords_found)),
             suggested_transition=suggested_transition
         )
-    
+
     def _get_topic_questions(self, topic: WorldbuildingTopic) -> List[str]:
         """Get suggested follow-up questions for a topic."""
         topic_questions = {
@@ -317,79 +317,98 @@ class WorldbuildingTopicClassifier:
                 "What mood or atmosphere are you trying to create?"
             ]
         }
-        
+
         return topic_questions.get(topic, topic_questions['general'])
-    
+
     def _apply_contextual_bonuses(self, message_lower: str, topic: WorldbuildingTopic, base_score: int) -> int:
         """Apply contextual bonuses to improve classification accuracy."""
         score = base_score
-        
+
         # Magic system bonuses
         if topic == 'magic_system':
             magic_indicators = ['arcane', 'mystical', 'supernatural', 'enchant', 'spell', 'magic', 'wizard', 'mage']
             if any(indicator in message_lower for indicator in magic_indicators):
                 score += 2  # Strong magic indicator
-            
+
             # Boost for magic-specific phrases
             if any(phrase in message_lower for phrase in ['forbidden magic', 'arcane arts', 'magical power', 'cast spell']):
                 score += 3
-        
+
         # Culture bonuses
         elif topic == 'culture':
             culture_indicators = ['tradition', 'custom', 'value', 'belief', 'practice', 'honor', 'society']
             if any(indicator in message_lower for indicator in culture_indicators):
                 score += 1
-            
+
             # Boost for culture-specific phrases
-            if any(phrase in message_lower for phrase in ['people value', 'cultural tradition', 'social custom', 'developed unique traditions', 'people have developed']):
+            if any(
+                phrase in message_lower for phrase in [
+                    'people value',
+                    'cultural tradition',
+                    'social custom',
+                    'developed unique traditions',
+                    'people have developed']):
                 score += 2
-        
+
         # Geography bonuses
         elif topic == 'geography':
             geo_indicators = ['mountain', 'river', 'valley', 'hill', 'forest', 'desert', 'ocean', 'lake']
             geo_count = sum(1 for indicator in geo_indicators if indicator in message_lower)
             if geo_count >= 2:  # Multiple geographical features mentioned
                 score += 2
-        
+
         # Technology bonuses
         elif topic == 'technology':
             tech_indicators = ['ship', 'ships', 'flying', 'powered', 'engine', 'machine', 'device', 'vehicle']
             if any(indicator in message_lower for indicator in tech_indicators):
                 score += 1
-            
+
             # Boost for technology-specific phrases
             if any(phrase in message_lower for phrase in ['flying ships', 'powered by', 'use ships', 'transportation']):
                 score += 2
-        
+
         # Politics bonuses
         elif topic == 'politics':
-            politics_indicators = ['ruled', 'rule', 'ruler', 'government', 'king', 'queen', 'emperor', 'control', 'power', 'authority']
+            politics_indicators = ['ruled', 'rule', 'ruler', 'government',
+                                   'king', 'queen', 'emperor', 'control', 'power', 'authority']
             if any(indicator in message_lower for indicator in politics_indicators):
                 score += 1
-            
+
             # Boost for politics-specific phrases
-            if any(phrase in message_lower for phrase in ['is ruled by', 'ruled by', 'controls the', 'who controls', 'government of']):
+            if any(
+                phrase in message_lower for phrase in [
+                    'is ruled by',
+                    'ruled by',
+                    'controls the',
+                    'who controls',
+                    'government of']):
                 score += 3
-        
+
         # Politics penalty for magic-related content (but not for political control of magic)
         if topic == 'politics' and any(magic_word in message_lower for magic_word in ['arcane', 'spell', 'mystical']):
             # Don't penalize if it's about political control of magic
             if not any(control_phrase in message_lower for control_phrase in ['controls the magic', 'ruled by', 'keeper']):
                 score = max(0, score - 2)  # Reduce politics score for magical content
-        
+
         # Magic system penalty for technology-related content
-        if topic == 'magic_system' and any(tech_word in message_lower for tech_word in ['ship', 'ships', 'flying ships', 'vehicle', 'transportation']):
+        if topic == 'magic_system' and any(
+            tech_word in message_lower for tech_word in [
+                'ship',
+                'ships',
+                'flying ships',
+                'vehicle',
+                'transportation']):
             score = max(0, score - 1)  # Reduce magic score for technological content
-        
+
         return score
-    
+
     def suggest_topic_exploration(self, current_topics: List[WorldbuildingTopic]) -> List[WorldbuildingTopic]:
         """Suggest unexplored topics based on current conversation."""
         all_topics = list(self.topic_keywords.keys())
         unexplored = [topic for topic in all_topics if topic not in current_topics]
-        
+
         # Prioritize core worldbuilding topics
         priority_topics = ['geography', 'culture', 'politics', 'history', 'magic_system']
         priority_unexplored = [topic for topic in priority_topics if topic in unexplored]
-        
+
         return priority_unexplored + [topic for topic in unexplored if topic not in priority_unexplored]

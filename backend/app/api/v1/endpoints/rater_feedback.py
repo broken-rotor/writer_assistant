@@ -27,7 +27,7 @@ async def rater_feedback(request: RaterFeedbackRequest):
     try:
         # Get context optimization service
         context_service = get_context_optimization_service()
-        
+
         # Optimize context transparently
         try:
             optimized_context = context_service.optimize_rater_feedback_context(
@@ -40,17 +40,17 @@ async def rater_feedback(request: RaterFeedbackRequest):
                 compose_phase=request.compose_phase,
                 phase_context=request.phase_context
             )
-            
+
             system_prompt = optimized_context.system_prompt
             user_message = optimized_context.user_message
-            
+
             # Log context optimization results
             if optimized_context.optimization_applied:
                 logger.info(f"Rater feedback context optimization applied: {optimized_context.total_tokens} tokens, "
-                           f"compression ratio: {optimized_context.compression_ratio:.2f}")
+                            f"compression ratio: {optimized_context.compression_ratio:.2f}")
             else:
                 logger.debug(f"No rater feedback context optimization needed: {optimized_context.total_tokens} tokens")
-                
+
         except Exception as e:
             logger.warning(f"Rater feedback context optimization failed, using fallback: {str(e)}")
             # Fallback to original context building
@@ -64,13 +64,13 @@ async def rater_feedback(request: RaterFeedbackRequest):
             phase_context_str = ""
             if request.compose_phase and request.phase_context:
                 phase_context_str = f"\nCompose Phase: {request.compose_phase}"
-                
+
                 if request.phase_context.phase_specific_instructions:
                     phase_context_str += f"\nPhase Instructions: {request.phase_context.phase_specific_instructions}"
-                
+
                 if request.phase_context.conversation_history:
                     conv_context = "\n".join([
-                        f"{msg.role}: {msg.content}" 
+                        f"{msg.role}: {msg.content}"
                         for msg in request.phase_context.conversation_history[-2:]  # Last 2 messages
                     ])
                     phase_context_str += f"\nRecent conversation:\n{conv_context}"

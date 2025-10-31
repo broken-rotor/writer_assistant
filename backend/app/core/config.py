@@ -2,6 +2,7 @@ from typing import Optional
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict, Field
 
+
 class Settings(BaseSettings):
     model_config = ConfigDict(
         case_sensitive=True,
@@ -91,7 +92,7 @@ class Settings(BaseSettings):
         le=10000,
         description="Reserved tokens for generation buffer"
     )
-    
+
     # Layer Token Allocation Limits (absolute token numbers)
     CONTEXT_LAYER_A_TOKENS: int = Field(
         default=2000,
@@ -123,7 +124,7 @@ class Settings(BaseSettings):
         le=20000,
         description="Plot/world summary layer tokens (5-10k tokens)"
     )
-    
+
     # Context Management Performance Settings
     CONTEXT_SUMMARIZATION_THRESHOLD: int = Field(
         default=25000,
@@ -137,7 +138,7 @@ class Settings(BaseSettings):
         le=10000,
         description="Maximum context assembly time in milliseconds"
     )
-    
+
     # Context Management Feature Toggles
     CONTEXT_ENABLE_RAG: bool = Field(
         default=True,
@@ -151,7 +152,7 @@ class Settings(BaseSettings):
         default=True,
         description="Enable context assembly result caching"
     )
-    
+
     # Context Optimization Settings
     CONTEXT_MIN_PRIORITY_THRESHOLD: float = Field(
         default=0.1,
@@ -178,7 +179,7 @@ class Settings(BaseSettings):
             self.CONTEXT_LAYER_E_TOKENS
         )
         available_tokens = self.CONTEXT_MAX_TOKENS - self.CONTEXT_BUFFER_TOKENS
-        
+
         if total_layer_tokens > available_tokens:
             raise ValueError(
                 f"Context layer tokens sum to {total_layer_tokens}, which exceeds available tokens ({available_tokens}). "
@@ -189,5 +190,6 @@ class Settings(BaseSettings):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.validate_layer_tokens()
+
 
 settings = Settings()

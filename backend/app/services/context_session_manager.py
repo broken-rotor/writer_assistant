@@ -1,7 +1,7 @@
 """
 Context State Manager for Writer Assistant API.
 
-This service handles context state serialization and deserialization for 
+This service handles context state serialization and deserialization for
 client-side persistence. The server remains completely stateless - all context
 state is returned to the client and sent back on subsequent requests.
 """
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ContextState:
     """Represents context state that can be serialized for client-side storage."""
-    
+
     state_id: str
     story_id: Optional[str]
     created_at: datetime
@@ -38,7 +38,7 @@ class ContextState:
     processing_history: List[Dict[str, Any]]
     state_metadata: Dict[str, Any]
     version: str = "1.0"
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert state to dictionary for serialization."""
         return {
@@ -51,7 +51,7 @@ class ContextState:
             'state_metadata': self.state_metadata,
             'version': self.version
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ContextState':
         """Create state from dictionary."""
@@ -70,14 +70,14 @@ class ContextState:
 class ContextStateManager:
     """
     Stateless service for context state serialization and management.
-    
+
     This service provides:
     - Context state serialization for client-side storage
     - Context state deserialization from client requests
     - Context state compression and optimization
     - Processing history management
     """
-    
+
     def __init__(
         self,
         max_processing_history: int = 50,
@@ -86,7 +86,7 @@ class ContextStateManager:
     ):
         """
         Initialize the context state manager.
-        
+
         Args:
             max_processing_history: Maximum processing history entries per state
             enable_compression: Whether to compress serialized state
@@ -95,9 +95,10 @@ class ContextStateManager:
         self.max_processing_history = max_processing_history
         self.enable_compression = enable_compression
         self.compression_threshold = compression_threshold
-        
-        logger.info(f"ContextStateManager initialized: compression={enable_compression}, history_limit={max_processing_history}")
-    
+
+        logger.info(
+            f"ContextStateManager initialized: compression={enable_compression}, history_limit={max_processing_history}")
+
     def create_initial_state(
         self,
         story_id: Optional[str] = None,
@@ -106,22 +107,22 @@ class ContextStateManager:
     ) -> ContextState:
         """
         Create a new context state.
-        
+
         Args:
             story_id: Optional story ID for the state
             initial_context: Initial context container
             state_metadata: Additional state metadata
-            
+
         Returns:
             ContextState object
         """
         state_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc)
-        
+
         # Create initial context container if not provided
         if initial_context is None:
             initial_context = StructuredContextContainer()
-        
+
         state = ContextState(
             state_id=state_id,
             story_id=story_id,
@@ -131,17 +132,17 @@ class ContextStateManager:
             processing_history=[],
             state_metadata=state_metadata or {}
         )
-        
+
         logger.debug(f"Created context state {state_id} for story {story_id}")
         return state
-    
+
     def serialize_state(self, state: ContextState) -> str:
         """
         Serialize context state to string for client-side storage.
-        
+
         Args:
             state: ContextState to serialize
-            
+
         Returns:
             Serialized state string (base64 encoded, optionally compressed)
         """
@@ -150,7 +151,7 @@ class ContextStateManager:
             state_dict = state.to_dict()
             json_str = json.dumps(state_dict, separators=(',', ':'))
             json_bytes = json_str.encode('utf-8')
-            
+
             # Compress if enabled and above threshold
             if self.enable_compression and len(json_bytes) > self.compression_threshold:
                 compressed_bytes = gzip.compress(json_bytes)
@@ -159,29 +160,29 @@ class ContextStateManager:
                 logger.debug(f"Compressed state {state.state_id}: {len(json_bytes)} -> {len(compressed_bytes)} bytes")
             else:
                 final_bytes = json_bytes
-            
+
             # Base64 encode for safe transmission
             encoded = base64.b64encode(final_bytes).decode('ascii')
             return encoded
-            
+
         except Exception as e:
             logger.error(f"Error serializing context state {state.state_id}: {e}")
             raise
-    
+
     def deserialize_state(self, serialized_state: str) -> ContextState:
         """
         Deserialize context state from client-provided string.
-        
+
         Args:
             serialized_state: Serialized state string from client
-            
+
         Returns:
             ContextState object
         """
         try:
             # Base64 decode
             decoded_bytes = base64.b64decode(serialized_state.encode('ascii'))
-            
+
             # Check for compression marker
             if decoded_bytes.startswith(b'GZIP:'):
                 # Decompress
@@ -190,20 +191,20 @@ class ContextStateManager:
                 logger.debug(f"Decompressed state: {len(compressed_bytes)} -> {len(json_bytes)} bytes")
             else:
                 json_bytes = decoded_bytes
-            
+
             # Parse JSON
             json_str = json_bytes.decode('utf-8')
             state_dict = json.loads(json_str)
-            
+
             # Create ContextState object
             state = ContextState.from_dict(state_dict)
             logger.debug(f"Deserialized context state {state.state_id}")
             return state
-            
+
         except Exception as e:
             logger.error(f"Error deserializing context state: {e}")
             raise
-    
+
     def update_state_context(
         self,
         state: ContextState,
@@ -212,19 +213,19 @@ class ContextStateManager:
     ) -> ContextState:
         """
         Update the context container in a state (returns new state).
-        
+
         Args:
             state: Current context state
             context_container: Updated context container
             processing_metadata: Metadata about the processing operation
-            
+
         Returns:
             Updated ContextState object
         """
         # Update context container
         state.context_container = context_container
         state.last_updated = datetime.now(timezone.utc)
-        
+
         # Add processing history entry
         if processing_metadata:
             history_entry = {
@@ -233,14 +234,14 @@ class ContextStateManager:
                 'metadata': processing_metadata
             }
             state.processing_history.append(history_entry)
-            
+
             # Limit history size
             if len(state.processing_history) > self.max_processing_history:
                 state.processing_history = state.processing_history[-self.max_processing_history:]
-        
+
         logger.debug(f"Updated context for state {state.state_id}")
         return state
-    
+
     def add_processing_history(
         self,
         state: ContextState,
@@ -249,12 +250,12 @@ class ContextStateManager:
     ) -> ContextState:
         """
         Add a processing history entry to a state (returns new state).
-        
+
         Args:
             state: Current context state
             operation: Operation name
             metadata: Operation metadata
-            
+
         Returns:
             Updated ContextState object
         """
@@ -263,39 +264,39 @@ class ContextStateManager:
             'operation': operation,
             'metadata': metadata
         }
-        
+
         state.processing_history.append(history_entry)
-        
+
         # Limit history size
         if len(state.processing_history) > self.max_processing_history:
             state.processing_history = state.processing_history[-self.max_processing_history:]
-        
+
         state.last_updated = datetime.now(timezone.utc)
-        
+
         logger.debug(f"Added processing history to state {state.state_id}: {operation}")
         return state
-    
+
     def compress_state(self, state_data: bytes) -> bytes:
         """
         Compress state data for transmission.
-        
+
         Args:
             state_data: Raw state data bytes
-            
+
         Returns:
             Compressed data bytes
         """
         if len(state_data) > self.compression_threshold:
             return gzip.compress(state_data)
         return state_data
-    
+
     def decompress_state(self, compressed_data: bytes) -> bytes:
         """
         Decompress state data from client.
-        
+
         Args:
             compressed_data: Compressed data bytes
-            
+
         Returns:
             Decompressed data bytes
         """

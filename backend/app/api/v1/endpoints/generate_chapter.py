@@ -26,7 +26,7 @@ async def generate_chapter(request: GenerateChapterRequest):
     try:
         # Get context optimization service
         context_service = get_context_optimization_service()
-        
+
         # Optimize context transparently
         try:
             optimized_context = context_service.optimize_chapter_generation_context(
@@ -41,17 +41,17 @@ async def generate_chapter(request: GenerateChapterRequest):
                 compose_phase=request.compose_phase,
                 phase_context=request.phase_context
             )
-            
+
             system_prompt = optimized_context.system_prompt
             user_message = optimized_context.user_message
-            
+
             # Log context optimization results
             if optimized_context.optimization_applied:
                 logger.info(f"Context optimization applied: {optimized_context.total_tokens} tokens, "
-                           f"compression ratio: {optimized_context.compression_ratio:.2f}")
+                            f"compression ratio: {optimized_context.compression_ratio:.2f}")
             else:
                 logger.debug(f"No context optimization needed: {optimized_context.total_tokens} tokens")
-                
+
         except Exception as e:
             logger.warning(f"Context optimization failed, using fallback: {str(e)}")
             # Fallback to original context building
@@ -75,13 +75,13 @@ async def generate_chapter(request: GenerateChapterRequest):
             if request.compose_phase and request.phase_context:
                 if request.phase_context.phase_specific_instructions:
                     phase_instructions = f"\nPhase-specific instructions: {request.phase_context.phase_specific_instructions}"
-                
+
                 if request.phase_context.previous_phase_output:
                     phase_instructions += f"\nPrevious phase output: {request.phase_context.previous_phase_output}"
-                
+
                 if request.phase_context.conversation_history:
                     conv_context = "\n".join([
-                        f"{msg.role}: {msg.content}" 
+                        f"{msg.role}: {msg.content}"
                         for msg in request.phase_context.conversation_history[-3:]  # Last 3 messages
                     ])
                     phase_instructions += f"\nRecent conversation:\n{conv_context}"
@@ -100,7 +100,8 @@ Plot point for this chapter: {request.plotPoint}
 
 {phase_instructions}
 
-Write an engaging chapter (800-1500 words) that brings this plot point to life with vivid prose, authentic dialogue, and character development."""
+Write an engaging chapter (800-1500 words) that brings this plot point to life with vivid prose, "
+        "authentic dialogue, and character development."""
 
         messages = [
             {"role": "system", "content": system_prompt.strip()},

@@ -8,12 +8,12 @@ from app.models.worldbuilding_models import WorldbuildingTopic, WorldbuildingPro
 
 class WorldbuildingPromptService:
     """Service for managing worldbuilding-specific prompts and templates."""
-    
+
     def __init__(self):
         self.prompt_templates = self._initialize_prompt_templates()
         self.conversation_starters = self._initialize_conversation_starters()
         self.follow_up_generators = self._initialize_follow_up_generators()
-    
+
     def _initialize_prompt_templates(self) -> Dict[WorldbuildingTopic, WorldbuildingPromptTemplate]:
         """Initialize comprehensive prompt templates for each worldbuilding topic."""
         return {
@@ -49,7 +49,7 @@ class WorldbuildingPromptService:
                     "Geographic influences on society addressed"
                 ]
             ),
-            
+
             'culture': WorldbuildingPromptTemplate(
                 topic='culture',
                 system_prompt="""You are a worldbuilding specialist focused on cultures and societies. Help users develop rich, authentic cultural systems including traditions, customs, social structures, arts, and daily life. Ask insightful questions about values, beliefs, social norms, and how culture shapes behavior and identity.""",
@@ -82,7 +82,7 @@ class WorldbuildingPromptService:
                     "Daily life patterns for different groups explained"
                 ]
             ),
-            
+
             'magic_system': WorldbuildingPromptTemplate(
                 topic='magic_system',
                 system_prompt="""You are a worldbuilding specialist focused on magic systems and supernatural elements. Help users create consistent, logical magic systems with clear rules, limitations, and consequences. Ask detailed questions about how magic works, who can use it, what it costs, and how it affects society.""",
@@ -115,7 +115,7 @@ class WorldbuildingPromptService:
                     "Different magical disciplines or types described"
                 ]
             ),
-            
+
             'politics': WorldbuildingPromptTemplate(
                 topic='politics',
                 system_prompt="""You are a worldbuilding specialist focused on political systems and governance. Help users create complex, realistic political structures including governments, power dynamics, laws, and conflicts. Ask probing questions about leadership, authority, justice, and how political systems affect people's lives.""",
@@ -148,7 +148,7 @@ class WorldbuildingPromptService:
                     "Inter-group political relationships described"
                 ]
             ),
-            
+
             'history': WorldbuildingPromptTemplate(
                 topic='history',
                 system_prompt="""You are a worldbuilding specialist focused on history and historical events. Help users create rich historical backgrounds including major events, timelines, legends, and how the past shapes the present. Ask thoughtful questions about origins, conflicts, changes, and the legacy of historical events.""",
@@ -181,7 +181,7 @@ class WorldbuildingPromptService:
                     "Historical influence on present explained"
                 ]
             ),
-            
+
             'technology': WorldbuildingPromptTemplate(
                 topic='technology',
                 system_prompt="""You are a worldbuilding specialist focused on technology and innovation. Help users develop consistent technological levels including tools, weapons, transportation, communication, and how technology affects society. Ask detailed questions about materials, methods, and the social impact of technological development.""",
@@ -214,7 +214,7 @@ class WorldbuildingPromptService:
                     "Social impact of technology addressed"
                 ]
             ),
-            
+
             'economy': WorldbuildingPromptTemplate(
                 topic='economy',
                 system_prompt="""You are a worldbuilding specialist focused on economic systems and trade. Help users create realistic economic structures including resources, trade, currency, and how people make their living. Ask insightful questions about wealth, commerce, labor, and economic relationships.""",
@@ -247,7 +247,7 @@ class WorldbuildingPromptService:
                     "Economic challenges and opportunities outlined"
                 ]
             ),
-            
+
             'religion': WorldbuildingPromptTemplate(
                 topic='religion',
                 system_prompt="""You are a worldbuilding specialist focused on religions and belief systems. Help users create meaningful spiritual systems including deities, practices, institutions, and how faith affects society. Ask thoughtful questions about beliefs, worship, religious authority, and the role of spirituality in daily life.""",
@@ -280,7 +280,7 @@ class WorldbuildingPromptService:
                     "Religious conflicts or diversity addressed"
                 ]
             ),
-            
+
             'characters': WorldbuildingPromptTemplate(
                 topic='characters',
                 system_prompt="""You are a worldbuilding specialist focused on characters and notable figures. Help users create memorable, influential people who shape their world including leaders, heroes, villains, and important personalities. Ask detailed questions about motivations, relationships, and how these figures affect the broader world.""",
@@ -313,7 +313,7 @@ class WorldbuildingPromptService:
                     "Characters' impact on the world explained"
                 ]
             ),
-            
+
             'languages': WorldbuildingPromptTemplate(
                 topic='languages',
                 system_prompt="""You are a worldbuilding specialist focused on languages and communication. Help users create linguistic diversity including different languages, dialects, writing systems, and how language affects culture and society. Ask detailed questions about communication, literacy, and the cultural significance of different languages.""",
@@ -346,7 +346,7 @@ class WorldbuildingPromptService:
                     "Communication methods and challenges outlined"
                 ]
             ),
-            
+
             'conflicts': WorldbuildingPromptTemplate(
                 topic='conflicts',
                 system_prompt="""You are a worldbuilding specialist focused on conflicts and tensions. Help users create compelling sources of drama including wars, rivalries, disputes, and threats that drive stories and shape the world. Ask probing questions about the causes, stakes, and consequences of various conflicts.""",
@@ -379,7 +379,7 @@ class WorldbuildingPromptService:
                     "Potential resolutions or escalations considered"
                 ]
             ),
-            
+
             'organizations': WorldbuildingPromptTemplate(
                 topic='organizations',
                 system_prompt="""You are a worldbuilding specialist focused on organizations and institutions. Help users create influential groups including guilds, orders, societies, and institutions that shape the world. Ask detailed questions about structure, purpose, influence, and how these organizations interact with each other and society.""",
@@ -412,7 +412,7 @@ class WorldbuildingPromptService:
                     "Impact on society and politics addressed"
                 ]
             ),
-            
+
             'general': WorldbuildingPromptTemplate(
                 topic='general',
                 system_prompt="""You are a worldbuilding specialist helping create rich, immersive fictional worlds. Guide users through developing comprehensive world details across all aspects of worldbuilding. Ask thoughtful questions to help them explore and expand their creative vision, and suggest areas that might need more development.""",
@@ -445,7 +445,7 @@ class WorldbuildingPromptService:
                 ]
             )
         }
-    
+
     def _initialize_conversation_starters(self) -> Dict[WorldbuildingTopic, List[str]]:
         """Initialize conversation starter prompts for each topic."""
         return {
@@ -480,7 +480,7 @@ class WorldbuildingPromptService:
                 "What major changes or conflicts have shaped the current era?"
             ]
         }
-    
+
     def _initialize_follow_up_generators(self) -> Dict[str, List[str]]:
         """Initialize follow-up question generators based on conversation context."""
         return {
@@ -509,11 +509,11 @@ class WorldbuildingPromptService:
                 "What does {place} look, sound, and feel like?"
             ]
         }
-    
+
     def get_prompt_template(self, topic: WorldbuildingTopic) -> WorldbuildingPromptTemplate:
         """Get the prompt template for a specific worldbuilding topic."""
         return self.prompt_templates.get(topic, self.prompt_templates['general'])
-    
+
     def get_conversation_starter(self, topic: WorldbuildingTopic) -> str:
         """Get a conversation starter for a specific topic."""
         starters = self.conversation_starters.get(topic, self.conversation_starters.get('general', []))
@@ -521,32 +521,32 @@ class WorldbuildingPromptService:
             import random
             return random.choice(starters)
         return "Tell me about your world. What would you like to explore?"
-    
-    def build_contextual_prompt(self, topic: WorldbuildingTopic, conversation_context: str = "", 
-                              story_context: str = "") -> str:
+
+    def build_contextual_prompt(self, topic: WorldbuildingTopic, conversation_context: str = "",
+                                story_context: str = "") -> str:
         """Build a contextual prompt combining template, conversation, and story context."""
         template = self.get_prompt_template(topic)
-        
+
         prompt_parts = [template.system_prompt]
-        
+
         if story_context:
             prompt_parts.append(f"\nStory Context:\n{story_context}")
-        
+
         if conversation_context:
             prompt_parts.append(f"\nConversation Context:\n{conversation_context}")
-        
+
         prompt_parts.append(f"\n{template.context_prompt}")
-        
+
         return "\n".join(prompt_parts)
-    
+
     def generate_follow_up_questions(self, topic: WorldbuildingTopic, context: str = "") -> List[str]:
         """Generate contextual follow-up questions for a topic."""
         template = self.get_prompt_template(topic)
         questions = template.followup_prompts.copy()
-        
+
         # Add context-specific questions if available
         if context:
             # This could be enhanced with more sophisticated context analysis
             questions.extend(template.key_questions[:2])  # Add some key questions
-        
+
         return questions[:5]  # Return top 5 questions

@@ -15,13 +15,13 @@ from .relevance_calculator import (
 
 __all__ = [
     "LlamaTokenizer",
-    "KeyInformationExtractor", 
-    "KeyInformation", 
-    "InformationType", 
+    "KeyInformationExtractor",
+    "KeyInformation",
+    "InformationType",
     "ExtractionResult",
     "RelevanceCalculator",
     "ContentItem",
-    "ContentCategory", 
+    "ContentCategory",
     "ScoringWeights",
     "RelevanceScore"
 ]

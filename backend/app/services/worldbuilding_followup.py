@@ -11,12 +11,12 @@ from app.models.generation_models import ConversationMessage
 
 class WorldbuildingFollowupGenerator:
     """Generates context-aware follow-up questions for worldbuilding conversations."""
-    
+
     def __init__(self):
         self.topic_question_templates = self._initialize_question_templates()
         self.context_analyzers = self._initialize_context_analyzers()
         self.gap_detectors = self._initialize_gap_detectors()
-    
+
     def _initialize_question_templates(self) -> Dict[WorldbuildingTopic, Dict[str, List[str]]]:
         """Initialize question templates categorized by type for each topic."""
         return {
@@ -151,7 +151,7 @@ class WorldbuildingFollowupGenerator:
                 ]
             }
         }
-    
+
     def _initialize_context_analyzers(self) -> Dict[str, callable]:
         """Initialize functions to analyze conversation context for different patterns."""
         return {
@@ -161,12 +161,12 @@ class WorldbuildingFollowupGenerator:
             'user_interests': self._analyze_user_interests,
             'connection_opportunities': self._find_connection_opportunities
         }
-    
+
     def _initialize_gap_detectors(self) -> Dict[WorldbuildingTopic, List[str]]:
         """Initialize gap detection criteria for each topic."""
         return {
             'geography': [
-                'climate_patterns', 'natural_resources', 'major_locations', 
+                'climate_patterns', 'natural_resources', 'major_locations',
                 'travel_methods', 'geographical_hazards', 'unique_features'
             ],
             'culture': [
@@ -186,52 +186,52 @@ class WorldbuildingFollowupGenerator:
                 'lost_knowledge', 'historical_conflicts', 'timeline'
             ]
         }
-    
+
     def generate_followup_questions(
-        self, 
+        self,
         context: WorldbuildingChatContext,
         recent_messages: List[ConversationMessage],
         max_questions: int = 5
     ) -> List[FollowupQuestion]:
         """Generate context-aware follow-up questions."""
-        
+
         # Analyze conversation context
         analysis = self._analyze_conversation_context(context, recent_messages)
-        
+
         # Generate questions based on different strategies
         questions = []
-        
+
         # 1. Topic-specific questions based on current focus
         questions.extend(self._generate_topic_specific_questions(
             context.current_topic, analysis, max_questions // 2
         ))
-        
+
         # 2. Gap-filling questions for incomplete areas
         questions.extend(self._generate_gap_filling_questions(
             context, analysis, max_questions // 3
         ))
-        
+
         # 3. Connection questions linking different topics
         questions.extend(self._generate_connection_questions(
             context, analysis, max_questions // 4
         ))
-        
+
         # 4. Exploration questions for new areas
         questions.extend(self._generate_exploration_questions(
             context, analysis, max_questions // 4
         ))
-        
+
         # Sort by priority and return top questions
         questions.sort(key=lambda q: q.priority, reverse=True)
         return questions[:max_questions]
-    
+
     def _analyze_conversation_context(
-        self, 
-        context: WorldbuildingChatContext, 
+        self,
+        context: WorldbuildingChatContext,
         recent_messages: List[ConversationMessage]
     ) -> Dict[str, any]:
         """Analyze conversation context to inform question generation."""
-        
+
         analysis = {
             'mentioned_entities': set(),
             'topic_depth': {},
@@ -240,7 +240,7 @@ class WorldbuildingFollowupGenerator:
             'recent_topics': [],
             'message_count': len(recent_messages)
         }
-        
+
         # Analyze recent messages
         for message in recent_messages[-10:]:  # Look at last 10 messages
             if message.role == 'user':
@@ -248,38 +248,38 @@ class WorldbuildingFollowupGenerator:
                 analysis['mentioned_entities'].update(
                     self._extract_mentioned_entities(message.content)
                 )
-                
+
                 # Identify user interests based on what they ask about
                 analysis['user_interests'].extend(
                     self._analyze_user_interests(message.content)
                 )
-        
+
         # Analyze topic depth for each active topic
         for topic in context.active_topics:
             if topic in context.topic_contexts:
                 topic_context = context.topic_contexts[topic]
                 analysis['topic_depth'][topic] = topic_context.completeness_score
-        
+
         # Identify gaps in worldbuilding coverage
         analysis['conversation_gaps'] = self._identify_conversation_gaps(context)
-        
+
         return analysis
-    
+
     def _generate_topic_specific_questions(
-        self, 
-        topic: WorldbuildingTopic, 
-        analysis: Dict[str, any], 
+        self,
+        topic: WorldbuildingTopic,
+        analysis: Dict[str, any],
         max_questions: int
     ) -> List[FollowupQuestion]:
         """Generate questions specific to the current topic."""
-        
+
         questions = []
         if topic not in self.topic_question_templates:
             return questions
-        
+
         templates = self.topic_question_templates[topic]
         entities = analysis['mentioned_entities']
-        
+
         # Generate questions for each question type
         for question_type, question_templates in templates.items():
             for template in question_templates[:2]:  # Limit per type
@@ -296,20 +296,20 @@ class WorldbuildingFollowupGenerator:
                         context_dependent=True,
                         reasoning=f"Explores {question_type} aspects of {topic}"
                     ))
-        
+
         return questions[:max_questions]
-    
+
     def _generate_gap_filling_questions(
-        self, 
-        context: WorldbuildingChatContext, 
-        analysis: Dict[str, any], 
+        self,
+        context: WorldbuildingChatContext,
+        analysis: Dict[str, any],
         max_questions: int
     ) -> List[FollowupQuestion]:
         """Generate questions to fill gaps in worldbuilding coverage."""
-        
+
         questions = []
         gaps = analysis['conversation_gaps']
-        
+
         gap_questions = {
             'geography': [
                 "What's the climate like in your world?",
@@ -342,7 +342,7 @@ class WorldbuildingFollowupGenerator:
                 "How does the past influence the present?"
             ]
         }
-        
+
         for gap_topic in gaps[:max_questions]:
             if gap_topic in gap_questions:
                 question_text = gap_questions[gap_topic][0]  # Use first question
@@ -353,36 +353,36 @@ class WorldbuildingFollowupGenerator:
                     context_dependent=False,
                     reasoning=f"Addresses gap in {gap_topic} coverage"
                 ))
-        
+
         return questions
-    
+
     def _generate_connection_questions(
-        self, 
-        context: WorldbuildingChatContext, 
-        analysis: Dict[str, any], 
+        self,
+        context: WorldbuildingChatContext,
+        analysis: Dict[str, any],
         max_questions: int
     ) -> List[FollowupQuestion]:
         """Generate questions that connect different worldbuilding topics."""
-        
+
         questions = []
         active_topics = context.active_topics
-        
+
         connection_templates = [
             "How does {topic1} influence {topic2} in your world?",
             "What happens when {topic1} conflicts with {topic2}?",
             "How do the {topic1} aspects affect {topic2}?",
             "What connections exist between {topic1} and {topic2}?"
         ]
-        
+
         # Generate connections between active topics
         for i, topic1 in enumerate(active_topics):
-            for topic2 in active_topics[i+1:]:
+            for topic2 in active_topics[i + 1:]:
                 if len(questions) >= max_questions:
                     break
-                
+
                 template = connection_templates[len(questions) % len(connection_templates)]
                 question_text = template.format(topic1=topic1, topic2=topic2)
-                
+
                 questions.append(FollowupQuestion(
                     question=question_text,
                     topic='general',  # Connection questions are general
@@ -390,21 +390,21 @@ class WorldbuildingFollowupGenerator:
                     context_dependent=True,
                     reasoning=f"Explores connections between {topic1} and {topic2}"
                 ))
-        
+
         return questions[:max_questions]
-    
+
     def _generate_exploration_questions(
-        self, 
-        context: WorldbuildingChatContext, 
-        analysis: Dict[str, any], 
+        self,
+        context: WorldbuildingChatContext,
+        analysis: Dict[str, any],
         max_questions: int
     ) -> List[FollowupQuestion]:
         """Generate questions to explore new or underdeveloped areas."""
-        
+
         questions = []
         all_topics = list(self.topic_question_templates.keys())
         unexplored_topics = [t for t in all_topics if t not in context.active_topics]
-        
+
         exploration_starters = {
             'geography': "What does the physical landscape of your world look like?",
             'culture': "Tell me about the people and societies in your world.",
@@ -419,7 +419,7 @@ class WorldbuildingFollowupGenerator:
             'conflicts': "What major conflicts or tensions exist?",
             'organizations': "What important groups or institutions exist?"
         }
-        
+
         for topic in unexplored_topics[:max_questions]:
             if topic in exploration_starters:
                 questions.append(FollowupQuestion(
@@ -429,44 +429,44 @@ class WorldbuildingFollowupGenerator:
                     context_dependent=False,
                     reasoning=f"Introduces unexplored topic: {topic}"
                 ))
-        
+
         return questions
-    
+
     def _extract_mentioned_entities(self, text: str) -> Set[str]:
         """Extract mentioned entities (places, people, concepts) from text."""
         # Simple entity extraction - could be enhanced with NLP
         entities = set()
-        
+
         # Look for capitalized words (potential proper nouns)
         import re
         capitalized_words = re.findall(r'\b[A-Z][a-z]+\b', text)
         entities.update(capitalized_words)
-        
+
         # Look for quoted terms
         quoted_terms = re.findall(r'"([^"]*)"', text)
         entities.update(quoted_terms)
-        
+
         return entities
-    
+
     def _analyze_topic_depth(self, context: WorldbuildingChatContext) -> Dict[WorldbuildingTopic, float]:
         """Analyze how deeply each topic has been explored."""
         depth_scores = {}
-        
+
         for topic, topic_context in context.topic_contexts.items():
             # Base score on completeness score and content length
             content_score = min(len(topic_context.accumulated_content) / 1000, 1.0)
             element_score = min(len(topic_context.key_elements) / 10, 1.0)
             question_score = min(len(topic_context.questions_asked) / 5, 1.0)
-            
+
             depth_scores[topic] = (content_score + element_score + question_score) / 3
-        
+
         return depth_scores
-    
+
     def _identify_conversation_gaps(self, context: WorldbuildingChatContext) -> List[WorldbuildingTopic]:
         """Identify topics that haven't been adequately covered."""
         gaps = []
         all_topics = list(self.gap_detectors.keys())
-        
+
         for topic in all_topics:
             if topic not in context.active_topics:
                 gaps.append(topic)
@@ -474,31 +474,31 @@ class WorldbuildingFollowupGenerator:
                 topic_context = context.topic_contexts[topic]
                 if topic_context.completeness_score < 0.3:  # Less than 30% complete
                     gaps.append(topic)
-        
+
         return gaps
-    
+
     def _analyze_user_interests(self, message: str) -> List[str]:
         """Analyze user message to identify their interests and focus areas."""
         interests = []
         message_lower = message.lower()
-        
+
         # Look for question patterns that indicate interest
         if any(word in message_lower for word in ['tell me about', 'what about', 'how does']):
             interests.append('detail_seeking')
-        
+
         if any(word in message_lower for word in ['why', 'how', 'what causes']):
             interests.append('explanation_seeking')
-        
+
         if any(word in message_lower for word in ['example', 'instance', 'specific']):
             interests.append('example_seeking')
-        
+
         return interests
-    
+
     def _find_connection_opportunities(self, context: WorldbuildingChatContext) -> List[tuple]:
         """Find opportunities to connect different worldbuilding topics."""
         connections = []
         active_topics = context.active_topics
-        
+
         # Define natural connections between topics
         natural_connections = {
             ('geography', 'culture'): "How does the environment shape cultural practices?",
@@ -508,28 +508,28 @@ class WorldbuildingFollowupGenerator:
             ('religion', 'politics'): "What role does faith play in governance?",
             ('culture', 'languages'): "How do different languages reflect cultural diversity?"
         }
-        
+
         for (topic1, topic2), question in natural_connections.items():
             if topic1 in active_topics and topic2 in active_topics:
                 connections.append((topic1, topic2, question))
-        
+
         return connections
-    
+
     def _fill_question_template(self, template: str, entities: Set[str]) -> str:
         """Fill question template with mentioned entities."""
         # Simple template filling - could be enhanced
         import re
-        
+
         # Find template variables
         variables = re.findall(r'\{([^}]+)\}', template)
-        
+
         if not variables:
             return template
-        
+
         # Try to fill with available entities
         filled_template = template
         entity_list = list(entities)
-        
+
         for i, var in enumerate(variables):
             if i < len(entity_list):
                 filled_template = filled_template.replace(f'{{{var}}}', entity_list[i])
@@ -537,13 +537,13 @@ class WorldbuildingFollowupGenerator:
                 # Use generic placeholder
                 placeholder = var.replace('_', ' ')
                 filled_template = filled_template.replace(f'{{{var}}}', f"[{placeholder}]")
-        
+
         return filled_template
-    
+
     def _calculate_question_priority(
-        self, 
-        question_type: str, 
-        topic: WorldbuildingTopic, 
+        self,
+        question_type: str,
+        topic: WorldbuildingTopic,
         analysis: Dict[str, any]
     ) -> float:
         """Calculate priority score for a question."""
@@ -553,12 +553,12 @@ class WorldbuildingFollowupGenerator:
             'connection': 0.8,
             'consequence': 0.5
         }.get(question_type, 0.5)
-        
+
         # Boost priority based on topic depth (less explored = higher priority)
         topic_depth = analysis['topic_depth'].get(topic, 0.0)
         depth_boost = (1.0 - topic_depth) * 0.3
-        
+
         # Boost priority if user has shown interest in this area
         interest_boost = 0.2 if 'detail_seeking' in analysis['user_interests'] else 0.0
-        
+
         return min(base_priority + depth_boost + interest_boost, 1.0)

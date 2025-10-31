@@ -17,7 +17,7 @@ from .rag_retriever import RAGRetriever, RetrievalStrategy, RetrievalResult, Ret
 
 __all__ = [
     'LayeredPrioritizer',
-    'ContentScore', 
+    'ContentScore',
     'PrioritizationConfig',
     'AgentType',
     'RAGRetriever',

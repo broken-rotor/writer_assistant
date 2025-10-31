@@ -80,7 +80,7 @@ The `context_processing_config` field allows fine-tuned control over how context
 }
 ```
 """
-from typing import Dict, List, Optional, Any, Literal, Union
+from typing import Dict, List, Optional, Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import datetime
 
@@ -148,15 +148,15 @@ class PlotElement(BaseModel):
     )
     content: str = Field(description="The actual plot content or description")
     priority: Literal["high", "medium", "low"] = Field(
-        default="medium", 
+        default="medium",
         description="Priority level for context inclusion"
     )
     tags: List[str] = Field(
-        default_factory=list, 
+        default_factory=list,
         description="Tags for categorization and filtering"
     )
     metadata: Dict[str, Any] = Field(
-        default_factory=dict, 
+        default_factory=dict,
         description="Additional metadata for the plot element"
     )
 
@@ -281,7 +281,7 @@ class StructuredContextContainer(BaseModel):
         None,
         description="Metadata about the context container"
     )
-    
+
     @model_validator(mode='after')
     def validate_context_consistency(self):
         """Validate consistency across context elements."""
@@ -289,7 +289,7 @@ class StructuredContextContainer(BaseModel):
         character_ids = [ctx.character_id for ctx in self.character_contexts]
         if len(character_ids) != len(set(character_ids)):
             raise ValueError("Duplicate character contexts found")
-        
+
         # Validate character references in plot elements
         character_names = {ctx.character_name.lower() for ctx in self.character_contexts}
         for plot_element in self.plot_elements:
@@ -299,7 +299,7 @@ class StructuredContextContainer(BaseModel):
                 if char_name in content_lower:
                     # Character is mentioned and exists in context - good
                     break
-        
+
         return self
 
 
@@ -309,22 +309,22 @@ class CharacterFeedbackRequest(BaseModel):
     systemPrompts: Optional[SystemPrompts] = None
     worldbuilding: Optional[str] = ""
     storySummary: Optional[str] = ""
-    
+
     # Core request fields
     previousChapters: List[ChapterInfo]
     character: CharacterInfo
     plotPoint: str
     incorporatedFeedback: Optional[List[FeedbackItem]] = []
-    
+
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
-    
+
     # New structured context fields
     structured_context: Optional[StructuredContextContainer] = Field(
         default=None,
-        description="Structured context container with plot elements, character contexts, user requests, and system instructions"
-    )
+        description="Structured context container with plot elements, character contexts, "
+                    "user requests, and system instructions")
     context_mode: Literal["legacy", "structured", "hybrid"] = Field(
         default="legacy",
         description="Which context format to use"
@@ -333,19 +333,19 @@ class CharacterFeedbackRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
+
     @field_validator('structured_context', mode='before')
     @classmethod
     def validate_structured_context(cls, v, info):
         """Validate structured context when in structured mode."""
         data = info.data if hasattr(info, 'data') else {}
         context_mode = data.get('context_mode', 'legacy')
-        
+
         if context_mode == 'structured' and v is None:
             raise ValueError("structured_context is required when context_mode is 'structured'")
-        
+
         return v
-    
+
     @model_validator(mode='after')
     def validate_context_consistency(self):
         """Validate consistency between context modes and available data."""
@@ -353,16 +353,16 @@ class CharacterFeedbackRequest(BaseModel):
         if self.context_mode == 'hybrid':
             has_legacy = bool(self.systemPrompts or self.worldbuilding or self.storySummary)
             has_structured = bool(self.structured_context)
-            
+
             if not (has_legacy and has_structured):
                 raise ValueError("Hybrid mode requires both legacy and structured context data")
-        
+
         # In legacy mode, ensure we have some legacy data
         elif self.context_mode == 'legacy':
             has_legacy = bool(self.systemPrompts or self.worldbuilding or self.storySummary)
             if not has_legacy:
                 raise ValueError("Legacy mode requires at least one legacy context field")
-        
+
         # Validate character consistency if both character info and structured context exist
         if self.structured_context and hasattr(self, 'character'):
             character_in_structured = any(
@@ -372,7 +372,7 @@ class CharacterFeedbackRequest(BaseModel):
             if not character_in_structured and self.structured_context.character_contexts:
                 # Add warning but don't fail - this might be intentional
                 pass
-        
+
         return self
 
 
@@ -400,21 +400,21 @@ class RaterFeedbackRequest(BaseModel):
     raterPrompt: str
     worldbuilding: Optional[str] = ""
     storySummary: Optional[str] = ""
-    
+
     # Core request fields
     previousChapters: List[ChapterInfo]
     plotPoint: str
     incorporatedFeedback: Optional[List[FeedbackItem]] = []
-    
+
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
-    
+
     # New structured context fields
     structured_context: Optional[StructuredContextContainer] = Field(
         default=None,
-        description="Structured context container with plot elements, character contexts, user requests, and system instructions"
-    )
+        description="Structured context container with plot elements, character contexts, "
+                    "user requests, and system instructions")
     context_mode: Literal["legacy", "structured", "hybrid"] = Field(
         default="legacy",
         description="Which context format to use"
@@ -445,22 +445,22 @@ class GenerateChapterRequest(BaseModel):
     systemPrompts: Optional[SystemPrompts] = None
     worldbuilding: Optional[str] = ""
     storySummary: Optional[str] = ""
-    
+
     # Core request fields
     previousChapters: List[ChapterInfo]
     characters: List[CharacterInfo]
     plotPoint: str
     incorporatedFeedback: List[FeedbackItem]
-    
+
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
-    
+
     # New structured context fields
     structured_context: Optional[StructuredContextContainer] = Field(
         default=None,
-        description="Structured context container with plot elements, character contexts, user requests, and system instructions"
-    )
+        description="Structured context container with plot elements, character contexts, "
+                    "user requests, and system instructions")
     context_mode: Literal["legacy", "structured", "hybrid"] = Field(
         default="legacy",
         description="Which context format to use"
@@ -487,21 +487,21 @@ class ModifyChapterRequest(BaseModel):
     systemPrompts: Optional[SystemPrompts] = None
     worldbuilding: Optional[str] = ""
     storySummary: Optional[str] = ""
-    
+
     # Core request fields
     previousChapters: List[ChapterInfo] = Field(default_factory=list)
     currentChapter: str = Field(description="The chapter text to be modified")
     userRequest: str = Field(description="User's modification request")
-    
+
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
-    
+
     # New structured context fields
     structured_context: Optional[StructuredContextContainer] = Field(
         default=None,
-        description="Structured context container with plot elements, character contexts, user requests, and system instructions"
-    )
+        description="Structured context container with plot elements, character contexts, "
+                    "user requests, and system instructions")
     context_mode: Literal["legacy", "structured", "hybrid"] = Field(
         default="legacy",
         description="Which context format to use"
@@ -510,17 +510,17 @@ class ModifyChapterRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
+
     @field_validator('structured_context', mode='before')
     @classmethod
     def validate_structured_context(cls, v, info):
         """Validate structured context when in structured mode."""
         data = info.data if hasattr(info, 'data') else {}
         context_mode = data.get('context_mode', 'legacy')
-        
+
         if context_mode == 'structured' and v is None:
             raise ValueError("structured_context is required when context_mode is 'structured'")
-        
+
         return v
 
 
@@ -540,21 +540,21 @@ class EditorReviewRequest(BaseModel):
     systemPrompts: Optional[SystemPrompts] = None
     worldbuilding: Optional[str] = ""
     storySummary: Optional[str] = ""
-    
+
     # Core request fields
     previousChapters: List[ChapterInfo]
     characters: List[CharacterInfo]
     chapterToReview: str
-    
+
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
-    
+
     # New structured context fields
     structured_context: Optional[StructuredContextContainer] = Field(
         default=None,
-        description="Structured context container with plot elements, character contexts, user requests, and system instructions"
-    )
+        description="Structured context container with plot elements, character contexts, "
+                    "user requests, and system instructions")
     context_mode: Literal["legacy", "structured", "hybrid"] = Field(
         default="legacy",
         description="Which context format to use"
@@ -585,20 +585,20 @@ class FleshOutRequest(BaseModel):
     systemPrompts: Optional[SystemPrompts] = None
     worldbuilding: Optional[str] = ""
     storySummary: Optional[str] = ""
-    
+
     # Core request fields
     textToFleshOut: str = Field(description="Text content to be expanded or fleshed out")
     context: Optional[str] = Field(default="", description="Additional context for the flesh out operation")
-    
+
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
-    
+
     # New structured context fields
     structured_context: Optional[StructuredContextContainer] = Field(
         default=None,
-        description="Structured context container with plot elements, character contexts, user requests, and system instructions"
-    )
+        description="Structured context container with plot elements, character contexts, "
+                    "user requests, and system instructions")
     context_mode: Literal["legacy", "structured", "hybrid"] = Field(
         default="legacy",
         description="Which context format to use"
@@ -607,17 +607,17 @@ class FleshOutRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
+
     @field_validator('structured_context', mode='before')
     @classmethod
     def validate_structured_context(cls, v, info):
         """Validate structured context when in structured mode."""
         data = info.data if hasattr(info, 'data') else {}
         context_mode = data.get('context_mode', 'legacy')
-        
+
         if context_mode == 'structured' and v is None:
             raise ValueError("structured_context is required when context_mode is 'structured'")
-        
+
         return v
 
 
@@ -636,23 +636,23 @@ class GenerateCharacterDetailsRequest(BaseModel):
     systemPrompts: Optional[SystemPrompts] = None
     worldbuilding: Optional[str] = ""
     storySummary: Optional[str] = ""
-    
+
     # Core request fields
     basicBio: str = Field(description="Basic biography or description of the character to generate details for")
     existingCharacters: List[Dict[str, str]] = Field(
         default_factory=list,
         description="List of existing characters with name, basicBio, and relationships"
     )
-    
+
     # Phase-specific fields (optional for backward compatibility)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
-    
+
     # New structured context fields
     structured_context: Optional[StructuredContextContainer] = Field(
         default=None,
-        description="Structured context container with plot elements, character contexts, user requests, and system instructions"
-    )
+        description="Structured context container with plot elements, character contexts, "
+                    "user requests, and system instructions")
     context_mode: Literal["legacy", "structured", "hybrid"] = Field(
         default="legacy",
         description="Which context format to use"
@@ -661,17 +661,17 @@ class GenerateCharacterDetailsRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
+
     @field_validator('structured_context', mode='before')
     @classmethod
     def validate_structured_context(cls, v, info):
         """Validate structured context when in structured mode."""
         data = info.data if hasattr(info, 'data') else {}
         context_mode = data.get('context_mode', 'legacy')
-        
+
         if context_mode == 'structured' and v is None:
             raise ValueError("structured_context is required when context_mode is 'structured'")
-        
+
         return v
 
 

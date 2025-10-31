@@ -232,7 +232,8 @@ class RAGService:
                             # Document found but content couldn't be read
                             logger.debug(f"Could not read content for: {source_name}")
                             logger.warning("Could not read content for requested document")
-                            retrieval_warnings.append(f"Document '{source_name}' was found but could not be read from the archive.")
+                            retrieval_warnings.append(
+                                f"Document '{source_name}' was found but could not be read from the archive.")
                     else:
                         # Document not found in archive
                         logger.debug(f"Source not found: {source_name}")

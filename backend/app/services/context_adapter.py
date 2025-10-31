@@ -35,11 +35,11 @@ from app.models.generation_models import SystemPrompts, PhaseContext, Conversati
 
 class ContextAdapter:
     """Service for converting between legacy and structured context formats."""
-    
+
     def __init__(self):
         """Initialize the context adapter."""
         pass
-    
+
     def legacy_to_structured(
         self,
         system_prompts: Optional[SystemPrompts] = None,
@@ -50,7 +50,7 @@ class ContextAdapter:
     ) -> Tuple[StructuredContextContainer, LegacyContextMapping]:
         """
         Convert legacy context fields to structured context container.
-        
+
         Returns:
             Tuple of (StructuredContextContainer, LegacyContextMapping)
         """
@@ -61,31 +61,31 @@ class ContextAdapter:
             story_summary_elements=[],
             phase_context_elements=[]
         )
-        
+
         # Convert SystemPrompts
         if system_prompts:
             system_elements, system_mapping = self._convert_system_prompts(system_prompts)
             elements.extend(system_elements)
             mapping.system_prompts_mapping.update(system_mapping)
-        
+
         # Convert worldbuilding
         if worldbuilding and worldbuilding.strip():
             wb_elements = self._convert_worldbuilding(worldbuilding)
             elements.extend(wb_elements)
             mapping.worldbuilding_elements.extend([e.id for e in wb_elements])
-        
+
         # Convert story summary
         if story_summary and story_summary.strip():
             summary_elements = self._convert_story_summary(story_summary)
             elements.extend(summary_elements)
             mapping.story_summary_elements.extend([e.id for e in summary_elements])
-        
+
         # Convert PhaseContext
         if phase_context:
             phase_elements = self._convert_phase_context(phase_context, compose_phase)
             elements.extend(phase_elements)
             mapping.phase_context_elements.extend([e.id for e in phase_elements])
-        
+
         # Create container
         container = StructuredContextContainer(
             elements=elements,
@@ -95,9 +95,9 @@ class ContextAdapter:
                 "legacy_compose_phase": compose_phase
             }
         )
-        
+
         return container, mapping
-    
+
     def structured_to_legacy(
         self,
         container: StructuredContextContainer,
@@ -105,24 +105,24 @@ class ContextAdapter:
     ) -> Tuple[SystemPrompts, str, str, PhaseContext]:
         """
         Convert structured context container back to legacy format.
-        
+
         Returns:
             Tuple of (SystemPrompts, worldbuilding, story_summary, PhaseContext)
         """
         # Convert to SystemPrompts
         system_prompts = self._extract_system_prompts(container, mapping)
-        
+
         # Convert to worldbuilding string
         worldbuilding = self._extract_worldbuilding(container, mapping)
-        
+
         # Convert to story summary string
         story_summary = self._extract_story_summary(container, mapping)
-        
+
         # Convert to PhaseContext
         phase_context = self._extract_phase_context(container, mapping)
-        
+
         return system_prompts, worldbuilding, story_summary, phase_context
-    
+
     def enhance_phase_context(
         self,
         phase_context: PhaseContext,
@@ -132,7 +132,7 @@ class ContextAdapter:
         Enhance existing PhaseContext with structured context data.
         """
         enhanced_context = phase_context.model_copy(deep=True) if phase_context else PhaseContext()
-        
+
         # Add structured context elements as additional context
         phase_elements = structured_context.get_elements_by_type(ContextType.PHASE_INSTRUCTION)
         if phase_elements:
@@ -141,7 +141,7 @@ class ContextAdapter:
                 enhanced_context.phase_specific_instructions += f"\n\n{additional_instructions}"
             else:
                 enhanced_context.phase_specific_instructions = additional_instructions
-        
+
         # Add conversation context from structured elements
         conv_elements = structured_context.get_elements_by_type(ContextType.CONVERSATION_HISTORY)
         if conv_elements and not enhanced_context.conversation_history:
@@ -160,14 +160,14 @@ class ContextAdapter:
                             enhanced_context.conversation_history.append(
                                 ConversationMessage(role='assistant', content=line[11:])
                             )
-        
+
         return enhanced_context
-    
+
     def _convert_system_prompts(self, system_prompts: SystemPrompts) -> Tuple[List[SystemContextElement], Dict[str, str]]:
         """Convert SystemPrompts to structured context elements."""
         elements = []
         mapping = {}
-        
+
         if system_prompts.mainPrefix:
             element_id = f"system_prompt_{uuid.uuid4().hex[:8]}"
             element = SystemContextElement(
@@ -184,7 +184,7 @@ class ContextAdapter:
             )
             elements.append(element)
             mapping["mainPrefix"] = element_id
-        
+
         if system_prompts.mainSuffix:
             element_id = f"system_prompt_{uuid.uuid4().hex[:8]}"
             element = SystemContextElement(
@@ -201,7 +201,7 @@ class ContextAdapter:
             )
             elements.append(element)
             mapping["mainSuffix"] = element_id
-        
+
         if system_prompts.assistantPrompt:
             element_id = f"system_prompt_{uuid.uuid4().hex[:8]}"
             element = SystemContextElement(
@@ -218,7 +218,7 @@ class ContextAdapter:
             )
             elements.append(element)
             mapping["assistantPrompt"] = element_id
-        
+
         if system_prompts.editorPrompt:
             element_id = f"system_prompt_{uuid.uuid4().hex[:8]}"
             element = SystemContextElement(
@@ -235,13 +235,13 @@ class ContextAdapter:
             )
             elements.append(element)
             mapping["editorPrompt"] = element_id
-        
+
         return elements, mapping
-    
+
     def _convert_worldbuilding(self, worldbuilding: str) -> List[StoryContextElement]:
         """Convert worldbuilding string to structured context elements."""
         elements = []
-        
+
         # For now, create a single worldbuilding element
         # In the future, this could be enhanced to parse and split worldbuilding into categories
         element_id = f"worldbuilding_{uuid.uuid4().hex[:8]}"
@@ -258,13 +258,13 @@ class ContextAdapter:
             )
         )
         elements.append(element)
-        
+
         return elements
-    
+
     def _convert_story_summary(self, story_summary: str) -> List[StoryContextElement]:
         """Convert story summary string to structured context elements."""
         elements = []
-        
+
         element_id = f"story_summary_{uuid.uuid4().hex[:8]}"
         element = StoryContextElement(
             id=element_id,
@@ -278,9 +278,9 @@ class ContextAdapter:
             )
         )
         elements.append(element)
-        
+
         return elements
-    
+
     def _convert_phase_context(
         self,
         phase_context: PhaseContext,
@@ -288,7 +288,7 @@ class ContextAdapter:
     ) -> List[PhaseContextElement]:
         """Convert PhaseContext to structured context elements."""
         elements = []
-        
+
         # Convert previous phase output
         if phase_context.previous_phase_output:
             element_id = f"phase_output_{uuid.uuid4().hex[:8]}"
@@ -305,7 +305,7 @@ class ContextAdapter:
                 )
             )
             elements.append(element)
-        
+
         # Convert phase-specific instructions
         if phase_context.phase_specific_instructions:
             element_id = f"phase_instruction_{uuid.uuid4().hex[:8]}"
@@ -322,16 +322,16 @@ class ContextAdapter:
                 )
             )
             elements.append(element)
-        
+
         # Convert conversation history
         if phase_context.conversation_history:
             element_id = f"conversation_{uuid.uuid4().hex[:8]}"
-            
+
             # Convert conversation messages to text format
             conversation_text = []
             for msg in phase_context.conversation_history:
                 conversation_text.append(f"{msg.role.title()}: {msg.content}")
-            
+
             element = ConversationContextElement(
                 id=element_id,
                 type=ContextType.CONVERSATION_HISTORY,
@@ -346,9 +346,9 @@ class ContextAdapter:
                 )
             )
             elements.append(element)
-        
+
         return elements
-    
+
     def _extract_system_prompts(
         self,
         container: StructuredContextContainer,
@@ -356,9 +356,9 @@ class ContextAdapter:
     ) -> SystemPrompts:
         """Extract SystemPrompts from structured context."""
         system_prompts = SystemPrompts()
-        
+
         system_elements = container.get_elements_by_type(ContextType.SYSTEM_PROMPT)
-        
+
         for element in system_elements:
             if isinstance(element, SystemContextElement):
                 if element.prompt_type == "main_prefix":
@@ -369,9 +369,9 @@ class ContextAdapter:
                     system_prompts.assistantPrompt = element.content
                 elif element.prompt_type == "editor_prompt":
                     system_prompts.editorPrompt = element.content
-        
+
         return system_prompts
-    
+
     def _extract_worldbuilding(
         self,
         container: StructuredContextContainer,
@@ -379,17 +379,17 @@ class ContextAdapter:
     ) -> str:
         """Extract worldbuilding string from structured context."""
         wb_elements = container.get_elements_by_type(ContextType.WORLD_BUILDING)
-        
+
         if not wb_elements:
             return ""
-        
+
         # Combine all worldbuilding elements
         wb_parts = []
         for element in wb_elements:
             wb_parts.append(element.content)
-        
+
         return "\n\n".join(wb_parts)
-    
+
     def _extract_story_summary(
         self,
         container: StructuredContextContainer,
@@ -397,17 +397,17 @@ class ContextAdapter:
     ) -> str:
         """Extract story summary string from structured context."""
         summary_elements = container.get_elements_by_type(ContextType.STORY_SUMMARY)
-        
+
         if not summary_elements:
             return ""
-        
+
         # Combine all story summary elements
         summary_parts = []
         for element in summary_elements:
             summary_parts.append(element.content)
-        
+
         return "\n\n".join(summary_parts)
-    
+
     def _extract_phase_context(
         self,
         container: StructuredContextContainer,
@@ -415,12 +415,12 @@ class ContextAdapter:
     ) -> PhaseContext:
         """Extract PhaseContext from structured context."""
         phase_context = PhaseContext()
-        
+
         # Extract phase output
         output_elements = container.get_elements_by_type(ContextType.PHASE_OUTPUT)
         if output_elements:
             phase_context.previous_phase_output = output_elements[0].content
-        
+
         # Extract phase instructions
         instruction_elements = container.get_elements_by_type(ContextType.PHASE_INSTRUCTION)
         if instruction_elements:
@@ -428,7 +428,7 @@ class ContextAdapter:
             for element in instruction_elements:
                 instructions.append(element.content)
             phase_context.phase_specific_instructions = "\n\n".join(instructions)
-        
+
         # Extract conversation history
         conv_elements = container.get_elements_by_type(ContextType.CONVERSATION_HISTORY)
         if conv_elements:
@@ -446,35 +446,35 @@ class ContextAdapter:
                             phase_context.conversation_history.append(
                                 ConversationMessage(role='assistant', content=line[11:])
                             )
-        
+
         return phase_context
-    
+
     def migrate_legacy_data(
         self,
         legacy_data: Dict[str, Any]
     ) -> StructuredContextContainer:
         """
         Migrate existing legacy data to structured format.
-        
+
         Args:
             legacy_data: Dictionary containing legacy fields
-        
+
         Returns:
             StructuredContextContainer with migrated data
         """
         system_prompts = None
         if 'systemPrompts' in legacy_data:
             system_prompts = SystemPrompts(**legacy_data['systemPrompts'])
-        
+
         worldbuilding = legacy_data.get('worldbuilding', '')
         story_summary = legacy_data.get('storySummary', '')
-        
+
         phase_context = None
         if 'phase_context' in legacy_data:
             phase_context = PhaseContext(**legacy_data['phase_context'])
-        
+
         compose_phase = legacy_data.get('compose_phase')
-        
+
         container, mapping = self.legacy_to_structured(
             system_prompts=system_prompts,
             worldbuilding=worldbuilding,
@@ -482,12 +482,12 @@ class ContextAdapter:
             phase_context=phase_context,
             compose_phase=compose_phase
         )
-        
+
         # Add migration metadata
         container.global_metadata.update({
             "migration_source": "legacy_data",
             "migration_timestamp": datetime.now(timezone.utc).isoformat(),
             "original_data_keys": list(legacy_data.keys())
         })
-        
+
         return container
