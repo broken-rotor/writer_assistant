@@ -145,9 +145,10 @@ class TestStructuredContextAPI:
         request_data = {
             "context_mode": "structured",
             "structured_context": sample_structured_context.model_dump(mode='json'),
+            "previousChapters": [],
             "character": {
                 "name": "Aria",
-                "description": "Brave young hero",
+                "basicBio": "Brave young hero with a mysterious past",
                 "personality": "determined and curious"
             },
             "plotPoint": "Discovery of hidden truth"
@@ -155,13 +156,17 @@ class TestStructuredContextAPI:
         
         response = client.post("/api/v1/character-feedback", json=request_data)
         
+        if response.status_code != 200:
+            print(f"Response status: {response.status_code}")
+            print(f"Response body: {response.text}")
+        
         assert response.status_code == 200
         data = response.json()
         
         # Validate response structure
         assert "feedback" in data
         assert "context_metadata" in data
-        assert data["context_metadata"]["processing_mode"] == "structured"
+        assert data["context_metadata"]["total_elements"] == 4  # From sample_structured_context
     
     def test_rater_feedback_structured_context(self, client, sample_structured_context):
         """Test rater feedback with structured context."""

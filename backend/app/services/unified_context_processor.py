@@ -739,10 +739,10 @@ class UnifiedContextProcessor:
 
             # Create context metadata
             context_metadata = ContextMetadata(
-                total_elements=metadata.get("original_count", 0),
+                total_elements=metadata.get("original_element_count", 0),
                 processing_applied=metadata.get("was_summarized", False),
                 optimization_level="moderate" if metadata.get("was_summarized", False) else "none",
-                compression_ratio=metadata.get("compression_ratio"),
+                compression_ratio=metadata.get("reduction_ratio"),
                 processing_time_ms=metadata.get("processing_time_ms", 0)
             )
 
@@ -752,8 +752,8 @@ class UnifiedContextProcessor:
                 context_metadata=context_metadata,
                 processing_mode="structured",
                 optimization_applied=metadata.get("was_summarized", False),
-                total_tokens=metadata.get("final_token_count", 0),
-                compression_ratio=metadata.get("compression_ratio", 1.0)
+                total_tokens=metadata.get("final_element_count", 0) * 100,  # Rough estimate
+                compression_ratio=metadata.get("reduction_ratio", 1.0)
             )
 
         except Exception as e:
