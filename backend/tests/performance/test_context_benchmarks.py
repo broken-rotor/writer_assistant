@@ -16,8 +16,12 @@ from app.services.context_manager import ContextManager
 from app.services.unified_context_processor import UnifiedContextProcessor
 from app.models.context_models import (
     StructuredContextContainer,
-    ContextElement,
+    BaseContextElement,
+    StoryContextElement,
+    SystemContextElement,
     ContextType,
+    ContextMetadata,
+    AgentType,
     ComposePhase
 )
 from app.models.generation_models import SystemPrompts, CharacterInfo
@@ -41,7 +45,7 @@ class TestContextProcessingBenchmarks:
             "characters": [
                 CharacterInfo(
                     name=f"Character_{i}",
-                    description=f"A detailed character with complex motivations and background. " * 10,
+                    basicBio=f"A detailed character with complex motivations and background. " * 10,
                     personality=f"Complex personality traits for character {i}"
                 ) for i in range(10)  # Multiple characters
             ],
@@ -53,59 +57,26 @@ class TestContextProcessingBenchmarks:
     def structured_context_data(self):
         """Sample structured context data for benchmarking."""
         return StructuredContextContainer(
-            plot_elements=[
-                ContextElement(
+            elements=[
+                StoryContextElement(
+                    id=f"plot_{i:03d}",
                     type=ContextType.PLOT_OUTLINE,
                     content=f"Plot element {i} with detailed narrative structure. " * 10,
-                    priority="high" if i < 3 else "medium",
-                    tags=[f"plot_{i}", "narrative"],
-                    metadata={"chapter": i, "importance": "high" if i < 3 else "medium"}
+                    metadata=ContextMetadata(
+                        priority=0.8 if i < 3 else 0.5,
+                        target_agents=[AgentType.WRITER],
+                        tags=[f"plot_{i}", "narrative"]
+                    )
                 ) for i in range(20)  # Many plot elements
             ],
-            character_contexts=[
-                {
-                    "character_id": f"char_{i}",
-                    "character_name": f"Character_{i}",
-                    "current_state": {
-                        "emotion": "determined",
-                        "location": f"location_{i}",
-                        "goals": [f"goal_{j}" for j in range(3)]
-                    },
-                    "personality_traits": [f"trait_{j}" for j in range(5)],
-                    "relationships": {f"char_{j}": "friendly" for j in range(i)}
-                } for i in range(10)  # Multiple characters
-            ],
-            user_requests=[
-                ContextElement(
-                    type=ContextType.USER_REQUEST,
-                    content=f"User request {i} with specific requirements. " * 5,
-                    priority="medium",
-                    tags=[f"request_{i}"]
-                ) for i in range(5)
-            ],
-            system_instructions=[
-                ContextElement(
-                    type=ContextType.SYSTEM_INSTRUCTION,
-                    content=f"System instruction {i} for content generation. " * 3,
-                    priority="high",
-                    tags=["system", f"instruction_{i}"]
-                ) for i in range(3)
-            ],
-            context_metadata={
-                "total_elements": 38,  # 20 + 10 + 5 + 3
+            global_metadata={
+                "total_elements": 20,
                 "processing_mode": "structured",
                 "version": "1.0"
             }
         )
     
-    @pytest.fixture
-    def mock_llm(self):
-        """Mock LLM to avoid actual inference during benchmarks."""
-        with patch('app.services.llm_inference.get_llm') as mock:
-            llm_instance = Mock()
-            llm_instance.chat_completion.return_value = "Mocked response"
-            mock.return_value = llm_instance
-            yield llm_instance
+
     
     def benchmark_function(self, func, *args, iterations: int = 10, **kwargs) -> Dict[str, float]:
         """Benchmark a function and return performance metrics."""
@@ -127,7 +98,7 @@ class TestContextProcessingBenchmarks:
             "iterations": iterations
         }
     
-    def test_legacy_vs_structured_context_processing_speed(self, legacy_context_data, structured_context_data, mock_llm):
+    def test_legacy_vs_structured_context_processing_speed(self, legacy_context_data, structured_context_data):
         """Compare processing speed between legacy and structured context."""
         # Initialize services
         legacy_service = ContextOptimizationService()
@@ -205,7 +176,7 @@ class TestContextProcessingBenchmarks:
         assert structured_vs_legacy < 2.0, "Structured context should not be more than 2x slower than legacy"
         assert unified_vs_legacy < 2.0, "Unified processor should not be more than 2x slower than legacy"
     
-    def test_context_size_scaling_performance(self, mock_llm):
+    def test_context_size_scaling_performance(self):
         """Test how performance scales with context size."""
         structured_service = ContextManager()
         
@@ -216,14 +187,19 @@ class TestContextProcessingBenchmarks:
         for size in sizes:
             # Create context with specified number of elements
             large_context = StructuredContextContainer(
-                plot_elements=[
-                    ContextElement(
+                elements=[
+                    StoryContextElement(
+                        id=f"plot_{i:03d}",
                         type=ContextType.PLOT_OUTLINE,
                         content=f"Plot element {i} with content. " * 10,
-                        priority="medium"
+                        metadata=ContextMetadata(
+                            priority=0.5,
+                            target_agents=[AgentType.WRITER],
+                            tags=["scaling_test"]
+                        )
                     ) for i in range(size)
                 ],
-                context_metadata={
+                global_metadata={
                     "total_elements": size,
                     "processing_mode": "structured"
                 }
@@ -265,7 +241,7 @@ class TestContextProcessingBenchmarks:
             # Time should not scale worse than linearly with size
             assert scaling_factor <= size_ratio * 1.5, "Performance should scale better than linear"
     
-    def test_memory_efficiency_structured_context(self, structured_context_data, mock_llm):
+    def test_memory_efficiency_structured_context(self, structured_context_data):
         """Test memory efficiency of structured context processing."""
         import psutil
         import os
@@ -302,7 +278,7 @@ class TestContextProcessingBenchmarks:
         # Memory increase should be reasonable (less than 100MB for this test)
         assert memory_increase < 100.0, "Memory increase should be less than 100MB"
     
-    def test_concurrent_context_processing(self, structured_context_data, mock_llm):
+    def test_concurrent_context_processing(self, structured_context_data):
         """Test performance under concurrent context processing."""
         import threading
         import queue
@@ -385,7 +361,7 @@ class TestContextProcessingBenchmarks:
             max_duration = max(r["duration"] for r in successful_results)
             assert max_duration < 30.0, "Individual requests should complete within 30 seconds"
     
-    def test_context_optimization_effectiveness(self, structured_context_data, mock_llm):
+    def test_context_optimization_effectiveness(self, structured_context_data):
         """Test effectiveness of context optimization/summarization."""
         structured_service = ContextManager()
         
