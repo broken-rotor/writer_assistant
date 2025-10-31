@@ -317,7 +317,7 @@ export class ContextBuilderService {
         title: chapter.title || '',
         content: chapter.content || '',
         wordCount: this.tokenCountingService.countWords(chapter.content || ''),
-        created: chapter.created || new Date()
+        created: chapter.metadata.created || new Date()
       }));
 
       const totalWordCount = structuredChapters.reduce((sum, chapter) => sum + chapter.wordCount, 0);
@@ -673,7 +673,7 @@ export class ContextBuilderService {
       return null;
     }
 
-    return entry;
+    return entry as ContextCacheEntry<T>;
   }
 
   private setCachedContext<T>(key: string, data: T, storyVersion: string): void {

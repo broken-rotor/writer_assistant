@@ -31,10 +31,12 @@ describe('ContextBuilderService', () => {
   const mockStory: Story = {
     id: 'test-story-123',
     general: {
+      title: 'Test Story Title',
       systemPrompts: {
         mainPrefix: 'Test main prefix',
         mainSuffix: 'Test main suffix',
-        assistantPrompt: 'Test assistant prompt'
+        assistantPrompt: 'Test assistant prompt',
+        editorPrompt: 'Test editor prompt'
       },
       worldbuilding: 'Test worldbuilding content with detailed universe information.'
     },
@@ -42,16 +44,30 @@ describe('ContextBuilderService', () => {
       summary: 'Test story summary describing the main plot.',
       chapters: [
         {
+          id: 'chapter-1',
           number: 1,
           title: 'Chapter One',
           content: 'This is the content of chapter one.',
-          created: new Date('2023-01-01')
+          plotPoint: 'Introduction of main character',
+          incorporatedFeedback: [],
+          metadata: {
+            created: new Date('2023-01-01'),
+            lastModified: new Date('2023-01-01'),
+            wordCount: 100
+          }
         },
         {
+          id: 'chapter-2',
           number: 2,
           title: 'Chapter Two',
           content: 'This is the content of chapter two.',
-          created: new Date('2023-01-02')
+          plotPoint: 'First conflict arises',
+          incorporatedFeedback: [],
+          metadata: {
+            created: new Date('2023-01-02'),
+            lastModified: new Date('2023-01-02'),
+            wordCount: 150
+          }
         }
       ]
     },
@@ -70,7 +86,11 @@ describe('ContextBuilderService', () => {
         motivations: 'Save the kingdom',
         fears: 'Losing loved ones',
         relationships: 'Friend of Jane',
-        isHidden: false
+        isHidden: false,
+        metadata: {
+          creationSource: 'user' as const,
+          lastModified: new Date('2023-01-01')
+        }
       } as Character],
       ['char2', {
         id: 'char2',
@@ -86,33 +106,69 @@ describe('ContextBuilderService', () => {
         motivations: 'Protect ancient knowledge',
         fears: 'Dark magic',
         relationships: 'Friend of John',
-        isHidden: false
+        isHidden: false,
+        metadata: {
+          creationSource: 'user' as const,
+          lastModified: new Date('2023-01-01')
+        }
       } as Character],
       ['char3', {
         id: 'char3',
         name: 'Hidden Character',
         basicBio: 'A secret character',
-        isHidden: true
+        sex: 'unknown',
+        gender: 'unknown',
+        sexualPreference: 'unknown',
+        age: 0,
+        physicalAppearance: 'Unknown',
+        usualClothing: 'Unknown',
+        personality: 'Mysterious',
+        motivations: 'Unknown',
+        fears: 'Unknown',
+        relationships: 'Unknown',
+        isHidden: true,
+        metadata: {
+          creationSource: 'ai_generated' as const,
+          lastModified: new Date('2023-01-01')
+        }
       } as Character]
-    ])
+    ]),
+    raters: new Map(),
+    plotOutline: {
+      content: 'Test plot outline content',
+      status: 'draft' as const,
+      chatHistory: [],
+      raterFeedback: new Map(),
+      metadata: {
+        created: new Date('2023-01-01'),
+        lastModified: new Date('2023-01-01'),
+        version: 1
+      }
+    },
+    chapterCreation: {
+      plotPoint: 'Test plot point',
+      incorporatedFeedback: [],
+      feedbackRequests: new Map()
+    },
+    metadata: {
+      version: '1.0.0',
+      created: new Date('2023-01-01'),
+      lastModified: new Date('2023-01-01')
+    }
   } as Story;
 
   const mockFeedbackItems: FeedbackItem[] = [
     {
-      id: 'feedback1',
+      source: 'Character Agent',
       content: 'Great character development',
-      agentId: 'agent1',
-      agentName: 'Character Agent',
-      timestamp: new Date(),
-      type: 'character'
+      type: 'suggestion',
+      incorporated: false
     },
     {
-      id: 'feedback2',
+      source: 'Narrative Agent',
       content: 'Improve pacing',
-      agentId: 'agent2',
-      agentName: 'Narrative Agent',
-      timestamp: new Date(),
-      type: 'narrative'
+      type: 'suggestion',
+      incorporated: true
     }
   ];
 
@@ -188,7 +244,8 @@ describe('ContextBuilderService', () => {
           systemPrompts: {
             mainPrefix: '',
             mainSuffix: '',
-            assistantPrompt: ''
+            assistantPrompt: '',
+            editorPrompt: ''
           }
         }
       };
@@ -371,10 +428,17 @@ describe('ContextBuilderService', () => {
         story: {
           ...mockStory.story,
           chapters: Array.from({ length: 60 }, (_, i) => ({
+            id: `chapter-${i + 1}`,
             number: i + 1,
             title: `Chapter ${i + 1}`,
             content: `Content ${i + 1}`,
-            created: new Date()
+            plotPoint: `Plot point ${i + 1}`,
+            incorporatedFeedback: [],
+            metadata: {
+              created: new Date(),
+              lastModified: new Date(),
+              wordCount: 50
+            }
           }))
         }
       };
@@ -424,12 +488,10 @@ describe('ContextBuilderService', () => {
 
     it('should handle large number of feedback items', () => {
       const manyFeedbackItems = Array.from({ length: 25 }, (_, i) => ({
-        id: `feedback${i}`,
+        source: `Agent ${i}`,
         content: `Feedback ${i}`,
-        agentId: `agent${i}`,
-        agentName: `Agent ${i}`,
-        timestamp: new Date(),
-        type: 'character'
+        type: 'suggestion' as const,
+        incorporated: i % 2 === 0
       }));
 
       const result = service.buildFeedbackContext(manyFeedbackItems, []);
@@ -504,13 +566,44 @@ describe('ContextBuilderService', () => {
               ['item2', { id: 'item2', title: 'Conflict', description: 'Hero faces challenge', order: 2 }]
             ])
           }
-        },
+        } as any,
         chapterDetailer: {
           status: 'in_progress',
           chapterDraft: {
             content: 'Draft chapter content...'
           }
-        }
+        } as any,
+        finalEdit: {
+          status: 'not_started'
+        } as any
+      },
+      sharedContext: {
+        chapterNumber: 1,
+        targetWordCount: 2000,
+        genre: 'fantasy',
+        tone: 'dramatic',
+        pov: 'third_person'
+      },
+      navigation: {
+        phaseHistory: ['plot_outline', 'chapter_detail'],
+        canGoBack: true,
+        canGoForward: false,
+        branchNavigation: {} as any
+      },
+      overallProgress: {
+        currentStep: 2,
+        totalSteps: 3,
+        phaseCompletionStatus: {
+          'plot_outline': true,
+          'chapter_detail': false,
+          'final_edit': false
+        },
+        estimatedTimeRemaining: 30
+      },
+      metadata: {
+        created: new Date('2023-01-01'),
+        lastModified: new Date('2023-01-01'),
+        version: '1.0.0'
       }
     } as ChapterComposeState;
 
@@ -561,7 +654,7 @@ describe('ContextBuilderService', () => {
     it('should validate current phase', () => {
       const invalidState = {
         ...mockChapterComposeState,
-        currentPhase: ''
+        currentPhase: 'plot_outline' as const
       } as ChapterComposeState;
 
       const result = service.buildPhaseContext(invalidState);
@@ -603,7 +696,8 @@ describe('ContextBuilderService', () => {
           systemPrompts: {
             mainPrefix: '',
             mainSuffix: '',
-            assistantPrompt: '' // This will cause validation error
+            assistantPrompt: '', // This will cause validation error
+            editorPrompt: ''
           }
         }
       };
