@@ -59,10 +59,18 @@ class ContextAnalysis:
 class ContextManager:
     """Service for managing structured context elements."""
     
-    def __init__(self):
+    def __init__(self, enable_session_persistence: bool = True):
         """Initialize the context manager."""
         self.summarizer = ContextSummarizer()
         self.formatter = ContextFormatter()
+        self.enable_session_persistence = enable_session_persistence
+        
+        # Import here to avoid circular imports
+        if enable_session_persistence:
+            from app.services.context_session_manager import get_context_state_manager
+            self.state_manager = get_context_state_manager()
+        else:
+            self.state_manager = None
     
     def process_context_for_agent(
         self,
@@ -121,6 +129,88 @@ class ContextManager:
         except Exception as e:
             logger.error(f"Error processing context for agent {config.target_agent}: {str(e)}")
             raise
+    
+    def process_context_with_state(
+        self,
+        context_container: StructuredContextContainer,
+        config: ContextProcessingConfig,
+        context_state: Optional[str] = None,
+        story_id: Optional[str] = None
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Process context container with stateless state management support.
+        
+        Args:
+            context_container: Context container to process
+            config: Processing configuration
+            context_state: Optional serialized context state from client
+            story_id: Optional story ID for new states
+            
+        Returns:
+            Tuple of (formatted_context_string, processing_metadata_with_state_info)
+        """
+        if not self.enable_session_persistence or not self.state_manager:
+            # Fall back to regular processing
+            return self.process_context_for_agent(context_container, config)
+        
+        try:
+            # Get or create state
+            if context_state:
+                try:
+                    state = self.state_manager.deserialize_state(context_state)
+                    logger.debug(f"Using existing context state {state.state_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to deserialize context state, creating new: {e}")
+                    state = self.state_manager.create_initial_state(
+                        story_id=story_id,
+                        initial_context=context_container
+                    )
+            else:
+                state = self.state_manager.create_initial_state(
+                    story_id=story_id,
+                    initial_context=context_container
+                )
+            
+            # Process context normally
+            formatted_context, metadata = self.process_context_for_agent(context_container, config)
+            
+            # Update state with processing history
+            processing_metadata = {
+                'agent_type': config.target_agent.value,
+                'phase': config.current_phase.value,
+                'token_count': metadata.get('final_token_count', 0),
+                'elements_processed': metadata.get('final_count', 0),
+                'was_summarized': metadata.get('was_summarized', False)
+            }
+            
+            state = self.state_manager.add_processing_history(
+                state,
+                'context_processing',
+                processing_metadata
+            )
+            
+            # Update state context if it was modified during processing
+            if metadata.get('was_summarized', False):
+                state = self.state_manager.update_state_context(
+                    state,
+                    context_container,
+                    processing_metadata
+                )
+            
+            # Serialize state for client
+            serialized_state = self.state_manager.serialize_state(state)
+            
+            # Add state information to metadata
+            metadata['context_state'] = serialized_state
+            metadata['state_id'] = state.state_id
+            metadata['state_persistence_enabled'] = True
+            
+            return formatted_context, metadata
+            
+        except Exception as e:
+            logger.error(f"Error processing context with state: {str(e)}")
+            # Fall back to regular processing
+            return self.process_context_for_agent(context_container, config)
     
     def _filter_elements_for_agent_and_phase(
         self,
