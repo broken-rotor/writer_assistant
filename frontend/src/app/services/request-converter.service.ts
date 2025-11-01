@@ -7,7 +7,7 @@
 
 import { Injectable, inject } from '@angular/core';
 import { ContextBuilderService } from './context-builder.service';
-import { Story, FeedbackItem } from '../models/story.model';
+import { FeedbackItem } from '../models/story.model';
 
 import {
   CharacterFeedbackRequest,
@@ -141,7 +141,7 @@ export class RequestConverterService {
    */
   convertToTraditional<T>(
     request: any,
-    options: RequestConversionOptions = {}
+    _options: RequestConversionOptions = {}
   ): RequestConversionResult<T> {
     const startTime = Date.now();
     

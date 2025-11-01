@@ -1,4 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/angular';
+// import type { Meta, StoryObj } from '@storybook/angular';
+type Meta<_T> = any;
+type StoryObj<_T> = any;
 import { TokenCounterComponent } from './token-counter.component';
 import {
   TokenCounterData,
@@ -390,7 +392,7 @@ export const CustomWarningThreshold: Story = {
 
 // All Display Modes Comparison
 export const AllDisplayModes: Story = {
-  render: (args) => ({
+  render: (args: any) => ({
     props: args,
     template: `
       <div style="display: flex; flex-direction: column; gap: 20px; padding: 20px;">
@@ -434,7 +436,7 @@ export const AllDisplayModes: Story = {
 
 // All Status States Comparison
 export const AllStatusStates: Story = {
-  render: (args) => ({
+  render: (args: any) => ({
     props: args,
     template: `
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 20px;">

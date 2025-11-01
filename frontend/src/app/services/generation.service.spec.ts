@@ -4,12 +4,24 @@ import { GenerationService } from './generation.service';
 import { ApiService } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
 import { TokenCountingService } from './token-counting.service';
+import { RequestConverterService } from './request-converter.service';
+import { RequestValidatorService } from './request-validator.service';
+import { RequestOptimizerService } from './request-optimizer.service';
 import { Story, Character, Rater } from '../models/story.model';
+import { 
+  StructuredCharacterFeedbackResponse,
+  StructuredRaterFeedbackResponse,
+  StructuredGenerateChapterResponse,
+  StructuredEditorReviewResponse
+} from '../models/structured-request.model';
 import { of } from 'rxjs';
 
 describe('GenerationService', () => {
   let service: GenerationService;
   let apiServiceSpy: jasmine.SpyObj<ApiService>;
+  let contextBuilderSpy: jasmine.SpyObj<ContextBuilderService>;
+  let requestValidatorSpy: jasmine.SpyObj<RequestValidatorService>;  // eslint-disable-line @typescript-eslint/no-unused-vars
+  let requestOptimizerSpy: jasmine.SpyObj<RequestOptimizerService>;  // eslint-disable-line @typescript-eslint/no-unused-vars
 
   beforeEach(() => {
     const spy = jasmine.createSpyObj('ApiService', [
@@ -22,7 +34,7 @@ describe('GenerationService', () => {
       'generateCharacterDetails'
     ]);
 
-    const contextBuilderSpy = jasmine.createSpyObj('ContextBuilderService', [
+    const contextBuilderSpyObj = jasmine.createSpyObj('ContextBuilderService', [
       'buildSystemPromptsContext',
       'buildWorldbuildingContext',
       'buildStorySummaryContext',
@@ -40,18 +52,50 @@ describe('GenerationService', () => {
       'countTokens'
     ]);
 
+    const requestConverterSpy = jasmine.createSpyObj('RequestConverterService', [
+      'convertToStructured'
+    ]);
+
+    const requestValidatorSpyObj = jasmine.createSpyObj('RequestValidatorService', [
+      'validateCharacterFeedbackRequest',
+      'validateRaterFeedbackRequest',
+      'validateEditorReviewRequest'
+    ]);
+
+    const requestOptimizerSpyObj = jasmine.createSpyObj('RequestOptimizerService', [
+      'optimizeCharacterFeedbackRequest',
+      'optimizeRaterFeedbackRequest',
+      'optimizeEditorReviewRequest'
+    ]);
+
+    // Set up default validation responses
+    requestValidatorSpyObj.validateCharacterFeedbackRequest.and.returnValue({ isValid: true, errors: [] });
+    requestValidatorSpyObj.validateRaterFeedbackRequest.and.returnValue({ isValid: true, errors: [] });
+    requestValidatorSpyObj.validateEditorReviewRequest.and.returnValue({ isValid: true, errors: [] });
+
+    // Set up default optimization responses (pass through unchanged)
+    requestOptimizerSpyObj.optimizeCharacterFeedbackRequest.and.callFake((req: any) => ({ optimizedRequest: req }));
+    requestOptimizerSpyObj.optimizeRaterFeedbackRequest.and.callFake((req: any) => ({ optimizedRequest: req }));
+    requestOptimizerSpyObj.optimizeEditorReviewRequest.and.callFake((req: any) => ({ optimizedRequest: req }));
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
         GenerationService,
         { provide: ApiService, useValue: spy },
-        { provide: ContextBuilderService, useValue: contextBuilderSpy },
-        { provide: TokenCountingService, useValue: tokenCountingSpy }
+        { provide: ContextBuilderService, useValue: contextBuilderSpyObj },
+        { provide: TokenCountingService, useValue: tokenCountingSpy },
+        { provide: RequestConverterService, useValue: requestConverterSpy },
+        { provide: RequestValidatorService, useValue: requestValidatorSpyObj },
+        { provide: RequestOptimizerService, useValue: requestOptimizerSpyObj }
       ]
     });
 
     service = TestBed.inject(GenerationService);
     apiServiceSpy = TestBed.inject(ApiService) as jasmine.SpyObj<ApiService>;
+    contextBuilderSpy = TestBed.inject(ContextBuilderService) as jasmine.SpyObj<ContextBuilderService>;
+    requestValidatorSpy = TestBed.inject(RequestValidatorService) as jasmine.SpyObj<RequestValidatorService>;
+    requestOptimizerSpy = TestBed.inject(RequestOptimizerService) as jasmine.SpyObj<RequestOptimizerService>;
   });
 
   it('should be created', () => {
@@ -59,7 +103,7 @@ describe('GenerationService', () => {
   });
 
   describe('requestCharacterFeedback', () => {
-    it('should build request with complete context and call API', (done) => {
+    it('should build structured request with complete context and call API', (done) => {
       const mockStory = createMockStory();
       const mockCharacter: Character = {
         id: 'char-1',
@@ -82,7 +126,7 @@ describe('GenerationService', () => {
         }
       };
 
-      const mockResponse = {
+      const mockResponse: StructuredCharacterFeedbackResponse = {
         characterName: 'Test Character',
         feedback: {
           actions: ['Draw sword'],
@@ -93,13 +137,33 @@ describe('GenerationService', () => {
         }
       };
 
+      // Mock context builder responses
+      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
+        success: true,
+        data: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' }
+      });
+      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
+        success: true,
+        data: { content: 'A fantasy world', isValid: true, wordCount: 3, lastUpdated: new Date() }
+      });
+      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
+        success: true,
+        data: { summary: 'A story about heroes', isValid: true, wordCount: 4, lastUpdated: new Date() }
+      });
+      contextBuilderSpy.buildChaptersContext.and.returnValue({
+        success: true,
+        data: { chapters: [], totalChapters: 0, totalWordCount: 0, lastUpdated: new Date() }
+      });
+
       apiServiceSpy.requestCharacterFeedback.and.returnValue(of(mockResponse));
 
       service.requestCharacterFeedback(mockStory, mockCharacter, 'Enter dungeon').subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.requestCharacterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotPoint: 'Enter dungeon',
+            plotContext: jasmine.objectContaining({
+              plotPoint: 'Enter dungeon'
+            }),
             character: jasmine.objectContaining({
               name: 'Test Character'
             })
@@ -111,7 +175,7 @@ describe('GenerationService', () => {
   });
 
   describe('requestRaterFeedback', () => {
-    it('should build request with complete context and call API', (done) => {
+    it('should build structured request with complete context and call API', (done) => {
       const mockStory = createMockStory();
       const mockRater: Rater = {
         id: 'rater-1',
@@ -124,7 +188,7 @@ describe('GenerationService', () => {
         }
       };
 
-      const mockResponse = {
+      const mockResponse: StructuredRaterFeedbackResponse = {
         raterName: 'Pacing Rater',
         feedback: {
           opinion: 'Good pacing',
@@ -132,13 +196,67 @@ describe('GenerationService', () => {
         }
       };
 
+      // Configure context builder spy methods to return successful responses
+      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
+        success: true,
+        data: {
+          mainPrefix: 'System prefix',
+          mainSuffix: 'System suffix',
+          assistantPrompt: 'Assistant prompt'
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
+      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
+        success: true,
+        data: {
+          content: 'Test worldbuilding',
+          isValid: true,
+          wordCount: 2,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
+      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
+        success: true,
+        data: {
+          summary: 'Test story summary',
+          isValid: true,
+          wordCount: 3,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
+      contextBuilderSpy.buildChaptersContext.and.returnValue({
+        success: true,
+        data: {
+          chapters: [],
+          totalChapters: 0,
+          totalWordCount: 0,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
       apiServiceSpy.requestRaterFeedback.and.returnValue(of(mockResponse));
 
       service.requestRaterFeedback(mockStory, mockRater, 'Enter dungeon').subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.requestRaterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotPoint: 'Enter dungeon',
+            plotContext: jasmine.objectContaining({
+              plotPoint: 'Enter dungeon'
+            }),
             raterPrompt: 'Evaluate pacing'
           })
         );
@@ -148,13 +266,64 @@ describe('GenerationService', () => {
   });
 
   describe('generateChapter', () => {
-    it('should build complete request and call API', (done) => {
+    it('should build structured request and call API', (done) => {
       const mockStory = createMockStory();
       mockStory.chapterCreation.plotPoint = 'The hero enters the dungeon';
 
-      const mockResponse = {
+      const mockResponse: StructuredGenerateChapterResponse = {
         chapterText: 'The hero stepped into the dark dungeon...'
       };
+
+      // Configure context builder spy to return successful response
+      contextBuilderSpy.buildChapterGenerationContext.and.returnValue({
+        success: true,
+        data: {
+          systemPrompts: {
+            mainPrefix: 'System prefix',
+            mainSuffix: 'System suffix',
+            assistantPrompt: 'Assistant prompt'
+          },
+          worldbuilding: {
+            content: 'Test worldbuilding',
+            isValid: true,
+            wordCount: 2,
+            lastUpdated: new Date()
+          },
+          storySummary: {
+            summary: 'Test story summary',
+            isValid: true,
+            wordCount: 3,
+            lastUpdated: new Date()
+          },
+          characters: {
+            characters: [],
+            totalCharacters: 0,
+            visibleCharacters: 0,
+            lastUpdated: new Date()
+          },
+          previousChapters: {
+            chapters: [],
+            totalChapters: 0,
+            totalWordCount: 0,
+            lastUpdated: new Date()
+          },
+          plotPoint: {
+            plotPoint: 'The hero enters the dungeon',
+            isValid: true,
+            wordCount: 5,
+            lastUpdated: new Date()
+          },
+          feedback: {
+            incorporatedFeedback: [],
+            selectedFeedback: [],
+            totalFeedbackItems: 0,
+            lastUpdated: new Date()
+          }
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
 
       apiServiceSpy.generateChapter.and.returnValue(of(mockResponse));
 
@@ -162,8 +331,12 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.generateChapter).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotPoint: 'The hero enters the dungeon',
-            incorporatedFeedback: []
+            plotContext: jasmine.objectContaining({
+              plotPoint: 'The hero enters the dungeon'
+            }),
+            feedbackContext: jasmine.objectContaining({
+              incorporatedFeedback: []
+            })
           })
         );
         done();
@@ -213,9 +386,76 @@ describe('GenerationService', () => {
         }
       });
 
-      const mockResponse = {
+      const mockResponse: StructuredGenerateChapterResponse = {
         chapterText: 'Chapter text'
       };
+
+      // Configure context builder spy to return successful response
+      contextBuilderSpy.buildChapterGenerationContext.and.returnValue({
+        success: true,
+        data: {
+          systemPrompts: {
+            mainPrefix: 'System prefix',
+            mainSuffix: 'System suffix',
+            assistantPrompt: 'Assistant prompt'
+          },
+          worldbuilding: {
+            content: 'Test worldbuilding',
+            isValid: true,
+            wordCount: 2,
+            lastUpdated: new Date()
+          },
+          storySummary: {
+            summary: 'Test story summary',
+            isValid: true,
+            wordCount: 3,
+            lastUpdated: new Date()
+          },
+          characters: {
+            characters: [
+              {
+                name: 'Visible Character',
+                basicBio: 'A hero',
+                sex: 'Male',
+                gender: 'Male',
+                sexualPreference: 'Heterosexual',
+                age: 30,
+                physicalAppearance: 'Tall',
+                usualClothing: 'Armor',
+                personality: 'Brave',
+                motivations: 'Justice',
+                fears: 'Failure',
+                relationships: 'None',
+                isHidden: false
+              }
+            ],
+            totalCharacters: 1,
+            visibleCharacters: 1,
+            lastUpdated: new Date()
+          },
+          previousChapters: {
+            chapters: [],
+            totalChapters: 0,
+            totalWordCount: 0,
+            lastUpdated: new Date()
+          },
+          plotPoint: {
+            plotPoint: 'Test plot point',
+            isValid: true,
+            wordCount: 3,
+            lastUpdated: new Date()
+          },
+          feedback: {
+            incorporatedFeedback: [],
+            selectedFeedback: [],
+            totalFeedbackItems: 0,
+            lastUpdated: new Date()
+          }
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
 
       apiServiceSpy.generateChapter.and.returnValue(of(mockResponse));
 
@@ -254,12 +494,77 @@ describe('GenerationService', () => {
   });
 
   describe('requestEditorReview', () => {
-    it('should build request with chapter and call API', (done) => {
+    it('should build structured request with chapter and call API', (done) => {
       const mockStory = createMockStory();
-      const mockResponse = {
+      const mockResponse: StructuredEditorReviewResponse = {
         overallAssessment: 'Good chapter',
         suggestions: []
       };
+
+      // Configure context builder spy methods to return successful responses
+      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
+        success: true,
+        data: {
+          mainPrefix: 'System prefix',
+          mainSuffix: 'System suffix',
+          assistantPrompt: 'Assistant prompt'
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
+      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
+        success: true,
+        data: {
+          content: 'Test worldbuilding',
+          isValid: true,
+          wordCount: 2,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
+      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
+        success: true,
+        data: {
+          summary: 'Test story summary',
+          isValid: true,
+          wordCount: 3,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
+      contextBuilderSpy.buildChaptersContext.and.returnValue({
+        success: true,
+        data: {
+          chapters: [],
+          totalChapters: 0,
+          totalWordCount: 0,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
+      contextBuilderSpy.buildCharacterContext.and.returnValue({
+        success: true,
+        data: {
+          characters: [],
+          totalCharacters: 0,
+          visibleCharacters: 0,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
 
       apiServiceSpy.requestEditorReview.and.returnValue(of(mockResponse));
 

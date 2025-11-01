@@ -117,8 +117,6 @@ export class RequestOptimizerService {
     const optimizationsApplied: string[] = [];
     const optimizedRequest = { ...request };
 
-    const maxTokens = options.maxTokens || this.DEFAULT_MAX_TOKENS;
-
     // Optimize rater prompt if too long
     if (optimizedRequest.raterPrompt.length > 800) {
       optimizedRequest.raterPrompt = this.summarizeText(optimizedRequest.raterPrompt, 600);
@@ -165,8 +163,6 @@ export class RequestOptimizerService {
     const originalTokenCount = this.estimateTokenCount(request);
     const optimizationsApplied: string[] = [];
     const optimizedRequest = { ...request };
-
-    const maxTokens = options.maxTokens || this.DEFAULT_MAX_TOKENS;
 
     // Optimize characters (limit to most relevant)
     if (optimizedRequest.characters.length > (options.limitCharacters || this.DEFAULT_MAX_CHARACTERS)) {
@@ -227,8 +223,6 @@ export class RequestOptimizerService {
     const optimizationsApplied: string[] = [];
     const optimizedRequest = { ...request };
 
-    const maxTokens = options.maxTokens || this.DEFAULT_MAX_TOKENS;
-
     // For editor review, we typically need fewer previous chapters
     if (optimizedRequest.previousChapters.length > (options.limitChapters || 2)) {
       optimizedRequest.previousChapters = this.optimizeChapters(
@@ -278,7 +272,7 @@ export class RequestOptimizerService {
   private optimizeChapters(
     chapters: StructuredChapterContext[],
     maxChapters: number,
-    prioritizeRecent: boolean = true
+    prioritizeRecent = true
   ): StructuredChapterContext[] {
     if (chapters.length <= maxChapters) {
       return chapters;

@@ -162,7 +162,6 @@ export class SystemPromptFieldComponent implements OnInit, OnDestroy, ControlVal
   }
 
   // Validator implementation
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   validate(_control: AbstractControl): ValidationErrors | null {
     if (!this.validationResult) {
       return null;

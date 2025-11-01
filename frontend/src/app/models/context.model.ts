@@ -77,11 +77,11 @@ export interface SessionContext extends BaseContext {
     sidebarState: any;
     viewMode: string;
   };
-  recentActions: Array<{
+  recentActions: {
     action: string;
     timestamp: Date;
     context?: any;
-  }>;
+  }[];
 }
 
 /**
@@ -95,22 +95,22 @@ export interface StoryContext extends BaseContext {
   outline: {
     summary: string;
     themes: string[];
-    plotPoints: Array<{
+    plotPoints: {
       id: string;
       title: string;
       description: string;
       order: number;
-    }>;
+    }[];
   };
   worldBuilding: {
     setting: string;
     timeframe: string;
     rules: string[];
-    locations: Array<{
+    locations: {
       id: string;
       name: string;
       description: string;
-    }>;
+    }[];
   };
   narrative: {
     tone: string;
@@ -140,32 +140,32 @@ export interface CharacterContext extends BaseContext {
     personality: string[];
     background: string;
     motivations: string[];
-    relationships: Array<{
+    relationships: {
       characterId: string;
       relationship: string;
       description: string;
-    }>;
+    }[];
   };
   memory: {
-    experiences: Array<{
+    experiences: {
       id: string;
       event: string;
       timestamp: Date;
       emotionalImpact: number;
       significance: number;
       relatedCharacters: string[];
-    }>;
-    knowledge: Array<{
+    }[];
+    knowledge: {
       topic: string;
       level: number; // 1-10
       source: string;
       confidence: number;
-    }>;
-    secrets: Array<{
+    }[];
+    secrets: {
       secret: string;
       knownBy: string[];
       importance: number;
-    }>;
+    }[];
   };
   currentState: {
     location?: string;
@@ -183,28 +183,28 @@ export interface ConversationContext extends BaseContext {
   type: ContextType.CONVERSATION;
   conversationId: string;
   storyId?: string;
-  participants: Array<{
+  participants: {
     id: string;
     type: 'user' | 'agent';
     name: string;
     role?: string;
-  }>;
-  messages: Array<{
+  }[];
+  messages: {
     id: string;
     senderId: string;
     content: string;
     timestamp: Date;
     type: 'text' | 'system' | 'feedback' | 'generation';
     metadata?: any;
-  }>;
-  decisions: Array<{
+  }[];
+  decisions: {
     id: string;
     question: string;
     options: string[];
     selectedOption?: string;
     timestamp: Date;
     impact: string;
-  }>;
+  }[];
   context: {
     topic: string;
     phase?: string;
@@ -233,12 +233,12 @@ export interface PhaseContext extends BaseContext {
     lastActivity: Date;
     context: any;
   }>;
-  transitions: Array<{
+  transitions: {
     fromPhase: string;
     toPhase: string;
     condition: string;
     timestamp?: Date;
-  }>;
+  }[];
   metrics: {
     startTime?: Date;
     endTime?: Date;

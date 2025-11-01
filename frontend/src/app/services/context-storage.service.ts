@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { 
   BaseContext, 
   ContextType, 
-  ContextVersion, 
   ContextOperationResult 
 } from '../models/context.model';
 import {
@@ -389,7 +388,7 @@ export class ContextStorageService {
     if (obj && typeof obj === 'object') {
       const serialized: any = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           serialized[key] = this.serializeDates(obj[key]);
         }
       }
@@ -411,7 +410,7 @@ export class ContextStorageService {
     if (obj && typeof obj === 'object') {
       const deserialized: any = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           deserialized[key] = this.deserializeDates(obj[key]);
         }
       }
@@ -542,10 +541,10 @@ export class ContextStorageService {
   private getStorageConfigs(): Record<ContextType, ContextStorageConfig> {
     try {
       const data = localStorage.getItem(this.CONFIG_KEY);
-      return data ? JSON.parse(data) : {};
+      return data ? JSON.parse(data) : this.defaultStorageConfigs;
     } catch (error) {
       console.error('Failed to load storage configs:', error);
-      return {};
+      return this.defaultStorageConfigs;
     }
   }
 

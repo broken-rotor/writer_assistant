@@ -9,18 +9,16 @@ import {
   CharacterFeedbackRequest,
   RaterFeedbackRequest,
   GenerateChapterRequest,
-  EditorReviewRequest
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
   StructuredRaterFeedbackRequest,
   StructuredGenerateChapterRequest,
-  StructuredEditorReviewRequest
 } from '../models/structured-request.model';
 
 describe('RequestConverterService', () => {
   let service: RequestConverterService;
-  let mockContextBuilderService: jasmine.SpyObj<ContextBuilderService>;
+  let mockContextBuilderService: jasmine.SpyObj<ContextBuilderService>;  // eslint-disable-line @typescript-eslint/no-unused-vars
 
   beforeEach(() => {
     const contextBuilderSpy = jasmine.createSpyObj('ContextBuilderService', [

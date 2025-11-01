@@ -247,9 +247,7 @@ describe('FeedbackService', () => {
   beforeEach(() => {
     const generationServiceSpy = jasmine.createSpyObj('GenerationService', [
       'requestCharacterFeedback',
-      'requestRaterFeedback',
-      'requestCharacterFeedbackWithPhase',
-      'requestRaterFeedbackWithPhase'
+      'requestRaterFeedback'
     ]);
 
     const conversationServiceSpy = jasmine.createSpyObj('ConversationService', [

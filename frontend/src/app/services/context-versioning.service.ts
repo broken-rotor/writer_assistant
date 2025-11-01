@@ -392,7 +392,7 @@ export class ContextVersioningService {
   /**
    * Calculate differences between two context objects
    */
-  private calculateDiffs(oldContext: any, newContext: any, path: string = ''): ContextDiff[] {
+  private calculateDiffs(oldContext: any, newContext: any, path = ''): ContextDiff[] {
     const diffs: ContextDiff[] = [];
     const now = new Date();
 
@@ -523,7 +523,7 @@ export class ContextVersioningService {
 
     const cloned = {} as T;
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         cloned[key] = this.deepClone(obj[key]);
       }
     }
@@ -544,7 +544,7 @@ export class ContextVersioningService {
     if (obj && typeof obj === 'object') {
       const serialized: any = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           serialized[key] = this.serializeDates(obj[key]);
         }
       }
@@ -566,7 +566,7 @@ export class ContextVersioningService {
     if (obj && typeof obj === 'object') {
       const deserialized: any = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           deserialized[key] = this.deserializeDates(obj[key]);
         }
       }
@@ -654,7 +654,7 @@ export class ContextVersioningService {
               }
             }
           } catch (error) {
-            // Ignore parsing errors for stats
+            console.info('Failed to parse version stats:', error)
           }
         }
       }

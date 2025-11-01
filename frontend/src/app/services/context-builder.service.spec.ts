@@ -10,16 +10,6 @@ import { ContextBuilderService } from './context-builder.service';
 import { TokenCountingService } from './token-counting.service';
 import { Story, Character, FeedbackItem, ConversationThread, ChapterComposeState } from '../models/story.model';
 import {
-  SystemPromptsContext,
-  WorldbuildingContext,
-  StorySummaryContext,
-  CharacterContext,
-  ChaptersContext,
-  PlotContext,
-  FeedbackContext,
-  ConversationContext,
-  PhaseContext,
-  ChapterGenerationContext,
   ContextBuildOptions
 } from '../models/context-builder.model';
 
