@@ -984,7 +984,7 @@ class UnifiedContextProcessor:
         context_metadata = ContextMetadata(
             total_elements=1,
             processing_applied=False,
-            processing_mode="legacy_fallback",
+            processing_mode="legacy",
             optimization_level="none",
             compression_ratio=1.0,
             processing_time_ms=0,
@@ -995,7 +995,7 @@ class UnifiedContextProcessor:
             system_prompt="\n\n".join(system_parts) if system_parts else "You are a helpful writing assistant.",
             user_message="\n\n".join(user_parts) if user_parts else "Please help with this writing task.",
             context_metadata=context_metadata,
-            processing_mode="legacy_fallback",
+            processing_mode="legacy",
             optimization_applied=False,
             total_tokens=len(" ".join(system_parts + user_parts).split()) if (system_parts or user_parts) else 10,
             compression_ratio=1.0
