@@ -202,8 +202,8 @@ export class ConfigurationService {
   loadDefaultConfiguration(): void {
     try {
       const saved = this.localStorageService.loadUserPreferences();
-      if (saved && saved.default_config) {
-        this.defaultConfigSubject.next(saved.default_config);
+      if (saved && saved['default_config']) {
+        this.defaultConfigSubject.next(saved['default_config']);
       }
     } catch (error) {
       console.error('Error loading default configuration:', error);
@@ -213,7 +213,7 @@ export class ConfigurationService {
   saveDefaultConfiguration(config: StoryConfiguration): void {
     try {
       const preferences = this.localStorageService.loadUserPreferences() || {};
-      preferences.default_config = config;
+      preferences['default_config'] = config;
       this.localStorageService.saveUserPreferences(preferences);
       this.defaultConfigSubject.next(config);
     } catch (error) {
@@ -224,7 +224,7 @@ export class ConfigurationService {
   // Story-Specific Configuration
   getStoryConfiguration(storyId: string): StoryConfiguration | null {
     const config = this.localStorageService.loadStoryConfig(storyId);
-    return config || this.defaultConfigSubject.value;
+    return (config as StoryConfiguration) || this.defaultConfigSubject.value || null;
   }
 
   saveStoryConfiguration(storyId: string, config: StoryConfiguration): void {

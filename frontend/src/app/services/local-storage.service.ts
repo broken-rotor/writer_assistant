@@ -9,6 +9,25 @@ export interface StorageQuota {
   percentage: number;
 }
 
+export interface StoryIndex {
+  id: string;
+  title: string;
+  genre: string;
+  size: number;
+  lastModified: string;
+}
+
+export interface UserPreferences {
+  theme?: string;
+  language?: string;
+  autoSave?: boolean;
+  [key: string]: any;
+}
+
+export interface StoryConfiguration {
+  [key: string]: any;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -533,5 +552,56 @@ export class LocalStorageService {
     } catch (error) {
       console.error('Error removing item from localStorage:', error);
     }
+  }
+
+  // Missing methods needed by components
+  getStoriesIndex(): Observable<StoryIndex[]> {
+    return new Observable(observer => {
+      const list = this.storyListSubject.value;
+      const storiesIndex: StoryIndex[] = list.map(item => {
+        const story = this.loadStory(item.id);
+        const serialized = story ? JSON.stringify({
+          ...story,
+          characters: Array.from(story.characters.entries()),
+          raters: Array.from(story.raters.entries())
+        }) : '';
+        
+        return {
+          id: item.id,
+          title: item.title,
+          genre: 'Unknown', // Genre not available in GeneralConfig
+          size: serialized.length,
+          lastModified: item.lastModified.toISOString()
+        };
+      });
+      
+      observer.next(storiesIndex);
+      observer.complete();
+    });
+  }
+
+  async importStories(file: File): Promise<{ success: boolean; storyId?: string; error?: string }> {
+    // For now, delegate to importStory since the component seems to expect the same interface
+    return this.importStory(file);
+  }
+
+  loadUserPreferences(): UserPreferences | null {
+    const key = `${this.STORAGE_PREFIX}user_preferences`;
+    return this.getItem(key);
+  }
+
+  saveUserPreferences(preferences: UserPreferences): boolean {
+    const key = `${this.STORAGE_PREFIX}user_preferences`;
+    return this.setItem(key, preferences);
+  }
+
+  loadStoryConfig(storyId: string): StoryConfiguration | null {
+    const key = `${this.STORAGE_PREFIX}story_config_${storyId}`;
+    return this.getItem(key);
+  }
+
+  saveStoryConfig(storyId: string, config: StoryConfiguration): boolean {
+    const key = `${this.STORAGE_PREFIX}story_config_${storyId}`;
+    return this.setItem(key, config);
   }
 }

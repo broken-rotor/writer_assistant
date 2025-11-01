@@ -375,19 +375,19 @@ export class ContextManagerService {
 
     switch (contextType) {
       case ContextType.SESSION:
-        return collection.sessionContext as T;
+        return collection.sessionContext as unknown as T;
       case ContextType.STORY:
         return activeIds.storyId ? 
-          (collection.storyContexts.get(activeIds.storyId) as T) || null : null;
+          (collection.storyContexts.get(activeIds.storyId) as unknown as T) || null : null;
       case ContextType.CHARACTER:
         return activeIds.characterId ? 
-          (collection.characterContexts.get(activeIds.characterId) as T) || null : null;
+          (collection.characterContexts.get(activeIds.characterId) as unknown as T) || null : null;
       case ContextType.CONVERSATION:
         return activeIds.conversationId ? 
-          (collection.conversationContexts.get(activeIds.conversationId) as T) || null : null;
+          (collection.conversationContexts.get(activeIds.conversationId) as unknown as T) || null : null;
       case ContextType.PHASE:
         return activeIds.phaseId ? 
-          (collection.phaseContexts.get(activeIds.phaseId) as T) || null : null;
+          (collection.phaseContexts.get(activeIds.phaseId) as unknown as T) || null : null;
       default:
         return null;
     }
@@ -426,6 +426,7 @@ export class ContextManagerService {
       },
       workspaceState: {
         openTabs: [],
+        sidebarState: {},
         viewMode: 'default'
       },
       recentActions: []

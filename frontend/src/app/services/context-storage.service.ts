@@ -542,10 +542,10 @@ export class ContextStorageService {
   private getStorageConfigs(): Record<ContextType, ContextStorageConfig> {
     try {
       const data = localStorage.getItem(this.CONFIG_KEY);
-      return data ? JSON.parse(data) : {};
+      return data ? JSON.parse(data) : this.defaultStorageConfigs;
     } catch (error) {
       console.error('Failed to load storage configs:', error);
-      return {};
+      return this.defaultStorageConfigs;
     }
   }
 

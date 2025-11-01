@@ -26,7 +26,7 @@ export class StorageManagementComponent implements OnInit, OnDestroy {
   isExporting = false;
   importFile: File | null = null;
   isImporting = false;
-  importResult: { success: number; errors: string[] } | null = null;
+  importResult: { success: boolean; storyId?: string; error?: string } | null = null;
 
   // Dependency injection
   private localStorageService = inject(LocalStorageService);
@@ -176,12 +176,12 @@ export class StorageManagementComponent implements OnInit, OnDestroy {
       this.isImporting = true;
       this.importResult = await this.localStorageService.importStories(this.importFile);
 
-      if (this.importResult.success > 0) {
+      if (this.importResult && this.importResult.success) {
         this.updateStorageStats();
       }
     } catch (error) {
       console.error('Error importing stories:', error);
-      this.importResult = { success: 0, errors: [`Import failed: ${error}`] };
+      this.importResult = { success: false, error: `Import failed: ${error}` };
     } finally {
       this.isImporting = false;
     }
