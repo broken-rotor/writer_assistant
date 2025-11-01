@@ -10,6 +10,7 @@ import re
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
+from app.core.config import settings
 from app.services.archive_service import ArchiveService, ArchiveSearchResult
 from app.services.llm_inference import LLMInference, get_llm
 from app.services.query_analyzer import QueryAnalyzer, QueryAnalysis
@@ -132,7 +133,7 @@ class RAGService:
             answer = self.llm.generate(
                 prompt=prompt,
                 max_tokens=max_tokens or 1024,
-                temperature=temperature if temperature is not None else 0.3,
+                temperature=temperature if temperature is not None else settings.RAG_DEFAULT_TEMPERATURE,
                 stop=["Question:", "Context:"]
             )
 
@@ -317,7 +318,7 @@ class RAGService:
             answer = self.llm.chat_completion(
                 messages=chat_messages,
                 max_tokens=max_tokens or 1024,
-                temperature=temperature if temperature is not None else 0.4
+                temperature=temperature if temperature is not None else settings.RAG_SUMMARIZATION_TEMPERATURE
             )
 
             # Build info message if there were partial failures

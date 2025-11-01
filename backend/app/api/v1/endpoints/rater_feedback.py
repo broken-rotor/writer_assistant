@@ -10,6 +10,7 @@ from app.models.generation_models import (
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
+from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -71,7 +72,11 @@ Provide feedback in JSON format:
         ]
 
         # Generate rater feedback using LLM
-        response_text = llm.chat_completion(messages, max_tokens=600, temperature=0.7)
+        response_text = llm.chat_completion(
+        messages, 
+        max_tokens=settings.ENDPOINT_RATER_FEEDBACK_MAX_TOKENS, 
+        temperature=settings.ENDPOINT_RATER_FEEDBACK_TEMPERATURE
+    )
         parsed = parse_json_response(response_text)
 
         if parsed and 'opinion' in parsed and 'suggestions' in parsed:

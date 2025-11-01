@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 
+from app.core.config import settings
 from ..llm_inference import LLMInference
 
 logger = logging.getLogger(__name__)
@@ -208,7 +209,7 @@ Preserve the narrative flow and story coherence while condensing descriptions an
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,  # Allow some buffer
-                temperature=0.3  # Lower temperature for consistency
+                temperature=settings.DISTILLATION_GENERAL_TEMPERATURE  # Lower temperature for consistency
             )
 
             # Extract key information
@@ -293,7 +294,7 @@ Preserve character authenticity and relationship coherence while condensing phys
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=0.3
+                temperature=settings.DISTILLATION_PLOT_SUMMARY_TEMPERATURE
             )
 
             key_info = self._extract_key_information(content, summary)
@@ -372,7 +373,7 @@ Convert lengthy dialogue into concise narrative summary while preserving essenti
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=0.3
+                temperature=settings.DISTILLATION_CHARACTER_SUMMARY_TEMPERATURE
             )
 
             key_info = self._extract_key_information(content, summary)
@@ -438,7 +439,7 @@ Maintain the logical flow while condensing detailed descriptions."""
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=0.3
+                temperature=settings.DISTILLATION_SCENE_SUMMARY_TEMPERATURE
             )
 
             key_info = self._extract_key_information(content, summary)
@@ -506,7 +507,7 @@ Preserve the emotional resonance while condensing excessive detail."""
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=0.4  # Slightly higher temperature for emotional nuance
+                temperature=settings.DISTILLATION_DIALOGUE_SUMMARY_TEMPERATURE  # Slightly higher temperature for emotional nuance
             )
 
             key_info = self._extract_key_information(content, summary)
@@ -579,7 +580,7 @@ Preserve essential world-building elements that affect story logic while condens
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=0.3
+                temperature=settings.DISTILLATION_GENERAL_TEMPERATURE
             )
 
             key_info = self._extract_key_information(content, summary)
@@ -665,7 +666,7 @@ Preserve all unaddressed feedback in full detail. Compress repetitive or less im
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=0.2  # Very low temperature for consistency with feedback
+                temperature=settings.DISTILLATION_FEEDBACK_SUMMARY_TEMPERATURE  # Very low temperature for consistency with feedback
             )
 
             key_info = self._extract_key_information(content, summary)
@@ -755,7 +756,7 @@ Preserve the functional integrity of the system prompt while making it more conc
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=0.1  # Very low temperature for system prompt consistency
+                temperature=settings.DISTILLATION_SYSTEM_PROMPT_TEMPERATURE  # Very low temperature for system prompt consistency
             )
 
             key_info = self._extract_key_information(content, summary)
@@ -846,7 +847,7 @@ Use sliding window approach:
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=0.3  # Moderate temperature for natural conversation flow
+                temperature=settings.DISTILLATION_CONVERSATION_TEMPERATURE  # Moderate temperature for natural conversation flow
             )
 
             key_info = self._extract_key_information(content, summary)

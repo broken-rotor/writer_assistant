@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 import json
 
+from app.core.config import settings
+
 from ..token_management import (
     TokenCounter, TokenAllocator, LayerType, LayerHierarchy,
     AllocationRequest, AllocationResult, OverflowStrategy
@@ -75,7 +77,7 @@ class DistillationConfig:
     min_summary_quality_score: float = 0.7
 
     # LLM settings for summarization
-    llm_temperature: float = 0.3  # Lower temperature for consistent summaries
+    llm_temperature: float = field(default_factory=lambda: settings.DISTILLATION_GENERAL_TEMPERATURE)  # Lower temperature for consistent summaries
     llm_max_tokens: int = 2048
 
     # Summary-of-summary settings

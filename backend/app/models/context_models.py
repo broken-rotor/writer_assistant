@@ -374,8 +374,11 @@ class StructuredContextContainer(BaseModel):
             if phase in element.metadata.relevant_phases
         ]
 
-    def get_high_priority_elements(self, threshold: float = 0.7) -> List[BaseContextElement]:
+    def get_high_priority_elements(self, threshold: float = None) -> List[BaseContextElement]:
         """Get context elements with priority above the threshold."""
+        if threshold is None:
+            from app.core.config import settings
+            threshold = settings.CONTEXT_HIGH_PRIORITY_THRESHOLD
         return [
             element for element in self.elements
             if element.metadata.priority >= threshold
