@@ -73,10 +73,10 @@ describe('GenerationService', () => {
     requestValidatorSpyObj.validateRaterFeedbackRequest.and.returnValue({ isValid: true, errors: [] });
     requestValidatorSpyObj.validateEditorReviewRequest.and.returnValue({ isValid: true, errors: [] });
 
-    // Set up default optimization responses
-    requestOptimizerSpyObj.optimizeCharacterFeedbackRequest.and.returnValue({ optimizedRequest: {} as any });
-    requestOptimizerSpyObj.optimizeRaterFeedbackRequest.and.returnValue({ optimizedRequest: {} as any });
-    requestOptimizerSpyObj.optimizeEditorReviewRequest.and.returnValue({ optimizedRequest: {} as any });
+    // Set up default optimization responses (pass through unchanged)
+    requestOptimizerSpyObj.optimizeCharacterFeedbackRequest.and.callFake((req: any) => ({ optimizedRequest: req }));
+    requestOptimizerSpyObj.optimizeRaterFeedbackRequest.and.callFake((req: any) => ({ optimizedRequest: req }));
+    requestOptimizerSpyObj.optimizeEditorReviewRequest.and.callFake((req: any) => ({ optimizedRequest: req }));
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
@@ -134,10 +134,6 @@ describe('GenerationService', () => {
           physicalSensations: ['Heart pounding'],
           emotions: ['Fear'],
           internalMonologue: ['What awaits?']
-        },
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
         }
       };
 
@@ -148,15 +144,15 @@ describe('GenerationService', () => {
       });
       contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
         success: true,
-        data: { content: 'A fantasy world' }
+        data: { content: 'A fantasy world', isValid: true, wordCount: 3, lastUpdated: new Date() }
       });
       contextBuilderSpy.buildStorySummaryContext.and.returnValue({
         success: true,
-        data: { summary: 'A story about heroes' }
+        data: { summary: 'A story about heroes', isValid: true, wordCount: 4, lastUpdated: new Date() }
       });
       contextBuilderSpy.buildChaptersContext.and.returnValue({
         success: true,
-        data: { chapters: [] }
+        data: { chapters: [], totalChapters: 0, totalWordCount: 0, lastUpdated: new Date() }
       });
 
       apiServiceSpy.requestCharacterFeedback.and.returnValue(of(mockResponse));
@@ -197,10 +193,6 @@ describe('GenerationService', () => {
         feedback: {
           opinion: 'Good pacing',
           suggestions: []
-        },
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
         }
       };
 
@@ -279,11 +271,7 @@ describe('GenerationService', () => {
       mockStory.chapterCreation.plotPoint = 'The hero enters the dungeon';
 
       const mockResponse: StructuredGenerateChapterResponse = {
-        chapterText: 'The hero stepped into the dark dungeon...',
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
-        }
+        chapterText: 'The hero stepped into the dark dungeon...'
       };
 
       // Configure context builder spy to return successful response
@@ -399,11 +387,7 @@ describe('GenerationService', () => {
       });
 
       const mockResponse: StructuredGenerateChapterResponse = {
-        chapterText: 'Chapter text',
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
-        }
+        chapterText: 'Chapter text'
       };
 
       // Configure context builder spy to return successful response
@@ -514,11 +498,7 @@ describe('GenerationService', () => {
       const mockStory = createMockStory();
       const mockResponse: StructuredEditorReviewResponse = {
         overallAssessment: 'Good chapter',
-        suggestions: [],
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
-        }
+        suggestions: []
       };
 
       // Configure context builder spy methods to return successful responses

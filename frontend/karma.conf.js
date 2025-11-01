@@ -46,8 +46,6 @@ module.exports = function (config) {
           '--disable-gpu',
           '--no-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
           '--remote-debugging-port=9222'
         ]
       }
