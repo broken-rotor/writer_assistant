@@ -571,15 +571,15 @@ export interface PlotElement {
   content: string;
   priority?: 'high' | 'medium' | 'low';
   tags?: string[];
-  metadata?: { [key: string]: any };
+  metadata?: Record<string, any>;
 }
 
 export interface CharacterContext {
   character_id: string;
   character_name: string;
-  current_state?: { [key: string]: any };
+  current_state?: Record<string, any>;
   recent_actions?: string[];
-  relationships?: { [key: string]: string };
+  relationships?: Record<string, string>;
   goals?: string[];
   memories?: string[];
   personality_traits?: string[];
@@ -601,8 +601,8 @@ export interface SystemInstruction {
   content: string;
   scope?: 'global' | 'character' | 'scene' | 'chapter' | 'story';
   priority?: 'high' | 'medium' | 'low';
-  conditions?: { [key: string]: any };
-  metadata?: { [key: string]: any };
+  conditions?: Record<string, any>;
+  metadata?: Record<string, any>;
 }
 
 export interface ContextMetadata {
@@ -611,7 +611,7 @@ export interface ContextMetadata {
   processing_mode?: 'legacy' | 'structured' | 'hybrid';
   optimization_level?: 'none' | 'light' | 'moderate' | 'aggressive';
   compression_ratio?: number;
-  filtered_elements?: { [key: string]: number };
+  filtered_elements?: Record<string, number>;
   processing_time_ms?: number;
   created_at?: string;
   version?: string;
@@ -636,15 +636,15 @@ export interface GenerateCharacterDetailsRequest {
   phase_context?: {
     previous_phase_output?: string;
     phase_specific_instructions?: string;
-    conversation_history?: Array<{
+    conversation_history?: {
       role: 'user' | 'assistant';
       content: string;
       timestamp?: string;
-    }>;
+    }[];
     conversation_branch_id?: string;
   };
   structured_context: StructuredContextContainer;
-  context_processing_config?: { [key: string]: any };
+  context_processing_config?: Record<string, any>;
 }
 
 // API Response types

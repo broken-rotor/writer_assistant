@@ -6,10 +6,6 @@
 
 import {
   StructuredContextContainer,
-  PlotElement,
-  CharacterContext,
-  UserRequest,
-  SystemInstruction,
   Character
 } from '../models/story.model';
 
@@ -126,7 +122,7 @@ export function transformToStructuredContext(
  */
 export function createMinimalStructuredContext(
   basicBio: string,
-  existingCharacters: Array<{name: string; basicBio: string; relationships: string}>
+  existingCharacters: {name: string; basicBio: string; relationships: string}[]
 ): StructuredContextContainer {
   const structuredContext: StructuredContextContainer = {
     plot_elements: [],
