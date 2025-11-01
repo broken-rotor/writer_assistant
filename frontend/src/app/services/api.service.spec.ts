@@ -2,13 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ApiService } from './api.service';
 import {
-  CharacterFeedbackRequest,
-  CharacterFeedbackResponse,
-  RaterFeedbackRequest,
-  RaterFeedbackResponse,
-  GenerateChapterRequest,
-  GenerateChapterResponse
-} from '../models/story.model';
+  StructuredCharacterFeedbackRequest,
+  StructuredCharacterFeedbackResponse,
+  StructuredRaterFeedbackRequest,
+  StructuredRaterFeedbackResponse,
+  StructuredGenerateChapterRequest,
+  StructuredGenerateChapterResponse,
+  StructuredEditorReviewRequest,
+  StructuredEditorReviewResponse
+} from '../models/structured-request.model';
 import { TokenStrategiesResponse } from '../models/token-limits.model';
 
 describe('ApiService', () => {
@@ -34,14 +36,18 @@ describe('ApiService', () => {
   });
 
   describe('requestCharacterFeedback', () => {
-    it('should send POST request to character-feedback endpoint', () => {
-      const request: CharacterFeedbackRequest = {
+    it('should send POST request to character-feedback/structured endpoint', () => {
+      const request: StructuredCharacterFeedbackRequest = {
         systemPrompts: {
           mainPrefix: '',
           mainSuffix: ''
         },
-        worldbuilding: 'A fantasy world',
-        storySummary: 'A story',
+        worldbuilding: {
+          content: 'A fantasy world'
+        },
+        storySummary: {
+          summary: 'A story'
+        },
         previousChapters: [],
         character: {
           name: 'Test Character',
@@ -57,10 +63,12 @@ describe('ApiService', () => {
           fears: 'Failure',
           relationships: 'None'
         },
-        plotPoint: 'The hero enters the dungeon'
+        plotContext: {
+          plotPoint: 'The hero enters the dungeon'
+        }
       };
 
-      const mockResponse: CharacterFeedbackResponse = {
+      const mockResponse: StructuredCharacterFeedbackResponse = {
         characterName: 'Test Character',
         feedback: {
           actions: ['Draw sword'],
@@ -75,7 +83,7 @@ describe('ApiService', () => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/character-feedback`);
+      const req = httpMock.expectOne(`${baseUrl}/character-feedback/structured`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(request);
       req.flush(mockResponse);
@@ -83,20 +91,26 @@ describe('ApiService', () => {
   });
 
   describe('requestRaterFeedback', () => {
-    it('should send POST request to rater-feedback endpoint', () => {
-      const request: RaterFeedbackRequest = {
+    it('should send POST request to rater-feedback/structured endpoint', () => {
+      const request: StructuredRaterFeedbackRequest = {
         systemPrompts: {
           mainPrefix: '',
           mainSuffix: ''
         },
         raterPrompt: 'Evaluate pacing',
-        worldbuilding: 'A fantasy world',
-        storySummary: 'A story',
+        worldbuilding: {
+          content: 'A fantasy world'
+        },
+        storySummary: {
+          summary: 'A story'
+        },
         previousChapters: [],
-        plotPoint: 'The hero enters the dungeon'
+        plotContext: {
+          plotPoint: 'The hero enters the dungeon'
+        }
       };
 
-      const mockResponse: RaterFeedbackResponse = {
+      const mockResponse: StructuredRaterFeedbackResponse = {
         raterName: 'Pacing Rater',
         feedback: {
           opinion: 'The pacing is good',
@@ -114,7 +128,7 @@ describe('ApiService', () => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/rater-feedback`);
+      const req = httpMock.expectOne(`${baseUrl}/rater-feedback/structured`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(request);
       req.flush(mockResponse);
@@ -122,22 +136,30 @@ describe('ApiService', () => {
   });
 
   describe('generateChapter', () => {
-    it('should send POST request to generate-chapter endpoint', () => {
-      const request: GenerateChapterRequest = {
+    it('should send POST request to generate-chapter/structured endpoint', () => {
+      const request: StructuredGenerateChapterRequest = {
         systemPrompts: {
           mainPrefix: '',
           mainSuffix: '',
           assistantPrompt: 'You are a writer'
         },
-        worldbuilding: 'A fantasy world',
-        storySummary: 'A story',
+        worldbuilding: {
+          content: 'A fantasy world'
+        },
+        storySummary: {
+          summary: 'A story'
+        },
         previousChapters: [],
         characters: [],
-        plotPoint: 'The hero enters the dungeon',
-        incorporatedFeedback: []
+        plotContext: {
+          plotPoint: 'The hero enters the dungeon'
+        },
+        feedbackContext: {
+          incorporatedFeedback: []
+        }
       };
 
-      const mockResponse: GenerateChapterResponse = {
+      const mockResponse: StructuredGenerateChapterResponse = {
         chapterText: 'The hero stepped into the dark dungeon...'
       };
 
@@ -145,7 +167,7 @@ describe('ApiService', () => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/generate-chapter`);
+      const req = httpMock.expectOne(`${baseUrl}/generate-chapter/structured`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(request);
       req.flush(mockResponse);
@@ -185,21 +207,25 @@ describe('ApiService', () => {
   });
 
   describe('requestEditorReview', () => {
-    it('should send POST request to editor-review endpoint', () => {
-      const request = {
+    it('should send POST request to editor-review/structured endpoint', () => {
+      const request: StructuredEditorReviewRequest = {
         systemPrompts: {
           mainPrefix: '',
           mainSuffix: '',
           editorPrompt: 'You are an editor'
         },
-        worldbuilding: 'A fantasy world',
-        storySummary: 'A story',
+        worldbuilding: {
+          content: 'A fantasy world'
+        },
+        storySummary: {
+          summary: 'A story'
+        },
         previousChapters: [],
         characters: [],
         chapterToReview: 'Chapter text to review'
       };
 
-      const mockResponse = {
+      const mockResponse: StructuredEditorReviewResponse = {
         overallAssessment: 'Good chapter',
         suggestions: [
           {
@@ -215,7 +241,7 @@ describe('ApiService', () => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/editor-review`);
+      const req = httpMock.expectOne(`${baseUrl}/editor-review/structured`);
       expect(req.request.method).toBe('POST');
       req.flush(mockResponse);
     });

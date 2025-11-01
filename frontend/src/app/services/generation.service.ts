@@ -9,16 +9,10 @@ import {
   Story,
   Character,
   Rater,
-  CharacterFeedbackRequest,
-  CharacterFeedbackResponse,
-  RaterFeedbackRequest,
-  RaterFeedbackResponse,
   GenerateChapterRequest,
   GenerateChapterResponse,
   ModifyChapterRequest,
   ModifyChapterResponse,
-  EditorReviewRequest,
-  EditorReviewResponse,
   FleshOutRequest,
   FleshOutResponse,
   GenerateCharacterDetailsRequest,
@@ -54,112 +48,17 @@ export class GenerationService {
   private requestValidatorService = inject(RequestValidatorService);
   private requestOptimizerService = inject(RequestOptimizerService);
 
-  // Character Feedback
-  requestCharacterFeedback(
-    story: Story,
-    character: Character,
-    plotPoint: string
-  ): Observable<CharacterFeedbackResponse> {
-    const request: CharacterFeedbackRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix
-      },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      character: {
-        name: character.name,
-        basicBio: character.basicBio,
-        sex: character.sex,
-        gender: character.gender,
-        sexualPreference: character.sexualPreference,
-        age: character.age,
-        physicalAppearance: character.physicalAppearance,
-        usualClothing: character.usualClothing,
-        personality: character.personality,
-        motivations: character.motivations,
-        fears: character.fears,
-        relationships: character.relationships
-      },
-      plotPoint: plotPoint
-    };
 
-    return this.apiService.requestCharacterFeedback(request);
-  }
 
-  // Rater Feedback
-  requestRaterFeedback(
-    story: Story,
-    rater: Rater,
-    plotPoint: string
-  ): Observable<RaterFeedbackResponse> {
-    const request: RaterFeedbackRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix
-      },
-      raterPrompt: rater.systemPrompt,
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      plotPoint: plotPoint
-    };
 
-    return this.apiService.requestRaterFeedback(request);
-  }
 
-  // Generate Chapter
-  generateChapter(story: Story): Observable<GenerateChapterResponse> {
-    const request: GenerateChapterRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix,
-        assistantPrompt: this.buildChapterGenerationPrompt(story, story.chapterCreation.plotPoint)
-      },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      characters: Array.from(story.characters.values())
-        .filter(c => !c.isHidden)
-        .map(c => ({
-          name: c.name,
-          basicBio: c.basicBio,
-          sex: c.sex,
-          gender: c.gender,
-          sexualPreference: c.sexualPreference,
-          age: c.age,
-          physicalAppearance: c.physicalAppearance,
-          usualClothing: c.usualClothing,
-          personality: c.personality,
-          motivations: c.motivations,
-          fears: c.fears,
-          relationships: c.relationships
-        })),
-      plotPoint: story.chapterCreation.plotPoint,
-      incorporatedFeedback: story.chapterCreation.incorporatedFeedback
-    };
 
-    return this.apiService.generateChapter(request);
-  }
 
   /**
    * Generate chapter using ContextBuilderService
    * This is the new structured approach that replaces manual context building
    */
-  generateChapterStructured(story: Story): Observable<GenerateChapterResponse> {
+  generateChapter(story: Story): Observable<GenerateChapterResponse> {
     try {
       // Build structured context using ContextBuilderService
       const contextResult = this.contextBuilderService.buildChapterGenerationContext(
@@ -239,45 +138,7 @@ export class GenerationService {
     return this.apiService.modifyChapter(request);
   }
 
-  // Editor Review
-  requestEditorReview(
-    story: Story,
-    chapterText: string
-  ): Observable<EditorReviewResponse> {
-    const request: EditorReviewRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix,
-        editorPrompt: story.general.systemPrompts.editorPrompt
-      },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      characters: Array.from(story.characters.values())
-        .filter(c => !c.isHidden)
-        .map(c => ({
-          name: c.name,
-          basicBio: c.basicBio,
-          sex: c.sex,
-          gender: c.gender,
-          sexualPreference: c.sexualPreference,
-          age: c.age,
-          physicalAppearance: c.physicalAppearance,
-          usualClothing: c.usualClothing,
-          personality: c.personality,
-          motivations: c.motivations,
-          fears: c.fears,
-          relationships: c.relationships
-        })),
-      chapterToReview: chapterText
-    };
 
-    return this.apiService.requestEditorReview(request);
-  }
 
   // Flesh Out (for plot points or worldbuilding)
   fleshOut(
@@ -983,7 +844,7 @@ ${story.plotOutline.content}`;
   /**
    * Request character feedback using structured context
    */
-  requestCharacterFeedbackStructured(
+  requestCharacterFeedback(
     story: Story,
     character: Character,
     plotPoint: string,
@@ -1064,7 +925,7 @@ ${story.plotOutline.content}`;
         structuredRequest = optimizationResult.optimizedRequest;
       }
 
-      return this.apiService.requestCharacterFeedbackStructured(structuredRequest);
+      return this.apiService.requestCharacterFeedback(structuredRequest);
     } catch (error) {
       throw new Error(`Failed to request structured character feedback: ${error}`);
     }
@@ -1073,7 +934,7 @@ ${story.plotOutline.content}`;
   /**
    * Request rater feedback using structured context
    */
-  requestRaterFeedbackStructured(
+  requestRaterFeedback(
     story: Story,
     rater: Rater,
     plotPoint: string,
@@ -1141,7 +1002,7 @@ ${story.plotOutline.content}`;
         structuredRequest = optimizationResult.optimizedRequest;
       }
 
-      return this.apiService.requestRaterFeedbackStructured(structuredRequest);
+      return this.apiService.requestRaterFeedback(structuredRequest);
     } catch (error) {
       throw new Error(`Failed to request structured rater feedback: ${error}`);
     }
@@ -1235,7 +1096,7 @@ ${story.plotOutline.content}`;
         structuredRequest = optimizationResult.optimizedRequest;
       }
 
-      return this.apiService.generateChapterStructured(structuredRequest);
+      return this.apiService.generateChapter(structuredRequest);
     } catch (error) {
       throw new Error(`Failed to generate chapter with structured context: ${error}`);
     }
@@ -1244,7 +1105,7 @@ ${story.plotOutline.content}`;
   /**
    * Request editor review using structured context
    */
-  requestEditorReviewStructured(
+  requestEditorReview(
     story: Story,
     chapterText: string,
     options: { validate?: boolean; optimize?: boolean } = {}
@@ -1322,7 +1183,7 @@ ${story.plotOutline.content}`;
         structuredRequest = optimizationResult.optimizedRequest;
       }
 
-      return this.apiService.requestEditorReviewStructured(structuredRequest);
+      return this.apiService.requestEditorReview(structuredRequest);
     } catch (error) {
       throw new Error(`Failed to request structured editor review: ${error}`);
     }
