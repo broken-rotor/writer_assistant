@@ -15,6 +15,7 @@ Handles:
 from typing import Dict, List, Optional, Any, Tuple
 import uuid
 from datetime import datetime, timezone
+from app.core.config import settings
 
 from app.models.context_models import (
     StructuredContextContainer,
@@ -177,7 +178,7 @@ class ContextAdapter:
                 prompt_type="main_prefix",
                 applies_to_agents=[AgentType.WRITER, AgentType.CHARACTER, AgentType.RATER, AgentType.EDITOR],
                 metadata=ContextMetadata(
-                    priority=0.9,
+                    priority=settings.CONTEXT_ADAPTER_SYSTEM_PREFIX_PRIORITY,
                     summarization_rule=SummarizationRule.PRESERVE_FULL,
                     target_agents=[AgentType.WRITER, AgentType.CHARACTER, AgentType.RATER, AgentType.EDITOR]
                 )
@@ -194,7 +195,7 @@ class ContextAdapter:
                 prompt_type="main_suffix",
                 applies_to_agents=[AgentType.WRITER, AgentType.CHARACTER, AgentType.RATER, AgentType.EDITOR],
                 metadata=ContextMetadata(
-                    priority=0.9,
+                    priority=settings.CONTEXT_ADAPTER_SYSTEM_SUFFIX_PRIORITY,
                     summarization_rule=SummarizationRule.PRESERVE_FULL,
                     target_agents=[AgentType.WRITER, AgentType.CHARACTER, AgentType.RATER, AgentType.EDITOR]
                 )
@@ -211,7 +212,7 @@ class ContextAdapter:
                 prompt_type="assistant_prompt",
                 applies_to_agents=[AgentType.WRITER],
                 metadata=ContextMetadata(
-                    priority=0.8,
+                    priority=settings.CONTEXT_ADAPTER_WRITING_ASSISTANT_PRIORITY,
                     summarization_rule=SummarizationRule.PRESERVE_FULL,
                     target_agents=[AgentType.WRITER]
                 )
@@ -228,7 +229,7 @@ class ContextAdapter:
                 prompt_type="editor_prompt",
                 applies_to_agents=[AgentType.EDITOR],
                 metadata=ContextMetadata(
-                    priority=0.8,
+                    priority=settings.CONTEXT_ADAPTER_WRITING_EDITOR_PRIORITY,
                     summarization_rule=SummarizationRule.PRESERVE_FULL,
                     target_agents=[AgentType.EDITOR]
                 )
@@ -251,7 +252,7 @@ class ContextAdapter:
             content=worldbuilding,
             story_aspect="general",
             metadata=ContextMetadata(
-                priority=0.7,
+                priority=settings.CONTEXT_ADAPTER_CHARACTER_PROMPT_PRIORITY,
                 summarization_rule=SummarizationRule.ALLOW_COMPRESSION,
                 target_agents=[AgentType.WRITER, AgentType.CHARACTER, AgentType.WORLDBUILDING],
                 tags=["worldbuilding", "legacy_converted"]
@@ -271,7 +272,7 @@ class ContextAdapter:
             type=ContextType.STORY_SUMMARY,
             content=story_summary,
             metadata=ContextMetadata(
-                priority=0.8,
+                priority=settings.CONTEXT_ADAPTER_RATER_PROMPT_PRIORITY,
                 summarization_rule=SummarizationRule.ALLOW_COMPRESSION,
                 target_agents=[AgentType.WRITER, AgentType.CHARACTER, AgentType.RATER, AgentType.EDITOR],
                 tags=["story_summary", "legacy_converted"]
@@ -298,7 +299,7 @@ class ContextAdapter:
                 content=phase_context.previous_phase_output,
                 phase=ComposePhase(compose_phase) if compose_phase else ComposePhase.PLOT_OUTLINE,
                 metadata=ContextMetadata(
-                    priority=0.8,
+                    priority=settings.CONTEXT_ADAPTER_EDITOR_PROMPT_PRIORITY,
                     summarization_rule=SummarizationRule.ALLOW_COMPRESSION,
                     target_agents=[AgentType.WRITER],
                     tags=["phase_output", "legacy_converted"]
@@ -315,7 +316,7 @@ class ContextAdapter:
                 content=phase_context.phase_specific_instructions,
                 phase=ComposePhase(compose_phase) if compose_phase else ComposePhase.PLOT_OUTLINE,
                 metadata=ContextMetadata(
-                    priority=0.9,
+                    priority=settings.CONTEXT_ADAPTER_INSTRUCTION_PRIORITY,
                     summarization_rule=SummarizationRule.PRESERVE_FULL,
                     target_agents=[AgentType.WRITER],
                     tags=["phase_instruction", "legacy_converted"]
@@ -339,7 +340,7 @@ class ContextAdapter:
                 participant_roles=[msg.role for msg in phase_context.conversation_history],
                 message_count=len(phase_context.conversation_history),
                 metadata=ContextMetadata(
-                    priority=0.6,
+                    priority=settings.CONTEXT_ADAPTER_OUTPUT_PRIORITY,
                     summarization_rule=SummarizationRule.EXTRACT_KEY_POINTS,
                     target_agents=[AgentType.WRITER, AgentType.CHARACTER],
                     tags=["conversation", "legacy_converted"]

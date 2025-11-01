@@ -73,7 +73,11 @@ Rewrite the chapter incorporating the requested changes while maintaining consis
         ]
 
         # Generate modified chapter using LLM
-        response_text = llm.chat_completion(messages, max_tokens=2500, temperature=0.7)
+        response_text = llm.chat_completion(
+        messages, 
+        max_tokens=settings.ENDPOINT_MODIFY_CHAPTER_MAX_TOKENS, 
+        temperature=settings.ENDPOINT_MODIFY_CHAPTER_TEMPERATURE
+    )
         word_count = len(response_text.split())
 
         # Create response with context metadata

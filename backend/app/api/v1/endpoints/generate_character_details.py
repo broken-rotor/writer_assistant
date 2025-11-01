@@ -81,7 +81,11 @@ Generate complete character details in JSON format:
         ]
 
         # Generate character details using LLM
-        response_text = llm.chat_completion(messages, max_tokens=1000, temperature=0.7)
+        response_text = llm.chat_completion(
+        messages, 
+        max_tokens=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_MAX_TOKENS, 
+        temperature=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_TEMPERATURE
+    )
         parsed = parse_json_response(response_text)
 
         if parsed and 'name' in parsed:

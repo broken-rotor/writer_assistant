@@ -71,7 +71,11 @@ Provide feedback in JSON format:
         ]
 
         # Generate rater feedback using LLM
-        response_text = llm.chat_completion(messages, max_tokens=600, temperature=0.7)
+        response_text = llm.chat_completion(
+        messages, 
+        max_tokens=settings.ENDPOINT_RATER_FEEDBACK_MAX_TOKENS, 
+        temperature=settings.ENDPOINT_RATER_FEEDBACK_TEMPERATURE
+    )
         parsed = parse_json_response(response_text)
 
         if parsed and 'opinion' in parsed and 'suggestions' in parsed:

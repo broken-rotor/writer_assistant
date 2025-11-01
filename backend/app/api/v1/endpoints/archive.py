@@ -250,7 +250,7 @@ class RAGQueryRequest(BaseModel):
     question: str = Field(..., description="Question to answer", min_length=1)
     n_context_chunks: int = Field(5, description="Number of context chunks to retrieve", ge=1, le=20)
     max_tokens: Optional[int] = Field(1024, description="Maximum tokens for answer", ge=50, le=4096)
-    temperature: Optional[float] = Field(0.3, description="Sampling temperature", ge=0.0, le=1.0)
+    temperature: Optional[float] = Field(None, description="Sampling temperature (uses ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE if not specified)", ge=0.0, le=1.0)
     filter_file_name: Optional[str] = Field(None, description="Optional file name filter")
 
 
@@ -265,7 +265,7 @@ class RAGChatRequest(BaseModel):
     messages: List[RAGChatMessageModel] = Field(..., description="Chat history including current question")
     n_context_chunks: int = Field(5, description="Number of context chunks to retrieve", ge=1, le=20)
     max_tokens: Optional[int] = Field(1024, description="Maximum tokens for answer", ge=50, le=4096)
-    temperature: Optional[float] = Field(0.4, description="Sampling temperature", ge=0.0, le=1.0)
+    temperature: Optional[float] = Field(None, description="Sampling temperature (uses ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE if not specified)", ge=0.0, le=1.0)
     filter_file_name: Optional[str] = Field(None, description="Optional file name filter")
 
 
@@ -373,7 +373,7 @@ async def rag_query(request: RAGQueryRequest):
             question=request.question,
             n_context_chunks=request.n_context_chunks,
             max_tokens=request.max_tokens,
-            temperature=request.temperature,
+            temperature=request.temperature if request.temperature is not None else settings.ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE,
             filter_metadata=filter_metadata
         )
 
@@ -446,7 +446,7 @@ async def rag_chat(request: RAGChatRequest):
             messages=messages,
             n_context_chunks=request.n_context_chunks,
             max_tokens=request.max_tokens,
-            temperature=request.temperature,
+            temperature=request.temperature if request.temperature is not None else settings.ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE,
             filter_metadata=filter_metadata
         )
 

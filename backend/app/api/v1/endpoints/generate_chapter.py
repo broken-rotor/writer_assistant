@@ -56,7 +56,11 @@ async def generate_chapter(request: GenerateChapterRequest):
         ]
 
         # Generate chapter using LLM
-        response_text = llm.chat_completion(messages, max_tokens=2000, temperature=0.8)
+        response_text = llm.chat_completion(
+        messages, 
+        max_tokens=settings.ENDPOINT_GENERATE_CHAPTER_MAX_TOKENS, 
+        temperature=settings.ENDPOINT_GENERATE_CHAPTER_TEMPERATURE
+    )
         word_count = len(response_text.split())
 
         # Create response with context metadata

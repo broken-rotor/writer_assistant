@@ -75,7 +75,11 @@ Provide 4-6 suggestions in JSON format:
         ]
 
         # Generate editor review using LLM
-        response_text = llm.chat_completion(messages, max_tokens=800, temperature=0.6)
+        response_text = llm.chat_completion(
+        messages, 
+        max_tokens=settings.ENDPOINT_EDITOR_REVIEW_MAX_TOKENS, 
+        temperature=settings.ENDPOINT_EDITOR_REVIEW_TEMPERATURE
+    )
         parsed = parse_json_response(response_text)
 
         suggestions = []

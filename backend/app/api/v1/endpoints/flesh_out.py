@@ -71,7 +71,11 @@ Provide a detailed, atmospheric expansion (200-400 words)."""
         ]
 
         # Generate expanded text using LLM
-        response_text = llm.chat_completion(messages, max_tokens=600, temperature=0.8)
+        response_text = llm.chat_completion(
+        messages, 
+        max_tokens=settings.ENDPOINT_FLESH_OUT_MAX_TOKENS, 
+        temperature=settings.ENDPOINT_FLESH_OUT_TEMPERATURE
+    )
 
         # Create response with context metadata
         return FleshOutResponse(

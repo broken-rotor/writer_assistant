@@ -78,7 +78,11 @@ Respond in JSON format with exactly these keys:
         ]
 
         # Generate character feedback using LLM
-        response_text = llm.chat_completion(messages, max_tokens=800, temperature=0.8)
+        response_text = llm.chat_completion(
+        messages, 
+        max_tokens=settings.ENDPOINT_CHARACTER_FEEDBACK_MAX_TOKENS, 
+        temperature=settings.ENDPOINT_CHARACTER_FEEDBACK_TEMPERATURE
+    )
         parsed = parse_json_response(response_text)
 
         if parsed and all(k in parsed for k in ['actions', 'dialog', 'physicalSensations', 'emotions', 'internalMonologue']):

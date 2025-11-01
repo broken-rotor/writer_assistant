@@ -21,6 +21,7 @@ import json
 
 from app.services.context_manager import ContextManager
 from app.services.context_adapter import ContextAdapter
+from app.core.config import settings
 from app.models.context_models import (
     StructuredContextContainer as LegacyStructuredContextContainer,
     ContextProcessingConfig,
@@ -57,7 +58,9 @@ def convert_api_to_legacy_context(api_context: StructuredContextContainer) -> Le
             type=ContextType.PLOT_OUTLINE,
             content=plot_element.content,
             metadata=LegacyContextMetadata(
-                priority=0.8 if plot_element.priority == "high" else 0.5 if plot_element.priority == "medium" else 0.2,
+                priority=(settings.CONTEXT_PRIORITY_PLOT_HIGH if plot_element.priority == "high" 
+                         else settings.CONTEXT_PRIORITY_PLOT_MEDIUM if plot_element.priority == "medium" 
+                         else settings.CONTEXT_PRIORITY_PLOT_LOW),
                 target_agents=[AgentType.WRITER],
                 tags=plot_element.tags
             )
@@ -82,7 +85,7 @@ def convert_api_to_legacy_context(api_context: StructuredContextContainer) -> Le
             character_id=character_context.character_id or f"char_{len(elements)}",
             character_name=character_context.character_name,
             metadata=LegacyContextMetadata(
-                priority=0.7,  # Character contexts are generally important
+                priority=settings.CONTEXT_PRIORITY_CHARACTER,
                 target_agents=[AgentType.CHARACTER, AgentType.WRITER],
                 tags=["character"]
             )
@@ -96,7 +99,9 @@ def convert_api_to_legacy_context(api_context: StructuredContextContainer) -> Le
             type=ContextType.USER_REQUEST,
             content=user_request.content,
             metadata=LegacyContextMetadata(
-                priority=0.8 if user_request.priority == "high" else 0.5 if user_request.priority == "medium" else 0.2,
+                priority=(settings.CONTEXT_PRIORITY_USER_HIGH if user_request.priority == "high" 
+                         else settings.CONTEXT_PRIORITY_USER_MEDIUM if user_request.priority == "medium" 
+                         else settings.CONTEXT_PRIORITY_USER_LOW),
                 target_agents=[AgentType.WRITER],
                 tags=[]
             )
@@ -110,7 +115,9 @@ def convert_api_to_legacy_context(api_context: StructuredContextContainer) -> Le
             type=ContextType.SYSTEM_INSTRUCTION,
             content=sys_instruction.content,
             metadata=LegacyContextMetadata(
-                priority=0.8 if sys_instruction.priority == "high" else 0.5 if sys_instruction.priority == "medium" else 0.2,
+                priority=(settings.CONTEXT_PRIORITY_SYSTEM_HIGH if sys_instruction.priority == "high" 
+                         else settings.CONTEXT_PRIORITY_SYSTEM_MEDIUM if sys_instruction.priority == "medium" 
+                         else settings.CONTEXT_PRIORITY_SYSTEM_LOW),
                 target_agents=[AgentType.WRITER],
                 tags=[]
             )
