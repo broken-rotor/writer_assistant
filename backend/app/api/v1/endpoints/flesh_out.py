@@ -83,7 +83,7 @@ Provide a detailed, atmospheric expansion (200-400 words)."""
                 "originalLength": len(request.textToFleshOut),
                 "expandedLength": len(response_text.strip()),
                 "contextType": request.context,
-                "contextMode": request.context_mode,
+                "contextMode": "structured",
                 "structuredContextProvided": bool(request.structured_context),
                 "processingMode": context_result.processing_mode
             }

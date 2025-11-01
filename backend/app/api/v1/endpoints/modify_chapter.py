@@ -86,7 +86,7 @@ Rewrite the chapter incorporating the requested changes while maintaining consis
                 "modifiedAt": datetime.now(UTC).isoformat(),
                 "originalWordCount": len(request.currentChapter.split()),
                 "modificationRequest": request.userRequest,
-                "contextMode": request.context_mode,
+                "contextMode": "structured",
                 "structuredContextProvided": bool(request.structured_context),
                 "processingMode": context_result.processing_mode
             }
