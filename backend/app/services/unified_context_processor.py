@@ -219,7 +219,7 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config
                 )
             else:  # legacy mode
-                result = self._process_legacy_context_for_chapter(
+                result = self._process_legacy_context_fallback(
                     system_prompts=system_prompts,
                     worldbuilding=worldbuilding,
                     story_summary=story_summary,
@@ -241,7 +241,7 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_generate_chapter_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_for_chapter(
+            return self._process_legacy_context_fallback(
                 system_prompts=system_prompts,
                 worldbuilding=worldbuilding,
                 story_summary=story_summary,
@@ -311,7 +311,7 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config
                 )
             else:  # legacy mode
-                result = self._process_legacy_context_for_character(
+                result = self._process_legacy_context_fallback(
                     system_prompts=system_prompts,
                     worldbuilding=worldbuilding,
                     story_summary=story_summary,
@@ -330,7 +330,7 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_character_feedback_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_for_character(
+            return self._process_legacy_context_fallback(
                 system_prompts=system_prompts,
                 worldbuilding=worldbuilding,
                 story_summary=story_summary,
@@ -398,7 +398,7 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config
                 )
             else:  # legacy mode
-                result = self._process_legacy_context_for_editor(
+                result = self._process_legacy_context_fallback(
                     system_prompts=system_prompts,
                     worldbuilding=worldbuilding,
                     story_summary=story_summary,
@@ -417,7 +417,7 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_editor_review_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_for_editor(
+            return self._process_legacy_context_fallback(
                 system_prompts=system_prompts,
                 worldbuilding=worldbuilding,
                 story_summary=story_summary,
@@ -489,7 +489,7 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config
                 )
             else:  # legacy mode
-                result = self._process_legacy_context_for_rater(
+                result = self._process_legacy_context_fallback(
                     system_prompts=system_prompts,
                     rater_prompt=rater_prompt or "",
                     worldbuilding=worldbuilding,
@@ -510,7 +510,7 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_rater_feedback_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_for_rater(
+            return self._process_legacy_context_fallback(
                 system_prompts=system_prompts,
                 rater_prompt=rater_prompt or "",
                 worldbuilding=worldbuilding,
@@ -582,13 +582,13 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config
                 )
             else:  # legacy mode
-                result = self._process_legacy_context_for_modify(
+                result = self._process_legacy_context_fallback(
                     system_prompts=system_prompts,
                     worldbuilding=worldbuilding,
                     story_summary=story_summary,
                     characters=characters or [],
-                    original_chapter=original_chapter or "",
-                    modification_request=modification_request or "",
+                    current_chapter=original_chapter or "",
+                    user_request=modification_request or "",
                     compose_phase=compose_phase,
                     phase_context=phase_context
                 )
@@ -602,13 +602,13 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_modify_chapter_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_for_modify(
+            return self._process_legacy_context_fallback(
                 system_prompts=system_prompts,
                 worldbuilding=worldbuilding,
                 story_summary=story_summary,
                 characters=characters or [],
-                original_chapter=original_chapter or "",
-                modification_request=modification_request or "",
+                current_chapter=original_chapter or "",
+                user_request=modification_request or "",
                 compose_phase=compose_phase,
                 phase_context=phase_context
             )
@@ -671,12 +671,12 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config
                 )
             else:  # legacy mode
-                result = self._process_legacy_context_for_flesh_out(
+                result = self._process_legacy_context_fallback(
                     system_prompts=system_prompts,
                     worldbuilding=worldbuilding,
                     story_summary=story_summary,
                     characters=characters or [],
-                    outline_section=outline_section or "",
+                    text_to_flesh_out=outline_section or "",
                     compose_phase=compose_phase,
                     phase_context=phase_context
                 )
@@ -690,12 +690,12 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_flesh_out_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_for_flesh_out(
+            return self._process_legacy_context_fallback(
                 system_prompts=system_prompts,
                 worldbuilding=worldbuilding,
                 story_summary=story_summary,
                 characters=characters or [],
-                outline_section=outline_section or "",
+                text_to_flesh_out=outline_section or "",
                 compose_phase=compose_phase,
                 phase_context=phase_context
             )
@@ -880,6 +880,126 @@ class UnifiedContextProcessor:
             "cache_size": len(self._cache),
             "cache_enabled": self.enable_caching
         }
+
+    def _process_legacy_context_fallback(
+        self,
+        system_prompts: Optional[SystemPrompts] = None,
+        worldbuilding: Optional[str] = None,
+        story_summary: Optional[str] = None,
+        characters: Optional[List[CharacterInfo]] = None,
+        character: Optional[CharacterInfo] = None,
+        plot_point: Optional[str] = None,
+        previous_chapters: Optional[List[ChapterInfo]] = None,
+        chapter_to_review: Optional[str] = None,
+        current_chapter: Optional[str] = None,
+        user_request: Optional[str] = None,
+        text_to_flesh_out: Optional[str] = None,
+        context: Optional[str] = None,
+        rater_prompt: Optional[str] = None,
+        incorporated_feedback: Optional[List[FeedbackItem]] = None,
+        compose_phase: Optional[ComposePhase] = None,
+        phase_context: Optional[PhaseContext] = None
+    ) -> UnifiedContextResult:
+        """
+        Simple fallback for legacy context processing when structured processing fails.
+        
+        This creates a basic context without advanced optimization, ensuring the API
+        continues to function even when structured processing encounters errors.
+        """
+        logger.warning("Using legacy context fallback - structured processing failed")
+        
+        # Build a simple system prompt
+        system_parts = []
+        
+        if system_prompts:
+            if system_prompts.mainPrefix:
+                system_parts.append(system_prompts.mainPrefix)
+            if system_prompts.assistantPrompt:
+                system_parts.append(system_prompts.assistantPrompt)
+            if system_prompts.editorPrompt:
+                system_parts.append(system_prompts.editorPrompt)
+            if system_prompts.mainSuffix:
+                system_parts.append(system_prompts.mainSuffix)
+        
+        if worldbuilding:
+            system_parts.append(f"World Context: {worldbuilding}")
+        
+        if story_summary:
+            system_parts.append(f"Story Summary: {story_summary}")
+        
+        # Build user message
+        user_parts = []
+        
+        if plot_point:
+            user_parts.append(f"Plot Point: {plot_point}")
+        
+        if character:
+            user_parts.append(f"Character: {character.name} - {character.basicBio}")
+        
+        if characters:
+            char_info = []
+            for char in characters[:3]:  # Limit to first 3 characters
+                char_info.append(f"{char.name}: {char.basicBio}")
+            if char_info:
+                user_parts.append(f"Characters: {'; '.join(char_info)}")
+        
+        if previous_chapters:
+            chapter_summaries = []
+            for i, chapter in enumerate(previous_chapters[-2:]):  # Last 2 chapters
+                if hasattr(chapter, 'content') and chapter.content:
+                    summary = chapter.content[:200] + "..." if len(chapter.content) > 200 else chapter.content
+                    chapter_summaries.append(f"Chapter {i+1}: {summary}")
+            if chapter_summaries:
+                user_parts.append(f"Previous Chapters: {'; '.join(chapter_summaries)}")
+        
+        if chapter_to_review:
+            review_text = chapter_to_review[:500] + "..." if len(chapter_to_review) > 500 else chapter_to_review
+            user_parts.append(f"Chapter to Review: {review_text}")
+        
+        if current_chapter:
+            current_text = current_chapter[:500] + "..." if len(current_chapter) > 500 else current_chapter
+            user_parts.append(f"Current Chapter: {current_text}")
+        
+        if user_request:
+            user_parts.append(f"User Request: {user_request}")
+        
+        if text_to_flesh_out:
+            user_parts.append(f"Text to Expand: {text_to_flesh_out}")
+        
+        if context:
+            user_parts.append(f"Context: {context}")
+        
+        if rater_prompt:
+            user_parts.append(f"Rating Instructions: {rater_prompt}")
+        
+        if incorporated_feedback:
+            feedback_items = []
+            for feedback in incorporated_feedback[:3]:  # Limit to first 3 feedback items
+                if hasattr(feedback, 'content') and feedback.content:
+                    feedback_items.append(feedback.content[:100])
+            if feedback_items:
+                user_parts.append(f"Feedback to Incorporate: {'; '.join(feedback_items)}")
+        
+        # Create basic metadata
+        context_metadata = ContextMetadata(
+            total_elements=1,
+            processing_applied=False,
+            processing_mode="legacy_fallback",
+            optimization_level="none",
+            compression_ratio=1.0,
+            processing_time_ms=0,
+            created_at=datetime.now(timezone.utc).isoformat()
+        )
+        
+        return UnifiedContextResult(
+            system_prompt="\n\n".join(system_parts) if system_parts else "You are a helpful writing assistant.",
+            user_message="\n\n".join(user_parts) if user_parts else "Please help with this writing task.",
+            context_metadata=context_metadata,
+            processing_mode="legacy_fallback",
+            optimization_applied=False,
+            total_tokens=len(" ".join(system_parts + user_parts).split()) if (system_parts or user_parts) else 10,
+            compression_ratio=1.0
+        )
 
 
 # Global instance
