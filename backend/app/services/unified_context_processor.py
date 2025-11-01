@@ -560,7 +560,7 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
-                    compose_phase=compose_phase or ComposePhase.REVISION,
+                    compose_phase=compose_phase or ComposePhase.FINAL_EDIT,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="change_focused_management"
                 )
@@ -696,6 +696,93 @@ class UnifiedContextProcessor:
                 story_summary=story_summary,
                 characters=characters or [],
                 text_to_flesh_out=outline_section or "",
+                compose_phase=compose_phase,
+                phase_context=phase_context
+            )
+
+    def process_character_generation_context(
+        self,
+        # Legacy fields
+        system_prompts: Optional[SystemPrompts] = None,
+        worldbuilding: Optional[str] = None,
+        story_summary: Optional[str] = None,
+        basic_bio: Optional[str] = None,
+        existing_characters: Optional[List[Dict[str, str]]] = None,
+        # Phase context
+        compose_phase: Optional[ComposePhase] = None,
+        phase_context: Optional[PhaseContext] = None,
+        # Structured context
+        structured_context: Optional[StructuredContextContainer] = None,
+        context_mode: Literal["legacy", "structured", "hybrid"] = "legacy",
+        context_processing_config: Optional[Dict[str, Any]] = None
+    ) -> UnifiedContextResult:
+        """
+        Process context for character generation with character-creation-specific prioritization.
+        
+        This method implements character generation focused context assembly, prioritizing
+        worldbuilding, existing character information, and character creation guidelines.
+        """
+        try:
+            # Generate cache key if caching is enabled
+            cache_key = None
+            if self.enable_caching:
+                cache_key = self._generate_cache_key(
+                    "character_generation", locals()
+                )
+                if cache_key in self._cache:
+                    logger.debug(f"Cache hit for character_generation: {cache_key}")
+                    return self._cache[cache_key]
+
+            if context_mode == "structured" and structured_context:
+                result = self._process_structured_context(
+                    structured_context=structured_context,
+                    agent_type=AgentType.WRITER,
+                    compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
+                    context_processing_config=context_processing_config,
+                    endpoint_strategy="character_generation_prioritization"
+                )
+            elif context_mode == "hybrid":
+                result = self._process_hybrid_context(
+                    structured_context=structured_context,
+                    agent_type=AgentType.WRITER,
+                    endpoint_strategy="character_generation_prioritization",
+                    context_processing_config=context_processing_config,
+                    # Legacy params as kwargs
+                    system_prompts=system_prompts,
+                    worldbuilding=worldbuilding,
+                    story_summary=story_summary,
+                    basic_bio=basic_bio,
+                    existing_characters=existing_characters,
+                    compose_phase=compose_phase,
+                    phase_context=phase_context
+                )
+            else:
+                # Legacy mode processing
+                result = self._process_legacy_context_fallback(
+                    system_prompts=system_prompts,
+                    worldbuilding=worldbuilding,
+                    story_summary=story_summary,
+                    characters=existing_characters or [],
+                    basic_bio=basic_bio or "",
+                    compose_phase=compose_phase,
+                    phase_context=phase_context
+                )
+
+            # Cache the result
+            if self.enable_caching and cache_key:
+                self._cache[cache_key] = result
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error in process_character_generation_context: {str(e)}")
+            # Fallback to legacy processing
+            return self._process_legacy_context_fallback(
+                system_prompts=system_prompts,
+                worldbuilding=worldbuilding,
+                story_summary=story_summary,
+                characters=existing_characters or [],
+                basic_bio=basic_bio or "",
                 compose_phase=compose_phase,
                 phase_context=phase_context
             )
