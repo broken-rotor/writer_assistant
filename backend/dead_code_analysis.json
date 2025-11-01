@@ -1,0 +1,1928 @@
+{
+  "obsolete_components": [
+    {
+      "name": "_format_for_worldbuilding",
+      "type": "function",
+      "file_path": "../backend/app/services/context_manager.py",
+      "line_number": 643,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingFollowupGenerator",
+      "type": "class",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 12,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "__init__",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 15,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_question_templates",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 20,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_context_analyzers",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 155,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_gap_detectors",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 165,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "generate_followup_questions",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 190,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_analyze_conversation_context",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 228,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_generate_topic_specific_questions",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 268,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_generate_gap_filling_questions",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 302,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_generate_connection_questions",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 359,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_generate_exploration_questions",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 396,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_extract_mentioned_entities",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 435,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_analyze_topic_depth",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 451,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_identify_conversation_gaps",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 465,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_analyze_user_interests",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 480,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_find_connection_opportunities",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 497,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_fill_question_template",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 518,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_calculate_question_priority",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_followup.py",
+      "line_number": 543,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_convert_worldbuilding",
+      "type": "function",
+      "file_path": "../backend/app/services/context_adapter.py",
+      "line_number": 241,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_extract_worldbuilding",
+      "type": "function",
+      "file_path": "../backend/app/services/context_adapter.py",
+      "line_number": 375,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "OptimizedContext",
+      "type": "class",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 35,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "ContextOptimizationService",
+      "type": "class",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 45,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "get_context_optimization_service",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 1185,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "__init__",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 53,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_apply_adaptive_summarization",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 99,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "optimize_chapter_generation_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 152,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "optimize_character_feedback_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 327,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "optimize_rater_feedback_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 423,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "optimize_editor_review_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 506,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_optimize_context_items",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 598,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_build_original_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 714,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_build_fallback_chapter_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 740,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_build_fallback_character_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 790,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_build_fallback_rater_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 834,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_build_fallback_editor_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 871,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "optimize_modify_chapter_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 911,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "optimize_flesh_out_context",
+      "type": "function",
+      "file_path": "../backend/app/services/context_optimization.py",
+      "line_number": 992,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingPersistenceService",
+      "type": "class",
+      "file_path": "../backend/app/services/worldbuilding_persistence.py",
+      "line_number": 14,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "export_worldbuilding_summary",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_persistence.py",
+      "line_number": 175,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "import_worldbuilding_summary",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_persistence.py",
+      "line_number": 255,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingValidator",
+      "type": "class",
+      "file_path": "../backend/app/services/worldbuilding_validator.py",
+      "line_number": 33,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingSyncService",
+      "type": "class",
+      "file_path": "../backend/app/services/worldbuilding_sync.py",
+      "line_number": 22,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_extract_user_worldbuilding",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_sync.py",
+      "line_number": 153,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_extract_assistant_worldbuilding",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_sync.py",
+      "line_number": 188,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_merge_worldbuilding_content",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_sync.py",
+      "line_number": 251,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_create_structured_worldbuilding",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_sync.py",
+      "line_number": 335,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "validate_worldbuilding_content",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_sync.py",
+      "line_number": 432,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "sanitize_worldbuilding_content",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_sync.py",
+      "line_number": 448,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingPromptService",
+      "type": "class",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 9,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "__init__",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 12,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_prompt_templates",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 17,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_conversation_starters",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 449,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_follow_up_generators",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 484,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "get_prompt_template",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 513,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "get_conversation_starter",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 517,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "build_contextual_prompt",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 525,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "generate_follow_up_questions",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_prompts.py",
+      "line_number": 542,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingStateMachine",
+      "type": "class",
+      "file_path": "../backend/app/services/worldbuilding_state_machine.py",
+      "line_number": 15,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingTopicClassifier",
+      "type": "class",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 12,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "__init__",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 15,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_topic_keywords",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 20,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_topic_patterns",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 113,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_initialize_transition_triggers",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 148,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "classify_message",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 161,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_get_topic_questions",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 238,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_apply_contextual_bonuses",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 323,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "suggest_topic_exploration",
+      "type": "function",
+      "file_path": "../backend/app/services/worldbuilding_classifier.py",
+      "line_number": 405,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": false,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "convert_api_to_legacy_context",
+      "type": "function",
+      "file_path": "../backend/app/services/unified_context_processor.py",
+      "line_number": 51,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_process_legacy_context_for_chapter",
+      "type": "function",
+      "file_path": "../backend/app/services/unified_context_processor.py",
+      "line_number": 813,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_process_legacy_context_for_character",
+      "type": "function",
+      "file_path": "../backend/app/services/unified_context_processor.py",
+      "line_number": 864,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_process_legacy_context_for_editor",
+      "type": "function",
+      "file_path": "../backend/app/services/unified_context_processor.py",
+      "line_number": 911,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_process_legacy_context_for_rater",
+      "type": "function",
+      "file_path": "../backend/app/services/unified_context_processor.py",
+      "line_number": 958,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_process_legacy_context_for_modify",
+      "type": "function",
+      "file_path": "../backend/app/services/unified_context_processor.py",
+      "line_number": 1007,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_process_legacy_context_for_flesh_out",
+      "type": "function",
+      "file_path": "../backend/app/services/unified_context_processor.py",
+      "line_number": 1056,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "LegacyContextMapping",
+      "type": "class",
+      "file_path": "../backend/app/models/context_models.py",
+      "line_number": 406,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingConversationState",
+      "type": "class",
+      "file_path": "../backend/app/models/worldbuilding_models.py",
+      "line_number": 45,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingChatContext",
+      "type": "class",
+      "file_path": "../backend/app/models/worldbuilding_models.py",
+      "line_number": 79,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingPromptTemplate",
+      "type": "class",
+      "file_path": "../backend/app/models/worldbuilding_models.py",
+      "line_number": 117,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingResponse",
+      "type": "class",
+      "file_path": "../backend/app/models/worldbuilding_models.py",
+      "line_number": 127,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "SystemPrompts",
+      "type": "class",
+      "file_path": "../backend/app/models/generation_models.py",
+      "line_number": 89,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingSyncRequest",
+      "type": "class",
+      "file_path": "../backend/app/api/v1/endpoints/worldbuilding_sync.py",
+      "line_number": 18,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingSyncResponse",
+      "type": "class",
+      "file_path": "../backend/app/api/v1/endpoints/worldbuilding_sync.py",
+      "line_number": 26,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingValidationRequest",
+      "type": "class",
+      "file_path": "../backend/app/api/v1/endpoints/worldbuilding_sync.py",
+      "line_number": 34,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingValidationResponse",
+      "type": "class",
+      "file_path": "../backend/app/api/v1/endpoints/worldbuilding_sync.py",
+      "line_number": 39,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "get_worldbuilding_sync_service",
+      "type": "function",
+      "file_path": "../backend/app/api/v1/endpoints/worldbuilding_sync.py",
+      "line_number": 53,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_build_worldbuilding_conversation_context",
+      "type": "function",
+      "file_path": "../backend/app/api/v1/endpoints/llm_chat.py",
+      "line_number": 300,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldBuildingStrategy",
+      "type": "class",
+      "file_path": "../backend/app/services/context_distillation/summarization_strategies.py",
+      "line_number": 549,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "SystemPromptOptimizationStrategy",
+      "type": "class",
+      "file_path": "../backend/app/services/context_distillation/summarization_strategies.py",
+      "line_number": 723,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "ConversationHistorySummaryStrategy",
+      "type": "class",
+      "file_path": "../backend/app/services/context_distillation/summarization_strategies.py",
+      "line_number": 816,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "_extract_worldbuilding_elements",
+      "type": "function",
+      "file_path": "../backend/app/services/context_distillation/summarization_strategies.py",
+      "line_number": 609,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingValidatorService",
+      "type": "class",
+      "file_path": "../frontend/src/app/services/worldbuilding-validator.service.ts",
+      "line_number": 24,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingSyncService",
+      "type": "class",
+      "file_path": "../frontend/src/app/services/worldbuilding-sync.service.ts",
+      "line_number": 54,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "SystemPromptFieldComponent",
+      "type": "class",
+      "file_path": "../frontend/src/app/components/system-prompt-field/system-prompt-field.component.ts",
+      "line_number": 74,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": false,
+      "confidence_obsolete": 1.0
+    },
+    {
+      "name": "WorldbuildingChatComponent",
+      "type": "class",
+      "file_path": "../frontend/src/app/components/worldbuilding-chat/worldbuilding-chat.component.ts",
+      "line_number": 17,
+      "dependencies": [],
+      "used_by": [],
+      "is_legacy_context": true,
+      "is_worldbuilding_specific": true,
+      "confidence_obsolete": 1.0
+    }
+  ],
+  "dependency_map": {
+    "../backend/main.py": [
+      "typing",
+      "datetime",
+      "pydantic",
+      "fastapi.responses",
+      "fastapi",
+      "fastapi.middleware.cors",
+      "uvicorn",
+      "json"
+    ],
+    "../scripts/analyze_dead_code.py": [
+      "typing",
+      "ast",
+      "dataclasses",
+      "argparse",
+      "os",
+      "re",
+      "json",
+      "collections",
+      "pathlib"
+    ],
+    "../scripts/dependency_mapper.py": [
+      "typing",
+      "networkx",
+      "dataclasses",
+      "argparse",
+      "os",
+      "pathlib",
+      "re",
+      "json",
+      "collections",
+      "ast"
+    ],
+    "../backend/tests/conftest.py": [
+      "app.core.config",
+      "pytest",
+      "pydantic",
+      "app.services.llm_inference",
+      "json",
+      "unittest.mock",
+      "app.services.worldbuilding_persistence",
+      "app.main",
+      "fastapi.testclient"
+    ],
+    "../backend/app/main.py": [
+      "app.core.config",
+      "asyncio",
+      "app.api.v1.api",
+      "fastapi",
+      "contextlib",
+      "fastapi.middleware.cors",
+      "app.services.llm_inference",
+      "logging"
+    ],
+    "../backend/scripts/ingest_stories.py": [
+      "typing",
+      "chromadb.config",
+      "sys",
+      "chromadb",
+      "argparse",
+      "os",
+      "markdown",
+      "logging",
+      "hashlib",
+      "bs4",
+      "chromadb.utils",
+      "pathlib"
+    ],
+    "../backend/app/core/config.py": [
+      "pydantic",
+      "typing",
+      "pydantic_settings"
+    ],
+    "../backend/app/cli/llm_test.py": [
+      "argparse",
+      "logging",
+      "sys",
+      "app.services.llm_inference"
+    ],
+    "../backend/app/services/query_analyzer.py": [
+      "re",
+      "logging",
+      "typing",
+      "dataclasses"
+    ],
+    "../backend/app/services/context_manager.py": [
+      "typing",
+      "datetime",
+      "dataclasses",
+      "app.services.context_session_manager",
+      "app.models.context_models",
+      "logging",
+      "collections",
+      "app.services.token_management.layers"
+    ],
+    "../backend/app/services/worldbuilding_followup.py": [
+      "re",
+      "typing",
+      "app.models.worldbuilding_models",
+      "app.models.generation_models"
+    ],
+    "../backend/app/services/context_adapter.py": [
+      "uuid",
+      "typing",
+      "datetime",
+      "app.models.generation_models",
+      "app.models.context_models"
+    ],
+    "../backend/app/services/context_optimization.py": [
+      "typing",
+      "datetime",
+      "app.services.content_prioritization",
+      "dataclasses",
+      "app.services.context_manager",
+      "app.utils.relevance_calculator",
+      "app.models.context_models",
+      "app.models.generation_models",
+      "app.services.llm_inference",
+      "logging",
+      "app.services.context_distillation",
+      "app.services.token_management.layers"
+    ],
+    "../backend/app/services/worldbuilding_persistence.py": [
+      "typing",
+      "datetime",
+      "os",
+      "app.models.worldbuilding_models",
+      "json"
+    ],
+    "../backend/app/services/worldbuilding_validator.py": [
+      "typing",
+      "dataclasses",
+      "re",
+      "logging",
+      "html"
+    ],
+    "../backend/app/services/worldbuilding_sync.py": [
+      "typing",
+      "datetime",
+      "app.models.worldbuilding_models",
+      "app.models.generation_models",
+      "logging",
+      "app.services.worldbuilding_persistence",
+      "app.services.worldbuilding_classifier",
+      "app.services.worldbuilding_validator",
+      "app.services.worldbuilding_state_machine"
+    ],
+    "../backend/app/services/rag_service.py": [
+      "typing",
+      "dataclasses",
+      "app.services.llm_inference",
+      "re",
+      "logging",
+      "app.services.archive_service",
+      "app.services.query_analyzer"
+    ],
+    "../backend/app/services/worldbuilding_prompts.py": [
+      "random",
+      "typing",
+      "app.models.worldbuilding_models"
+    ],
+    "../backend/app/services/worldbuilding_state_machine.py": [
+      "typing",
+      "datetime",
+      "app.models.worldbuilding_models",
+      "app.models.generation_models",
+      "re",
+      "app.services.worldbuilding_persistence"
+    ],
+    "../backend/app/services/archive_service.py": [
+      "typing",
+      "chromadb.config",
+      "app.core.config",
+      "chromadb",
+      "os.path",
+      "logging",
+      "chromadb.utils",
+      "pathlib"
+    ],
+    "../backend/app/services/llm_inference.py": [
+      "typing",
+      "logging",
+      "pathlib",
+      "llama_cpp"
+    ],
+    "../backend/app/services/worldbuilding_classifier.py": [
+      "re",
+      "typing",
+      "app.models.worldbuilding_models"
+    ],
+    "../backend/app/services/context_session_manager.py": [
+      "uuid",
+      "typing",
+      "datetime",
+      "dataclasses",
+      "base64",
+      "gzip",
+      "app.models.context_models",
+      "json",
+      "logging"
+    ],
+    "../backend/app/services/unified_context_processor.py": [
+      "typing",
+      "datetime",
+      "dataclasses",
+      "app.services.context_manager",
+      "app.services.context_adapter",
+      "app.models.context_models",
+      "app.models.generation_models",
+      "json",
+      "logging",
+      "hashlib",
+      "app.services.context_optimization"
+    ],
+    "../backend/app/models/token_models.py": [
+      "pydantic",
+      "typing",
+      "app.services.token_management"
+    ],
+    "../backend/app/models/context_models.py": [
+      "pydantic",
+      "typing",
+      "enum",
+      "datetime"
+    ],
+    "../backend/app/models/chat_models.py": [
+      "pydantic",
+      "typing",
+      "generation_models"
+    ],
+    "../backend/app/models/worldbuilding_models.py": [
+      "pydantic",
+      "typing",
+      "generation_models"
+    ],
+    "../backend/app/models/phase_models.py": [
+      "pydantic",
+      "typing",
+      "generation_models"
+    ],
+    "../backend/app/models/generation_models.py": [
+      "pydantic",
+      "typing",
+      "datetime"
+    ],
+    "../backend/app/utils/key_information_extractor.py": [
+      "typing",
+      "dataclasses",
+      "re",
+      "logging",
+      "collections",
+      "enum"
+    ],
+    "../backend/app/utils/relevance_calculator.py": [
+      "typing",
+      "datetime",
+      "dataclasses",
+      "math",
+      "re",
+      "logging",
+      "enum"
+    ],
+    "../backend/app/utils/__init__.py": [
+      "key_information_extractor",
+      "relevance_calculator",
+      "llama_tokenizer"
+    ],
+    "../backend/app/utils/llama_tokenizer.py": [
+      "typing",
+      "llama_cpp",
+      "logging",
+      "threading",
+      "pathlib"
+    ],
+    "../backend/app/utils/context_converters.py": [
+      "typing",
+      "logging",
+      "app.models.generation_models",
+      "datetime"
+    ],
+    "../backend/app/api/v1/api.py": [
+      "fastapi",
+      "app.api.v1.endpoints"
+    ],
+    "../backend/app/api/v1/endpoints/modify_chapter.py": [
+      "datetime",
+      "app.models.generation_models",
+      "fastapi",
+      "app.services.llm_inference",
+      "logging",
+      "app.services.unified_context_processor"
+    ],
+    "../backend/app/api/v1/endpoints/worldbuilding_sync.py": [
+      "typing",
+      "app.services.worldbuilding_sync",
+      "pydantic",
+      "fastapi",
+      "app.models.generation_models",
+      "logging"
+    ],
+    "../backend/app/api/v1/endpoints/llm_chat.py": [
+      "datetime",
+      "app.models.worldbuilding_models",
+      "fastapi",
+      "app.services.llm_inference",
+      "app.services.worldbuilding_followup",
+      "app.services.worldbuilding_state_machine",
+      "logging",
+      "app.models.chat_models",
+      "app.services.worldbuilding_prompts",
+      "app.services.worldbuilding_classifier"
+    ],
+    "../backend/app/api/v1/endpoints/ai_generation.py": [
+      "app.api.v1.endpoints.flesh_out",
+      "app.api.v1.endpoints.generate_chapter",
+      "app.api.v1.endpoints.generate_character_details",
+      "fastapi",
+      "app.api.v1.endpoints.rater_feedback",
+      "app.api.v1.endpoints.modify_chapter",
+      "app.api.v1.endpoints.character_feedback",
+      "app.api.v1.endpoints.editor_review"
+    ],
+    "../backend/app/api/v1/endpoints/archive.py": [
+      "typing",
+      "pydantic",
+      "fastapi",
+      "app.services.rag_service",
+      "logging",
+      "app.services.archive_service",
+      "app.main"
+    ],
+    "../backend/app/api/v1/endpoints/generate_character_details.py": [
+      "app.api.v1.endpoints.shared_utils",
+      "app.models.generation_models",
+      "fastapi",
+      "app.services.llm_inference",
+      "re",
+      "logging"
+    ],
+    "../backend/app/api/v1/endpoints/rater_feedback.py": [
+      "app.api.v1.endpoints.shared_utils",
+      "app.models.generation_models",
+      "fastapi",
+      "app.services.llm_inference",
+      "logging",
+      "app.services.unified_context_processor"
+    ],
+    "../backend/app/api/v1/endpoints/shared_utils.py": [
+      "re",
+      "json"
+    ],
+    "../backend/app/api/v1/endpoints/phase_validation.py": [
+      "datetime",
+      "app.models.phase_models",
+      "fastapi",
+      "logging"
+    ],
+    "../backend/app/api/v1/endpoints/generate_chapter.py": [
+      "datetime",
+      "app.models.generation_models",
+      "fastapi",
+      "app.services.llm_inference",
+      "logging",
+      "app.services.unified_context_processor"
+    ],
+    "../backend/app/api/v1/endpoints/flesh_out.py": [
+      "datetime",
+      "app.models.generation_models",
+      "fastapi",
+      "app.services.llm_inference",
+      "logging",
+      "app.services.unified_context_processor"
+    ],
+    "../backend/app/api/v1/endpoints/tokens.py": [
+      "typing",
+      "app.core.config",
+      "fastapi",
+      "logging",
+      "app.models.token_models",
+      "app.services.token_management"
+    ],
+    "../backend/app/api/v1/endpoints/character_feedback.py": [
+      "app.api.v1.endpoints.shared_utils",
+      "app.models.generation_models",
+      "fastapi",
+      "app.services.llm_inference",
+      "logging",
+      "app.services.unified_context_processor"
+    ],
+    "../backend/app/api/v1/endpoints/editor_review.py": [
+      "app.api.v1.endpoints.shared_utils",
+      "app.models.generation_models",
+      "fastapi",
+      "app.services.llm_inference",
+      "logging",
+      "app.services.unified_context_processor"
+    ],
+    "../backend/app/services/content_prioritization/__init__.py": [
+      "layered_prioritizer",
+      "rag_retriever"
+    ],
+    "../backend/app/services/content_prioritization/rag_retriever.py": [
+      "core.config",
+      "typing",
+      "datetime",
+      "dataclasses",
+      "utils.relevance_calculator",
+      "token_management.token_counter",
+      "re",
+      "logging",
+      "json",
+      "enum"
+    ],
+    "../backend/app/services/content_prioritization/layered_prioritizer.py": [
+      "core.config",
+      "typing",
+      "datetime",
+      "dataclasses",
+      "utils.relevance_calculator",
+      "token_management.token_counter",
+      "logging",
+      "token_management.layers",
+      "enum"
+    ],
+    "../backend/app/services/context_distillation/__init__.py": [
+      "context_distiller",
+      "summarization_strategies",
+      "adaptive_summarizer"
+    ],
+    "../backend/app/services/context_distillation/context_distiller.py": [
+      "typing",
+      "dataclasses",
+      "summarization_strategies",
+      "llm_inference",
+      "json",
+      "logging",
+      "enum",
+      "token_management"
+    ],
+    "../backend/app/services/context_distillation/summarization_strategies.py": [
+      "typing",
+      "dataclasses",
+      "llm_inference",
+      "re",
+      "logging",
+      "abc"
+    ],
+    "../backend/app/services/context_distillation/adaptive_summarizer.py": [
+      "typing",
+      "models.context_models",
+      "dataclasses",
+      "summarization_strategies",
+      "llm_inference",
+      "logging",
+      "enum"
+    ],
+    "../backend/app/services/token_management/__init__.py": [
+      "token_counter",
+      "layers",
+      "allocator"
+    ],
+    "../backend/app/services/token_management/layers.py": [
+      "dataclasses",
+      "typing",
+      "logging",
+      "enum"
+    ],
+    "../backend/app/services/token_management/allocator.py": [
+      "core.config",
+      "typing",
+      "dataclasses",
+      "token_counter",
+      "time",
+      "logging",
+      "layers",
+      "enum"
+    ],
+    "../backend/app/services/token_management/token_counter.py": [
+      "typing",
+      "dataclasses",
+      "utils.llama_tokenizer",
+      "re",
+      "logging",
+      "enum"
+    ],
+    "../backend/tests/utils/__init__.py": [
+      "test_data_generators"
+    ],
+    "../frontend/src/main.ts": [
+      "./app/app.component",
+      "./app/app.config",
+      "@angular/platform-browser"
+    ],
+    "../frontend/src/app/app.config.ts": [
+      "@angular/router",
+      "@angular/platform-browser/animations/async",
+      "@angular/core",
+      "@angular/common/http",
+      "./app.routes"
+    ],
+    "../frontend/src/app/app.routes.ts": [
+      "./components/dashboard/dashboard.component",
+      "./components/story-workspace/story-workspace.component",
+      "./components/archive/archive.component",
+      "@angular/router"
+    ],
+    "../frontend/src/app/app.component.ts": [
+      "@angular/core",
+      "@angular/router"
+    ],
+    "../frontend/src/app/services/plot-outline.service.ts": [
+      "@angular/core",
+      "./story.service",
+      "rxjs/operators",
+      "rxjs",
+      "./generation.service",
+      "../models/story.model"
+    ],
+    "../frontend/src/app/services/feedback.service.ts": [
+      "./conversation.service",
+      "@angular/core",
+      "rxjs",
+      "./generation.service",
+      "./local-storage.service",
+      "./phase-state.service"
+    ],
+    "../frontend/src/app/services/phase-state.service.ts": [
+      "@angular/core",
+      "rxjs/operators",
+      "rxjs",
+      "./local-storage.service",
+      "./api.service"
+    ],
+    "../frontend/src/app/services/api.service.ts": [
+      "rxjs",
+      "@angular/core",
+      "@angular/common/http",
+      "../models/token-limits.model"
+    ],
+    "../frontend/src/app/services/worldbuilding-validator.service.ts": [
+      "@angular/core"
+    ],
+    "../frontend/src/app/services/worldbuilding-sync.service.ts": [
+      "./conversation.service",
+      "@angular/core",
+      "@angular/common/http",
+      "rxjs/operators",
+      "./worldbuilding-validator.service",
+      "rxjs",
+      "../models/story.model",
+      "../../environments/environment",
+      "./local-storage.service"
+    ],
+    "../frontend/src/app/services/archive.service.ts": [
+      "rxjs",
+      "@angular/core",
+      "@angular/common/http",
+      "../../environments/environment"
+    ],
+    "../frontend/src/app/services/toast.service.ts": [
+      "rxjs",
+      "@angular/core",
+      "../constants/token-limits.constants"
+    ],
+    "../frontend/src/app/services/generation.service.ts": [
+      "./context-builder.service",
+      "@angular/core",
+      "rxjs",
+      "./request-optimizer.service",
+      "./request-validator.service",
+      "./request-converter.service",
+      "../models/context-builder.model",
+      "./api.service"
+    ],
+    "../frontend/src/app/services/token-validation.service.ts": [
+      "./token-counting.service",
+      "@angular/core",
+      "rxjs/operators",
+      "../models/token-counter.model",
+      "rxjs",
+      "../models/token.model",
+      "./token-limits.service"
+    ],
+    "../frontend/src/app/services/local-storage.service.ts": [
+      "../models/story.model",
+      "rxjs",
+      "@angular/core"
+    ],
+    "../frontend/src/app/services/token-limits.service.ts": [
+      "@angular/core",
+      "../models/token-limits.model",
+      "@angular/common/http",
+      "rxjs/operators",
+      "rxjs"
+    ],
+    "../frontend/src/app/services/loading.service.ts": [
+      "rxjs",
+      "@angular/core"
+    ],
+    "../frontend/src/app/services/configuration.service.ts": [
+      "rxjs",
+      "@angular/core",
+      "./local-storage.service"
+    ],
+    "../frontend/src/app/services/story.service.ts": [
+      "../models/story.model",
+      "rxjs",
+      "@angular/core",
+      "./local-storage.service"
+    ],
+    "../frontend/src/app/services/token-counting.service.ts": [
+      "rxjs",
+      "@angular/core",
+      "@angular/common/http"
+    ],
+    "../frontend/src/app/services/review.service.ts": [
+      "./conversation.service",
+      "@angular/core",
+      "rxjs",
+      "./feedback.service",
+      "./generation.service",
+      "./local-storage.service"
+    ],
+    "../frontend/src/app/services/conversation.service.ts": [
+      "@angular/core",
+      "rxjs/operators",
+      "rxjs",
+      "./api.service",
+      "./local-storage.service",
+      "./phase-state.service"
+    ],
+    "../frontend/src/app/services/context-builder.service.ts": [
+      "../models/story.model",
+      "rxjs",
+      "@angular/core",
+      "./token-counting.service"
+    ],
+    "../frontend/src/app/services/context-manager.service.ts": [
+      "rxjs",
+      "@angular/core",
+      "./context-storage.service"
+    ],
+    "../frontend/src/app/services/context-storage.service.ts": [
+      "rxjs",
+      "@angular/core"
+    ],
+    "../frontend/src/app/services/context-versioning.service.ts": [
+      "rxjs",
+      "@angular/core",
+      "./context-storage.service"
+    ],
+    "../frontend/src/app/services/request-converter.service.ts": [
+      "../models/story.model",
+      "./context-builder.service",
+      "@angular/core"
+    ],
+    "../frontend/src/app/services/request-optimizer.service.ts": [
+      "@angular/core",
+      "./token-counting.service"
+    ],
+    "../frontend/src/app/services/request-validator.service.ts": [
+      "@angular/core"
+    ],
+    "../frontend/src/app/pipes/newline-to-br.pipe.ts": [
+      "@angular/core",
+      "@angular/platform-browser"
+    ],
+    "../frontend/src/app/models/context-builder.model.ts": [
+      "./story.model"
+    ],
+    "../frontend/src/app/models/context-state.model.ts": [
+      "./context.model"
+    ],
+    "../frontend/src/app/constants/token-limits.constants.ts": [
+      "../models/token-limits.model"
+    ],
+    "../frontend/src/app/components/plot-outline-phase/plot-outline-phase.component.ts": [
+      "@angular/forms",
+      "../chat-interface/chat-interface.component",
+      "@angular/core",
+      "@angular/common",
+      "../../services/toast.service",
+      "../../services/conversation.service",
+      "rxjs",
+      "../../services/phase-state.service",
+      "../../pipes/newline-to-br.pipe",
+      "../../services/story.service",
+      "../../services/archive.service",
+      "@angular/cdk/drag-drop",
+      "../../services/generation.service"
+    ],
+    "../frontend/src/app/components/archive/archive.component.ts": [
+      "@angular/forms",
+      "rxjs",
+      "@angular/core",
+      "@angular/common"
+    ],
+    "../frontend/src/app/components/review-feedback-panel/review-feedback-panel.component.ts": [
+      "@angular/forms",
+      "@angular/core",
+      "@angular/common",
+      "rxjs",
+      "../../services/phase-state.service",
+      "../../services/review.service"
+    ],
+    "../frontend/src/app/components/plot-outline-tab/plot-outline-tab.component.ts": [
+      "@angular/forms",
+      "../../models/story.model",
+      "@angular/core",
+      "@angular/common",
+      "../../services/plot-outline.service",
+      "../../services/toast.service",
+      "../../services/loading.service",
+      "../../services/generation.service"
+    ],
+    "../frontend/src/app/components/final-edit-phase/final-edit-phase.component.ts": [
+      "@angular/forms",
+      "../chat-interface/chat-interface.component",
+      "@angular/core",
+      "@angular/common",
+      "../review-feedback-panel/review-feedback-panel.component",
+      "rxjs/operators",
+      "../../services/conversation.service",
+      "../../services/toast.service",
+      "rxjs",
+      "../../services/phase-state.service",
+      "../../pipes/newline-to-br.pipe",
+      "../../services/story.service",
+      "../../services/review.service",
+      "../../services/generation.service"
+    ],
+    "../frontend/src/app/components/storage-management/storage-management.component.ts": [
+      "@angular/forms",
+      "@angular/core",
+      "@angular/common",
+      "rxjs",
+      "../../services/local-storage.service",
+      "../../services/story.service"
+    ],
+    "../frontend/src/app/components/story-workspace/story-workspace.component.ts": [
+      "@angular/router",
+      "@angular/core",
+      "@angular/common",
+      "../../services/context-builder.service",
+      "../phase-navigation/phase-navigation.component",
+      "../../services/token-limits.service",
+      "../final-edit-phase/final-edit-phase.component",
+      "../feedback-sidebar/feedback-sidebar.component",
+      "rxjs",
+      "../system-prompt-field/system-prompt-field.component",
+      "../plot-outline-phase/plot-outline-phase.component",
+      "../plot-outline-tab/plot-outline-tab.component",
+      "../worldbuilding-chat/worldbuilding-chat.component",
+      "../../services/token-validation.service",
+      "../../services/generation.service",
+      "@angular/forms",
+      "../../models/story.model",
+      "../../services/feedback.service",
+      "../../models/token-validation.model",
+      "../../services/toast.service",
+      "../../pipes/newline-to-br.pipe",
+      "../../services/loading.service",
+      "../loading-spinner/loading-spinner.component",
+      "../../services/phase-state.service",
+      "../../services/story.service",
+      "../../services/archive.service",
+      "../toast/toast.component"
+    ],
+    "../frontend/src/app/components/chapter-detailer-phase/chapter-detailer-phase.component.ts": [
+      "@angular/forms",
+      "../chat-interface/chat-interface.component",
+      "@angular/core",
+      "@angular/common",
+      "../../services/feedback.service",
+      "../feedback-sidebar/feedback-sidebar.component",
+      "rxjs/operators",
+      "../../services/conversation.service",
+      "../../services/toast.service",
+      "rxjs",
+      "../../services/phase-state.service",
+      "../../services/token-counting.service",
+      "../../pipes/newline-to-br.pipe",
+      "../../services/story.service",
+      "../../services/context-builder.service",
+      "../../services/generation.service"
+    ],
+    "../frontend/src/app/components/dashboard/dashboard.component.ts": [
+      "../../models/story.model",
+      "@angular/router",
+      "@angular/core",
+      "@angular/common",
+      "rxjs",
+      "../../services/local-storage.service",
+      "../../services/story.service"
+    ],
+    "../frontend/src/app/components/chat-interface/chat-interface.component.ts": [
+      "@angular/forms",
+      "@angular/core",
+      "@angular/common",
+      "rxjs",
+      "../../services/phase-state.service"
+    ],
+    "../frontend/src/app/components/system-prompt-field/system-prompt-field.component.ts": [
+      "@angular/forms",
+      "@angular/common",
+      "../../services/token-limits.service",
+      "rxjs/operators",
+      "../token-counter/token-counter.component",
+      "../../services/toast.service",
+      "rxjs",
+      "../../models/token-counter.model",
+      "../../services/token-validation.service"
+    ],
+    "../frontend/src/app/components/worldbuilding-chat/worldbuilding-chat.component.ts": [
+      "../../models/story.model",
+      "../chat-interface/chat-interface.component",
+      "@angular/core",
+      "@angular/common",
+      "../../services/conversation.service",
+      "rxjs",
+      "../../services/worldbuilding-sync.service"
+    ],
+    "../frontend/src/app/components/token-counter/token-counter.component.ts": [
+      "@angular/core",
+      "@angular/common"
+    ],
+    "../frontend/src/app/components/token-counter/token-counter.stories.ts": [
+      "./token-counter.component",
+      "@storybook/angular"
+    ],
+    "../frontend/src/app/components/loading-spinner/loading-spinner.component.ts": [
+      "rxjs",
+      "@angular/core",
+      "@angular/common",
+      "../../services/loading.service"
+    ],
+    "../frontend/src/app/components/phase-navigation/phase-navigation.component.ts": [
+      "../../models/story.model",
+      "@angular/core",
+      "@angular/common",
+      "rxjs",
+      "../../services/phase-state.service"
+    ],
+    "../frontend/src/app/components/feedback-sidebar/feedback-sidebar.component.ts": [
+      "@angular/forms",
+      "@angular/core",
+      "@angular/common",
+      "../../services/feedback.service",
+      "rxjs",
+      "../../services/phase-state.service"
+    ],
+    "../frontend/src/app/components/toast/toast.component.ts": [
+      "rxjs",
+      "@angular/core",
+      "@angular/common",
+      "../../services/toast.service"
+    ]
+  },
+  "usage_patterns": {
+    "legacy_context_usage": 32,
+    "structured_context_usage": 14,
+    "hybrid_context_usage": 3,
+    "worldbuilding_services": 9
+  },
+  "recommendations": [
+    "\ud83d\udd25 Remove 14 obsolete service files",
+    "\ud83d\uddd1\ufe0f  Remove 21 completely obsolete files",
+    "\u26a0\ufe0f  Review 95 high-confidence obsolete components",
+    "\ud83d\udcdd Update API endpoints to remove legacy context parameters",
+    "\ud83e\uddf9 Clean up imports and dependencies after component removal",
+    "\ud83e\uddea Update tests to use structured context patterns"
+  ],
+  "total_files_analyzed": 26988,
+  "potential_savings": {
+    "files": 21,
+    "lines_of_code": 11399,
+    "components": 95
+  }
+}
