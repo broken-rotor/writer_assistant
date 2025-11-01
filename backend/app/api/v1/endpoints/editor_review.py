@@ -10,6 +10,7 @@ from app.models.generation_models import (
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
+from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
