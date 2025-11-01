@@ -277,14 +277,43 @@ describe('ApiService', () => {
   describe('generateCharacterDetails', () => {
     it('should send POST request to generate-character-details endpoint', () => {
       const request = {
-        systemPrompts: {
-          mainPrefix: '',
-          mainSuffix: ''
-        },
-        worldbuilding: 'A fantasy world',
-        storySummary: 'A story',
         basicBio: 'A brave knight',
-        existingCharacters: []
+        existingCharacters: [],
+        structured_context: {
+          plot_elements: [
+            {
+              type: 'setup' as const,
+              content: 'A fantasy world',
+              priority: 'high' as const,
+              tags: ['worldbuilding', 'setting'],
+              metadata: {
+                source: 'worldbuilding',
+                category: 'background'
+              }
+            },
+            {
+              type: 'scene' as const,
+              content: 'A story',
+              priority: 'high' as const,
+              tags: ['story_summary', 'plot'],
+              metadata: {
+                source: 'story_summary',
+                category: 'narrative'
+              }
+            }
+          ],
+          character_contexts: [],
+          user_requests: [
+            {
+              type: 'general' as const,
+              content: 'Generate detailed character information for: A brave knight',
+              priority: 'high' as const,
+              target: 'new_character',
+              context: 'character_generation'
+            }
+          ],
+          system_instructions: []
+        }
       };
 
       const mockResponse = {
