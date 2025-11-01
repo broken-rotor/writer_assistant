@@ -35,7 +35,9 @@ class TestGenerateChapterEndpoint:
 
         assert "generatedAt" in metadata
         assert "plotPoint" in metadata
-        assert "feedbackItemsIncorporated" in metadata
+        assert "contextMode" in metadata
+        assert "processingMode" in metadata
+        assert metadata["contextMode"] == "structured"
 
     def test_generate_chapter_with_empty_plot_point(self, client, sample_generate_chapter_request):
         """Test chapter generation with empty plot point"""
@@ -47,33 +49,47 @@ class TestGenerateChapterEndpoint:
 
     def test_generate_chapter_with_multiple_characters(self, client, sample_generate_chapter_request):
         """Test chapter generation with multiple characters"""
-        sample_generate_chapter_request["characters"].append({
-            "name": "John Doe",
-            "basicBio": "A mysterious stranger",
-            "sex": "Male",
-            "gender": "Male",
-            "sexualPreference": "Heterosexual",
-            "age": 40,
-            "physicalAppearance": "Tall and imposing",
-            "usualClothing": "Dark suits",
-            "personality": "Enigmatic",
-            "motivations": "Unknown",
-            "fears": "Exposure",
-            "relationships": "None known"
+        sample_generate_chapter_request["structured_context"]["character_contexts"].append({
+            "character_id": "john_doe",
+            "character_name": "John Doe",
+            "current_state": {
+                "emotion": "mysterious",
+                "location": "unknown",
+                "mental_state": "calculating"
+            },
+            "recent_actions": ["Appeared at scene", "Watching from shadows"],
+            "relationships": {"detective": "unknown"},
+            "goals": ["Remain hidden", "Observe"],
+            "memories": ["Past encounters", "Secret knowledge"],
+            "personality_traits": ["enigmatic", "imposing", "secretive"]
         })
         response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
         assert response.status_code == 200
 
     def test_generate_chapter_with_incorporated_feedback(self, client, sample_generate_chapter_request):
-        """Test chapter generation with incorporated feedback"""
-        sample_generate_chapter_request["incorporatedFeedback"] = [
-            {"source": "character1", "type": "action", "content": "Consider this", "incorporated": True},
-            {"source": "rater1", "type": "suggestion", "content": "Add more detail", "incorporated": True}
-        ]
+        """Test chapter generation with incorporated feedback via structured context"""
+        # Add feedback as user requests in structured context
+        sample_generate_chapter_request["structured_context"]["user_requests"].extend([
+            {
+                "type": "modification",
+                "content": "Consider this feedback from character1",
+                "priority": "high",
+                "target": "character1",
+                "context": "action_feedback"
+            },
+            {
+                "type": "general", 
+                "content": "Add more detail as suggested by rater1",
+                "priority": "medium",
+                "target": "rater1",
+                "context": "suggestion_feedback"
+            }
+        ])
         response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
         assert response.status_code == 200
+        # Verify that the response includes context metadata
         metadata = response.json()["metadata"]
-        assert metadata["feedbackItemsIncorporated"] == 2
+        assert "processingMode" in metadata
 
     def test_generate_chapter_word_count_accuracy(self, client, sample_generate_chapter_request):
         """Test that word count is reasonably accurate"""

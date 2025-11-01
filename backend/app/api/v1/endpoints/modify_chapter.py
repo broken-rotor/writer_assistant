@@ -18,7 +18,7 @@ router = APIRouter()
 
 @router.post("/modify-chapter", response_model=ModifyChapterResponse)
 async def modify_chapter(request: ModifyChapterRequest):
-    """Modify an existing chapter using LLM with structured context support."""
+    """Modify an existing chapter using LLM with structured context only."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
@@ -27,21 +27,17 @@ async def modify_chapter(request: ModifyChapterRequest):
         # Get unified context processor
         context_processor = get_unified_context_processor()
 
-        # Process context using unified processor (supports both legacy and structured contexts)
+        # Process context using structured context only
         context_result = context_processor.process_modify_chapter_context(
-            # Legacy fields
-            system_prompts=request.systemPrompts,
-            worldbuilding=request.worldbuilding,
-            story_summary=request.storySummary,
-            characters=getattr(request, 'characters', []),  # May not be present in all requests
+            # Core fields
             original_chapter=request.currentChapter,
             modification_request=request.userRequest,
             # Phase context
             compose_phase=request.compose_phase,
             phase_context=request.phase_context,
-            # Structured context
+            # Structured context (required)
             structured_context=request.structured_context,
-            context_mode=request.context_mode,
+            context_mode="structured",
             context_processing_config=request.context_processing_config
         )
 

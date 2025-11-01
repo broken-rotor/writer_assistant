@@ -145,9 +145,8 @@ def client():
 
 @pytest.fixture
 def sample_character_feedback_request():
-    """Sample character feedback request using structured context"""
+    """Sample character feedback request using structured context only"""
     return {
-        "context_mode": "structured",
         "structured_context": {
             "plot_elements": [
                 {
@@ -191,30 +190,14 @@ def sample_character_feedback_request():
                 }
             ]
         },
-        "character": {
-            "name": "Detective Sarah Chen",
-            "basicBio": "A hardboiled detective with a troubled past",
-            "sex": "Female",
-            "gender": "Female",
-            "sexualPreference": "Heterosexual",
-            "age": 35,
-            "physicalAppearance": "Tall, athletic, with sharp eyes",
-            "usualClothing": "Trench coat and fedora",
-            "personality": "Cynical but determined",
-            "motivations": "Seeking justice and redemption",
-            "fears": "Losing another partner",
-            "relationships": "Works alone, trusts few people"
-        },
-        "plotPoint": "The detective discovers a crucial clue at the crime scene",
-        "previousChapters": []
+        "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 
 
 @pytest.fixture
 def sample_rater_feedback_request():
-    """Sample rater feedback request using structured context"""
+    """Sample rater feedback request using structured context only"""
     return {
-        "context_mode": "structured",
         "structured_context": {
             "plot_elements": [
                 {
@@ -251,16 +234,14 @@ def sample_rater_feedback_request():
             ]
         },
         "raterPrompt": "Evaluate the narrative flow and character consistency",
-        "plotPoint": "The detective discovers a crucial clue at the crime scene",
-        "previousChapters": []
+        "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 
 
 @pytest.fixture
 def sample_generate_chapter_request():
-    """Sample chapter generation request using structured context"""
+    """Sample chapter generation request using structured context only"""
     return {
-        "context_mode": "structured",
         "structured_context": {
             "plot_elements": [
                 {
@@ -310,33 +291,14 @@ def sample_generate_chapter_request():
                 }
             ]
         },
-        "characters": [
-            {
-                "name": "Detective Sarah Chen",
-                "basicBio": "A hardboiled detective",
-                "sex": "Female",
-                "gender": "Female",
-                "sexualPreference": "Heterosexual",
-                "age": 35,
-                "physicalAppearance": "Tall and athletic",
-                "usualClothing": "Trench coat",
-                "personality": "Cynical but determined",
-                "motivations": "Seeking justice",
-                "fears": "Losing another partner",
-                "relationships": "Works alone"
-            }
-        ],
-        "plotPoint": "The detective discovers a crucial clue at the crime scene",
-        "previousChapters": [],
-        "incorporatedFeedback": []
+        "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 
 
 @pytest.fixture
 def sample_modify_chapter_request():
-    """Sample chapter modification request using structured context"""
+    """Sample chapter modification request using structured context only"""
     return {
-        "context_mode": "structured",
         "structured_context": {
             "plot_elements": [
                 {
@@ -395,16 +357,14 @@ def sample_modify_chapter_request():
             ]
         },
         "currentChapter": "The rain fell hard on the city streets. Detective Chen examined the crime scene with practiced eyes.",
-        "userRequest": "Add more atmospheric details about the weather and setting",
-        "previousChapters": []
+        "userRequest": "Add more atmospheric details about the weather and setting"
     }
 
 
 @pytest.fixture
 def sample_editor_review_request():
-    """Sample editor review request using structured context"""
+    """Sample editor review request using structured context only"""
     return {
-        "context_mode": "structured",
         "structured_context": {
             "plot_elements": [
                 {
@@ -454,17 +414,14 @@ def sample_editor_review_request():
                 }
             ]
         },
-        "characters": [],
-        "chapterToReview": "The rain fell hard on the city streets. Detective Chen examined the crime scene.",
-        "previousChapters": []
+        "chapterToReview": "The rain fell hard on the city streets. Detective Chen examined the crime scene."
     }
 
 
 @pytest.fixture
 def sample_flesh_out_request():
-    """Sample flesh out request using structured context"""
+    """Sample flesh out request using structured context only"""
     return {
-        "context_mode": "structured",
         "structured_context": {
             "plot_elements": [
                 {
@@ -507,9 +464,8 @@ def sample_flesh_out_request():
 
 @pytest.fixture
 def sample_generate_character_request():
-    """Sample generate character details request using structured context"""
+    """Sample generate character details request using structured context only"""
     return {
-        "context_mode": "structured",
         "structured_context": {
             "plot_elements": [
                 {
