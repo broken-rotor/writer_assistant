@@ -78,8 +78,7 @@ async def generate_chapter(request: GenerateChapterRequest):
                 "phaseContextProvided": bool(request.phase_context),
                 "contextMode": request.context_mode,
                 "structuredContextProvided": bool(request.structured_context),
-                "processingMode": context_result.processing_mode,
-                "contextOptimizationApplied": context_result.optimization_applied
+                "processingMode": context_result.processing_mode
             }
         )
     except Exception as e:

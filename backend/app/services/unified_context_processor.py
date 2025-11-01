@@ -1,9 +1,8 @@
 """
 Unified Context Processor for Writer Assistant API.
 
-This service provides a unified interface for processing both legacy and structured contexts,
-integrating the ContextManager service with the existing context_optimization service
-while maintaining backward compatibility.
+This service provides a unified interface for processing structured contexts
+using the ContextManager service.
 
 Key Features:
 - Dual request handling (legacy + structured contexts)
@@ -21,7 +20,6 @@ import hashlib
 import json
 
 from app.services.context_manager import ContextManager
-from app.services.context_optimization import ContextOptimizationService, OptimizedContext
 from app.services.context_adapter import ContextAdapter
 from app.models.context_models import (
     StructuredContextContainer as LegacyStructuredContextContainer,
@@ -144,17 +142,15 @@ class UnifiedContextResult:
 
 class UnifiedContextProcessor:
     """
-    Unified service for processing both legacy and structured contexts.
+    Unified service for processing structured contexts.
     
-    This service acts as a facade that routes context processing requests
-    to the appropriate service (ContextManager or ContextOptimizationService)
-    based on the context mode and provides a consistent interface.
+    This service provides a consistent interface for context processing
+    using the ContextManager for structured context handling.
     """
 
     def __init__(self, enable_caching: bool = True):
         """Initialize the unified context processor."""
         self.context_manager = ContextManager()
-        self.context_optimization = ContextOptimizationService()
         self.context_adapter = ContextAdapter()
         self.enable_caching = enable_caching
         self._cache: Dict[str, UnifiedContextResult] = {}
@@ -808,296 +804,6 @@ class UnifiedContextProcessor:
 
         except Exception as e:
             logger.error(f"Error processing hybrid context: {str(e)}")
-            raise
-
-    def _process_legacy_context_for_chapter(
-        self,
-        system_prompts: Optional[SystemPrompts],
-        worldbuilding: Optional[str],
-        story_summary: Optional[str],
-        characters: List[CharacterInfo],
-        plot_point: str,
-        incorporated_feedback: List[FeedbackItem],
-        previous_chapters: Optional[List[ChapterInfo]],
-        compose_phase: Optional[ComposePhase],
-        phase_context: Optional[PhaseContext]
-    ) -> UnifiedContextResult:
-        """Process legacy context for chapter generation using context optimization."""
-        try:
-            optimized = self.context_optimization.optimize_chapter_generation_context(
-                system_prompts=system_prompts or SystemPrompts(),
-                worldbuilding=worldbuilding or "",
-                story_summary=story_summary or "",
-                characters=characters,
-                plot_point=plot_point,
-                incorporated_feedback=incorporated_feedback,
-                previous_chapters=previous_chapters,
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
-
-            # Create context metadata for legacy processing
-            context_metadata = ContextMetadata(
-                total_elements=len(characters) + len(incorporated_feedback) + (1 if previous_chapters else 0),
-                processing_applied=optimized.optimization_applied,
-                processing_mode="legacy",
-                optimization_level="moderate" if optimized.optimization_applied else "none",
-                compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0,  # Not tracked in legacy system
-                created_at=datetime.now(timezone.utc).isoformat()
-            )
-
-            return UnifiedContextResult(
-                system_prompt=optimized.system_prompt,
-                user_message=optimized.user_message,
-                context_metadata=context_metadata,
-                processing_mode="legacy",
-                optimization_applied=optimized.optimization_applied,
-                total_tokens=optimized.total_tokens,
-                compression_ratio=optimized.compression_ratio
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing legacy context for chapter: {str(e)}")
-            raise
-
-    def _process_legacy_context_for_character(
-        self,
-        system_prompts: Optional[SystemPrompts],
-        worldbuilding: Optional[str],
-        story_summary: Optional[str],
-        character: Optional[CharacterInfo],
-        plot_point: str,
-        compose_phase: Optional[ComposePhase],
-        phase_context: Optional[PhaseContext]
-    ) -> UnifiedContextResult:
-        """Process legacy context for character feedback using context optimization."""
-        try:
-            optimized = self.context_optimization.optimize_character_feedback_context(
-                system_prompts=system_prompts or SystemPrompts(),
-                worldbuilding=worldbuilding or "",
-                story_summary=story_summary or "",
-                character=character or CharacterInfo(name="Character", basicBio="", sex=""),
-                plot_point=plot_point,
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
-
-            # Create context metadata for legacy processing
-            context_metadata = ContextMetadata(
-                total_elements=3,  # system_prompts, worldbuilding, story_summary
-                processing_applied=optimized.optimization_applied,
-                processing_mode="legacy",
-                optimization_level="moderate" if optimized.optimization_applied else "none",
-                compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0,  # Not tracked in legacy system
-                created_at=datetime.now(timezone.utc).isoformat()
-            )
-
-            return UnifiedContextResult(
-                system_prompt=optimized.system_prompt,
-                user_message=optimized.user_message,
-                context_metadata=context_metadata,
-                processing_mode="legacy",
-                optimization_applied=optimized.optimization_applied,
-                total_tokens=optimized.total_tokens,
-                compression_ratio=optimized.compression_ratio
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing legacy context for character: {str(e)}")
-            raise
-
-    def _process_legacy_context_for_editor(
-        self,
-        system_prompts: Optional[SystemPrompts],
-        worldbuilding: Optional[str],
-        story_summary: Optional[str],
-        previous_chapters: List[ChapterInfo],
-        plot_point: str,
-        compose_phase: Optional[ComposePhase],
-        phase_context: Optional[PhaseContext]
-    ) -> UnifiedContextResult:
-        """Process legacy context for editor review using context optimization."""
-        try:
-            optimized = self.context_optimization.optimize_editor_review_context(
-                system_prompts=system_prompts or SystemPrompts(),
-                worldbuilding=worldbuilding or "",
-                story_summary=story_summary or "",
-                previous_chapters=previous_chapters,
-                plot_point=plot_point,
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
-
-            # Create context metadata for legacy processing
-            context_metadata = ContextMetadata(
-                total_elements=len(previous_chapters) + 3,  # chapters + system_prompts, worldbuilding, story_summary
-                processing_applied=optimized.optimization_applied,
-                processing_mode="legacy",
-                optimization_level="moderate" if optimized.optimization_applied else "none",
-                compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0,  # Not tracked in legacy system
-                created_at=datetime.now(timezone.utc).isoformat()
-            )
-
-            return UnifiedContextResult(
-                system_prompt=optimized.system_prompt,
-                user_message=optimized.user_message,
-                context_metadata=context_metadata,
-                processing_mode="legacy",
-                optimization_applied=optimized.optimization_applied,
-                total_tokens=optimized.total_tokens,
-                compression_ratio=optimized.compression_ratio
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing legacy context for editor: {str(e)}")
-            raise
-
-    def _process_legacy_context_for_rater(
-        self,
-        system_prompts: Optional[SystemPrompts],
-        rater_prompt: str,
-        worldbuilding: Optional[str],
-        story_summary: Optional[str],
-        previous_chapters: List[ChapterInfo],
-        plot_point: str,
-        incorporated_feedback: List[FeedbackItem],
-        compose_phase: Optional[ComposePhase],
-        phase_context: Optional[PhaseContext]
-    ) -> UnifiedContextResult:
-        """Process legacy context for rater feedback using context optimization."""
-        try:
-            optimized = self.context_optimization.optimize_rater_feedback_context(
-                system_prompts=system_prompts or SystemPrompts(),
-                rater_prompt=rater_prompt,
-                worldbuilding=worldbuilding or "",
-                story_summary=story_summary or "",
-                plot_point=plot_point,
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
-
-            # Create context metadata for legacy processing
-            context_metadata = ContextMetadata(
-                total_elements=4,  # system_prompts, rater_prompt, worldbuilding, story_summary, plot_point
-                processing_applied=optimized.optimization_applied,
-                processing_mode="legacy",
-                optimization_level="moderate" if optimized.optimization_applied else "none",
-                compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0,  # Not tracked in legacy system
-                created_at=datetime.now(timezone.utc).isoformat()
-            )
-
-            return UnifiedContextResult(
-                system_prompt=optimized.system_prompt,
-                user_message=optimized.user_message,
-                context_metadata=context_metadata,
-                processing_mode="legacy",
-                optimization_applied=optimized.optimization_applied,
-                total_tokens=optimized.total_tokens,
-                compression_ratio=optimized.compression_ratio
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing legacy context for rater: {str(e)}")
-            raise
-
-    def _process_legacy_context_for_modify(
-        self,
-        system_prompts: Optional[SystemPrompts],
-        worldbuilding: Optional[str],
-        story_summary: Optional[str],
-        characters: List[CharacterInfo],
-        original_chapter: str,
-        modification_request: str,
-        compose_phase: Optional[ComposePhase],
-        phase_context: Optional[PhaseContext]
-    ) -> UnifiedContextResult:
-        """Process legacy context for chapter modification using context optimization."""
-        try:
-            optimized = self.context_optimization.optimize_modify_chapter_context(
-                system_prompts=system_prompts or SystemPrompts(),
-                worldbuilding=worldbuilding or "",
-                story_summary=story_summary or "",
-                characters=characters,
-                original_chapter=original_chapter,
-                modification_request=modification_request,
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
-
-            # Create context metadata for legacy processing
-            context_metadata = ContextMetadata(
-                total_elements=len(characters) + 5,  # + system_prompts, worldbuilding, story_summary, original_chapter, modification_request
-                processing_applied=optimized.optimization_applied,
-                processing_mode="legacy",
-                optimization_level="moderate" if optimized.optimization_applied else "none",
-                compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0,  # Not tracked in legacy system
-                created_at=datetime.now(timezone.utc).isoformat()
-            )
-
-            return UnifiedContextResult(
-                system_prompt=optimized.system_prompt,
-                user_message=optimized.user_message,
-                context_metadata=context_metadata,
-                processing_mode="legacy",
-                optimization_applied=optimized.optimization_applied,
-                total_tokens=optimized.total_tokens,
-                compression_ratio=optimized.compression_ratio
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing legacy context for modify: {str(e)}")
-            raise
-
-    def _process_legacy_context_for_flesh_out(
-        self,
-        system_prompts: Optional[SystemPrompts],
-        worldbuilding: Optional[str],
-        story_summary: Optional[str],
-        characters: List[CharacterInfo],
-        outline_section: str,
-        compose_phase: Optional[ComposePhase],
-        phase_context: Optional[PhaseContext]
-    ) -> UnifiedContextResult:
-        """Process legacy context for flesh out using context optimization."""
-        try:
-            optimized = self.context_optimization.optimize_flesh_out_context(
-                system_prompts=system_prompts or SystemPrompts(),
-                worldbuilding=worldbuilding or "",
-                story_summary=story_summary or "",
-                context="flesh_out",  # Fixed parameter name
-                text_to_flesh_out=outline_section,  # Fixed parameter name
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
-
-            # Create context metadata for legacy processing
-            context_metadata = ContextMetadata(
-                total_elements=4,  # system_prompts, worldbuilding, story_summary, context, text_to_flesh_out
-                processing_applied=optimized.optimization_applied,
-                processing_mode="legacy",
-                optimization_level="moderate" if optimized.optimization_applied else "none",
-                compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0,  # Not tracked in legacy system
-                created_at=datetime.now(timezone.utc).isoformat()
-            )
-
-            return UnifiedContextResult(
-                system_prompt=optimized.system_prompt,
-                user_message=optimized.user_message,
-                context_metadata=context_metadata,
-                processing_mode="legacy",
-                optimization_applied=optimized.optimization_applied,
-                total_tokens=optimized.total_tokens,
-                compression_ratio=optimized.compression_ratio
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing legacy context for flesh out: {str(e)}")
             raise
 
     def _parse_formatted_context(

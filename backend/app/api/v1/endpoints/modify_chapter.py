@@ -92,8 +92,7 @@ Rewrite the chapter incorporating the requested changes while maintaining consis
                 "modificationRequest": request.userRequest,
                 "contextMode": request.context_mode,
                 "structuredContextProvided": bool(request.structured_context),
-                "processingMode": context_result.processing_mode,
-                "contextOptimizationApplied": context_result.optimization_applied
+                "processingMode": context_result.processing_mode
             }
         )
     except Exception as e:
