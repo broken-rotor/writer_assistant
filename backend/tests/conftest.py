@@ -7,7 +7,7 @@ import json
 from app.main import app
 from app.core.config import Settings
 from app.services.llm_inference import LLMInference
-from app.services.worldbuilding_persistence import WorldbuildingPersistenceService
+
 
 
 @pytest.fixture(autouse=True)
@@ -265,8 +265,4 @@ def sample_generate_character_request():
     }
 
 
-@pytest.fixture
-def temp_persistence_service(tmp_path):
-    """Create a WorldbuildingPersistenceService with a temporary directory."""
-    storage_path = tmp_path / "worldbuilding"
-    return WorldbuildingPersistenceService(storage_path=str(storage_path))
+

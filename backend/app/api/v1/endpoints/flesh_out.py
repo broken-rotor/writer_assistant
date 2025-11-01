@@ -89,8 +89,7 @@ Provide a detailed, atmospheric expansion (200-400 words)."""
                 "contextType": request.context,
                 "contextMode": request.context_mode,
                 "structuredContextProvided": bool(request.structured_context),
-                "processingMode": context_result.processing_mode,
-                "contextOptimizationApplied": context_result.optimization_applied
+                "processingMode": context_result.processing_mode
             }
         )
     except Exception as e:
