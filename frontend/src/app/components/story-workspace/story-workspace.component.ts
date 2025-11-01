@@ -781,7 +781,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.generatingChapter = true;
     this.loadingService.show('Generating chapter...', 'generate-chapter');
 
-    this.generationService.generateChapterStructured(this.story)
+    this.generationService.generateChapterStructuredNew(this.story)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
@@ -789,7 +789,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           this.loadingService.hide();
         })
       ).subscribe({
-        next: (response) => {
+        next: (response: any) => {
           if (this.story) {
             this.story.chapterCreation.generatedChapter = {
               text: response.chapterText,
@@ -804,7 +804,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
             this.toastService.show('Chapter generated successfully!', 'success');
           }
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error('Error generating chapter:', err);
           this.toastService.show('Error generating chapter: ' + err, 'error');
         }

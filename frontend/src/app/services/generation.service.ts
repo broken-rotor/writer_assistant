@@ -24,7 +24,14 @@ import {
   EnhancedEditorReviewRequest,
   ApiPhaseContext,
   ChapterComposeState,
-  ConversationThread
+  ConversationThread,
+  // Legacy request/response types still needed
+  CharacterFeedbackRequest,
+  CharacterFeedbackResponse,
+  RaterFeedbackRequest,
+  RaterFeedbackResponse,
+  EditorReviewRequest,
+  EditorReviewResponse
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
@@ -74,15 +81,17 @@ export class GenerationService {
 
       const context = contextResult.data;
 
-      // Build request using structured context
-      const request: GenerateChapterRequest = {
+      // Build structured request using structured context
+      const request: StructuredGenerateChapterRequest = {
         systemPrompts: {
           mainPrefix: context.systemPrompts.mainPrefix,
           mainSuffix: context.systemPrompts.mainSuffix,
           assistantPrompt: this.buildChapterGenerationPrompt(story, context.plotPoint.plotPoint)
         },
-        worldbuilding: context.worldbuilding.content,
-        storySummary: context.storySummary.summary,
+        worldbuilding: { content: context.worldbuilding.content },
+        storySummary: { summary: context.storySummary.summary },
+        plotContext: { plotPoint: context.plotPoint.plotPoint },
+        feedbackContext: { incorporatedFeedback: context.feedback.incorporatedFeedback },
         previousChapters: context.previousChapters.chapters.map(ch => ({
           number: ch.number,
           title: ch.title,
@@ -101,9 +110,7 @@ export class GenerationService {
           motivations: c.motivations,
           fears: c.fears,
           relationships: c.relationships
-        })),
-        plotPoint: context.plotPoint.plotPoint,
-        incorporatedFeedback: context.feedback.incorporatedFeedback
+        }))
       };
 
       return this.apiService.generateChapter(request);
@@ -218,14 +225,16 @@ export class GenerationService {
   ): Observable<GenerateChapterResponse> {
     const plotPoint = outlineItems.map(item => `${item.title}: ${item.description}`).join('\n\n');
     
-    const request: GenerateChapterRequest = {
+    const request: StructuredGenerateChapterRequest = {
       systemPrompts: {
         mainPrefix: story.general.systemPrompts.mainPrefix,
         mainSuffix: story.general.systemPrompts.mainSuffix,
         assistantPrompt: story.general.systemPrompts.assistantPrompt
       },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
+      worldbuilding: { content: story.general.worldbuilding },
+      storySummary: { summary: story.story.summary },
+      plotContext: { plotPoint: plotPoint },
+      feedbackContext: { incorporatedFeedback: [] },
       previousChapters: story.story.chapters.map(ch => ({
         number: ch.number,
         title: ch.title,
@@ -246,9 +255,7 @@ export class GenerationService {
           motivations: c.motivations,
           fears: c.fears,
           relationships: c.relationships
-        })),
-      plotPoint: plotPoint,
-      incorporatedFeedback: []
+        }))
     };
 
     return this.apiService.generateChapter(request);
@@ -537,7 +544,23 @@ export class GenerationService {
       phase_context: this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions)
     };
 
-    return this.apiService.requestCharacterFeedbackWithPhase(enhancedRequest);
+    // Convert to structured request and use new API method
+    const structuredRequest: StructuredCharacterFeedbackRequest = {
+      worldbuilding: { content: enhancedRequest.worldbuilding },
+      storySummary: { summary: enhancedRequest.storySummary },
+      plotContext: { plotPoint: enhancedRequest.plotPoint },
+      character: enhancedRequest.character,
+      previousChapters: enhancedRequest.previousChapters,
+      systemPrompts: enhancedRequest.systemPrompts,
+      phaseContext: enhancedRequest.phase_context ? {
+        currentPhase: enhancedRequest.compose_phase || 'chapter_detail',
+        previousPhaseOutput: enhancedRequest.phase_context.previous_phase_output,
+        phaseSpecificInstructions: enhancedRequest.phase_context.phase_specific_instructions,
+        conversationHistory: enhancedRequest.phase_context.conversation_history,
+        conversationBranchId: enhancedRequest.phase_context.conversation_branch_id
+      } : undefined
+    };
+    return this.apiService.requestCharacterFeedback(structuredRequest);
   }
 
   /**
@@ -573,7 +596,23 @@ export class GenerationService {
       phase_context: this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions)
     };
 
-    return this.apiService.requestRaterFeedbackWithPhase(enhancedRequest);
+    // Convert to structured request and use new API method
+    const structuredRequest: StructuredRaterFeedbackRequest = {
+      worldbuilding: { content: enhancedRequest.worldbuilding },
+      storySummary: { summary: enhancedRequest.storySummary },
+      plotContext: { plotPoint: enhancedRequest.plotPoint },
+      raterPrompt: enhancedRequest.raterPrompt,
+      previousChapters: enhancedRequest.previousChapters,
+      systemPrompts: enhancedRequest.systemPrompts,
+      phaseContext: enhancedRequest.phase_context ? {
+        currentPhase: enhancedRequest.compose_phase || 'chapter_detail',
+        previousPhaseOutput: enhancedRequest.phase_context.previous_phase_output,
+        phaseSpecificInstructions: enhancedRequest.phase_context.phase_specific_instructions,
+        conversationHistory: enhancedRequest.phase_context.conversation_history,
+        conversationBranchId: enhancedRequest.phase_context.conversation_branch_id
+      } : undefined
+    };
+    return this.apiService.requestRaterFeedback(structuredRequest);
   }
 
   /**
@@ -624,7 +663,24 @@ export class GenerationService {
       phase_context: this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions)
     };
 
-    return this.apiService.generateChapterWithPhase(enhancedRequest);
+    // Convert to structured request and use new API method
+    const structuredRequest: StructuredGenerateChapterRequest = {
+      worldbuilding: { content: enhancedRequest.worldbuilding },
+      storySummary: { summary: enhancedRequest.storySummary },
+      plotContext: { plotPoint: enhancedRequest.plotPoint },
+      feedbackContext: { incorporatedFeedback: enhancedRequest.incorporatedFeedback },
+      characters: enhancedRequest.characters,
+      previousChapters: enhancedRequest.previousChapters,
+      systemPrompts: enhancedRequest.systemPrompts,
+      phaseContext: enhancedRequest.phase_context ? {
+        currentPhase: enhancedRequest.compose_phase || 'chapter_detail',
+        previousPhaseOutput: enhancedRequest.phase_context.previous_phase_output,
+        phaseSpecificInstructions: enhancedRequest.phase_context.phase_specific_instructions,
+        conversationHistory: enhancedRequest.phase_context.conversation_history,
+        conversationBranchId: enhancedRequest.phase_context.conversation_branch_id
+      } : undefined
+    };
+    return this.apiService.generateChapter(structuredRequest);
   }
 
   /**
@@ -675,7 +731,23 @@ export class GenerationService {
       phase_context: this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions)
     };
 
-    return this.apiService.requestEditorReviewWithPhase(enhancedRequest);
+    // Convert to structured request and use new API method
+    const structuredRequest: StructuredEditorReviewRequest = {
+      worldbuilding: { content: enhancedRequest.worldbuilding },
+      storySummary: { summary: enhancedRequest.storySummary },
+      chapterToReview: enhancedRequest.chapterToReview,
+      characters: enhancedRequest.characters,
+      previousChapters: enhancedRequest.previousChapters,
+      systemPrompts: enhancedRequest.systemPrompts,
+      phaseContext: enhancedRequest.phase_context ? {
+        currentPhase: enhancedRequest.compose_phase || 'chapter_detail',
+        previousPhaseOutput: enhancedRequest.phase_context.previous_phase_output,
+        phaseSpecificInstructions: enhancedRequest.phase_context.phase_specific_instructions,
+        conversationHistory: enhancedRequest.phase_context.conversation_history,
+        conversationBranchId: enhancedRequest.phase_context.conversation_branch_id
+      } : undefined
+    };
+    return this.apiService.requestEditorReview(structuredRequest);
   }
 
   // ============================================================================
