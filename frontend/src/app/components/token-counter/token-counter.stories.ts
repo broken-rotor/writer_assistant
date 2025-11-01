@@ -1,6 +1,6 @@
 // import type { Meta, StoryObj } from '@storybook/angular';
-type Meta<T> = any;
-type StoryObj<T> = any;
+type Meta<_T> = any;
+type StoryObj<_T> = any;
 import { TokenCounterComponent } from './token-counter.component';
 import {
   TokenCounterData,

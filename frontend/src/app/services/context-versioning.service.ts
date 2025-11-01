@@ -392,7 +392,7 @@ export class ContextVersioningService {
   /**
    * Calculate differences between two context objects
    */
-  private calculateDiffs(oldContext: any, newContext: any, path: string = ''): ContextDiff[] {
+  private calculateDiffs(oldContext: any, newContext: any, path = ''): ContextDiff[] {
     const diffs: ContextDiff[] = [];
     const now = new Date();
 
@@ -654,7 +654,7 @@ export class ContextVersioningService {
               }
             }
           } catch (error) {
-            // Ignore parsing errors for stats
+            console.info('Failed to parse version stats:', error)
           }
         }
       }

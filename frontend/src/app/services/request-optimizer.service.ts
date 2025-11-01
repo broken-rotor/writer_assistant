@@ -278,7 +278,7 @@ export class RequestOptimizerService {
   private optimizeChapters(
     chapters: StructuredChapterContext[],
     maxChapters: number,
-    prioritizeRecent: boolean = true
+    prioritizeRecent = true
   ): StructuredChapterContext[] {
     if (chapters.length <= maxChapters) {
       return chapters;

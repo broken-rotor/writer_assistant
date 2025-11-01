@@ -24,9 +24,7 @@ export interface UserPreferences {
   [key: string]: any;
 }
 
-export interface StoryConfiguration {
-  [key: string]: any;
-}
+export type StoryConfiguration = Record<string, any>;
 
 @Injectable({
   providedIn: 'root'

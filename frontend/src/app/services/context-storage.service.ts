@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { 
   BaseContext, 
   ContextType, 
-  ContextVersion, 
   ContextOperationResult 
 } from '../models/context.model';
 import {

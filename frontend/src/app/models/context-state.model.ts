@@ -76,11 +76,11 @@ export interface ContextMigration {
  */
 export interface ContextValidationResult {
   isValid: boolean;
-  errors: Array<{
+  errors: {
     field: string;
     message: string;
     severity: 'error' | 'warning';
-  }>;
+  }[];
   warnings: string[];
   suggestions: string[];
 }
@@ -163,12 +163,12 @@ export interface ContextMergeResult {
 export interface ContextExportFormat {
   version: string;
   exportedAt: Date;
-  contexts: Array<{
+  contexts: {
     type: ContextType;
     data: BaseContext;
     versions?: ContextVersion[];
     branches?: ContextBranch[];
-  }>;
+  }[];
   metadata: {
     totalSize: number;
     contextCount: number;
@@ -200,10 +200,10 @@ export interface ContextImportResult {
   skippedCount: number;
   errorCount: number;
   conflicts: ContextMergeConflict[];
-  errors: Array<{
+  errors: {
     contextId: string;
     error: string;
-  }>;
+  }[];
   warnings: string[];
 }
 
@@ -227,12 +227,12 @@ export interface ContextSearchResult {
   context: BaseContext;
   relevanceScore: number;
   matchedFields: string[];
-  highlights: Array<{
+  highlights: {
     field: string;
     text: string;
     start: number;
     end: number;
-  }>;
+  }[];
 }
 
 /**

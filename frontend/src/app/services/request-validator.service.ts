@@ -347,7 +347,7 @@ export class RequestValidatorService {
     character: any,
     errors: StructuredRequestValidationError[],
     warnings: StructuredRequestValidationError[],
-    fieldPrefix: string = 'character'
+    fieldPrefix = 'character'
   ): void {
     if (!character) {
       errors.push({
