@@ -374,7 +374,9 @@ def sample_modify_chapter_request():
                 }
             ]
         },
-        "currentChapter": "The rain fell hard on the city streets. Detective Chen examined the crime scene with practiced eyes."
+        "currentChapter": "The rain fell hard on the city streets. Detective Chen examined the crime scene with practiced eyes.",
+        "userRequest": "Add more atmospheric details about the weather and setting",
+        "previousChapters": []
     }
 
 
@@ -433,7 +435,8 @@ def sample_editor_review_request():
             ]
         },
         "characters": [],
-        "chapterToReview": "The rain fell hard on the city streets. Detective Chen examined the crime scene."
+        "chapterToReview": "The rain fell hard on the city streets. Detective Chen examined the crime scene.",
+        "previousChapters": []
     }
 
 
