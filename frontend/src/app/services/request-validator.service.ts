@@ -482,7 +482,7 @@ export class RequestValidatorService {
   private validatePhaseContext(
     phaseContext: any,
     errors: StructuredRequestValidationError[],
-    warnings: StructuredRequestValidationError[]
+    _warnings: StructuredRequestValidationError[]
   ): void {
     const validPhases = ['plot_outline', 'chapter_detail', 'final_edit'];
     if (!validPhases.includes(phaseContext.currentPhase)) {

@@ -20,8 +20,8 @@ describe('GenerationService', () => {
   let service: GenerationService;
   let apiServiceSpy: jasmine.SpyObj<ApiService>;
   let contextBuilderSpy: jasmine.SpyObj<ContextBuilderService>;
-  let requestValidatorSpy: jasmine.SpyObj<RequestValidatorService>;
-  let requestOptimizerSpy: jasmine.SpyObj<RequestOptimizerService>;
+  let requestValidatorSpy: jasmine.SpyObj<RequestValidatorService>;  // eslint-disable-line @typescript-eslint/no-unused-vars
+  let requestOptimizerSpy: jasmine.SpyObj<RequestOptimizerService>;  // eslint-disable-line @typescript-eslint/no-unused-vars
 
   beforeEach(() => {
     const spy = jasmine.createSpyObj('ApiService', [
