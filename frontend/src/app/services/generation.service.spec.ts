@@ -4,12 +4,24 @@ import { GenerationService } from './generation.service';
 import { ApiService } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
 import { TokenCountingService } from './token-counting.service';
+import { RequestConverterService } from './request-converter.service';
+import { RequestValidatorService } from './request-validator.service';
+import { RequestOptimizerService } from './request-optimizer.service';
 import { Story, Character, Rater } from '../models/story.model';
+import { 
+  StructuredCharacterFeedbackResponse,
+  StructuredRaterFeedbackResponse,
+  StructuredGenerateChapterResponse,
+  StructuredEditorReviewResponse
+} from '../models/structured-request.model';
 import { of } from 'rxjs';
 
 describe('GenerationService', () => {
   let service: GenerationService;
   let apiServiceSpy: jasmine.SpyObj<ApiService>;
+  let contextBuilderSpy: jasmine.SpyObj<ContextBuilderService>;
+  let requestValidatorSpy: jasmine.SpyObj<RequestValidatorService>;
+  let requestOptimizerSpy: jasmine.SpyObj<RequestOptimizerService>;
 
   beforeEach(() => {
     const spy = jasmine.createSpyObj('ApiService', [
@@ -22,7 +34,7 @@ describe('GenerationService', () => {
       'generateCharacterDetails'
     ]);
 
-    const contextBuilderSpy = jasmine.createSpyObj('ContextBuilderService', [
+    const contextBuilderSpyObj = jasmine.createSpyObj('ContextBuilderService', [
       'buildSystemPromptsContext',
       'buildWorldbuildingContext',
       'buildStorySummaryContext',
@@ -40,18 +52,50 @@ describe('GenerationService', () => {
       'countTokens'
     ]);
 
+    const requestConverterSpy = jasmine.createSpyObj('RequestConverterService', [
+      'convertToStructured'
+    ]);
+
+    const requestValidatorSpyObj = jasmine.createSpyObj('RequestValidatorService', [
+      'validateCharacterFeedbackRequest',
+      'validateRaterFeedbackRequest',
+      'validateEditorReviewRequest'
+    ]);
+
+    const requestOptimizerSpyObj = jasmine.createSpyObj('RequestOptimizerService', [
+      'optimizeCharacterFeedbackRequest',
+      'optimizeRaterFeedbackRequest',
+      'optimizeEditorReviewRequest'
+    ]);
+
+    // Set up default validation responses
+    requestValidatorSpyObj.validateCharacterFeedbackRequest.and.returnValue({ isValid: true, errors: [] });
+    requestValidatorSpyObj.validateRaterFeedbackRequest.and.returnValue({ isValid: true, errors: [] });
+    requestValidatorSpyObj.validateEditorReviewRequest.and.returnValue({ isValid: true, errors: [] });
+
+    // Set up default optimization responses
+    requestOptimizerSpyObj.optimizeCharacterFeedbackRequest.and.returnValue({ optimizedRequest: {} as any });
+    requestOptimizerSpyObj.optimizeRaterFeedbackRequest.and.returnValue({ optimizedRequest: {} as any });
+    requestOptimizerSpyObj.optimizeEditorReviewRequest.and.returnValue({ optimizedRequest: {} as any });
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
         GenerationService,
         { provide: ApiService, useValue: spy },
-        { provide: ContextBuilderService, useValue: contextBuilderSpy },
-        { provide: TokenCountingService, useValue: tokenCountingSpy }
+        { provide: ContextBuilderService, useValue: contextBuilderSpyObj },
+        { provide: TokenCountingService, useValue: tokenCountingSpy },
+        { provide: RequestConverterService, useValue: requestConverterSpy },
+        { provide: RequestValidatorService, useValue: requestValidatorSpyObj },
+        { provide: RequestOptimizerService, useValue: requestOptimizerSpyObj }
       ]
     });
 
     service = TestBed.inject(GenerationService);
     apiServiceSpy = TestBed.inject(ApiService) as jasmine.SpyObj<ApiService>;
+    contextBuilderSpy = TestBed.inject(ContextBuilderService) as jasmine.SpyObj<ContextBuilderService>;
+    requestValidatorSpy = TestBed.inject(RequestValidatorService) as jasmine.SpyObj<RequestValidatorService>;
+    requestOptimizerSpy = TestBed.inject(RequestOptimizerService) as jasmine.SpyObj<RequestOptimizerService>;
   });
 
   it('should be created', () => {
@@ -59,7 +103,7 @@ describe('GenerationService', () => {
   });
 
   describe('requestCharacterFeedback', () => {
-    it('should build request with complete context and call API', (done) => {
+    it('should build structured request with complete context and call API', (done) => {
       const mockStory = createMockStory();
       const mockCharacter: Character = {
         id: 'char-1',
@@ -82,7 +126,7 @@ describe('GenerationService', () => {
         }
       };
 
-      const mockResponse = {
+      const mockResponse: StructuredCharacterFeedbackResponse = {
         characterName: 'Test Character',
         feedback: {
           actions: ['Draw sword'],
@@ -90,8 +134,30 @@ describe('GenerationService', () => {
           physicalSensations: ['Heart pounding'],
           emotions: ['Fear'],
           internalMonologue: ['What awaits?']
+        },
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
         }
       };
+
+      // Mock context builder responses
+      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
+        success: true,
+        data: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' }
+      });
+      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
+        success: true,
+        data: { content: 'A fantasy world' }
+      });
+      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
+        success: true,
+        data: { summary: 'A story about heroes' }
+      });
+      contextBuilderSpy.buildChaptersContext.and.returnValue({
+        success: true,
+        data: { chapters: [] }
+      });
 
       apiServiceSpy.requestCharacterFeedback.and.returnValue(of(mockResponse));
 
@@ -113,7 +179,7 @@ describe('GenerationService', () => {
   });
 
   describe('requestRaterFeedback', () => {
-    it('should build request with complete context and call API', (done) => {
+    it('should build structured request with complete context and call API', (done) => {
       const mockStory = createMockStory();
       const mockRater: Rater = {
         id: 'rater-1',
@@ -126,13 +192,35 @@ describe('GenerationService', () => {
         }
       };
 
-      const mockResponse = {
+      const mockResponse: StructuredRaterFeedbackResponse = {
         raterName: 'Pacing Rater',
         feedback: {
           opinion: 'Good pacing',
           suggestions: []
+        },
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
         }
       };
+
+      // Mock context builder responses
+      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
+        success: true,
+        data: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' }
+      });
+      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
+        success: true,
+        data: { content: 'A fantasy world' }
+      });
+      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
+        success: true,
+        data: { summary: 'A story about heroes' }
+      });
+      contextBuilderSpy.buildChaptersContext.and.returnValue({
+        success: true,
+        data: { chapters: [] }
+      });
 
       apiServiceSpy.requestRaterFeedback.and.returnValue(of(mockResponse));
 
@@ -152,13 +240,31 @@ describe('GenerationService', () => {
   });
 
   describe('generateChapter', () => {
-    it('should build complete request and call API', (done) => {
+    it('should build structured request and call API', (done) => {
       const mockStory = createMockStory();
       mockStory.chapterCreation.plotPoint = 'The hero enters the dungeon';
 
-      const mockResponse = {
-        chapterText: 'The hero stepped into the dark dungeon...'
+      const mockResponse: StructuredGenerateChapterResponse = {
+        chapterText: 'The hero stepped into the dark dungeon...',
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
+        }
       };
+
+      // Mock context builder response
+      contextBuilderSpy.buildChapterGenerationContext.and.returnValue({
+        success: true,
+        data: {
+          systemPrompts: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' },
+          worldbuilding: { content: 'A fantasy world' },
+          storySummary: { summary: 'A story about heroes' },
+          plotPoint: { plotPoint: 'The hero enters the dungeon' },
+          feedback: { incorporatedFeedback: [] },
+          previousChapters: { chapters: [] },
+          characters: { characters: [] }
+        }
+      });
 
       apiServiceSpy.generateChapter.and.returnValue(of(mockResponse));
 
@@ -221,9 +327,43 @@ describe('GenerationService', () => {
         }
       });
 
-      const mockResponse = {
-        chapterText: 'Chapter text'
+      const mockResponse: StructuredGenerateChapterResponse = {
+        chapterText: 'Chapter text',
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
+        }
       };
+
+      // Mock context builder response with filtered characters
+      contextBuilderSpy.buildChapterGenerationContext.and.returnValue({
+        success: true,
+        data: {
+          systemPrompts: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' },
+          worldbuilding: { content: 'A fantasy world' },
+          storySummary: { summary: 'A story about heroes' },
+          plotPoint: { plotPoint: '' },
+          feedback: { incorporatedFeedback: [] },
+          previousChapters: { chapters: [] },
+          characters: { 
+            characters: [{
+              name: 'Visible Character',
+              basicBio: 'A hero',
+              sex: 'Male',
+              gender: 'Male',
+              sexualPreference: 'Heterosexual',
+              age: 30,
+              physicalAppearance: 'Tall',
+              usualClothing: 'Armor',
+              personality: 'Brave',
+              motivations: 'Justice',
+              fears: 'Failure',
+              relationships: 'None',
+              isHidden: false
+            }]
+          }
+        }
+      });
 
       apiServiceSpy.generateChapter.and.returnValue(of(mockResponse));
 
@@ -262,12 +402,38 @@ describe('GenerationService', () => {
   });
 
   describe('requestEditorReview', () => {
-    it('should build request with chapter and call API', (done) => {
+    it('should build structured request with chapter and call API', (done) => {
       const mockStory = createMockStory();
-      const mockResponse = {
+      const mockResponse: StructuredEditorReviewResponse = {
         overallAssessment: 'Good chapter',
-        suggestions: []
+        suggestions: [],
+        requestMetadata: {
+          timestamp: new Date(),
+          requestSource: 'generation_service_structured'
+        }
       };
+
+      // Mock context builder responses
+      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
+        success: true,
+        data: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' }
+      });
+      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
+        success: true,
+        data: { content: 'A fantasy world' }
+      });
+      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
+        success: true,
+        data: { summary: 'A story about heroes' }
+      });
+      contextBuilderSpy.buildChaptersContext.and.returnValue({
+        success: true,
+        data: { chapters: [] }
+      });
+      contextBuilderSpy.buildCharacterContext.and.returnValue({
+        success: true,
+        data: { characters: [] }
+      });
 
       apiServiceSpy.requestEditorReview.and.returnValue(of(mockResponse));
 
