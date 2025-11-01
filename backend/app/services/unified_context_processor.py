@@ -24,12 +24,19 @@ from app.services.context_manager import ContextManager
 from app.services.context_optimization import ContextOptimizationService, OptimizedContext
 from app.services.context_adapter import ContextAdapter
 from app.models.context_models import (
-    StructuredContextContainer,
+    StructuredContextContainer as LegacyStructuredContextContainer,
     ContextProcessingConfig,
     AgentType,
-    ComposePhase
+    ComposePhase,
+    StoryContextElement,
+    CharacterContextElement,
+    UserContextElement,
+    SystemContextElement,
+    ContextType,
+    ContextMetadata as LegacyContextMetadata
 )
 from app.models.generation_models import (
+    StructuredContextContainer,
     SystemPrompts,
     CharacterInfo,
     ChapterInfo,
@@ -39,6 +46,88 @@ from app.models.generation_models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def convert_api_to_legacy_context(api_context: StructuredContextContainer) -> LegacyStructuredContextContainer:
+    """Convert StructuredContextContainer from generation_models.py to context_models.py format."""
+    elements = []
+    
+    # Convert plot elements to story context elements
+    for plot_element in api_context.plot_elements:
+        element = StoryContextElement(
+            id=plot_element.id or f"plot_{len(elements)}",
+            type=ContextType.PLOT_OUTLINE,
+            content=plot_element.content,
+            metadata=LegacyContextMetadata(
+                priority=0.8 if plot_element.priority == "high" else 0.5 if plot_element.priority == "medium" else 0.2,
+                target_agents=[AgentType.WRITER],
+                tags=plot_element.tags
+            )
+        )
+        elements.append(element)
+    
+    # Convert character contexts to story context elements
+    for character_context in api_context.character_contexts:
+        # Create content from character context
+        content = f"Character: {character_context.character_name}\n"
+        if character_context.current_state:
+            content += f"Current State: {character_context.current_state}\n"
+        if character_context.goals:
+            content += f"Goals: {', '.join(character_context.goals)}\n"
+        if character_context.personality_traits:
+            content += f"Personality: {', '.join(character_context.personality_traits)}"
+        
+        element = CharacterContextElement(
+            id=character_context.character_id or f"char_{len(elements)}",
+            type=ContextType.CHARACTER_PROFILE,
+            content=content,
+            character_id=character_context.character_id or f"char_{len(elements)}",
+            character_name=character_context.character_name,
+            metadata=LegacyContextMetadata(
+                priority=0.7,  # Character contexts are generally important
+                target_agents=[AgentType.CHARACTER, AgentType.WRITER],
+                tags=["character"]
+            )
+        )
+        elements.append(element)
+    
+    # Convert user requests to user context elements
+    for user_request in api_context.user_requests:
+        element = UserContextElement(
+            id=user_request.id or f"user_{len(elements)}",
+            type=ContextType.USER_REQUEST,
+            content=user_request.content,
+            metadata=LegacyContextMetadata(
+                priority=0.8 if user_request.priority == "high" else 0.5 if user_request.priority == "medium" else 0.2,
+                target_agents=[AgentType.WRITER],
+                tags=[]
+            )
+        )
+        elements.append(element)
+    
+    # Convert system instructions to system context elements
+    for sys_instruction in api_context.system_instructions:
+        element = SystemContextElement(
+            id=sys_instruction.id or f"sys_{len(elements)}",
+            type=ContextType.SYSTEM_INSTRUCTION,
+            content=sys_instruction.content,
+            metadata=LegacyContextMetadata(
+                priority=0.8 if sys_instruction.priority == "high" else 0.5 if sys_instruction.priority == "medium" else 0.2,
+                target_agents=[AgentType.WRITER],
+                tags=[]
+            )
+        )
+        elements.append(element)
+    
+    # Create legacy container
+    return LegacyStructuredContextContainer(
+        elements=elements,
+        global_metadata={
+            "total_elements": len(elements),
+            "converted_from_api": True,
+            "original_total_elements": api_context.metadata.total_elements if api_context.metadata else len(elements)
+        }
+    )
 
 
 @dataclass
@@ -111,7 +200,7 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
-                    compose_phase=compose_phase or ComposePhase.CHAPTER_WRITING,
+                    compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="full_narrative_assembly"
                 )
@@ -292,7 +381,7 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.EDITOR,
-                    compose_phase=compose_phase or ComposePhase.EDITING,
+                    compose_phase=compose_phase or ComposePhase.FINAL_EDIT,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="review_focused_filtering"
                 )
@@ -381,7 +470,7 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.RATER,
-                    compose_phase=compose_phase or ComposePhase.FEEDBACK,
+                    compose_phase=compose_phase or ComposePhase.FINAL_EDIT,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="rater_specific_preparation"
                 )
@@ -625,6 +714,9 @@ class UnifiedContextProcessor:
     ) -> UnifiedContextResult:
         """Process structured context using ContextManager."""
         try:
+            # Convert API structured context to legacy format for processing
+            legacy_context = convert_api_to_legacy_context(structured_context)
+            
             # Create processing configuration
             processing_config = ContextProcessingConfig(
                 target_agent=agent_type,
@@ -637,7 +729,7 @@ class UnifiedContextProcessor:
 
             # Process context with ContextManager
             formatted_context, metadata = self.context_manager.process_context_for_agent(
-                structured_context, processing_config
+                legacy_context, processing_config
             )
 
             # Parse the formatted context to extract system prompt and user message
@@ -647,11 +739,13 @@ class UnifiedContextProcessor:
 
             # Create context metadata
             context_metadata = ContextMetadata(
-                total_elements=metadata.get("original_count", 0),
+                total_elements=metadata.get("original_element_count", 0),
                 processing_applied=metadata.get("was_summarized", False),
+                processing_mode="structured",
                 optimization_level="moderate" if metadata.get("was_summarized", False) else "none",
-                compression_ratio=metadata.get("compression_ratio"),
-                processing_time_ms=metadata.get("processing_time_ms", 0)
+                compression_ratio=metadata.get("reduction_ratio"),
+                processing_time_ms=metadata.get("processing_time_ms", 0),
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -660,8 +754,8 @@ class UnifiedContextProcessor:
                 context_metadata=context_metadata,
                 processing_mode="structured",
                 optimization_applied=metadata.get("was_summarized", False),
-                total_tokens=metadata.get("final_token_count", 0),
-                compression_ratio=metadata.get("compression_ratio", 1.0)
+                total_tokens=metadata.get("final_element_count", 0) * 100,  # Rough estimate
+                compression_ratio=metadata.get("reduction_ratio", 1.0)
             )
 
         except Exception as e:
@@ -687,13 +781,16 @@ class UnifiedContextProcessor:
                 compose_phase=legacy_params.get("compose_phase")
             )
 
+            # Convert API structured context to legacy format for processing
+            legacy_structured_context = convert_api_to_legacy_context(structured_context)
+            
             # Merge legacy and structured contexts
-            merged_elements = list(structured_context.elements) + list(legacy_container.elements)
-            merged_container = StructuredContextContainer(
+            merged_elements = list(legacy_structured_context.elements) + list(legacy_container.elements)
+            merged_container = LegacyStructuredContextContainer(
                 elements=merged_elements,
-                relationships=structured_context.relationships + legacy_container.relationships,
+                relationships=legacy_structured_context.relationships + legacy_container.relationships,
                 global_metadata={
-                    **structured_context.global_metadata,
+                    **legacy_structured_context.global_metadata,
                     **legacy_container.global_metadata,
                     "processing_mode": "hybrid",
                     "legacy_mapping": mapping.model_dump()
@@ -704,7 +801,7 @@ class UnifiedContextProcessor:
             return self._process_structured_context(
                 structured_context=merged_container,
                 agent_type=agent_type,
-                compose_phase=legacy_params.get("compose_phase", ComposePhase.CHAPTER_WRITING),
+                compose_phase=legacy_params.get("compose_phase", ComposePhase.CHAPTER_DETAIL),
                 context_processing_config=context_processing_config,
                 endpoint_strategy=endpoint_strategy
             )
@@ -743,9 +840,11 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=len(characters) + len(incorporated_feedback) + (1 if previous_chapters else 0),
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -788,9 +887,11 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=3,  # system_prompts, worldbuilding, story_summary
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -833,9 +934,11 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=len(previous_chapters) + 3,  # chapters + system_prompts, worldbuilding, story_summary
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -880,9 +983,11 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=4,  # system_prompts, rater_prompt, worldbuilding, story_summary, plot_point
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -927,9 +1032,11 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=len(characters) + 5,  # + system_prompts, worldbuilding, story_summary, original_chapter, modification_request
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(
@@ -972,9 +1079,11 @@ class UnifiedContextProcessor:
             context_metadata = ContextMetadata(
                 total_elements=4,  # system_prompts, worldbuilding, story_summary, context, text_to_flesh_out
                 processing_applied=optimized.optimization_applied,
+                processing_mode="legacy",
                 optimization_level="moderate" if optimized.optimization_applied else "none",
                 compression_ratio=optimized.compression_ratio if optimized.optimization_applied else None,
-                processing_time_ms=0  # Not tracked in legacy system
+                processing_time_ms=0,  # Not tracked in legacy system
+                created_at=datetime.now(timezone.utc).isoformat()
             )
 
             return UnifiedContextResult(

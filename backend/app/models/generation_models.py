@@ -245,6 +245,10 @@ class ContextMetadata(BaseModel):
     """Metadata about context processing and optimization."""
     total_elements: int = Field(description="Total number of context elements")
     processing_applied: bool = Field(description="Whether context processing was applied")
+    processing_mode: Literal["legacy", "structured", "hybrid"] = Field(
+        default="legacy",
+        description="Which context processing mode was used"
+    )
     optimization_level: Literal["none", "light", "moderate", "aggressive"] = Field(
         default="none",
         description="Level of context optimization applied"
@@ -260,6 +264,14 @@ class ContextMetadata(BaseModel):
     processing_time_ms: Optional[float] = Field(
         None,
         description="Time taken for context processing in milliseconds"
+    )
+    created_at: Optional[str] = Field(
+        None,
+        description="Timestamp when context processing was performed"
+    )
+    version: str = Field(
+        default="1.0",
+        description="Context processing version"
     )
 
 
