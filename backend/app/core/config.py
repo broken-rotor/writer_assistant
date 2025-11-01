@@ -352,13 +352,13 @@ class Settings(BaseSettings):
 
     # Context Adapter Priority Settings
     CONTEXT_ADAPTER_SYSTEM_PREFIX_PRIORITY: float = Field(
-        default=0.9,
+        default=1.0,
         ge=0.0,
         le=1.0,
         description="Priority for system prompt prefix in context adapter"
     )
     CONTEXT_ADAPTER_SYSTEM_SUFFIX_PRIORITY: float = Field(
-        default=0.9,
+        default=1.0,
         ge=0.0,
         le=1.0,
         description="Priority for system prompt suffix in context adapter"
