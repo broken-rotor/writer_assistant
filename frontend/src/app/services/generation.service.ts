@@ -44,6 +44,7 @@ import {
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';
 import { StructuredCharacter } from '../models/context-builder.model';
+import { transformToStructuredContext } from '../utils/context-transformer';
 
 @Injectable({
   providedIn: 'root'
@@ -173,7 +174,8 @@ export class GenerationService {
     basicBio: string,
     existingCharacters: Character[]
   ): Observable<GenerateCharacterDetailsResponse> {
-    const request: GenerateCharacterDetailsRequest = {
+    // Transform legacy data to structured context
+    const legacyData = {
       systemPrompts: {
         mainPrefix: story.general.systemPrompts.mainPrefix,
         mainSuffix: story.general.systemPrompts.mainSuffix
@@ -181,11 +183,19 @@ export class GenerationService {
       worldbuilding: story.general.worldbuilding,
       storySummary: story.story.summary,
       basicBio: basicBio,
+      existingCharacters: existingCharacters
+    };
+
+    const structuredContext = transformToStructuredContext(legacyData);
+
+    const request: GenerateCharacterDetailsRequest = {
+      basicBio: basicBio,
       existingCharacters: existingCharacters.map(c => ({
         name: c.name,
         basicBio: c.basicBio,
         relationships: c.relationships
-      }))
+      })),
+      structured_context: structuredContext
     };
 
     return this.apiService.generateCharacterDetails(request);
@@ -197,8 +207,8 @@ export class GenerationService {
     character: Character,
     otherCharacters: Character[]
   ): Observable<GenerateCharacterDetailsResponse> {
-    // Use the same endpoint but we'll only extract the relationships field
-    const request: GenerateCharacterDetailsRequest = {
+    // Transform legacy data to structured context
+    const legacyData = {
       systemPrompts: {
         mainPrefix: story.general.systemPrompts.mainPrefix,
         mainSuffix: story.general.systemPrompts.mainSuffix
@@ -206,11 +216,20 @@ export class GenerationService {
       worldbuilding: story.general.worldbuilding,
       storySummary: story.story.summary,
       basicBio: character.basicBio,
+      existingCharacters: [character, ...otherCharacters]
+    };
+
+    const structuredContext = transformToStructuredContext(legacyData);
+
+    // Use the same endpoint but we'll only extract the relationships field
+    const request: GenerateCharacterDetailsRequest = {
+      basicBio: character.basicBio,
       existingCharacters: otherCharacters.map(c => ({
         name: c.name,
         basicBio: c.basicBio,
         relationships: c.relationships
-      }))
+      })),
+      structured_context: structuredContext
     };
 
     return this.apiService.generateCharacterDetails(request);

@@ -564,19 +564,87 @@ export interface FleshOutRequest {
   context: string;
 }
 
+// Structured Context Models
+export interface PlotElement {
+  id?: string;
+  type: 'scene' | 'conflict' | 'resolution' | 'twist' | 'setup' | 'payoff' | 'transition';
+  content: string;
+  priority?: 'high' | 'medium' | 'low';
+  tags?: string[];
+  metadata?: { [key: string]: any };
+}
+
+export interface CharacterContext {
+  character_id: string;
+  character_name: string;
+  current_state?: { [key: string]: any };
+  recent_actions?: string[];
+  relationships?: { [key: string]: string };
+  goals?: string[];
+  memories?: string[];
+  personality_traits?: string[];
+}
+
+export interface UserRequest {
+  id?: string;
+  type: 'modification' | 'addition' | 'removal' | 'style_change' | 'tone_adjustment' | 'general';
+  content: string;
+  priority?: 'high' | 'medium' | 'low';
+  target?: string;
+  context?: string;
+  timestamp?: string;
+}
+
+export interface SystemInstruction {
+  id?: string;
+  type: 'behavior' | 'style' | 'constraint' | 'preference' | 'rule';
+  content: string;
+  scope?: 'global' | 'character' | 'scene' | 'chapter' | 'story';
+  priority?: 'high' | 'medium' | 'low';
+  conditions?: { [key: string]: any };
+  metadata?: { [key: string]: any };
+}
+
+export interface ContextMetadata {
+  total_elements: number;
+  processing_applied: boolean;
+  processing_mode?: 'legacy' | 'structured' | 'hybrid';
+  optimization_level?: 'none' | 'light' | 'moderate' | 'aggressive';
+  compression_ratio?: number;
+  filtered_elements?: { [key: string]: number };
+  processing_time_ms?: number;
+  created_at?: string;
+  version?: string;
+}
+
+export interface StructuredContextContainer {
+  plot_elements?: PlotElement[];
+  character_contexts?: CharacterContext[];
+  user_requests?: UserRequest[];
+  system_instructions?: SystemInstruction[];
+  metadata?: ContextMetadata;
+}
+
 export interface GenerateCharacterDetailsRequest {
-  systemPrompts: {
-    mainPrefix: string;
-    mainSuffix: string;
-  };
-  worldbuilding: string;
-  storySummary: string;
   basicBio: string;
   existingCharacters: {
     name: string;
     basicBio: string;
     relationships: string;
   }[];
+  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  phase_context?: {
+    previous_phase_output?: string;
+    phase_specific_instructions?: string;
+    conversation_history?: Array<{
+      role: 'user' | 'assistant';
+      content: string;
+      timestamp?: string;
+    }>;
+    conversation_branch_id?: string;
+  };
+  structured_context: StructuredContextContainer;
+  context_processing_config?: { [key: string]: any };
 }
 
 // API Response types
@@ -635,6 +703,7 @@ export interface GenerateCharacterDetailsResponse {
   motivations: string;
   fears: string;
   relationships: string;
+  context_metadata?: ContextMetadata;
 }
 
 // ============================================================================
