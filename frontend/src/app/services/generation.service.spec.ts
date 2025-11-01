@@ -99,7 +99,9 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.requestCharacterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotPoint: 'Enter dungeon',
+            plotContext: jasmine.objectContaining({
+              plotPoint: 'Enter dungeon'
+            }),
             character: jasmine.objectContaining({
               name: 'Test Character'
             })
@@ -138,7 +140,9 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.requestRaterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotPoint: 'Enter dungeon',
+            plotContext: jasmine.objectContaining({
+              plotPoint: 'Enter dungeon'
+            }),
             raterPrompt: 'Evaluate pacing'
           })
         );
@@ -162,8 +166,12 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.generateChapter).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotPoint: 'The hero enters the dungeon',
-            incorporatedFeedback: []
+            plotContext: jasmine.objectContaining({
+              plotPoint: 'The hero enters the dungeon'
+            }),
+            feedbackContext: jasmine.objectContaining({
+              incorporatedFeedback: []
+            })
           })
         );
         done();
