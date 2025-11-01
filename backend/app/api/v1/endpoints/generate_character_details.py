@@ -7,6 +7,7 @@ from app.models.generation_models import (
     GenerateCharacterDetailsResponse
 )
 from app.services.llm_inference import get_llm
+from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response
 import logging
 import re
@@ -18,31 +19,45 @@ router = APIRouter()
 
 @router.post("/generate-character-details", response_model=GenerateCharacterDetailsResponse)
 async def generate_character_details(request: GenerateCharacterDetailsRequest):
-    """Generate detailed character information using LLM."""
+    """Generate detailed character information using LLM with structured context support."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        existing_chars = "\n".join([
-            f"- {c.get('name', 'Unknown')}: {c.get('basicBio', '')}"
-            for c in request.existingCharacters[:3]
-        ])
+        # Get unified context processor
+        context_processor = get_unified_context_processor()
 
-        system_prompt = f"""{request.systemPrompts.mainPrefix}
+        # Process context using unified processor (supports both legacy and structured contexts)
+        context_result = context_processor.process_character_generation_context(
+            # Legacy fields
+            system_prompts=request.systemPrompts,
+            worldbuilding=request.worldbuilding,
+            story_summary=request.storySummary,
+            basic_bio=request.basicBio,
+            existing_characters=request.existingCharacters,
+            # Phase context
+            compose_phase=request.compose_phase,
+            phase_context=request.phase_context,
+            # Structured context
+            structured_context=request.structured_context,
+            context_mode=request.context_mode,
+            context_processing_config=request.context_processing_config
+        )
 
-Create detailed characters for stories with rich personalities and backgrounds.
+        # Log context processing results
+        if context_result.optimization_applied:
+            logger.info(f"Character generation context processing applied ({context_result.processing_mode} mode): "
+                       f"{context_result.total_tokens} tokens, "
+                       f"compression ratio: {context_result.compression_ratio:.2f}")
+        else:
+            logger.debug(f"No character generation context optimization needed ({context_result.processing_mode} mode): "
+                        f"{context_result.total_tokens} tokens")
 
-{request.systemPrompts.mainSuffix}"""
-
-        user_message = f"""Story context:
-- World: {request.worldbuilding}
-- Story: {request.storySummary}
-
-Character concept: {request.basicBio}
-
-Existing characters:
-{existing_chars}
+        # For character generation, we need to ensure the user message includes the JSON format instruction
+        # if it's not already included in the structured context
+        if not any("JSON format" in context_result.user_message for _ in [1]):
+            json_instruction = f"""
 
 Generate complete character details in JSON format:
 {{
@@ -58,12 +73,17 @@ Generate complete character details in JSON format:
   "fears": "what they fear",
   "relationships": "how they relate to others"
 }}"""
+            user_message = context_result.user_message + json_instruction
+        else:
+            user_message = context_result.user_message
 
+        # Prepare messages for LLM
         messages = [
-            {"role": "system", "content": system_prompt.strip()},
+            {"role": "system", "content": context_result.system_prompt.strip()},
             {"role": "user", "content": user_message.strip()}
         ]
 
+        # Generate character details using LLM
         response_text = llm.chat_completion(messages, max_tokens=1000, temperature=0.7)
         parsed = parse_json_response(response_text)
 
@@ -79,7 +99,8 @@ Generate complete character details in JSON format:
                 personality=parsed.get('personality', ''),
                 motivations=parsed.get('motivations', ''),
                 fears=parsed.get('fears', ''),
-                relationships=parsed.get('relationships', '')
+                relationships=parsed.get('relationships', ''),
+                context_metadata=context_result.context_metadata
             )
         else:
             logger.warning("Failed to parse character JSON, using fallback")
@@ -98,7 +119,8 @@ Generate complete character details in JSON format:
                 personality=request.basicBio,
                 motivations="To achieve their goals",
                 fears="Failure and loss",
-                relationships="Building connections with others"
+                relationships="Building connections with others",
+                context_metadata=context_result.context_metadata
             )
     except Exception as e:
         logger.error(f"Error in generate_character_details: {str(e)}")
