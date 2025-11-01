@@ -264,8 +264,8 @@ Each API endpoint can have customized generation parameters:
 
 | Setting | Type | Default | Range | Description | Usage |
 |---------|------|---------|-------|-------------|-------|
-| `CONTEXT_ADAPTER_SYSTEM_PREFIX_PRIORITY` | float | `0.9` | 0.0-1.0 | Priority for system prompt prefix | Opening system instructions |
-| `CONTEXT_ADAPTER_SYSTEM_SUFFIX_PRIORITY` | float | `0.9` | 0.0-1.0 | Priority for system prompt suffix | Closing system instructions |
+| `CONTEXT_ADAPTER_SYSTEM_PREFIX_PRIORITY` | float | `1.0` | 0.0-1.0 | Priority for system prompt prefix | Opening system instructions |
+| `CONTEXT_ADAPTER_SYSTEM_SUFFIX_PRIORITY` | float | `1.0` | 0.0-1.0 | Priority for system prompt suffix | Closing system instructions |
 | `CONTEXT_ADAPTER_WRITING_ASSISTANT_PRIORITY` | float | `0.8` | 0.0-1.0 | Priority for writing assistant prompt | Writing-specific instructions |
 | `CONTEXT_ADAPTER_WRITING_EDITOR_PRIORITY` | float | `0.8` | 0.0-1.0 | Priority for writing editor prompt | Editing-specific instructions |
 | `CONTEXT_ADAPTER_CHARACTER_PROMPT_PRIORITY` | float | `0.7` | 0.0-1.0 | Priority for character prompt | Character-specific instructions |

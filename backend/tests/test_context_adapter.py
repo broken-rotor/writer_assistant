@@ -52,7 +52,7 @@ class TestContextAdapter:
         assert prefix_element.content == "You are a creative writing assistant."
         assert prefix_element.type == ContextType.SYSTEM_PROMPT
         assert AgentType.WRITER in prefix_element.applies_to_agents
-        assert prefix_element.metadata.priority == 0.9
+        assert prefix_element.metadata.priority == 1.0
         assert prefix_element.metadata.summarization_rule == SummarizationRule.PRESERVE_FULL
         
         # Check assistant prompt targeting
