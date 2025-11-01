@@ -1,6 +1,60 @@
-# Writer Assistant Backend Settings Configuration
+# Writer Assistant Backend Configuration Guide
 
 This document provides comprehensive documentation of all configuration options available in the Writer Assistant backend. All settings are defined in `app/core/config.py` and can be configured via environment variables in the `.env` file.
+
+## Table of Contents
+
+1. [Quick Start](#quick-start)
+2. [Configuration Overview](#configuration-overview)
+3. [Core Settings](#core-settings)
+4. [LLM Configuration](#llm-configuration)
+5. [Context Management Configuration](#context-management-configuration)
+6. [Endpoint-Specific Generation Settings](#endpoint-specific-generation-settings)
+7. [Context Priority Settings](#context-priority-settings)
+8. [Archive Configuration](#archive-configuration)
+9. [Deployment Examples](#deployment-examples)
+10. [Configuration Examples](#configuration-examples)
+11. [Troubleshooting](#troubleshooting)
+12. [Migration Notes](#migration-notes)
+
+## Quick Start
+
+### Option 1: Using the start script (recommended)
+
+```bash
+# Simple usage - pass model path as argument
+./start_with_llm.sh /path/to/model.gguf
+
+# With custom settings
+LLM_N_CTX=8192 LLM_N_GPU_LAYERS=35 ./start_with_llm.sh /path/to/model.gguf
+```
+
+### Option 2: Using a .env file
+
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and set your model path:
+   ```bash
+   MODEL_PATH=/path/to/your/model.gguf
+   ```
+
+3. Start the server:
+   ```bash
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+### Option 3: Export environment variables manually
+
+```bash
+export MODEL_PATH=/path/to/model.gguf
+export LLM_N_CTX=8192
+export LLM_N_GPU_LAYERS=-1
+
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
 ## Configuration Overview
 
@@ -8,6 +62,28 @@ The backend uses Pydantic Settings for configuration management, which loads val
 1. Default values (defined in code)
 2. Environment variables (from `.env` file or system environment)
 3. Runtime overrides (passed directly to services)
+
+### How Configuration Works
+
+The backend uses Pydantic Settings (`app.core.config.Settings`) to manage all configuration:
+
+1. **Environment Variables**: Set via shell exports or .env file
+2. **Pydantic Validation**: Automatic type checking and constraint validation
+3. **LLM Initialization**: `LLMInferenceConfig.from_settings(settings)` reads validated config
+4. **Error Handling**: Invalid values cause startup errors with clear messages
+
+### Validation Examples
+
+```bash
+# ✅ Valid configuration
+export LLM_TEMPERATURE=0.7    # OK: Between 0.0 and 2.0
+export LLM_N_CTX=8192         # OK: Valid integer
+
+# ❌ Invalid configuration (will fail at startup)
+export LLM_TEMPERATURE=5.0    # Error: Must be <= 2.0
+export LLM_N_CTX=abc          # Error: Must be integer
+export LLM_TOP_P=1.5          # Error: Must be <= 1.0
+```
 
 ## Core Settings
 
@@ -244,6 +320,48 @@ These settings control the validation logic for story phases:
 | `VALIDATION_COMPLETION_SCORE` | float | `1.0` | 0.0-1.0 | Score for completion validation | Full score for completed content |
 | `VALIDATION_INCOMPLETE_SCORE` | float | `0.5` | 0.0-1.0 | Score for incomplete validation | Moderate score for incomplete content |
 
+## Deployment Examples
+
+### Using with Docker
+
+Set environment variables in Dockerfile:
+```dockerfile
+ENV MODEL_PATH=/models/your-model.gguf
+ENV LLM_N_CTX=4096
+ENV LLM_N_GPU_LAYERS=-1
+```
+
+Or pass at runtime:
+```bash
+docker run -e MODEL_PATH=/models/model.gguf -e LLM_N_CTX=8192 writer-assistant
+```
+
+Or use a .env file:
+```bash
+docker run --env-file .env writer-assistant
+```
+
+### Using with systemd
+
+Create a service file with environment variables:
+
+```ini
+[Service]
+Environment="MODEL_PATH=/path/to/model.gguf"
+Environment="LLM_N_CTX=8192"
+Environment="LLM_N_GPU_LAYERS=-1"
+ExecStart=/usr/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+WorkingDirectory=/path/to/backend
+```
+
+Or load from a .env file:
+```ini
+[Service]
+EnvironmentFile=/path/to/backend/.env
+ExecStart=/usr/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+WorkingDirectory=/path/to/backend
+```
+
 ## Configuration Examples
 
 ### Basic Development Setup
@@ -312,6 +430,65 @@ max_tokens = settings.ENDPOINT_GENERATE_CHAPTER_MAX_TOKENS
 
 ### Common Issues
 
+#### Server starts but LLM not working
+
+Check the startup logs for:
+```
+INFO:     No MODEL_PATH configured in settings. LLM functionality will not be available.
+```
+
+**Solution**: Set the MODEL_PATH environment variable.
+
+#### Validation errors at startup
+
+If you see Pydantic validation errors:
+```
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+LLM_TEMPERATURE
+  Input should be less than or equal to 2.0 [type=less_than_equal, input_value=5.0, input_type=float]
+```
+
+**Solution**: Check that all LLM configuration values are within valid ranges (see Configuration Variables section).
+
+#### Model file not found
+
+Check the startup logs for:
+```
+ERROR:    Failed to initialize LLM: Model file not found: /path/to/model.gguf
+```
+
+**Solution**: Verify the MODEL_PATH points to an existing GGUF file.
+
+#### Out of memory errors
+
+Try reducing:
+- `LLM_N_CTX` to 2048 or lower
+- `LLM_N_GPU_LAYERS` to a smaller number or 0 (CPU only)
+
+#### Slow performance
+
+Try increasing:
+- `LLM_N_GPU_LAYERS` to offload more to GPU
+- `LLM_N_THREADS` if using CPU
+
+#### Configuration Not Loading
+
+If settings aren't being applied:
+1. Check that `.env` file exists in `backend/` directory
+2. Verify there are no syntax errors in `.env`
+3. Restart the backend server after changes
+4. Check logs for configuration warnings
+
+#### Archive Database Path Issues
+
+If archive features fail:
+1. Ensure `ARCHIVE_DB_PATH` points to a writable directory
+2. Create the directory if it doesn't exist
+3. Check file permissions
+4. Verify the path is relative to the backend directory or use absolute paths
+
+### Additional Troubleshooting
+
 1. **Model Loading Fails**: Check `MODEL_PATH` points to valid GGUF file
 2. **Context Assembly Timeout**: Increase `CONTEXT_ASSEMBLY_TIMEOUT`
 3. **Memory Issues**: Reduce `CONTEXT_MAX_TOKENS` or layer allocations
@@ -325,9 +502,92 @@ max_tokens = settings.ENDPOINT_GENERATE_CHAPTER_MAX_TOKENS
 3. **Generation Speed**: Lower `LLM_MAX_TOKENS` for faster responses
 4. **Quality vs Speed**: Adjust temperature settings per endpoint
 
+### Configuration Validation
+
+The backend performs validation at startup using Pydantic. This ensures:
+
+- **Type Safety**: All values are correct types (int, float, bool, str)
+- **Range Validation**: Values are within acceptable ranges
+  - `LLM_TEMPERATURE`: 0.0-2.0
+  - `LLM_TOP_P`: 0.0-1.0
+  - `LLM_TOP_K`: ≥ 1
+  - `LLM_MAX_TOKENS`: ≥ 1
+  - `LLM_REPEAT_PENALTY`: 1.0-2.0
+- **Early Error Detection**: Catch configuration issues before they cause runtime problems
+
+#### Checking Configuration
+
+To verify your configuration is valid without starting the server:
+
+```python
+from app.core.config import settings
+print(f"Model path: {settings.MODEL_PATH}")
+print(f"Context size: {settings.LLM_N_CTX}")
+print(f"Temperature: {settings.LLM_TEMPERATURE}")
+```
+
+If there are validation errors, Pydantic will raise them immediately.
+
 ## Migration Notes
+
+### From Older Versions
 
 If upgrading from older versions, note that some settings from the original `CONFIGURATION.md` are not implemented:
 - `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `PROJECT_NAME`, `DATA_DIR` are not used in the current codebase
 - Legacy settings like `MAX_CONTEXT_LENGTH` and `DEFAULT_TEMPERATURE` have been replaced by the new context management system
 
+### From Command-Line Arguments
+
+If you were previously using command-line arguments, here's the mapping:
+
+| Old Argument | New Environment Variable |
+|-------------|-------------------------|
+| `--model-path` | `MODEL_PATH` |
+| `--n-ctx` | `LLM_N_CTX` |
+| `--n-gpu-layers` | `LLM_N_GPU_LAYERS` |
+| `--n-threads` | `LLM_N_THREADS` |
+| `--temperature` | `LLM_TEMPERATURE` |
+| `--top-p` | `LLM_TOP_P` |
+| `--top-k` | `LLM_TOP_K` |
+| `--max-tokens` | `LLM_MAX_TOKENS` |
+| `--repeat-penalty` | `LLM_REPEAT_PENALTY` |
+| `--verbose` | `LLM_VERBOSE` |
+
+### Configuration Precedence
+
+Configuration values are loaded in the following order (later overrides earlier):
+
+1. **Default values** (defined in `config.py`)
+2. **Environment variables** (from `.env` file or system environment)
+3. **Runtime overrides** (passed directly to services/functions)
+
+Example:
+```python
+# Uses settings.ARCHIVE_DB_PATH by default
+service = ArchiveService()
+
+# Override at runtime
+service = ArchiveService(db_path="/custom/path")
+```
+
+### Production Considerations
+
+When deploying to production:
+
+1. **Set DEBUG=False** to disable debug mode
+2. **Use absolute paths** for `MODEL_PATH` and `ARCHIVE_DB_PATH`
+3. **Secure the .env file** (add to .gitignore, restrict permissions)
+4. **Consider using system environment variables** instead of .env file
+
+### Accessing Configuration in Code
+
+Configuration is accessed through the `settings` object:
+
+```python
+from app.core.config import settings
+
+# Access configuration values
+db_path = settings.ARCHIVE_DB_PATH
+collection_name = settings.ARCHIVE_COLLECTION_NAME
+model_path = settings.MODEL_PATH
+```
