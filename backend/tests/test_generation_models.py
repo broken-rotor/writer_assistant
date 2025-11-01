@@ -135,35 +135,34 @@ class TestStructuredContextModels:
 class TestRequestModels:
     """Test the request models with structured context support."""
     
-    def test_character_feedback_request_legacy_mode(self):
-        """Test CharacterFeedbackRequest in legacy mode."""
-        system_prompts = SystemPrompts(
-            mainPrefix="You are a character",
-            mainSuffix="Respond in character"
+    def test_character_feedback_request_structured_mode(self):
+        """Test CharacterFeedbackRequest in structured mode."""
+        plot_element = PlotElement(type="scene", content="Forest entrance")
+        char_context = CharacterContext(character_id="aria", character_name="Aria")
+        system_instruction = SystemInstruction(
+            type="behavior",
+            content="You are a character responding in character",
+            scope="global"
         )
         
-        character = CharacterInfo(
-            name="Aria",
-            basicBio="A brave hero"
+        structured_context = StructuredContextContainer(
+            plot_elements=[plot_element],
+            character_contexts=[char_context],
+            system_instructions=[system_instruction]
         )
         
         request = CharacterFeedbackRequest(
-            context_mode="legacy",
-            systemPrompts=system_prompts,
-            worldbuilding="Fantasy world",
-            storySummary="Hero's journey",
-            previousChapters=[],
-            character=character,
+            structured_context=structured_context,
             plotPoint="Entering the forest"
         )
         
-        assert request.context_mode == "legacy"
-        assert request.systemPrompts.mainPrefix == "You are a character"
-        assert request.worldbuilding == "Fantasy world"
-        assert request.character.name == "Aria"
+        assert request.structured_context is not None
+        assert len(request.structured_context.plot_elements) == 1
+        assert request.structured_context.plot_elements[0].content == "Forest entrance"
+        assert request.structured_context.character_contexts[0].character_name == "Aria"
     
-    def test_character_feedback_request_structured_mode(self):
-        """Test CharacterFeedbackRequest in structured mode."""
+    def test_character_feedback_request_validation(self):
+        """Test CharacterFeedbackRequest validation with structured context."""
         plot_element = PlotElement(type="scene", content="Forest entrance")
         char_context = CharacterContext(character_id="aria", character_name="Aria")
         
@@ -172,94 +171,47 @@ class TestRequestModels:
             character_contexts=[char_context]
         )
         
-        character = CharacterInfo(name="Aria", basicBio="A brave hero")
-        
         request = CharacterFeedbackRequest(
-            context_mode="structured",
             structured_context=structured_context,
-            previousChapters=[],
-            character=character,
             plotPoint="Entering the forest"
         )
         
-        assert request.context_mode == "structured"
         assert request.structured_context is not None
         assert len(request.structured_context.plot_elements) == 1
         assert request.structured_context.plot_elements[0].content == "Forest entrance"
     
-    def test_character_feedback_request_hybrid_mode(self):
-        """Test CharacterFeedbackRequest in hybrid mode."""
-        system_prompts = SystemPrompts(mainPrefix="You are a character")
-        structured_context = StructuredContextContainer(
-            plot_elements=[PlotElement(type="scene", content="Forest")]
+    def test_character_feedback_request_with_system_instructions(self):
+        """Test CharacterFeedbackRequest with system instructions in structured context."""
+        system_instruction = SystemInstruction(
+            type="behavior",
+            content="You are a character responding in character",
+            scope="global"
         )
-        character = CharacterInfo(name="Aria", basicBio="A brave hero")
+        structured_context = StructuredContextContainer(
+            plot_elements=[PlotElement(type="scene", content="Forest")],
+            system_instructions=[system_instruction]
+        )
         
         request = CharacterFeedbackRequest(
-            context_mode="hybrid",
-            systemPrompts=system_prompts,
-            worldbuilding="Fantasy world",
             structured_context=structured_context,
-            previousChapters=[],
-            character=character,
             plotPoint="Entering the forest"
         )
         
-        assert request.context_mode == "hybrid"
-        assert request.systemPrompts is not None
         assert request.structured_context is not None
+        assert len(request.structured_context.system_instructions) == 1
+        assert request.structured_context.system_instructions[0].content == "You are a character responding in character"
     
-    def test_structured_mode_validation_error(self):
-        """Test that structured mode requires structured_context."""
-        character = CharacterInfo(name="Aria", basicBio="A brave hero")
-        
+    def test_structured_context_validation_error(self):
+        """Test that structured_context is required."""
         with pytest.raises(ValidationError):
             CharacterFeedbackRequest(
-                context_mode="structured",
                 structured_context=None,  # This should cause validation error
-                previousChapters=[],
-                character=character,
                 plotPoint="Entering the forest"
             )
     
-    def test_hybrid_mode_validation_error(self):
-        """Test that hybrid mode requires both legacy and structured context."""
-        character = CharacterInfo(name="Aria", basicBio="A brave hero")
-        
-        # Missing structured context
-        with pytest.raises(ValidationError):
-            CharacterFeedbackRequest(
-                context_mode="hybrid",
-                systemPrompts=SystemPrompts(mainPrefix="Test"),
-                worldbuilding="Fantasy world",
-                structured_context=None,  # Missing structured context
-                previousChapters=[],
-                character=character,
-                plotPoint="Entering the forest"
-            )
-        
-        # Missing legacy context
-        with pytest.raises(ValidationError):
-            CharacterFeedbackRequest(
-                context_mode="hybrid",
-                structured_context=StructuredContextContainer(),
-                previousChapters=[],
-                character=character,
-                plotPoint="Entering the forest"
-            )
+
     
-    def test_legacy_mode_validation_error(self):
-        """Test that legacy mode requires some legacy context."""
-        character = CharacterInfo(name="Aria", basicBio="A brave hero")
-        
-        with pytest.raises(ValidationError):
-            CharacterFeedbackRequest(
-                context_mode="legacy",
-                # No legacy context provided
-                previousChapters=[],
-                character=character,
-                plotPoint="Entering the forest"
-            )
+
 
 
 class TestUpdatedLegacyModels:
@@ -272,13 +224,11 @@ class TestUpdatedLegacyModels:
         )
         
         request = ModifyChapterRequest(
-            context_mode="structured",
             structured_context=structured_context,
             currentChapter="Chapter text",
             userRequest="Make it more exciting"
         )
         
-        assert request.context_mode == "structured"
         assert request.structured_context is not None
         assert len(request.structured_context.user_requests) == 1
     
@@ -289,12 +239,10 @@ class TestUpdatedLegacyModels:
         )
         
         request = FleshOutRequest(
-            context_mode="structured",
             structured_context=structured_context,
             textToFleshOut="The ancient castle"
         )
         
-        assert request.context_mode == "structured"
         assert request.structured_context is not None
         assert len(request.structured_context.plot_elements) == 1
     
@@ -307,12 +255,10 @@ class TestUpdatedLegacyModels:
         )
         
         request = GenerateCharacterDetailsRequest(
-            context_mode="structured",
             structured_context=structured_context,
             basicBio="A mysterious stranger"
         )
         
-        assert request.context_mode == "structured"
         assert request.structured_context is not None
         assert len(request.structured_context.character_contexts) == 1
 

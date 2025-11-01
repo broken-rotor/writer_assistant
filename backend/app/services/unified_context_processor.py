@@ -650,7 +650,7 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
-                    compose_phase=compose_phase or ComposePhase.EXPANSION,
+                    compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="expansion_specific_assembly"
                 )

@@ -19,7 +19,7 @@ router = APIRouter()
 
 @router.post("/editor-review", response_model=EditorReviewResponse)
 async def editor_review(request: EditorReviewRequest):
-    """Generate editor review using LLM with structured context support."""
+    """Generate editor review using LLM with structured context only."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
@@ -28,20 +28,16 @@ async def editor_review(request: EditorReviewRequest):
         # Get unified context processor
         context_processor = get_unified_context_processor()
 
-        # Process context using unified processor (supports both legacy and structured contexts)
+        # Process context using structured context only
         context_result = context_processor.process_editor_review_context(
-            # Legacy fields
-            system_prompts=request.systemPrompts,
-            worldbuilding=request.worldbuilding,
-            story_summary=request.storySummary,
-            previous_chapters=[],  # Editor review doesn't use previous chapters in current implementation
-            plot_point=getattr(request, 'chapterToReview', '')[:200],  # Use first 200 chars as plot point
+            # Core fields
+            plot_point=request.chapterToReview[:200],  # Use first 200 chars as plot point
             # Phase context
             compose_phase=request.compose_phase,
             phase_context=request.phase_context,
-            # Structured context
+            # Structured context (required)
             structured_context=request.structured_context,
-            context_mode=request.context_mode,
+            context_mode="structured",
             context_processing_config=request.context_processing_config
         )
 

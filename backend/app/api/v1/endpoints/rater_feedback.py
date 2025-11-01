@@ -19,7 +19,7 @@ router = APIRouter()
 
 @router.post("/rater-feedback", response_model=RaterFeedbackResponse)
 async def rater_feedback(request: RaterFeedbackRequest):
-    """Generate rater feedback for a plot point using LLM with structured context support."""
+    """Generate rater feedback for a plot point using LLM with structured context only."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
@@ -28,22 +28,17 @@ async def rater_feedback(request: RaterFeedbackRequest):
         # Get unified context processor
         context_processor = get_unified_context_processor()
 
-        # Process context using unified processor (supports both legacy and structured contexts)
+        # Process context using structured context only
         context_result = context_processor.process_rater_feedback_context(
-            # Legacy fields
-            system_prompts=request.systemPrompts,
+            # Core fields
             rater_prompt=request.raterPrompt,
-            worldbuilding=request.worldbuilding,
-            story_summary=request.storySummary,
-            previous_chapters=request.previousChapters,
             plot_point=request.plotPoint,
-            incorporated_feedback=request.incorporatedFeedback,
             # Phase context
             compose_phase=request.compose_phase,
             phase_context=request.phase_context,
-            # Structured context
+            # Structured context (required)
             structured_context=request.structured_context,
-            context_mode=request.context_mode,
+            context_mode="structured",
             context_processing_config=request.context_processing_config
         )
 

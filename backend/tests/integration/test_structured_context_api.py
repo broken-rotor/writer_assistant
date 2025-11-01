@@ -437,15 +437,10 @@ class TestStructuredContextAPI:
         error_data = response.json()
         assert "detail" in error_data
     
-    def test_backward_compatibility_fallback(self, client):
-        """Test that system gracefully handles mixed context modes."""
-        # Test request with both legacy and structured context
-        mixed_request = {
-            "context_mode": "hybrid",  # Hybrid mode
-            "systemPrompts": {
-                "mainPrefix": "Legacy system prompt"
-            },
-            "worldbuilding": "Legacy worldbuilding",
+    def test_structured_context_only_migration(self, client):
+        """Test that system now operates in structured context only mode."""
+        # Test request with structured context only (Phase 2.2 migration)
+        structured_request = {
             "structured_context": {
                 "plot_elements": [
                     {
@@ -454,32 +449,41 @@ class TestStructuredContextAPI:
                         "priority": "high"
                     }
                 ],
-                "character_contexts": [],
+                "character_contexts": [
+                    {
+                        "character_id": "aria",
+                        "character_name": "Aria",
+                        "current_state": {"emotion": "determined"},
+                        "recent_actions": ["Entered the scene"],
+                        "relationships": {},
+                        "goals": ["Complete the quest"],
+                        "memories": ["Previous adventures"],
+                        "personality_traits": ["brave", "determined"]
+                    }
+                ],
                 "user_requests": [],
-                "system_instructions": [],
+                "system_instructions": [
+                    {
+                        "type": "behavior",
+                        "content": "Write in an engaging narrative style",
+                        "scope": "global"
+                    }
+                ],
                 "metadata": {
-                    "total_elements": 1,
+                    "total_elements": 3,
                     "processing_applied": False,
                     "processing_mode": "structured",
                     "optimization_level": "none"
                 }
             },
-            "plotPoint": "Compatibility test",
-            "previousChapters": [],
-            "characters": [
-                {
-                    "name": "Aria",
-                    "basicBio": "Brave young hero"
-                }
-            ],
-            "incorporatedFeedback": []
+            "plotPoint": "Structured context test"
         }
         
-        response = client.post("/api/v1/generate-chapter", json=mixed_request)
+        response = client.post("/api/v1/generate-chapter", json=structured_request)
         
         assert response.status_code == 200
         data = response.json()
         
-        # Should process successfully with hybrid mode
-        assert data["metadata"]["contextMode"] == "hybrid"
+        # Should process successfully with structured context only
+        assert data["metadata"]["contextMode"] == "structured"
         assert "context_metadata" in data

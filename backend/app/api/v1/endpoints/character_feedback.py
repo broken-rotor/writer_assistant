@@ -19,31 +19,30 @@ router = APIRouter()
 
 @router.post("/character-feedback", response_model=CharacterFeedbackResponse)
 async def character_feedback(request: CharacterFeedbackRequest):
-    """Generate character feedback for a plot point using LLM with structured context support."""
+    """Generate character feedback for a plot point using LLM with structured context only."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     try:
-        character_name = request.character.name if request.character else "Character"
+        # Extract character name from structured context
+        character_name = "Character"
+        if request.structured_context.character_contexts:
+            character_name = request.structured_context.character_contexts[0].character_name
 
         # Get unified context processor
         context_processor = get_unified_context_processor()
 
-        # Process context using unified processor (supports both legacy and structured contexts)
+        # Process context using structured context only
         context_result = context_processor.process_character_feedback_context(
-            # Legacy fields
-            system_prompts=request.systemPrompts,
-            worldbuilding=request.worldbuilding,
-            story_summary=request.storySummary,
-            character=request.character,
+            # Core fields
             plot_point=request.plotPoint,
             # Phase context
             compose_phase=request.compose_phase,
             phase_context=request.phase_context,
-            # Structured context
+            # Structured context (required)
             structured_context=request.structured_context,
-            context_mode=request.context_mode,
+            context_mode="structured",
             context_processing_config=request.context_processing_config
         )
 

@@ -18,7 +18,7 @@ router = APIRouter()
 
 @router.post("/generate-chapter", response_model=GenerateChapterResponse)
 async def generate_chapter(request: GenerateChapterRequest):
-    """Generate a complete chapter using LLM with structured context support."""
+    """Generate a complete chapter using LLM with structured context only."""
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
@@ -27,22 +27,16 @@ async def generate_chapter(request: GenerateChapterRequest):
         # Get unified context processor
         context_processor = get_unified_context_processor()
 
-        # Process context using unified processor (supports both legacy and structured contexts)
+        # Process context using structured context only
         context_result = context_processor.process_generate_chapter_context(
-            # Legacy fields
-            system_prompts=request.systemPrompts,
-            worldbuilding=request.worldbuilding,
-            story_summary=request.storySummary,
-            characters=request.characters,
+            # Core fields
             plot_point=request.plotPoint,
-            incorporated_feedback=request.incorporatedFeedback,
-            previous_chapters=request.previousChapters,
             # Phase context
             compose_phase=request.compose_phase,
             phase_context=request.phase_context,
-            # Structured context
+            # Structured context (required)
             structured_context=request.structured_context,
-            context_mode=request.context_mode,
+            context_mode="structured",
             context_processing_config=request.context_processing_config
         )
 
@@ -73,10 +67,9 @@ async def generate_chapter(request: GenerateChapterRequest):
             metadata={
                 "generatedAt": datetime.now(UTC).isoformat(),
                 "plotPoint": request.plotPoint,
-                "feedbackItemsIncorporated": len(request.incorporatedFeedback or []),
                 "composePhase": request.compose_phase,
                 "phaseContextProvided": bool(request.phase_context),
-                "contextMode": request.context_mode,
+                "contextMode": "structured",
                 "structuredContextProvided": bool(request.structured_context),
                 "processingMode": context_result.processing_mode
             }
