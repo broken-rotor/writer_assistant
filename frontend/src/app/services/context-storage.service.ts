@@ -389,7 +389,7 @@ export class ContextStorageService {
     if (obj && typeof obj === 'object') {
       const serialized: any = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           serialized[key] = this.serializeDates(obj[key]);
         }
       }
@@ -411,7 +411,7 @@ export class ContextStorageService {
     if (obj && typeof obj === 'object') {
       const deserialized: any = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           deserialized[key] = this.deserializeDates(obj[key]);
         }
       }

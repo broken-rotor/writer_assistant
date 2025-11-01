@@ -204,22 +204,56 @@ describe('GenerationService', () => {
         }
       };
 
-      // Mock context builder responses
+      // Configure context builder spy methods to return successful responses
       contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
         success: true,
-        data: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' }
+        data: {
+          mainPrefix: 'System prefix',
+          mainSuffix: 'System suffix',
+          assistantPrompt: 'Assistant prompt'
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
+
       contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
         success: true,
-        data: { content: 'A fantasy world' }
+        data: {
+          content: 'Test worldbuilding',
+          isValid: true,
+          wordCount: 2,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
+
       contextBuilderSpy.buildStorySummaryContext.and.returnValue({
         success: true,
-        data: { summary: 'A story about heroes' }
+        data: {
+          summary: 'Test story summary',
+          isValid: true,
+          wordCount: 3,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
+
       contextBuilderSpy.buildChaptersContext.and.returnValue({
         success: true,
-        data: { chapters: [] }
+        data: {
+          chapters: [],
+          totalChapters: 0,
+          totalWordCount: 0,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
 
       apiServiceSpy.requestRaterFeedback.and.returnValue(of(mockResponse));
@@ -252,18 +286,55 @@ describe('GenerationService', () => {
         }
       };
 
-      // Mock context builder response
+      // Configure context builder spy to return successful response
       contextBuilderSpy.buildChapterGenerationContext.and.returnValue({
         success: true,
         data: {
-          systemPrompts: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' },
-          worldbuilding: { content: 'A fantasy world' },
-          storySummary: { summary: 'A story about heroes' },
-          plotPoint: { plotPoint: 'The hero enters the dungeon' },
-          feedback: { incorporatedFeedback: [] },
-          previousChapters: { chapters: [] },
-          characters: { characters: [] }
-        }
+          systemPrompts: {
+            mainPrefix: 'System prefix',
+            mainSuffix: 'System suffix',
+            assistantPrompt: 'Assistant prompt'
+          },
+          worldbuilding: {
+            content: 'Test worldbuilding',
+            isValid: true,
+            wordCount: 2,
+            lastUpdated: new Date()
+          },
+          storySummary: {
+            summary: 'Test story summary',
+            isValid: true,
+            wordCount: 3,
+            lastUpdated: new Date()
+          },
+          characters: {
+            characters: [],
+            totalCharacters: 0,
+            visibleCharacters: 0,
+            lastUpdated: new Date()
+          },
+          previousChapters: {
+            chapters: [],
+            totalChapters: 0,
+            totalWordCount: 0,
+            lastUpdated: new Date()
+          },
+          plotPoint: {
+            plotPoint: 'The hero enters the dungeon',
+            isValid: true,
+            wordCount: 5,
+            lastUpdated: new Date()
+          },
+          feedback: {
+            incorporatedFeedback: [],
+            selectedFeedback: [],
+            totalFeedbackItems: 0,
+            lastUpdated: new Date()
+          }
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
 
       apiServiceSpy.generateChapter.and.returnValue(of(mockResponse));
@@ -335,34 +406,71 @@ describe('GenerationService', () => {
         }
       };
 
-      // Mock context builder response with filtered characters
+      // Configure context builder spy to return successful response
       contextBuilderSpy.buildChapterGenerationContext.and.returnValue({
         success: true,
         data: {
-          systemPrompts: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' },
-          worldbuilding: { content: 'A fantasy world' },
-          storySummary: { summary: 'A story about heroes' },
-          plotPoint: { plotPoint: '' },
-          feedback: { incorporatedFeedback: [] },
-          previousChapters: { chapters: [] },
-          characters: { 
-            characters: [{
-              name: 'Visible Character',
-              basicBio: 'A hero',
-              sex: 'Male',
-              gender: 'Male',
-              sexualPreference: 'Heterosexual',
-              age: 30,
-              physicalAppearance: 'Tall',
-              usualClothing: 'Armor',
-              personality: 'Brave',
-              motivations: 'Justice',
-              fears: 'Failure',
-              relationships: 'None',
-              isHidden: false
-            }]
+          systemPrompts: {
+            mainPrefix: 'System prefix',
+            mainSuffix: 'System suffix',
+            assistantPrompt: 'Assistant prompt'
+          },
+          worldbuilding: {
+            content: 'Test worldbuilding',
+            isValid: true,
+            wordCount: 2,
+            lastUpdated: new Date()
+          },
+          storySummary: {
+            summary: 'Test story summary',
+            isValid: true,
+            wordCount: 3,
+            lastUpdated: new Date()
+          },
+          characters: {
+            characters: [
+              {
+                name: 'Visible Character',
+                basicBio: 'A hero',
+                sex: 'Male',
+                gender: 'Male',
+                sexualPreference: 'Heterosexual',
+                age: 30,
+                physicalAppearance: 'Tall',
+                usualClothing: 'Armor',
+                personality: 'Brave',
+                motivations: 'Justice',
+                fears: 'Failure',
+                relationships: 'None',
+                isHidden: false
+              }
+            ],
+            totalCharacters: 1,
+            visibleCharacters: 1,
+            lastUpdated: new Date()
+          },
+          previousChapters: {
+            chapters: [],
+            totalChapters: 0,
+            totalWordCount: 0,
+            lastUpdated: new Date()
+          },
+          plotPoint: {
+            plotPoint: 'Test plot point',
+            isValid: true,
+            wordCount: 3,
+            lastUpdated: new Date()
+          },
+          feedback: {
+            incorporatedFeedback: [],
+            selectedFeedback: [],
+            totalFeedbackItems: 0,
+            lastUpdated: new Date()
           }
-        }
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
 
       apiServiceSpy.generateChapter.and.returnValue(of(mockResponse));
@@ -413,26 +521,69 @@ describe('GenerationService', () => {
         }
       };
 
-      // Mock context builder responses
+      // Configure context builder spy methods to return successful responses
       contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
         success: true,
-        data: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' }
+        data: {
+          mainPrefix: 'System prefix',
+          mainSuffix: 'System suffix',
+          assistantPrompt: 'Assistant prompt'
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
+
       contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
         success: true,
-        data: { content: 'A fantasy world' }
+        data: {
+          content: 'Test worldbuilding',
+          isValid: true,
+          wordCount: 2,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
+
       contextBuilderSpy.buildStorySummaryContext.and.returnValue({
         success: true,
-        data: { summary: 'A story about heroes' }
+        data: {
+          summary: 'Test story summary',
+          isValid: true,
+          wordCount: 3,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
+
       contextBuilderSpy.buildChaptersContext.and.returnValue({
         success: true,
-        data: { chapters: [] }
+        data: {
+          chapters: [],
+          totalChapters: 0,
+          totalWordCount: 0,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
+
       contextBuilderSpy.buildCharacterContext.and.returnValue({
         success: true,
-        data: { characters: [] }
+        data: {
+          characters: [],
+          totalCharacters: 0,
+          visibleCharacters: 0,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
       });
 
       apiServiceSpy.requestEditorReview.and.returnValue(of(mockResponse));
