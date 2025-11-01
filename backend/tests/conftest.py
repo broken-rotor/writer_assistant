@@ -75,6 +75,26 @@ def mock_llm():
 
         # Chapter generation or modification
         elif "chapter" in prompt.lower() or "write" in prompt.lower():
+            # Check if this is a modification request (contains "Current chapter:")
+            if "Current chapter:" in prompt and "modification request:" in prompt.lower():
+                # Extract the current chapter text
+                lines = prompt.split('\n')
+                current_chapter_start = -1
+                current_chapter_end = -1
+                
+                for i, line in enumerate(lines):
+                    if "Current chapter:" in line:
+                        current_chapter_start = i + 1
+                    elif current_chapter_start != -1 and ("User's modification request:" in line or "modification request:" in line.lower()):
+                        current_chapter_end = i
+                        break
+                
+                if current_chapter_start != -1 and current_chapter_end != -1:
+                    original_chapter = '\n'.join(lines[current_chapter_start:current_chapter_end]).strip()
+                    # Return the original chapter with some modifications to simulate LLM processing
+                    return f"{original_chapter}\n\n[Modified based on user request]"
+                
+            # Default chapter generation
             return """The rain fell hard on the city streets as Detective Chen examined the scene. Every detail mattered now.
 
 She knelt beside the evidence, her trained eye catching what others had missed. The implications were staggering - this case was about to break wide open.
