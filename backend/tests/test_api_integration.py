@@ -92,8 +92,8 @@ class TestAPIIntegration:
         # Modify the chapter
         sample_modify_chapter_request["currentChapter"] = chapter_text
         modify_response = client.post("/api/v1/modify-chapter", json=sample_modify_chapter_request)
-        assert modify_response.status_code == 200
-        assert chapter_text in modify_response.json()["modifiedChapter"]
+        modify_data = extract_final_result_from_streaming_response(modify_response)
+        assert chapter_text in modify_data["modifiedChapter"]
 
     def test_flesh_out_to_chapter_workflow(
         self,
