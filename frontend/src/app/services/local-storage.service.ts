@@ -69,6 +69,11 @@ export class LocalStorageService {
           ...story.chapterCreation,
           feedbackRequests: Array.from(story.chapterCreation.feedbackRequests.entries())
         },
+        // Serialize plotOutline.raterFeedback Map if it exists
+        plotOutline: story.plotOutline ? {
+          ...story.plotOutline,
+          raterFeedback: Array.from(story.plotOutline.raterFeedback.entries())
+        } : undefined,
         // Serialize ChapterComposeState if it exists
         chapterCompose: story.chapterCompose ? this.serializeChapterComposeState(story.chapterCompose) : undefined
       };
@@ -106,7 +111,7 @@ export class LocalStorageService {
         // Deserialize plotOutline.raterFeedback Map if it exists
         plotOutline: parsed.plotOutline ? {
           ...parsed.plotOutline,
-          raterFeedback: new Map(parsed.plotOutline.raterFeedback || []),
+          raterFeedback: this.deserializeRaterFeedback(parsed.plotOutline.raterFeedback),
           metadata: {
             ...parsed.plotOutline.metadata,
             created: new Date(parsed.plotOutline.metadata.created),
@@ -613,5 +618,25 @@ export class LocalStorageService {
   saveStoryConfig(storyId: string, config: StoryConfiguration): boolean {
     const key = `${this.STORAGE_PREFIX}story_config_${storyId}`;
     return this.setItem(key, config);
+  }
+
+  // Helper method to deserialize raterFeedback Map
+  private deserializeRaterFeedback(raterFeedback: any): Map<string, any> {
+    if (!raterFeedback) {
+      return new Map();
+    }
+    
+    // If it's already an array (new format), use it directly
+    if (Array.isArray(raterFeedback)) {
+      return new Map(raterFeedback);
+    }
+    
+    // If it's an object (old format), convert to entries array
+    if (typeof raterFeedback === 'object') {
+      return new Map(Object.entries(raterFeedback));
+    }
+    
+    // Fallback to empty Map
+    return new Map();
   }
 }
