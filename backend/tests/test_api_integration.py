@@ -3,6 +3,7 @@ Integration tests across multiple endpoints.
 """
 import pytest
 from fastapi.testclient import TestClient
+from tests.test_generate_chapter import extract_final_result_from_streaming_response
 
 
 class TestAPIIntegration:
@@ -26,7 +27,7 @@ class TestAPIIntegration:
 
         # Generate chapter with feedback
         chapter_response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
-        assert chapter_response.status_code == 200
+        chapter_data = extract_final_result_from_streaming_response(chapter_response)
 
     def test_chapter_generation_to_editor_review(
         self,
@@ -37,8 +38,8 @@ class TestAPIIntegration:
         """Test workflow: generate chapter -> editor review"""
         # Generate chapter
         chapter_response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
-        assert chapter_response.status_code == 200
-        chapter_text = chapter_response.json()["chapterText"]
+        chapter_data = extract_final_result_from_streaming_response(chapter_response)
+        chapter_text = chapter_data["chapterText"]
 
         # Get editor review of the chapter
         sample_editor_review_request["chapterToReview"] = chapter_text
@@ -55,8 +56,8 @@ class TestAPIIntegration:
         """Test workflow: generate chapter -> modify chapter"""
         # Generate chapter
         chapter_response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
-        assert chapter_response.status_code == 200
-        chapter_text = chapter_response.json()["chapterText"]
+        chapter_data = extract_final_result_from_streaming_response(chapter_response)
+        chapter_text = chapter_data["chapterText"]
 
         # Modify the chapter
         sample_modify_chapter_request["currentChapter"] = chapter_text
