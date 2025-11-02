@@ -72,6 +72,14 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
       const newWorldbuilding = newStory?.general?.worldbuilding || '';
       const previousWorldbuilding = previousStory?.general?.worldbuilding || '';
       
+      // Debug logging for tests
+      console.log('ngOnChanges debug:', {
+        newWorldbuilding,
+        previousWorldbuilding,
+        areEqual: newWorldbuilding === previousWorldbuilding,
+        willUpdate: newWorldbuilding !== previousWorldbuilding
+      });
+      
       if (newWorldbuilding !== previousWorldbuilding) {
         this.currentWorldbuilding = newWorldbuilding;
         
