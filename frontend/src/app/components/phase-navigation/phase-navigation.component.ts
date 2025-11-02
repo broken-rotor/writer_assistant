@@ -238,7 +238,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
    * Get validation error message for display
    */
   getValidationErrorMessage(): string {
-    if (this.validationResult.validationErrors.length === 0) return '';
+    if (!this.validationResult || !this.validationResult.validationErrors?.length) return '';
     return this.validationResult.validationErrors[0];
   }
 
@@ -246,7 +246,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
    * Get requirements message for display
    */
   getRequirementsMessage(): string {
-    if (this.validationResult.requirements.length === 0) return '';
+    if (!this.validationResult || !this.validationResult.requirements?.length) return '';
     return `Requirements: ${this.validationResult.requirements.join(', ')}`;
   }
 
@@ -254,13 +254,27 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
    * Check if advance button should be shown
    */
   showAdvanceButton(): boolean {
-    return this.validationResult.nextPhase !== undefined;
+    return this.validationResult?.nextPhase !== undefined;
   }
 
   /**
    * Check if revert button should be shown
    */
   showRevertButton(): boolean {
-    return this.validationResult.previousPhase !== undefined;
+    return this.validationResult?.previousPhase !== undefined;
+  }
+
+  /**
+   * TrackBy function for requirements list to improve performance
+   */
+  trackByRequirement(index: number, requirement: string): string {
+    return requirement;
+  }
+
+  /**
+   * TrackBy function for validation errors list to improve performance
+   */
+  trackByError(index: number, error: string): string {
+    return error;
   }
 }

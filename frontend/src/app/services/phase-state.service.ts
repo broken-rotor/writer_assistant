@@ -394,7 +394,11 @@ export class PhaseStateService {
       previousPhase
     };
 
-    this.validationResultSubject.next(result);
+    // Use setTimeout to defer validation updates to the next tick
+    // This prevents ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.validationResultSubject.next(result);
+    }, 0);
   }
 
   /**
@@ -490,7 +494,11 @@ export class PhaseStateService {
       previousPhase: this.getPreviousPhase(phase)
     };
     
-    this.validationResultSubject.next(updatedValidation);
+    // Use setTimeout to defer validation updates to the next tick
+    // This prevents ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.validationResultSubject.next(updatedValidation);
+    }, 0);
   }
 
   /**
