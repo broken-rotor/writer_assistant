@@ -252,7 +252,7 @@ export class GenerationService {
   generateChapterFromOutline(
     story: Story,
     outlineItems: {title: string, description: string}[]
-  ): Observable<GenerateChapterResponse> {
+  ): Observable<StructuredGenerateChapterResponse> {
     const plotPoint = outlineItems.map(item => `${item.title}: ${item.description}`).join('\n\n');
     
     const request: StructuredGenerateChapterRequest = {
