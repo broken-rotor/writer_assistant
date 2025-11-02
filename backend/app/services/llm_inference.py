@@ -258,6 +258,60 @@ class LLMInference:
             logger.error(f"Error during chat completion: {str(e)}")
             raise RuntimeError(f"Chat completion failed: {str(e)}")
 
+    def chat_completion_stream(
+        self,
+        messages: List[Dict[str, str]],
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        top_p: Optional[float] = None,
+        top_k: Optional[int] = None,
+        repeat_penalty: Optional[float] = None,
+        stop: Optional[List[str]] = None
+    ):
+        """
+        Generate a streaming chat completion from a list of messages.
+
+        Args:
+            messages: List of message dicts with 'role' and 'content' keys
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature
+            top_p: Nucleus sampling
+            top_k: Top-k sampling
+            repeat_penalty: Repetition penalty
+            stop: List of stop sequences
+
+        Yields:
+            Token strings as they are generated
+        """
+        if self.model is None:
+            raise RuntimeError("Model not loaded.")
+
+        generation_params = {
+            "max_tokens": max_tokens or self.config.max_tokens,
+            "temperature": temperature if temperature is not None else self.config.temperature,
+            "top_p": top_p if top_p is not None else self.config.top_p,
+            "top_k": top_k if top_k is not None else self.config.top_k,
+            "repeat_penalty": repeat_penalty if repeat_penalty is not None else self.config.repeat_penalty,
+            "stop": stop or [],
+            "stream": True
+        }
+
+        try:
+            stream = self.model.create_chat_completion(
+                messages=messages,
+                **generation_params
+            )
+
+            for chunk in stream:
+                if 'choices' in chunk and len(chunk['choices']) > 0:
+                    delta = chunk['choices'][0].get('delta', {})
+                    if 'content' in delta:
+                        yield delta['content']
+
+        except Exception as e:
+            logger.error(f"Error during streaming chat completion: {str(e)}")
+            raise RuntimeError(f"Streaming chat completion failed: {str(e)}")
+
     def get_embedding(self, text: str) -> List[float]:
         """
         Get embeddings for text (if model supports it).
