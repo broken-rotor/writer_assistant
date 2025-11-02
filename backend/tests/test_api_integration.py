@@ -74,8 +74,8 @@ class TestAPIIntegration:
         """Test workflow: flesh out plot point -> generate chapter"""
         # Flesh out a plot point
         flesh_response = client.post("/api/v1/flesh-out", json=sample_flesh_out_request)
-        assert flesh_response.status_code == 200
-        fleshed_text = flesh_response.json()["fleshedOutText"]
+        flesh_data = extract_final_result_from_streaming_response(flesh_response)
+        fleshed_text = flesh_data["fleshedOutText"]
 
         # Use fleshed out text as plot point for chapter
         sample_generate_chapter_request["plotPoint"] = fleshed_text

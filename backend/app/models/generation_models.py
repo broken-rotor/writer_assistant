@@ -537,6 +537,7 @@ class FleshOutRequest(BaseModel):
 class FleshOutResponse(BaseModel):
     fleshedOutText: str
     originalText: str
+    metadata: Dict[str, Any]
     context_metadata: Optional[ContextMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
