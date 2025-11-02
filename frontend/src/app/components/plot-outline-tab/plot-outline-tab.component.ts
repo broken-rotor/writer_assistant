@@ -226,9 +226,10 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     }
 
     // Set all raters to generating state
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
     enabledRaters.forEach(rater => {
       this.generatingFeedback.add(rater.id);
-      this.story.plotOutline.raterFeedback.set(rater.id, {
+      raterFeedbackMap.set(rater.id, {
         raterId: rater.id,
         raterName: rater.name,
         feedback: '',
@@ -244,8 +245,9 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       const feedbackResults = await this.plotOutlineService.requestAllRaterFeedback(this.story.id).toPromise();
       
       if (feedbackResults) {
+        const raterFeedbackMap = this.ensureRaterFeedbackMap();
         feedbackResults.forEach(feedback => {
-          this.story.plotOutline.raterFeedback.set(feedback.raterId, feedback);
+          raterFeedbackMap.set(feedback.raterId, feedback);
           this.generatingFeedback.delete(feedback.raterId);
         });
       }
@@ -278,7 +280,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     }
 
     // Set generating state
-    this.story.plotOutline.raterFeedback.set(raterId, {
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
+    raterFeedbackMap.set(raterId, {
       raterId: raterId,
       raterName: rater.name,
       feedback: '',
@@ -296,7 +299,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       ).toPromise();
 
       if (feedback) {
-        this.story.plotOutline.raterFeedback.set(raterId, feedback);
+        const raterFeedbackMap = this.ensureRaterFeedbackMap();
+        raterFeedbackMap.set(raterId, feedback);
       }
       this.generatingFeedback.delete(raterId);
       this.updateOutlineStatus();
@@ -305,7 +309,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
 
     } catch {
       this.generatingFeedback.delete(raterId);
-      this.story.plotOutline.raterFeedback.set(raterId, {
+      const raterFeedbackMap = this.ensureRaterFeedbackMap();
+      raterFeedbackMap.set(raterId, {
         raterId: raterId,
         raterName: rater.name,
         feedback: '',
@@ -325,7 +330,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
 
   clearAllFeedback(): void {
     if (confirm('Are you sure you want to clear all rater feedback?')) {
-      this.story.plotOutline.raterFeedback.clear();
+      const raterFeedbackMap = this.ensureRaterFeedbackMap();
+      raterFeedbackMap.clear();
       this.generatingFeedback.clear();
       this.story.plotOutline.status = 'draft';
       this.outlineUpdated.emit(this.story.plotOutline.content);
@@ -334,7 +340,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   }
 
   acceptFeedback(raterId: string): void {
-    const feedback = this.story.plotOutline.raterFeedback.get(raterId);
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
+    const feedback = raterFeedbackMap.get(raterId);
     if (feedback) {
       feedback.userResponse = 'accepted';
       this.updateOutlineStatus();
@@ -343,7 +350,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   }
 
   requestRevision(raterId: string): void {
-    const feedback = this.story.plotOutline.raterFeedback.get(raterId);
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
+    const feedback = raterFeedbackMap.get(raterId);
     if (feedback) {
       feedback.userResponse = 'revision_requested';
       this.requestRaterFeedback(raterId); // Request new feedback
@@ -351,7 +359,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   }
 
   discussFeedback(raterId: string): void {
-    const feedback = this.story.plotOutline.raterFeedback.get(raterId);
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
+    const feedback = raterFeedbackMap.get(raterId);
     if (feedback) {
       feedback.userResponse = 'discussed';
       // Add to chat with context about the specific feedback
@@ -363,7 +372,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     const enabledRaters = this.getEnabledRaters();
     if (enabledRaters.length === 0) return true; // Can approve if no raters
 
-    const completedFeedback = Array.from(this.story.plotOutline.raterFeedback.values())
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
+    const completedFeedback = Array.from(raterFeedbackMap.values())
       .filter(f => f.status === 'complete');
 
     return this.story.plotOutline.content.trim().length > 0 &&
@@ -382,6 +392,22 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
 
   getEnabledRaters(): Rater[] {
     return Array.from(this.story.raters.values()).filter(r => r.enabled);
+  }
+
+  // Template helper methods for safe raterFeedback access
+  hasRaterFeedback(raterId: string): boolean {
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
+    return raterFeedbackMap.has(raterId);
+  }
+
+  getRaterFeedback(raterId: string): PlotOutlineFeedback | undefined {
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
+    return raterFeedbackMap.get(raterId);
+  }
+
+  deleteRaterFeedback(raterId: string): void {
+    const raterFeedbackMap = this.ensureRaterFeedbackMap();
+    raterFeedbackMap.delete(raterId);
   }
 
   private updateOutlineStatus(): void {
@@ -410,27 +436,53 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Safely get rater feedback values, handling cases where raterFeedback might not be a Map
+   * Ensure raterFeedback is a Map and return it, handling cases where it might be a plain object
    */
-  private getRaterFeedbackValues(): PlotOutlineFeedback[] {
-    if (!this.story.plotOutline?.raterFeedback) {
-      return [];
+  private ensureRaterFeedbackMap(): Map<string, PlotOutlineFeedback> {
+    if (!this.story.plotOutline) {
+      // Initialize plotOutline if it doesn't exist
+      this.story.plotOutline = {
+        content: '',
+        status: 'draft',
+        chatHistory: [],
+        raterFeedback: new Map(),
+        metadata: {
+          created: new Date(),
+          lastModified: new Date(),
+          version: 1
+        }
+      };
+      return this.story.plotOutline.raterFeedback;
+    }
+
+    if (!this.story.plotOutline.raterFeedback) {
+      this.story.plotOutline.raterFeedback = new Map();
+      return this.story.plotOutline.raterFeedback;
     }
 
     // Check if it's actually a Map
     if (this.story.plotOutline.raterFeedback instanceof Map) {
-      return Array.from(this.story.plotOutline.raterFeedback.values());
+      return this.story.plotOutline.raterFeedback;
     }
 
     // If it's a plain object (due to JSON deserialization), convert it
     if (typeof this.story.plotOutline.raterFeedback === 'object') {
-      // Convert plain object to Map
       const feedbackMap = new Map(Object.entries(this.story.plotOutline.raterFeedback as Record<string, PlotOutlineFeedback>));
       this.story.plotOutline.raterFeedback = feedbackMap;
-      return Array.from(feedbackMap.values());
+      return feedbackMap;
     }
 
-    return [];
+    // Fallback: create new Map
+    this.story.plotOutline.raterFeedback = new Map();
+    return this.story.plotOutline.raterFeedback;
+  }
+
+  /**
+   * Safely get rater feedback values, handling cases where raterFeedback might not be a Map
+   */
+  private getRaterFeedbackValues(): PlotOutlineFeedback[] {
+    const feedbackMap = this.ensureRaterFeedbackMap();
+    return Array.from(feedbackMap.values());
   }
 
   // ============================================================================
