@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { Story, ChatMessage, Rater, PlotOutlineFeedback } from '../../models/story.model';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
@@ -242,7 +243,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     this.outlineUpdated.emit(this.story.plotOutline.content);
 
     try {
-      const feedbackResults = await this.plotOutlineService.requestAllRaterFeedback(this.story.id).toPromise();
+      const feedbackResults = await firstValueFrom(this.plotOutlineService.requestAllRaterFeedback(this.story.id));
       
       if (feedbackResults) {
         const raterFeedbackMap = this.ensureRaterFeedbackMap();
@@ -292,11 +293,11 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     this.outlineUpdated.emit(this.story.plotOutline.content);
 
     try {
-      const feedback = await this.plotOutlineService.requestPlotOutlineFeedback(
+      const feedback = await firstValueFrom(this.plotOutlineService.requestPlotOutlineFeedback(
         this.story.id, 
         raterId, 
         this.story.plotOutline.content
-      ).toPromise();
+      ));
 
       if (feedback) {
         const raterFeedbackMap = this.ensureRaterFeedbackMap();

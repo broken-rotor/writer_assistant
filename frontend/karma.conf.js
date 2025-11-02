@@ -48,7 +48,17 @@ module.exports = function (config) {
           '--disable-dev-shm-usage',
           '--disable-web-security',
           '--disable-features=VizDisplayCompositor',
-          '--remote-debugging-port=9222'
+          '--remote-debugging-port=9222',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding'
+        ]
+      },
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox'
         ]
       }
     }

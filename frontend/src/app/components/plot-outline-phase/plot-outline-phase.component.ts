@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetect
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 
 import { 
   Story, 
@@ -168,11 +168,11 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     this.isGeneratingFleshOut = true;
     
     try {
-      const response = await this.generationService.fleshOut(
+      const response = await firstValueFrom(this.generationService.fleshOut(
         this.story,
         this.basicOutline,
         'plot outline development'
-      ).toPromise();
+      ));
 
       if (response?.fleshedOutText) {
         // Add the AI response to the chat
@@ -209,7 +209,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     this.researchError = null;
     
     try {
-      const response = await this.archiveService.ragQuery(this.basicOutline).toPromise();
+      const response = await firstValueFrom(this.archiveService.ragQuery(this.basicOutline));
       
       if (response) {
         this.researchData = response;
