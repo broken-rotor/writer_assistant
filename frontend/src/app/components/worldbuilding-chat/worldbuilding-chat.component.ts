@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges, ViewChild, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 
@@ -14,7 +14,7 @@ import { WorldbuildingSyncService } from '../../services/worldbuilding-sync.serv
   templateUrl: './worldbuilding-chat.component.html',
   styleUrls: ['./worldbuilding-chat.component.scss']
 })
-export class WorldbuildingChatComponent implements OnInit, OnDestroy {
+export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges {
   @Input() story!: Story;
   @Input() disabled = false;
   @Input() processing = false;
@@ -60,6 +60,22 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Check if the story input has changed
+    if (changes['story'] && !changes['story'].firstChange) {
+      const newStory = changes['story'].currentValue;
+      const previousStory = changes['story'].previousValue;
+      
+      // Update currentWorldbuilding if the worldbuilding content has changed
+      if (newStory?.general?.worldbuilding !== previousStory?.general?.worldbuilding) {
+        this.currentWorldbuilding = newStory.general.worldbuilding || '';
+        
+        // Emit the updated worldbuilding to parent components
+        this.worldbuildingUpdated.emit(this.currentWorldbuilding);
+      }
+    }
   }
 
   // Keyboard event handlers
