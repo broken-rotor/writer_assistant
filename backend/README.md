@@ -591,3 +591,31 @@ db_path = settings.ARCHIVE_DB_PATH
 collection_name = settings.ARCHIVE_COLLECTION_NAME
 model_path = settings.MODEL_PATH
 ```
+
+## Common Issues and Troubleshooting
+
+### Frontend Worldbuilding Sync Errors
+
+**Issue**: Frontend shows error "Backend sync failed, falling back to local sync: Not Found"
+
+**Cause**: The backend server is not running or not accessible at the expected URL.
+
+**Solution**:
+1. Verify the backend server is running:
+   ```bash
+   curl http://localhost:8000/health
+   ```
+
+2. If not running, start the server:
+   ```bash
+   cd backend
+   source venv/bin/activate
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+3. Test the worldbuilding endpoint specifically:
+   ```bash
+   curl http://localhost:8000/api/v1/worldbuilding/status/test
+   ```
+
+**Note**: The frontend will automatically fall back to local sync when the backend is unavailable, so the application will continue to work, but you'll see this error in the console logs.
