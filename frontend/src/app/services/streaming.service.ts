@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export interface StreamingEvent {
   type: 'status' | 'result' | 'error';
@@ -32,8 +32,6 @@ export class StreamingService {
     onProgress?: (progress: StreamingProgress) => void
   ): Observable<T> {
     return new Observable<T>(observer => {
-      let eventSource: EventSource | null = null;
-      
       try {
         // Create a POST request to initiate the streaming
         fetch(`${this.baseUrl}${endpoint}`, {
@@ -105,9 +103,7 @@ export class StreamingService {
       
       // Cleanup function
       return () => {
-        if (eventSource) {
-          eventSource.close();
-        }
+        // No cleanup needed for fetch-based streaming
       };
     });
   }

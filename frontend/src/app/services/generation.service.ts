@@ -1084,7 +1084,7 @@ ${story.plotOutline.content}`;
     rater: Rater,
     plotPoint: string,
     onProgress?: (progress: { phase: string; message: string; progress: number }) => void,
-    options: { validate?: boolean; optimize?: boolean } = {}
+    _options: { validate?: boolean; optimize?: boolean } = {}
   ): Observable<StructuredRaterFeedbackResponse> {
     try {
       // Build structured request using ContextBuilderService
@@ -1101,7 +1101,7 @@ ${story.plotOutline.content}`;
       }
 
       // Build structured request
-      let structuredRequest: any = {
+      const structuredRequest: any = {
         raterPrompt: rater.systemPrompt,
         plotPoint: plotPoint,
         structured_context: {
