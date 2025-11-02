@@ -247,7 +247,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   aiFleshOutWorldbuilding() {
     if (!this.story || !this.story.general.worldbuilding) {
-      alert('Please enter worldbuilding text first');
+      this.toastService.showWarning('Please enter worldbuilding text first');
       return;
     }
 
@@ -265,11 +265,12 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           if (this.story) {
             this.story.general.worldbuilding = response.fleshedOutText;
             this.storyService.saveStory(this.story);
+            this.toastService.showSuccess('Worldbuilding fleshed out successfully! Check the updated content in the worldbuilding panel.');
           }
         },
         error: (err) => {
           console.error('Error fleshing out worldbuilding:', err);
-          alert('Failed to flesh out worldbuilding');
+          this.toastService.showError('Failed to flesh out worldbuilding. Please try again.');
         }
       });
   }
@@ -608,7 +609,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   // Chapter Creation tab methods
   aiFleshOutPlotPoint() {
     if (!this.story || !this.story.chapterCreation.plotPoint) {
-      alert('Please enter a plot point first');
+      this.toastService.showWarning('Please enter a plot point first');
       return;
     }
 
@@ -626,11 +627,12 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           if (this.story) {
             this.story.chapterCreation.plotPoint = response.fleshedOutText;
             this.storyService.saveStory(this.story);
+            this.toastService.showSuccess('Plot point fleshed out successfully! The expanded content is now available.');
           }
         },
         error: (err) => {
           console.error('Error fleshing out plot point:', err);
-          alert('Failed to flesh out plot point');
+          this.toastService.showError('Failed to flesh out plot point. Please try again.');
         }
       });
   }

@@ -630,4 +630,108 @@ describe('WorldbuildingChatComponent', () => {
       expect(component.focusedPanel).toBe('chat');
     });
   });
+
+  describe('ngOnChanges', () => {
+    it('should update currentWorldbuilding when story worldbuilding changes', () => {
+      // Initialize component with initial story
+      component.story = mockStory;
+      fixture.detectChanges();
+      
+      expect(component.currentWorldbuilding).toBe('Initial worldbuilding content');
+      
+      // Create updated story with new worldbuilding content
+      const updatedStory = {
+        ...mockStory,
+        general: {
+          ...mockStory.general,
+          worldbuilding: 'Updated worldbuilding content from flesh out'
+        }
+      };
+      
+      spyOn(component.worldbuildingUpdated, 'emit');
+      
+      // Simulate ngOnChanges with story change
+      component.ngOnChanges({
+        story: {
+          currentValue: updatedStory,
+          previousValue: mockStory,
+          firstChange: false,
+          isFirstChange: () => false
+        }
+      });
+      
+      expect(component.currentWorldbuilding).toBe('Updated worldbuilding content from flesh out');
+      expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith('Updated worldbuilding content from flesh out');
+    });
+
+    it('should not update currentWorldbuilding on first change', () => {
+      spyOn(component.worldbuildingUpdated, 'emit');
+      
+      // Simulate ngOnChanges with first change
+      component.ngOnChanges({
+        story: {
+          currentValue: mockStory,
+          previousValue: undefined,
+          firstChange: true,
+          isFirstChange: () => true
+        }
+      });
+      
+      expect(component.worldbuildingUpdated.emit).not.toHaveBeenCalled();
+    });
+
+    it('should not update currentWorldbuilding when worldbuilding content is the same', () => {
+      component.story = mockStory;
+      fixture.detectChanges();
+      
+      spyOn(component.worldbuildingUpdated, 'emit');
+      
+      // Create story with same worldbuilding content
+      const sameStory = {
+        ...mockStory,
+        general: {
+          ...mockStory.general,
+          worldbuilding: 'Initial worldbuilding content' // Same content
+        }
+      };
+      
+      component.ngOnChanges({
+        story: {
+          currentValue: sameStory,
+          previousValue: mockStory,
+          firstChange: false,
+          isFirstChange: () => false
+        }
+      });
+      
+      expect(component.worldbuildingUpdated.emit).not.toHaveBeenCalled();
+    });
+
+    it('should handle empty worldbuilding content', () => {
+      component.story = mockStory;
+      fixture.detectChanges();
+      
+      const updatedStory = {
+        ...mockStory,
+        general: {
+          ...mockStory.general,
+          worldbuilding: '' // Empty content
+        }
+      };
+      
+      spyOn(component.worldbuildingUpdated, 'emit');
+      
+      component.ngOnChanges({
+        story: {
+          currentValue: updatedStory,
+          previousValue: mockStory,
+          firstChange: false,
+          isFirstChange: () => false
+        }
+      });
+      
+      expect(component.currentWorldbuilding).toBe('');
+      expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith('');
+    });
+  });
 });
