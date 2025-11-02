@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { SSEStreamingService } from './sse-streaming.service';
 import {
   ModifyChapterRequest,
   ModifyChapterResponse,
@@ -35,6 +36,7 @@ export class ApiService {
   private readonly baseUrl = 'http://localhost:8000/api/v1';
 
   private http = inject(HttpClient);
+  private sseStreamingService = inject(SSEStreamingService);
 
   // Chapter Modification
   modifyChapter(request: ModifyChapterRequest): Observable<ModifyChapterResponse> {
@@ -276,6 +278,9 @@ export class ApiService {
 
   // Editor Review
   requestEditorReview(request: StructuredEditorReviewRequest): Observable<StructuredEditorReviewResponse> {
-    return this.http.post<StructuredEditorReviewResponse>(`${this.baseUrl}/editor-review/structured`, request);
+    return this.sseStreamingService.createSSEObservable<StructuredEditorReviewResponse>(
+      `${this.baseUrl}/editor-review`,
+      request
+    );
   }
 }
