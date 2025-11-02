@@ -46,7 +46,7 @@ import {
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';
 import { StructuredCharacter } from '../models/context-builder.model';
-import { transformToStructuredContext } from '../utils/context-transformer';
+import { transformToStructuredContext, transformToFleshOutStructuredContext } from '../utils/context-transformer';
 
 @Injectable({
   providedIn: 'root'
@@ -156,7 +156,8 @@ export class GenerationService {
     textToFleshOut: string,
     context: string
   ): Observable<FleshOutResponse> {
-    const request: FleshOutRequest = {
+    // Transform legacy data to structured context
+    const legacyData = {
       systemPrompts: {
         mainPrefix: story.general.systemPrompts.mainPrefix,
         mainSuffix: story.general.systemPrompts.mainSuffix
@@ -165,6 +166,14 @@ export class GenerationService {
       storySummary: story.story.summary,
       textToFleshOut: textToFleshOut,
       context: context
+    };
+
+    const structuredContext = transformToFleshOutStructuredContext(legacyData);
+
+    const request: FleshOutRequest = {
+      textToFleshOut: textToFleshOut,
+      context: context,
+      structured_context: structuredContext
     };
 
     return this.apiService.fleshOut(request);

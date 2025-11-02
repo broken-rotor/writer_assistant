@@ -554,14 +554,12 @@ export interface EditorReviewRequest {
 }
 
 export interface FleshOutRequest {
-  systemPrompts: {
-    mainPrefix: string;
-    mainSuffix: string;
-  };
-  worldbuilding: string;
-  storySummary: string;
   textToFleshOut: string;
-  context: string;
+  context?: string;
+  compose_phase?: any;
+  phase_context?: any;
+  structured_context: StructuredContextContainer;
+  context_processing_config?: Record<string, any>;
 }
 
 // Structured Context Models

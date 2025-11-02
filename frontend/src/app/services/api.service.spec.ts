@@ -250,14 +250,53 @@ describe('ApiService', () => {
   describe('fleshOut', () => {
     it('should send POST request to flesh-out endpoint', () => {
       const request = {
-        systemPrompts: {
-          mainPrefix: '',
-          mainSuffix: ''
-        },
-        worldbuilding: 'A fantasy world',
-        storySummary: 'A story',
         textToFleshOut: 'The hero is brave',
-        context: 'character description'
+        context: 'character description',
+        structured_context: {
+          plot_elements: [
+            {
+              type: 'setup' as const,
+              content: 'A fantasy world',
+              priority: 'high' as const,
+              tags: ['worldbuilding', 'setting'],
+              metadata: {
+                source: 'worldbuilding',
+                category: 'background'
+              }
+            },
+            {
+              type: 'scene' as const,
+              content: 'A story',
+              priority: 'high' as const,
+              tags: ['story_summary', 'plot'],
+              metadata: {
+                source: 'story_summary',
+                category: 'narrative'
+              }
+            },
+            {
+              type: 'scene' as const,
+              content: 'The hero is brave',
+              priority: 'high' as const,
+              tags: ['current_scene', 'flesh_out_target'],
+              metadata: {
+                source: 'text_to_flesh_out',
+                category: 'target_content'
+              }
+            }
+          ],
+          character_contexts: [],
+          user_requests: [
+            {
+              type: 'addition' as const,
+              content: 'Expand and flesh out the following text with relevant detail: The hero is brave',
+              priority: 'high' as const,
+              target: 'flesh_out_target',
+              context: 'character description'
+            }
+          ],
+          system_instructions: []
+        }
       };
 
       const mockResponse = {
