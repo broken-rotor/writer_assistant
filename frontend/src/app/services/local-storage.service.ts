@@ -103,6 +103,18 @@ export class LocalStorageService {
           ...parsed.chapterCreation,
           feedbackRequests: new Map(parsed.chapterCreation?.feedbackRequests || [])
         },
+        // Deserialize plotOutline.raterFeedback Map if it exists
+        plotOutline: parsed.plotOutline ? {
+          ...parsed.plotOutline,
+          raterFeedback: new Map(parsed.plotOutline.raterFeedback || []),
+          metadata: {
+            ...parsed.plotOutline.metadata,
+            created: new Date(parsed.plotOutline.metadata.created),
+            lastModified: new Date(parsed.plotOutline.metadata.lastModified),
+            approvedAt: parsed.plotOutline.metadata.approvedAt ? new Date(parsed.plotOutline.metadata.approvedAt) : undefined,
+            lastFeedbackRequest: parsed.plotOutline.metadata.lastFeedbackRequest ? new Date(parsed.plotOutline.metadata.lastFeedbackRequest) : undefined
+          }
+        } : undefined,
         // Deserialize ChapterComposeState if it exists
         chapterCompose: parsed.chapterCompose ? this.deserializeChapterComposeState(parsed.chapterCompose) : undefined,
         metadata: {
