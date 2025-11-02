@@ -34,7 +34,7 @@ module.exports = function (config) {
       ]
     },
     reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadlessNoSandbox'],
+    browsers: ['Chrome'],
     restartOnFileChange: true,
     browserNoActivityTimeout: 120000,
     captureTimeout: 120000,
