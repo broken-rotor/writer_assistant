@@ -363,7 +363,9 @@ describe('ApiService', () => {
       // Replace the service's SSE streaming service with our mock
       (service as any).sseStreamingService = mockSSEService;
 
-      service.generateCharacterDetails(request).subscribe(response => {
+      const mockOnProgress = jasmine.createSpy('onProgress');
+      
+      service.generateCharacterDetails(request, mockOnProgress).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
