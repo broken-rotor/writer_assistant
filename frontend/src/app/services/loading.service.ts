@@ -31,6 +31,22 @@ export class LoadingService {
   }
 
   /**
+   * Update loading message while keeping loading state active
+   * @param message New message to display
+   * @param operation Optional operation identifier for tracking
+   */
+  updateMessage(message: string, operation?: string): void {
+    const currentState = this.loadingSubject.value;
+    if (currentState.isLoading) {
+      this.loadingSubject.next({
+        isLoading: true,
+        message,
+        operation: operation || currentState.operation
+      });
+    }
+  }
+
+  /**
    * Hide loading indicator
    */
   hide(): void {
