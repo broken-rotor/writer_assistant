@@ -112,16 +112,6 @@ run_frontend_build_and_test() {
         FRONTEND_LINT_STATUS="warning"
     fi
 
-    # Run tests (if test configuration exists)
-    log_info "Running frontend tests..."
-    if npm run test -- --watch=false --code-coverage --browsers=ChromeHeadless 2>&1 | tee frontend-test.log; then
-        log_success "Frontend tests passed!"
-        FRONTEND_TESTS_STATUS="passed"
-    else
-        log_warning "Frontend tests skipped or failed (check frontend-test.log)"
-        FRONTEND_TESTS_STATUS="warning"
-    fi
-
     # Run build
     log_info "Building frontend production bundle..."
     if npm run build 2>&1 | tee frontend-build.log; then
@@ -139,6 +129,16 @@ run_frontend_build_and_test() {
         FRONTEND_BUILD_STATUS="failed"
         cd "$SCRIPT_DIR"
         exit 1
+    fi
+
+    # Run tests (if test configuration exists)
+    log_info "Running frontend tests..."
+    if npm run test -- --watch=false --code-coverage --browsers=ChromeHeadless 2>&1 | tee frontend-test.log; then
+        log_success "Frontend tests passed!"
+        FRONTEND_TESTS_STATUS="passed"
+    else
+        log_warning "Frontend tests skipped or failed (check frontend-test.log)"
+        FRONTEND_TESTS_STATUS="warning"
     fi
 
     cd "$SCRIPT_DIR"
