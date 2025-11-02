@@ -309,7 +309,7 @@ export interface StructuredRaterFeedbackResponse {
       priority: 'high' | 'medium' | 'low';
     }[];
   };
-  metadata?: StructuredResponseMetadata;
+  context_metadata?: StructuredResponseMetadata;
 }
 
 /**

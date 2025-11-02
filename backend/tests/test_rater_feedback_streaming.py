@@ -22,33 +22,15 @@ def sample_streaming_request():
     return {
         "raterPrompt": "You are a story critic. Evaluate this plot point.",
         "plotPoint": "The hero discovers a hidden door in the basement.",
+        "compose_phase": "plot_outline",
+        "phase_context": {},
         "structured_context": {
-            "systemPrompts": {
-                "mainPrefix": "You are a helpful assistant.",
-                "mainSuffix": "Be creative and engaging.",
-                "assistantPrompt": "Provide detailed feedback."
-            },
-            "worldbuilding": {
-                "content": "A fantasy world with magic.",
-                "lastModified": "2024-01-01T00:00:00Z",
-                "wordCount": 5
-            },
-            "storySummary": {
-                "summary": "A hero's journey begins.",
-                "lastModified": "2024-01-01T00:00:00Z",
-                "wordCount": 4
-            },
-            "previousChapters": [],
+            "system_prompts": [],
+            "worldbuilding": [],
+            "story_summary": [],
             "characters": [],
-            "plotContext": {
-                "plotPoint": "The hero discovers a hidden door in the basement.",
-                "plotOutline": "Hero finds door, explores, finds treasure.",
-                "plotOutlineStatus": "draft"
-            },
-            "requestMetadata": {
-                "timestamp": "2024-01-01T00:00:00Z",
-                "requestSource": "test"
-            }
+            "phase_context": [],
+            "conversation_history": []
         }
     }
 
@@ -139,30 +121,30 @@ def test_streaming_rater_feedback_success(mock_context_processor, mock_get_llm, 
     assert 'suggestions' in result_data['feedback']
 
 
-@patch('app.services.llm_inference.get_llm')
-def test_streaming_rater_feedback_no_llm(mock_get_llm, client, sample_streaming_request):
+def test_streaming_rater_feedback_no_llm(client, sample_streaming_request):
     """Test streaming rater feedback when LLM is not available."""
-    mock_get_llm.return_value = None
-    
-    response = client.post("/api/v1/rater-feedback/stream", json=sample_streaming_request)
-    
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
-    
-    # Parse streaming response
-    events = []
-    for line in response.text.split('\n'):
-        if line.startswith('data: '):
-            try:
-                event_data = json.loads(line[6:])
-                events.append(event_data)
-            except json.JSONDecodeError:
-                pass
-    
-    # Should have at least one error event
-    error_events = [e for e in events if e.get('type') == 'error']
-    assert len(error_events) >= 1
-    assert 'LLM not initialized' in error_events[0]['message']
+    # Override the global mock to return None
+    with patch('app.services.llm_inference.get_llm', return_value=None):
+        with patch('app.api.v1.endpoints.rater_feedback.get_llm', return_value=None):
+            response = client.post("/api/v1/rater-feedback/stream", json=sample_streaming_request)
+            
+            assert response.status_code == 200
+            assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+            
+            # Parse streaming response
+            events = []
+            for line in response.text.split('\n'):
+                if line.startswith('data: '):
+                    try:
+                        event_data = json.loads(line[6:])
+                        events.append(event_data)
+                    except json.JSONDecodeError:
+                        pass
+            
+            # Should have at least one error event
+            error_events = [e for e in events if e.get('type') == 'error']
+            assert len(error_events) >= 1
+            assert 'LLM not initialized' in error_events[0]['message']
 
 
 def test_streaming_rater_feedback_invalid_request(client):
@@ -175,14 +157,11 @@ def test_streaming_rater_feedback_invalid_request(client):
     assert response.status_code == 422
 
 
-@patch('app.services.llm_inference.get_llm')
-@patch('app.services.unified_context_processor.get_unified_context_processor')
-def test_streaming_rater_feedback_llm_error(mock_context_processor, mock_get_llm, client, sample_streaming_request):
+def test_streaming_rater_feedback_llm_error(client, sample_streaming_request):
     """Test streaming rater feedback when LLM throws an error."""
     # Mock LLM that throws an error
     mock_llm = Mock()
     mock_llm.chat_completion_stream.side_effect = Exception("LLM generation failed")
-    mock_get_llm.return_value = mock_llm
     
     # Mock context processor
     mock_processor = Mock()
@@ -192,24 +171,27 @@ def test_streaming_rater_feedback_llm_error(mock_context_processor, mock_get_llm
     mock_context_result.context_metadata = {"tokens": 100}
     mock_context_result.optimization_applied = False
     mock_processor.process_rater_feedback_context.return_value = mock_context_result
-    mock_context_processor.return_value = mock_processor
     
-    response = client.post("/api/v1/rater-feedback/stream", json=sample_streaming_request)
-    
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
-    
-    # Parse streaming response
-    events = []
-    for line in response.text.split('\n'):
-        if line.startswith('data: '):
-            try:
-                event_data = json.loads(line[6:])
-                events.append(event_data)
-            except json.JSONDecodeError:
-                pass
-    
-    # Should have error event
-    error_events = [e for e in events if e.get('type') == 'error']
-    assert len(error_events) >= 1
-    assert 'LLM generation failed' in error_events[0]['message']
+    # Override the global mocks
+    with patch('app.services.llm_inference.get_llm', return_value=mock_llm):
+        with patch('app.api.v1.endpoints.rater_feedback.get_llm', return_value=mock_llm):
+            with patch('app.services.unified_context_processor.get_unified_context_processor', return_value=mock_processor):
+                response = client.post("/api/v1/rater-feedback/stream", json=sample_streaming_request)
+                
+                assert response.status_code == 200
+                assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+                
+                # Parse streaming response
+                events = []
+                for line in response.text.split('\n'):
+                    if line.startswith('data: '):
+                        try:
+                            event_data = json.loads(line[6:])
+                            events.append(event_data)
+                        except json.JSONDecodeError:
+                            pass
+                
+                # Should have error event
+                error_events = [e for e in events if e.get('type') == 'error']
+                assert len(error_events) >= 1
+                assert 'LLM generation failed' in error_events[0]['message']
