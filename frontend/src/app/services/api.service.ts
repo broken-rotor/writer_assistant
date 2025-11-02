@@ -38,9 +38,21 @@ export class ApiService {
   private http = inject(HttpClient);
   private sseStreamingService = inject(SSEStreamingService);
 
-  // Chapter Modification
-  modifyChapter(request: ModifyChapterRequest): Observable<ModifyChapterResponse> {
-    return this.http.post<ModifyChapterResponse>(`${this.baseUrl}/modify-chapter`, request);
+  // Chapter Modification - now with SSE streaming
+  modifyChapter(
+    request: ModifyChapterRequest,
+    onProgress?: (phase: string, message: string, progress: number) => void
+  ): Observable<ModifyChapterResponse> {
+    return this.sseStreamingService.createSSEObservable<ModifyChapterResponse>(
+      `${this.baseUrl}/modify-chapter`,
+      request,
+      {
+        onProgress: onProgress ? (update) => onProgress(update.phase, update.message, update.progress) : undefined,
+        onError: (error) => {
+          console.error('Chapter modification streaming error:', error);
+        }
+      }
+    );
   }
 
   // Flesh Out Plot Point / Worldbuilding

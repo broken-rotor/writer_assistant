@@ -378,7 +378,11 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
       const response = await firstValueFrom(this.generationService.modifyChapter(
         this.story,
         currentContent,
-        message.content
+        message.content,
+        (phase: string, message: string, progress: number) => {
+          // Update loading message with current phase
+          console.log(`Chapter modification progress: ${phase} - ${message} (${progress}%)`);
+        }
       ));
 
       if (response?.modifiedChapter) {

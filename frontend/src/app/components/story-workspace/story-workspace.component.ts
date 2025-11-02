@@ -836,7 +836,11 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.generationService.modifyChapter(
       this.story,
       this.story.chapterCreation.generatedChapter.text,
-      this.changeRequest
+      this.changeRequest,
+      (phase: string, message: string, progress: number) => {
+        // Update loading message with current phase
+        this.loadingService.updateMessage(`${message} (${progress}%)`, 'modify-chapter');
+      }
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
@@ -923,7 +927,11 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.generationService.modifyChapter(
       this.story,
       this.story.chapterCreation.generatedChapter.text,
-      modificationRequest
+      modificationRequest,
+      (phase: string, message: string, progress: number) => {
+        // Update loading message with current phase
+        this.loadingService.updateMessage(`${message} (${progress}%)`, 'apply-suggestions');
+      }
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
