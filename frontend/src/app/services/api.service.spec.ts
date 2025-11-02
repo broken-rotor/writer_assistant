@@ -8,8 +8,7 @@ import {
   StructuredRaterFeedbackResponse,
   StructuredGenerateChapterRequest,
   StructuredGenerateChapterResponse,
-  StructuredEditorReviewRequest,
-  StructuredEditorReviewResponse
+  StructuredEditorReviewRequest
 } from '../models/structured-request.model';
 import { TokenStrategiesResponse } from '../models/token-limits.model';
 
