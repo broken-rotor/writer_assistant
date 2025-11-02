@@ -695,12 +695,18 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.selectedAgentId = raterId;
     this.generatingFeedback.add(raterId);
 
+    // Initialize with basic loading message
     this.loadingService.show(`Getting feedback from ${rater.name}...`, 'rater-feedback');
 
-    this.generationService.requestRaterFeedback(
+    // Use streaming version with progress updates
+    this.generationService.requestRaterFeedbackWithStreaming(
       this.story,
       rater,
-      this.story.chapterCreation.plotPoint
+      this.story.chapterCreation.plotPoint,
+      (progress) => {
+        // Update loading message with current phase
+        this.loadingService.show(`${rater.name}: ${progress.message}`, 'rater-feedback');
+      }
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
