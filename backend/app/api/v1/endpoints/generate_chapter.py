@@ -93,7 +93,7 @@ async def generate_chapter(request: GenerateChapterRequest):
                 }
             )
             
-            yield f"data: {json.dumps({'type': 'result', 'data': result.dict(), 'status': 'complete'})}\n\n"
+            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
             
         except Exception as e:
             logger.error(f"Error in generate_chapter: {str(e)}")

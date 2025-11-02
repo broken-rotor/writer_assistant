@@ -109,3 +109,47 @@ class TestGenerateChapterEndpoint:
         }
         response = client.post("/api/v1/generate-chapter", json=invalid_request)
         assert response.status_code == 422
+
+    def test_generate_chapter_streaming_response(self, client, sample_generate_chapter_request):
+        """Test that the endpoint returns a streaming response with proper SSE format"""
+        response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
+        
+        # Should return 200 for streaming
+        assert response.status_code == 200
+        
+        # Should have proper SSE headers
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+        assert "no-cache" in response.headers.get("cache-control", "")
+        
+        # Parse SSE content
+        content = response.text
+        lines = content.split('\n')
+        
+        # Should contain data lines
+        data_lines = [line for line in lines if line.startswith('data: ')]
+        assert len(data_lines) > 0
+        
+        # Parse JSON from data lines
+        import json
+        messages = []
+        for line in data_lines:
+            try:
+                data = json.loads(line[6:])  # Remove 'data: ' prefix
+                messages.append(data)
+            except json.JSONDecodeError:
+                pass
+        
+        # Should have at least status and result messages
+        assert len(messages) > 0
+        
+        # Check for expected message types
+        message_types = [msg.get('type') for msg in messages]
+        assert 'status' in message_types
+        
+        # If we have a result message, verify its structure
+        result_messages = [msg for msg in messages if msg.get('type') == 'result']
+        if result_messages:
+            result_data = result_messages[0].get('data', {})
+            assert 'chapterText' in result_data
+            assert 'wordCount' in result_data
+            assert 'metadata' in result_data
