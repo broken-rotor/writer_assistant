@@ -156,8 +156,7 @@ class TestStructuredContextAPI:
             print(f"Response status: {response.status_code}")
             print(f"Response body: {response.text}")
         
-        assert response.status_code == 200
-        data = response.json()
+        data = extract_final_result_from_streaming_response(response)
         
         # Validate response structure
         assert "feedback" in data
