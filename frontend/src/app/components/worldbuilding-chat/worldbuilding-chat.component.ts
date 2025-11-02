@@ -69,8 +69,11 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
       const previousStory = changes['story'].previousValue;
       
       // Update currentWorldbuilding if the worldbuilding content has changed
-      if (newStory?.general?.worldbuilding !== previousStory?.general?.worldbuilding) {
-        this.currentWorldbuilding = newStory.general.worldbuilding || '';
+      const newWorldbuilding = newStory?.general?.worldbuilding || '';
+      const previousWorldbuilding = previousStory?.general?.worldbuilding || '';
+      
+      if (newWorldbuilding !== previousWorldbuilding) {
+        this.currentWorldbuilding = newWorldbuilding;
         
         // Emit the updated worldbuilding to parent components
         this.worldbuildingUpdated.emit(this.currentWorldbuilding);

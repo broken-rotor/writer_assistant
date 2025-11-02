@@ -39,13 +39,15 @@ module.exports = function (config) {
     browserNoActivityTimeout: 120000,
     captureTimeout: 120000,
     customLaunchers: {
-      ChromeHeadless: {
+      ChromeHeadlessNoSandbox: {
         base: 'Chrome',
         flags: [
           '--headless',
           '--disable-gpu',
           '--no-sandbox',
           '--disable-dev-shm-usage',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
           '--remote-debugging-port=9222'
         ]
       }
