@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError, firstValueFrom } from 'rxjs';
-import { debounceTime, distinctUntilChanged, catchError, retry, timeout } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, timeout } from 'rxjs/operators';
 
 import { ConversationService } from './conversation.service';
 import { LocalStorageService } from './local-storage.service';
@@ -251,7 +251,7 @@ export class WorldbuildingSyncService {
         }
       };
 
-      eventSource.onerror = (error) => {
+      eventSource.onerror = (_error) => {
         if (timeoutId) clearTimeout(timeoutId);
         eventSource.close();
         reject(new Error('SSE connection error'));

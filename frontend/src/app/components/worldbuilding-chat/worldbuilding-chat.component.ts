@@ -307,7 +307,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
    * Get display name for sync phase
    */
   public getPhaseDisplayName(phase: string): string {
-    const phaseNames: { [key: string]: string } = {
+    const phaseNames: Record<string, string> = {
       'message_processing': 'Processing Messages',
       'extracting': 'Extracting Information',
       'merging': 'Merging Content',
