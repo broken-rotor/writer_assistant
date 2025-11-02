@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { ChatInterfaceComponent, ChatInterfaceConfig, MessageActionEvent } from '../chat-interface/chat-interface.component';
 import { Story } from '../../models/story.model';
 import { ConversationService } from '../../services/conversation.service';
-import { WorldbuildingSyncService } from '../../services/worldbuilding-sync.service';
+import { WorldbuildingSyncService, SyncProgress } from '../../services/worldbuilding-sync.service';
 
 @Component({
   selector: 'app-worldbuilding-chat',
@@ -34,6 +34,8 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
   isInitialized = false;
   currentWorldbuilding = '';
   error: string | null = null;
+  syncProgress: SyncProgress | null = null;
+  isSyncing = false;
   
   // UI state for accessibility and navigation
   isMobileView = false;
@@ -168,6 +170,20 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
       })
     );
 
+    // Subscribe to sync progress updates
+    this.subscriptions.push(
+      this.worldbuildingSyncService.syncProgress$.subscribe(progress => {
+        this.syncProgress = progress;
+      })
+    );
+
+    // Subscribe to sync status updates
+    this.subscriptions.push(
+      this.worldbuildingSyncService.syncInProgress$.subscribe(inProgress => {
+        this.isSyncing = inProgress;
+      })
+    );
+
     // Subscribe to conversation changes to trigger sync
     this.subscriptions.push(
       this.conversationService.currentThread$.subscribe(thread => {
@@ -285,6 +301,20 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
    */
   public isReady(): boolean {
     return this.isInitialized && this.chatConfig !== null;
+  }
+
+  /**
+   * Get display name for sync phase
+   */
+  public getPhaseDisplayName(phase: string): string {
+    const phaseNames: Record<string, string> = {
+      'message_processing': 'Processing Messages',
+      'extracting': 'Extracting Information',
+      'merging': 'Merging Content',
+      'quality_assessment': 'Quality Assessment',
+      'complete': 'Complete'
+    };
+    return phaseNames[phase] || phase;
   }
 
   /**

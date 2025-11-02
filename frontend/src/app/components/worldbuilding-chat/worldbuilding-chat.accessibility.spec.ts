@@ -188,7 +188,9 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     const worldbuildingSyncServiceSpy = jasmine.createSpyObj('WorldbuildingSyncService', [
       'syncWorldbuildingFromConversation'
     ], {
-      worldbuildingUpdated$: of('')
+      worldbuildingUpdated$: of(''),
+      syncProgress$: of(null),
+      syncInProgress$: of(false)
     });
 
     await TestBed.configureTestingModule({
@@ -202,6 +204,21 @@ describe('WorldbuildingChatComponent - Accessibility', () => {
     fixture = TestBed.createComponent(WorldbuildingChatComponent);
     component = fixture.componentInstance;
     component.story = mockStory;
+
+    // Initialize component properties required for template rendering
+    component.isInitialized = true;
+    component.chatConfig = {
+      phase: 'plot_outline',
+      storyId: mockStory.id,
+      chapterNumber: 0,
+      enableBranching: true,
+      enableMessageTypes: ['user', 'assistant'],
+      placeholder: 'Describe your world, ask questions, or request worldbuilding assistance...',
+      maxHeight: '400px',
+      showTimestamps: true,
+      showMessageTypes: true,
+      allowMessageEditing: true
+    };
 
     // Setup conversation service spy return values
     conversationServiceSpy.getCurrentBranchMessages.and.returnValue([]);

@@ -213,7 +213,8 @@ describe('WorldbuildingChatComponent', () => {
       'isSyncInProgress'
     ], {
       worldbuildingUpdated$: new BehaviorSubject<string>('Initial worldbuilding content'),
-      syncInProgress$: new BehaviorSubject<boolean>(false)
+      syncInProgress$: new BehaviorSubject<boolean>(false),
+      syncProgress$: new BehaviorSubject<any>(null)
     });
 
     await TestBed.configureTestingModule({

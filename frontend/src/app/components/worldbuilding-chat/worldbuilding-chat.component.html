@@ -2,10 +2,10 @@
      *ngIf="isInitialized && chatConfig"
      role="application"
      aria-label="Worldbuilding Chat Interface"
-     [attr.aria-describedby]="'worldbuilding-help-' + story.id">
+     [attr.aria-describedby]="story ? 'worldbuilding-help-' + story.id : null">
   
   <!-- Screen reader instructions -->
-  <div [id]="'worldbuilding-help-' + story.id" class="sr-only">
+  <div [id]="story ? 'worldbuilding-help-' + story.id : 'worldbuilding-help-default'" class="sr-only">
     Interactive worldbuilding interface with two panels: current worldbuilding summary and chat assistant. 
     Use Tab to navigate between elements, Ctrl+Slash for keyboard shortcuts help.
   </div>
@@ -46,14 +46,35 @@
           <button 
             class="sync-button" 
             (click)="syncWorldbuilding()" 
-            [disabled]="disabled"
-            [attr.aria-describedby]="'sync-help-' + story.id"
+            [disabled]="disabled || isSyncing"
+            [attr.aria-describedby]="story ? 'sync-help-' + story.id : null"
             aria-label="Sync worldbuilding content from conversation">
-            <i class="icon-sync" aria-hidden="true"></i>
-            <span>Sync</span>
+            <i class="icon-sync" [class.spinning]="isSyncing" aria-hidden="true"></i>
+            <span>{{ isSyncing ? 'Syncing...' : 'Sync' }}</span>
           </button>
-          <div [id]="'sync-help-' + story.id" class="sr-only">
+          <div [id]="story ? 'sync-help-' + story.id : 'sync-help-default'" class="sr-only">
             Updates the worldbuilding summary with content from your conversation
+          </div>
+          
+          <!-- Progress indicator -->
+          <div *ngIf="syncProgress" 
+               class="sync-progress" 
+               role="status" 
+               aria-live="polite"
+               [attr.aria-label]="'Sync progress: ' + syncProgress.message + ', ' + syncProgress.progress + '% complete'">
+            <div class="progress-bar">
+              <div class="progress-fill" 
+                   [style.width.%]="syncProgress.progress"
+                   [attr.aria-valuenow]="syncProgress.progress"
+                   aria-valuemin="0"
+                   aria-valuemax="100">
+              </div>
+            </div>
+            <div class="progress-text">
+              <span class="progress-phase">{{ getPhaseDisplayName(syncProgress.phase) }}</span>
+              <span class="progress-message">{{ syncProgress.message }}</span>
+              <span class="progress-percentage">{{ syncProgress.progress }}%</span>
+            </div>
           </div>
         </div>
       </header>
@@ -84,7 +105,7 @@
          aria-label="Panel navigation">
       <button role="tab"
               [attr.aria-selected]="focusedPanel === 'summary'"
-              [attr.aria-controls]="'summary-panel-' + story.id"
+              [attr.aria-controls]="story ? 'summary-panel-' + story.id : null"
               class="panel-tab"
               [class.active]="focusedPanel === 'summary'"
               (click)="switchToPanel('summary')"
@@ -95,7 +116,7 @@
       </button>
       <button role="tab"
               [attr.aria-selected]="focusedPanel === 'chat'"
-              [attr.aria-controls]="'chat-panel-' + story.id"
+              [attr.aria-controls]="story ? 'chat-panel-' + story.id : null"
               class="panel-tab"
               [class.active]="focusedPanel === 'chat'"
               (click)="switchToPanel('chat')"
@@ -111,7 +132,7 @@
              role="main"
              [attr.aria-label]="'Worldbuilding chat assistant'"
              [attr.aria-expanded]="!isMobileView || focusedPanel === 'chat'"
-             [attr.id]="'chat-panel-' + story.id"
+             [attr.id]="story ? 'chat-panel-' + story.id : 'chat-panel-default'"
              tabindex="-1"
              #chatPanel>
       
@@ -119,10 +140,10 @@
         <h3 id="chat-heading">Worldbuilding Assistant</h3>
         <div class="panel-info">
           <span class="info-text" 
-                [attr.aria-describedby]="'chat-help-' + story.id">
+                [attr.aria-describedby]="story ? 'chat-help-' + story.id : null">
             Ask questions, describe your world, or request assistance
           </span>
-          <div [id]="'chat-help-' + story.id" class="sr-only">
+          <div [id]="story ? 'chat-help-' + story.id : 'chat-help-default'" class="sr-only">
             Interactive chat interface for worldbuilding assistance. Type your message and press Enter to send.
           </div>
         </div>
@@ -150,10 +171,10 @@
        class="error-message" 
        role="alert" 
        aria-live="assertive"
-       [attr.aria-describedby]="'error-help-' + story.id">
+       [attr.aria-describedby]="story ? 'error-help-' + story.id : null">
     <i class="icon-error" aria-hidden="true"></i>
     <span>{{ error }}</span>
-    <div [id]="'error-help-' + story.id" class="sr-only">
+    <div [id]="story ? 'error-help-' + story.id : 'error-help-default'" class="sr-only">
       An error occurred in the worldbuilding chat interface. Please try refreshing the page or contact support if the problem persists.
     </div>
   </div>
