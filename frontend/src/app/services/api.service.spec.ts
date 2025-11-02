@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { of } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   StructuredCharacterFeedbackRequest,
@@ -300,7 +301,7 @@ describe('ApiService', () => {
   });
 
   describe('generateCharacterDetails', () => {
-    it('should send POST request to generate-character-details endpoint', () => {
+    it('should use SSE streaming service for character details generation', () => {
       const request = {
         basicBio: 'A brave knight',
         existingCharacters: [],
@@ -355,13 +356,25 @@ describe('ApiService', () => {
         relationships: 'Loyal to the king'
       };
 
+      // Mock the SSE streaming service
+      const mockSSEService = jasmine.createSpyObj('SSEStreamingService', ['createSSEObservable']);
+      mockSSEService.createSSEObservable.and.returnValue(of(mockResponse));
+      
+      // Replace the service's SSE streaming service with our mock
+      (service as any).sseStreamingService = mockSSEService;
+
       service.generateCharacterDetails(request).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/generate-character-details`);
-      expect(req.request.method).toBe('POST');
-      req.flush(mockResponse);
+      expect(mockSSEService.createSSEObservable).toHaveBeenCalledWith(
+        `${baseUrl}/generate-character-details`,
+        request,
+        jasmine.objectContaining({
+          onProgress: jasmine.any(Function),
+          onError: jasmine.any(Function)
+        })
+      );
     });
   });
 

@@ -48,9 +48,21 @@ export class ApiService {
     return this.http.post<FleshOutResponse>(`${this.baseUrl}/flesh-out`, request);
   }
 
-  // Generate Character Details
-  generateCharacterDetails(request: GenerateCharacterDetailsRequest): Observable<GenerateCharacterDetailsResponse> {
-    return this.http.post<GenerateCharacterDetailsResponse>(`${this.baseUrl}/generate-character-details`, request);
+  // Generate Character Details - now with SSE streaming
+  generateCharacterDetails(
+    request: GenerateCharacterDetailsRequest,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
+  ): Observable<GenerateCharacterDetailsResponse> {
+    return this.sseStreamingService.createSSEObservable<GenerateCharacterDetailsResponse>(
+      `${this.baseUrl}/generate-character-details`,
+      request,
+      {
+        onProgress: onProgress,
+        onError: (error) => {
+          console.error('Character details generation streaming error:', error);
+        }
+      }
+    );
   }
 
   // Token Strategies
