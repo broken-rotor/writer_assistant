@@ -20,7 +20,6 @@ import {
   OutlineItem, 
   ChatMessage,
   EnhancedFeedbackItem,
-  GenerateChapterResponse,
   ModifyChapterResponse
 } from '../../models/story.model';
 import { StructuredGenerateChapterResponse } from '../../models/structured-request.model';
