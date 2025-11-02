@@ -123,10 +123,10 @@ class RAGService:
                 )
 
             # Step 2: Build context from search results
-            context = self._build_context(search_results)
+            context = self.build_context(search_results)
 
             # Step 3: Create prompt for LLM
-            prompt = self._build_rag_prompt(question, context)
+            prompt = self.build_rag_prompt(question, context)
 
             # Step 4: Generate answer using LLM
             logger.info(f"Generating answer with {len(search_results)} context chunks")
@@ -338,7 +338,7 @@ class RAGService:
             logger.error(f"RAG chat failed: {e}")
             raise RuntimeError(f"Failed to process RAG chat: {str(e)}")
 
-    def _build_context(self, search_results: List[ArchiveSearchResult]) -> str:
+    def build_context(self, search_results: List[ArchiveSearchResult]) -> str:
         """
         Build context string from search results.
 
@@ -403,7 +403,7 @@ class RAGService:
 
         return "\n".join(context_parts) if context_parts else ""
 
-    def _build_rag_prompt(self, question: str, context: str) -> str:
+    def build_rag_prompt(self, question: str, context: str) -> str:
         """
         Build a RAG prompt for single-turn question answering.
 
