@@ -20,9 +20,9 @@ import {
   OutlineItem, 
   ChatMessage,
   EnhancedFeedbackItem,
-  GenerateChapterResponse,
   ModifyChapterResponse
 } from '../../models/story.model';
+import { StructuredGenerateChapterResponse } from '../../models/structured-request.model';
 
 describe('ChapterDetailerPhaseComponent', () => {
   let component: ChapterDetailerPhaseComponent;
@@ -490,7 +490,7 @@ describe('ChapterDetailerPhaseComponent', () => {
     });
 
     it('should generate initial chapter successfully', async () => {
-      const mockResponse: GenerateChapterResponse = {
+      const mockResponse: StructuredGenerateChapterResponse = {
         chapterText: 'Generated chapter content'
       };
       mockGenerationService.generateChapterFromOutline.and.returnValue(of(mockResponse));

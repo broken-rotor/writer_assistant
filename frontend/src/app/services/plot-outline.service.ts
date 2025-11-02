@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, from, throwError } from 'rxjs';
+import { Observable, from, throwError, firstValueFrom } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { GenerationService } from './generation.service';
 import { StoryService } from './story.service';
@@ -109,7 +109,7 @@ ${story.general.systemPrompts.mainSuffix}`;
     }
 
     const feedbackRequests = enabledRaters.map(rater => 
-      this.requestPlotOutlineFeedback(storyId, rater.id, story.plotOutline.content).toPromise()
+      firstValueFrom(this.requestPlotOutlineFeedback(storyId, rater.id, story.plotOutline.content))
     );
 
     return from(Promise.allSettled(feedbackRequests)).pipe(

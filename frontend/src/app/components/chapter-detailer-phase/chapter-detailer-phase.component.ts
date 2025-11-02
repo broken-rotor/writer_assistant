@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import {
@@ -301,10 +301,10 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
         description: item.description
       }));
       
-      const response = await this.generationService.generateChapterFromOutline(
+      const response = await firstValueFrom(this.generationService.generateChapterFromOutline(
         this.story,
         outlineItems
-      ).toPromise();
+      ));
       
       if (response?.chapterText) {
         const versionId = this.createNewVersion(
@@ -335,10 +335,10 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
 
     this.isContinuingChapter = true;
     try {
-      const response = await this.generationService.continueChapter(
+      const response = await firstValueFrom(this.generationService.continueChapter(
         this.story,
         currentVersion.content
-      ).toPromise();
+      ));
 
       if (response?.modifiedChapter) {
         const versionId = this.createNewVersion(
@@ -375,11 +375,11 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
       const currentVersion = this.getCurrentVersion();
       const currentContent = currentVersion?.content || '';
       
-      const response = await this.generationService.modifyChapter(
+      const response = await firstValueFrom(this.generationService.modifyChapter(
         this.story,
         currentContent,
         message.content
-      ).toPromise();
+      ));
 
       if (response?.modifiedChapter) {
         const versionId = this.createNewVersion(
@@ -424,12 +424,12 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
         type: item.type
       }));
 
-      const response = await this.generationService.regenerateChapterWithFeedbackStructured(
+      const response = await firstValueFrom(this.generationService.regenerateChapterWithFeedbackStructured(
         this.story,
         currentVersion.content,
         feedbackForService,
         userComment
-      ).toPromise();
+      ));
 
       if (response?.modifiedChapter) {
         const versionId = this.createNewVersion(

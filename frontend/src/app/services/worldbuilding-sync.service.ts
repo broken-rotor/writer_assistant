@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, throwError, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, catchError, retry, timeout } from 'rxjs/operators';
 
 import { ConversationService } from './conversation.service';
@@ -185,13 +185,12 @@ export class WorldbuildingSyncService {
       force_sync: false
     };
 
-    return this.http.post<BackendSyncResponse>(`${this.apiBaseUrl}/worldbuilding/sync`, request)
+    return firstValueFrom(this.http.post<BackendSyncResponse>(`${this.apiBaseUrl}/worldbuilding/sync`, request)
       .pipe(
         timeout(config.timeoutMs!),
         retry(config.retryAttempts!),
         catchError(this.handleHttpError.bind(this))
-      )
-      .toPromise()
+      ))
       .then(response => {
         if (!response || !response.success) {
           throw new Error(response?.errors?.join(', ') || 'Backend sync failed');
@@ -498,9 +497,8 @@ export class WorldbuildingSyncService {
    */
   async testBackendConnection(): Promise<boolean> {
     try {
-      await this.http.get(`${this.apiBaseUrl}/worldbuilding/status/test`)
-        .pipe(timeout(5000))
-        .toPromise();
+      await firstValueFrom(this.http.get(`${this.apiBaseUrl}/worldbuilding/status/test`)
+        .pipe(timeout(5000)));
       return true;
     } catch (error) {
       console.warn('Backend connectivity test failed:', error);
