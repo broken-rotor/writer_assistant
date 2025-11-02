@@ -125,6 +125,19 @@ What had seemed simple moments ago now revealed layers of complexity. The charac
 
     mock_llm_instance.chat_completion.side_effect = chat_completion_side_effect
 
+    # Mock chat_completion_stream for streaming endpoints
+    def chat_completion_stream_side_effect(messages, **kwargs):
+        # Extract the combined content from system and user messages
+        combined_prompt = "\n".join(msg["content"] for msg in messages)
+        # Generate response using same logic as generate
+        response = generate_side_effect(combined_prompt, **kwargs)
+        # Yield tokens one by one to simulate streaming
+        words = response.split()
+        for word in words:
+            yield word + " "
+
+    mock_llm_instance.chat_completion_stream.side_effect = chat_completion_stream_side_effect
+
     # Patch get_llm to return our mock in all endpoint modules
     with patch('app.services.llm_inference.get_llm', return_value=mock_llm_instance):
         with patch('app.api.v1.endpoints.character_feedback.get_llm', return_value=mock_llm_instance):

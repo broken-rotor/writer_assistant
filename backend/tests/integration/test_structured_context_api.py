@@ -11,6 +11,7 @@ import json
 from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch
 from datetime import datetime, timezone
+from tests.test_generate_chapter import extract_final_result_from_streaming_response
 
 from app.main import app
 from app.models.context_models import (
@@ -114,12 +115,7 @@ class TestStructuredContextAPI:
         
         response = client.post("/api/v1/generate-chapter", json=request_data)
         
-        if response.status_code != 200:
-            print(f"Response status: {response.status_code}")
-            print(f"Response body: {response.text}")
-        
-        assert response.status_code == 200
-        data = response.json()
+        data = extract_final_result_from_streaming_response(response)
         
         # Validate response structure
         assert "chapterText" in data
@@ -252,8 +248,7 @@ class TestStructuredContextAPI:
         
         response = client.post("/api/v1/generate-chapter", json=request_data)
         
-        assert response.status_code == 200
-        data = response.json()
+        data = extract_final_result_from_streaming_response(response)
         
         context_metadata = data["context_metadata"]
         
@@ -404,13 +399,11 @@ class TestStructuredContextAPI:
         end_time = time.time()
         processing_time = end_time - start_time
         
-        assert response.status_code == 200
-        
         # Should complete within reasonable time (adjust threshold as needed)
         assert processing_time < 30.0  # 30 seconds max
         
         # Verify context was processed (might be optimized/summarized)
-        data = response.json()
+        data = extract_final_result_from_streaming_response(response)
         assert "context_metadata" in data
         assert data["context_metadata"]["processing_mode"] == "structured"
     
@@ -481,8 +474,7 @@ class TestStructuredContextAPI:
         
         response = client.post("/api/v1/generate-chapter", json=structured_request)
         
-        assert response.status_code == 200
-        data = response.json()
+        data = extract_final_result_from_streaming_response(response)
         
         # Should process successfully with structured context only
         assert data["metadata"]["contextMode"] == "structured"

@@ -686,12 +686,12 @@ describe('WorldbuildingChatComponent', () => {
       
       spyOn(component.worldbuildingUpdated, 'emit');
       
-      // Create story with same worldbuilding content
+      // Create story with same worldbuilding content - use the exact same reference
       const sameStory = {
         ...mockStory,
         general: {
           ...mockStory.general,
-          worldbuilding: 'Initial worldbuilding content' // Same content
+          worldbuilding: mockStory.general.worldbuilding // Use exact same reference
         }
       };
       
@@ -710,6 +710,9 @@ describe('WorldbuildingChatComponent', () => {
     it('should handle empty worldbuilding content', () => {
       component.story = mockStory;
       fixture.detectChanges();
+      
+      // Verify initial state
+      expect(component.currentWorldbuilding).toBe('Initial worldbuilding content');
       
       const updatedStory = {
         ...mockStory,
