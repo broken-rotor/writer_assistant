@@ -89,3 +89,4 @@ async def test_worldbuilding_status():
             status_code=500,
             detail=f"Status check failed: {str(e)}"
         )
+

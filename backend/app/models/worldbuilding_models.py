@@ -45,3 +45,5 @@ class WorldbuildingStatusResponse(BaseModel):
     status: str = Field(default="ok", description="Service status")
     timestamp: str = Field(..., description="Current timestamp")
     version: str = Field(default="1.0.0", description="API version")
+
+

@@ -245,3 +245,5 @@ Please merge this information into a coherent worldbuilding document."""
             score += 0.1
         
         return min(score, 1.0)
+
+
