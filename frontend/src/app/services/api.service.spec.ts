@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   StructuredCharacterFeedbackRequest,
@@ -175,7 +175,7 @@ describe('ApiService', () => {
   });
 
   describe('modifyChapter', () => {
-    it('should send POST request to modify-chapter endpoint', () => {
+    it('should create an observable for SSE streaming chapter modification', () => {
       const request = {
         systemPrompts: {
           mainPrefix: '',
@@ -196,13 +196,65 @@ describe('ApiService', () => {
         changesSummary: 'Made the chapter more exciting'
       };
 
+      // Mock the SSE streaming service
+      const mockSSEObservable = jasmine.createSpy('createSSEObservable').and.returnValue(
+        new Observable(observer => {
+          observer.next(mockResponse);
+          observer.complete();
+        })
+      );
+      
+      spyOn(service['sseStreamingService'], 'createSSEObservable').and.callFake(mockSSEObservable);
+
       service.modifyChapter(request).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/modify-chapter`);
-      expect(req.request.method).toBe('POST');
-      req.flush(mockResponse);
+      expect(mockSSEObservable).toHaveBeenCalledWith(
+        `${baseUrl}/modify-chapter`,
+        request,
+        jasmine.objectContaining({
+          onError: jasmine.any(Function)
+        })
+      );
+    });
+
+    it('should handle progress updates when provided', () => {
+      const request = {
+        systemPrompts: {
+          mainPrefix: '',
+          mainSuffix: '',
+          assistantPrompt: 'You are a writer'
+        },
+        worldbuilding: 'A fantasy world',
+        storySummary: 'A story',
+        previousChapters: [],
+        currentChapter: 'Original chapter text',
+        userRequest: 'Make it more exciting'
+      };
+
+      const progressCallback = jasmine.createSpy('onProgress');
+      
+      // Mock the SSE streaming service
+      const mockSSEObservable = jasmine.createSpy('createSSEObservable').and.returnValue(
+        new Observable(observer => {
+          observer.next({});
+          observer.complete();
+        })
+      );
+      
+      spyOn(service['sseStreamingService'], 'createSSEObservable').and.callFake(mockSSEObservable);
+
+      service.modifyChapter(request, progressCallback).subscribe();
+
+      expect(mockSSEObservable).toHaveBeenCalledWith(
+        `${baseUrl}/modify-chapter`,
+        request,
+        jasmine.objectContaining({
+          onProgress: jasmine.any(Function),
+          onError: jasmine.any(Function)
+        })
+      );
     });
   });
 

@@ -486,7 +486,8 @@ describe('GenerationService', () => {
           jasmine.objectContaining({
             currentChapter: 'Original text',
             userRequest: 'Make it exciting'
-          })
+          }),
+          undefined
         );
         done();
       });

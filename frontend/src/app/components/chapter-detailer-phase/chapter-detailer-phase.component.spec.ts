@@ -574,7 +574,8 @@ describe('ChapterDetailerPhaseComponent', () => {
       expect(mockGenerationService.modifyChapter).toHaveBeenCalledWith(
         mockStory,
         'Existing content',
-        'Add more dialogue'
+        'Add more dialogue',
+        jasmine.any(Function)
       );
     });
 

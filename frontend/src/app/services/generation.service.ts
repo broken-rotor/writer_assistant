@@ -126,7 +126,8 @@ export class GenerationService {
   modifyChapter(
     story: Story,
     currentChapterText: string,
-    userRequest: string
+    userRequest: string,
+    onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     const request: ModifyChapterRequest = {
       systemPrompts: {
@@ -145,7 +146,7 @@ export class GenerationService {
       userRequest: userRequest
     };
 
-    return this.apiService.modifyChapter(request);
+    return this.apiService.modifyChapter(request, onProgress);
   }
 
 
@@ -295,7 +296,8 @@ export class GenerationService {
   continueChapter(
     story: Story,
     currentChapterContent: string,
-    continuationPrompt?: string
+    continuationPrompt?: string,
+    onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     const defaultPrompt = 'Continue writing this chapter from where it left off, maintaining the same tone, style, and narrative flow.';
     const prompt = continuationPrompt || defaultPrompt;
@@ -317,7 +319,7 @@ export class GenerationService {
       userRequest: `${prompt}\n\nCurrent chapter content:\n${currentChapterContent}`
     };
 
-    return this.apiService.modifyChapter(request);
+    return this.apiService.modifyChapter(request, onProgress);
   }
 
   // Regenerate Chapter with Feedback
@@ -325,7 +327,8 @@ export class GenerationService {
     story: Story,
     currentChapterContent: string,
     feedbackItems: {source: string, content: string, type: string}[],
-    userInstructions?: string
+    userInstructions?: string,
+    onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     const feedbackText = feedbackItems.map(item => 
       `${item.source} (${item.type}): ${item.content}`
@@ -358,7 +361,7 @@ export class GenerationService {
       userRequest: incorporationPrompt
     };
 
-    return this.apiService.modifyChapter(request);
+    return this.apiService.modifyChapter(request, onProgress);
   }
 
   /**
@@ -369,7 +372,8 @@ export class GenerationService {
     story: Story,
     currentChapterContent: string,
     feedbackItems: {source: string, content: string, type: string}[],
-    userInstructions?: string
+    userInstructions?: string,
+    onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     try {
       // Build structured context using ContextBuilderService
@@ -417,7 +421,7 @@ export class GenerationService {
         userRequest: incorporationPrompt
       };
 
-      return this.apiService.modifyChapter(request);
+      return this.apiService.modifyChapter(request, onProgress);
     } catch (error) {
       throw new Error(`Failed to regenerate chapter with structured context: ${error}`);
     }
@@ -427,7 +431,8 @@ export class GenerationService {
   generateChapterVariation(
     story: Story,
     baseChapterContent: string,
-    variationPrompt: string
+    variationPrompt: string,
+    onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     const request: ModifyChapterRequest = {
       systemPrompts: {
@@ -446,7 +451,7 @@ export class GenerationService {
       userRequest: `Create a variation of this chapter with the following changes: ${variationPrompt}\n\nBase chapter:\n${baseChapterContent}`
     };
 
-    return this.apiService.modifyChapter(request);
+    return this.apiService.modifyChapter(request, onProgress);
   }
 
   // Refine Chapter Section
@@ -454,7 +459,8 @@ export class GenerationService {
     story: Story,
     fullChapterContent: string,
     sectionToRefine: string,
-    refinementInstructions: string
+    refinementInstructions: string,
+    onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     const request: ModifyChapterRequest = {
       systemPrompts: {
@@ -473,7 +479,7 @@ export class GenerationService {
       userRequest: `Please refine this specific section of the chapter: "${sectionToRefine}"\n\nRefinement instructions: ${refinementInstructions}\n\nFull chapter context:\n${fullChapterContent}`
     };
 
-    return this.apiService.modifyChapter(request);
+    return this.apiService.modifyChapter(request, onProgress);
   }
 
   // ============================================================================
