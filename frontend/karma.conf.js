@@ -39,7 +39,7 @@ module.exports = function (config) {
     browserNoActivityTimeout: 120000,
     captureTimeout: 120000,
     customLaunchers: {
-      ChromeHeadlessNoSandbox: {
+      ChromeHeadless: {
         base: 'Chrome',
         flags: [
           '--headless',

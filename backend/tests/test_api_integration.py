@@ -2,8 +2,38 @@
 Integration tests across multiple endpoints.
 """
 import pytest
+import json
 from fastapi.testclient import TestClient
 from tests.test_generate_chapter import extract_final_result_from_streaming_response
+
+
+def extract_editor_review_result_from_streaming_response(response):
+    """Helper function to extract the final result from editor review streaming SSE response."""
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+    
+    # Parse SSE content
+    content = response.text
+    lines = content.split('\n')
+    
+    # Should contain data lines
+    data_lines = [line for line in lines if line.startswith('data: ')]
+    assert len(data_lines) > 0
+    
+    # Parse JSON from data lines
+    messages = []
+    for line in data_lines:
+        try:
+            data = json.loads(line[6:])  # Remove 'data: ' prefix
+            messages.append(data)
+        except json.JSONDecodeError:
+            pass
+    
+    # Find the result message
+    result_messages = [msg for msg in messages if msg.get('type') == 'result']
+    assert len(result_messages) > 0, "No result message found in streaming response"
+    
+    return result_messages[0].get('data', {})
 
 
 class TestAPIIntegration:
@@ -44,8 +74,8 @@ class TestAPIIntegration:
         # Get editor review of the chapter
         sample_editor_review_request["chapterToReview"] = chapter_text
         editor_response = client.post("/api/v1/editor-review", json=sample_editor_review_request)
-        assert editor_response.status_code == 200
-        assert len(editor_response.json()["suggestions"]) > 0
+        editor_data = extract_editor_review_result_from_streaming_response(editor_response)
+        assert len(editor_data["suggestions"]) > 0
 
     def test_chapter_modification_workflow(
         self,

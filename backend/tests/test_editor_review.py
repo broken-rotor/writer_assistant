@@ -2,7 +2,37 @@
 Tests for editor review endpoint.
 """
 import pytest
+import json
 from fastapi.testclient import TestClient
+
+
+def extract_final_result_from_streaming_response(response):
+    """Helper function to extract the final result from a streaming SSE response."""
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+    
+    # Parse SSE content
+    content = response.text
+    lines = content.split('\n')
+    
+    # Should contain data lines
+    data_lines = [line for line in lines if line.startswith('data: ')]
+    assert len(data_lines) > 0
+    
+    # Parse JSON from data lines
+    messages = []
+    for line in data_lines:
+        try:
+            data = json.loads(line[6:])  # Remove 'data: ' prefix
+            messages.append(data)
+        except json.JSONDecodeError:
+            pass
+    
+    # Find the result message
+    result_messages = [msg for msg in messages if msg.get('type') == 'result']
+    assert len(result_messages) > 0, "No result message found in streaming response"
+    
+    return result_messages[0].get('data', {})
 
 
 class TestEditorReviewEndpoint:
@@ -11,14 +41,13 @@ class TestEditorReviewEndpoint:
     def test_editor_review_success(self, client, sample_editor_review_request):
         """Test successful editor review"""
         response = client.post("/api/v1/editor-review", json=sample_editor_review_request)
-        assert response.status_code == 200
-        data = response.json()
+        data = extract_final_result_from_streaming_response(response)
         assert "suggestions" in data
 
     def test_editor_review_response_structure(self, client, sample_editor_review_request):
         """Test editor review response structure"""
         response = client.post("/api/v1/editor-review", json=sample_editor_review_request)
-        data = response.json()
+        data = extract_final_result_from_streaming_response(response)
 
         assert isinstance(data["suggestions"], list)
         assert len(data["suggestions"]) > 0
@@ -26,7 +55,8 @@ class TestEditorReviewEndpoint:
     def test_editor_review_suggestion_structure(self, client, sample_editor_review_request):
         """Test individual suggestion structure"""
         response = client.post("/api/v1/editor-review", json=sample_editor_review_request)
-        suggestions = response.json()["suggestions"]
+        data = extract_final_result_from_streaming_response(response)
+        suggestions = data["suggestions"]
 
         for suggestion in suggestions:
             assert "issue" in suggestion
@@ -39,7 +69,8 @@ class TestEditorReviewEndpoint:
     def test_editor_review_has_multiple_priorities(self, client, sample_editor_review_request):
         """Test editor review includes suggestions with different priorities"""
         response = client.post("/api/v1/editor-review", json=sample_editor_review_request)
-        suggestions = response.json()["suggestions"]
+        data = extract_final_result_from_streaming_response(response)
+        suggestions = data["suggestions"]
 
         priorities = set(s["priority"] for s in suggestions)
         # Should have at least 2 different priority levels
@@ -64,7 +95,8 @@ class TestEditorReviewEndpoint:
             }
         ]
         response = client.post("/api/v1/editor-review", json=sample_editor_review_request)
-        assert response.status_code == 200
+        data = extract_final_result_from_streaming_response(response)
+        assert "suggestions" in data
 
     def test_editor_review_missing_chapter(self, client):
         """Test editor review fails without chapter to review"""
