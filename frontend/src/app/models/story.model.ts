@@ -777,9 +777,30 @@ export interface LLMChatRequest {
 
 export interface LLMChatResponse {
   message: LLMChatMessage;
-  agent_type: 'writer' | 'character' | 'editor';
+  agent_type: 'writer' | 'character' | 'editor' | 'worldbuilding';
   metadata: Record<string, any>;
 }
+
+// SSE Streaming interfaces for LLM Chat
+export interface LLMChatStreamStatus {
+  type: 'status';
+  phase: 'context_building' | 'generating' | 'formatting';
+  message: string;
+  progress: number;
+}
+
+export interface LLMChatStreamResult {
+  type: 'result';
+  data: LLMChatResponse;
+  status: 'complete';
+}
+
+export interface LLMChatStreamError {
+  type: 'error';
+  message: string;
+}
+
+export type LLMChatStreamMessage = LLMChatStreamStatus | LLMChatStreamResult | LLMChatStreamError;
 
 /**
  * Phase Validation API models

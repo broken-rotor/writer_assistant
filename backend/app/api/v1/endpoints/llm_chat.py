@@ -3,10 +3,13 @@ LLM Chat endpoint for direct conversations with AI agents.
 Separate from RAG chat functionality.
 """
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from app.models.chat_models import LLMChatRequest, LLMChatResponse, ConversationMessage
 from app.services.llm_inference import get_llm
 from datetime import datetime, UTC
 import logging
+import json
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -66,78 +69,91 @@ def _build_conversation_context(messages, compose_context=None) -> str:
     return "\n".join(context_parts) if context_parts else ""
 
 
-@router.post("/chat/llm", response_model=LLMChatResponse)
+@router.post("/chat/llm")
 async def llm_chat(request: LLMChatRequest):
     """
-    Direct LLM chat for interactive conversations with AI agents.
+    Direct LLM chat for interactive conversations with AI agents using SSE streaming.
     Separate from RAG chat functionality.
     """
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
-    try:
-        # Standard chat processing for all agent types
-        return await _handle_standard_chat(request, llm)
-
-    except Exception as e:
-        logger.error(f"Error in llm_chat: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error in LLM chat: {str(e)}")
-
-
-
-async def _handle_standard_chat(request: LLMChatRequest, llm) -> LLMChatResponse:
-    """Handle standard chat for non-worldbuilding agents."""
-
-    # Build system prompt based on agent type and context
-    system_prompt = _build_agent_system_prompt(
-        request.agent_type,
-        request.compose_context,
-        request.system_prompts
-    )
-
-    # Build conversation context
-    context = _build_conversation_context(request.messages, request.compose_context)
-
-    # Prepare messages for LLM
-    llm_messages = [{"role": "system", "content": system_prompt}]
-
-    # Add context as first user message if available
-    if context:
-        llm_messages.append({"role": "user", "content": f"Context:\n{context}"})
-        llm_messages.append({"role": "assistant", "content": "I understand the context. How can I help you?"})
-
-    # Add conversation history
-    for msg in request.messages:
-        llm_messages.append({
-            "role": msg.role,
-            "content": msg.content
-        })
-
-    # Get LLM response
-    response_text = llm.chat_completion(
-        llm_messages,
-        max_tokens=request.max_tokens,
-        temperature=request.temperature
-    )
-
-    # Create response message
-    response_message = ConversationMessage(
-        role="assistant",
-        content=response_text.strip(),
-        timestamp=datetime.now(UTC).isoformat()
-    )
-
-    return LLMChatResponse(
-        message=response_message,
-        agent_type=request.agent_type,
-        metadata={
-            "generatedAt": datetime.now(UTC).isoformat(),
-            "phase": request.compose_context.current_phase if request.compose_context else None,
-            "conversationLength": len(request.messages),
-            "contextProvided": bool(context)
+    async def generate_with_updates():
+        try:
+            # Phase 1: Context Building
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_building', 'message': f'Building {request.agent_type} agent context...', 'progress': 30})}\n\n"
+            
+            # Build system prompt based on agent type and context
+            system_prompt = _build_agent_system_prompt(
+                request.agent_type,
+                request.compose_context,
+                request.system_prompts
+            )
+            
+            # Build conversation context
+            context = _build_conversation_context(request.messages, request.compose_context)
+            
+            # Prepare messages for LLM
+            llm_messages = [{"role": "system", "content": system_prompt}]
+            
+            # Add context as first user message if available
+            if context:
+                llm_messages.append({"role": "user", "content": f"Context:\n{context}"})
+                llm_messages.append({"role": "assistant", "content": "I understand the context. How can I help you?"})
+            
+            # Add conversation history
+            for msg in request.messages:
+                llm_messages.append({
+                    "role": msg.role,
+                    "content": msg.content
+                })
+            
+            # Phase 2: Generation
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': f'{request.agent_type.title()} agent is thinking...', 'progress': 70})}\n\n"
+            
+            # Get LLM response
+            response_text = llm.chat_completion(
+                llm_messages,
+                max_tokens=request.max_tokens,
+                temperature=request.temperature
+            )
+            
+            # Phase 3: Formatting
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'formatting', 'message': 'Formatting response...', 'progress': 90})}\n\n"
+            
+            # Create response message
+            response_message = ConversationMessage(
+                role="assistant",
+                content=response_text.strip(),
+                timestamp=datetime.now(UTC).isoformat()
+            )
+            
+            # Final result
+            result = LLMChatResponse(
+                message=response_message,
+                agent_type=request.agent_type,
+                metadata={
+                    "generatedAt": datetime.now(UTC).isoformat(),
+                    "phase": request.compose_context.current_phase if request.compose_context else None,
+                    "conversationLength": len(request.messages),
+                    "contextProvided": bool(context)
+                }
+            )
+            
+            yield f"data: {json.dumps({'type': 'result', 'data': result.dict(), 'status': 'complete'})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"Error in llm_chat: {str(e)}")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        generate_with_updates(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
         }
     )
-
 
 

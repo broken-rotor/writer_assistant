@@ -11,6 +11,7 @@ import {
   // New LLM Chat interfaces
   LLMChatRequest,
   LLMChatResponse,
+  LLMChatStreamMessage,
   // New Phase Validation interfaces
   PhaseTransitionRequest,
   PhaseTransitionResponse
@@ -59,9 +60,128 @@ export class ApiService {
   // NEW ENDPOINTS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
   // ============================================================================
 
-  // LLM Chat (separate from RAG)
+  // LLM Chat (separate from RAG) - now with SSE streaming
   llmChat(request: LLMChatRequest): Observable<LLMChatResponse> {
-    return this.http.post<LLMChatResponse>(`${this.baseUrl}/chat/llm`, request);
+    return new Observable<LLMChatResponse>(observer => {
+      fetch(`${this.baseUrl}/chat/llm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        
+        if (!reader) {
+          throw new Error('No response body');
+        }
+        
+        const processStream = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data: LLMChatStreamMessage = JSON.parse(line.slice(6));
+                    
+                    if (data.type === 'result') {
+                      observer.next(data.data);
+                      observer.complete();
+                      return;
+                    } else if (data.type === 'error') {
+                      observer.error(new Error(data.message));
+                      return;
+                    }
+                    // Status updates are handled but not emitted to maintain compatibility
+                  } catch (parseError) {
+                    console.warn('Failed to parse SSE message:', line, parseError);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            observer.error(error);
+          }
+        };
+        
+        processStream();
+      })
+      .catch(error => {
+        observer.error(error);
+      });
+    });
+  }
+
+  // LLM Chat with progress updates - for components that want to show progress
+  llmChatWithUpdates(request: LLMChatRequest): Observable<LLMChatStreamMessage> {
+    return new Observable<LLMChatStreamMessage>(observer => {
+      fetch(`${this.baseUrl}/chat/llm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        
+        if (!reader) {
+          throw new Error('No response body');
+        }
+        
+        const processStream = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data: LLMChatStreamMessage = JSON.parse(line.slice(6));
+                    observer.next(data);
+                    
+                    if (data.type === 'result' || data.type === 'error') {
+                      observer.complete();
+                      return;
+                    }
+                  } catch (parseError) {
+                    console.warn('Failed to parse SSE message:', line, parseError);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            observer.error(error);
+          }
+        };
+        
+        processStream();
+      })
+      .catch(error => {
+        observer.error(error);
+      });
+    });
   }
 
   // Phase Transition Validation
