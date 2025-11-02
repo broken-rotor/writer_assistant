@@ -56,23 +56,23 @@
   <!-- Navigation Controls -->
   <div class="navigation-controls">
     <!-- Previous Button -->
-    <button 
+    <button
       *ngIf="showRevertButton()"
       class="nav-button prev-button"
-      [disabled]="!validationResult?.canRevert"
+      [disabled]="!validationResult.canRevert"
       (click)="revertToPrevious()"
-      [attr.aria-label]="validationResult?.previousPhase ? 'Go back to ' + getPhaseDisplayName(validationResult.previousPhase!) : 'Go back'">
+      [attr.aria-label]="validationResult.previousPhase ? 'Go back to ' + getPhaseDisplayName(validationResult.previousPhase!) : 'Go back'">
       <span class="button-icon">←</span>
       <span class="button-text">Previous</span>
     </button>
 
     <!-- Next Button -->
-    <button 
+    <button
       *ngIf="showAdvanceButton()"
       class="nav-button next-button"
-      [disabled]="!validationResult?.canAdvance"
+      [disabled]="!validationResult.canAdvance"
       (click)="advanceToNext()"
-      [attr.aria-label]="validationResult?.nextPhase ? 'Advance to ' + getPhaseDisplayName(validationResult.nextPhase!) : 'Advance'">
+      [attr.aria-label]="validationResult.nextPhase ? 'Advance to ' + getPhaseDisplayName(validationResult.nextPhase!) : 'Advance'">
       <span class="button-text">Next</span>
       <span class="button-icon">→</span>
     </button>
