@@ -1077,7 +1077,113 @@ ${story.plotOutline.content}`;
   }
 
   /**
-   * Request rater feedback using structured context
+   * Request rater feedback using structured context with streaming support
+   */
+  requestRaterFeedbackWithStreaming(
+    story: Story,
+    rater: Rater,
+    plotPoint: string,
+    onProgress?: (progress: { phase: string; message: string; progress: number }) => void,
+    _options: { validate?: boolean; optimize?: boolean } = {}
+  ): Observable<StructuredRaterFeedbackResponse> {
+    try {
+      // Build structured request using ContextBuilderService
+      const systemPromptsResult = this.contextBuilderService.buildSystemPromptsContext(story);
+      const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
+      const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
+      const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
+      const charactersResult = this.contextBuilderService.buildCharacterContext(story);
+
+      // Check if context building was successful
+      if (!systemPromptsResult.success || !worldbuildingResult.success || 
+          !storySummaryResult.success || !chaptersResult.success || !charactersResult.success) {
+        throw new Error('Failed to build required context for structured rater feedback request');
+      }
+
+      // Build structured request
+      const structuredRequest: any = {
+        raterPrompt: rater.systemPrompt,
+        plotPoint: plotPoint,
+        structured_context: {
+          systemPrompts: {
+            mainPrefix: systemPromptsResult.data!.mainPrefix,
+            mainSuffix: systemPromptsResult.data!.mainSuffix,
+            assistantPrompt: systemPromptsResult.data!.assistantPrompt
+          },
+          worldbuilding: {
+            content: worldbuildingResult.data!.content,
+            lastModified: new Date(),
+            wordCount: worldbuildingResult.data!.content.split(/\s+/).length
+          },
+          storySummary: {
+            summary: storySummaryResult.data!.summary,
+            lastModified: new Date(),
+            wordCount: storySummaryResult.data!.summary.split(/\s+/).length
+          },
+          previousChapters: chaptersResult.data!.chapters.map(ch => ({
+            number: ch.number,
+            title: ch.title,
+            content: ch.content,
+            wordCount: ch.content.split(/\s+/).length
+          })),
+          characters: charactersResult.data!.characters.map((c: any) => ({
+            name: c.name,
+            basicBio: c.basicBio,
+            sex: c.sex,
+            gender: c.gender,
+            sexualPreference: c.sexualPreference,
+            age: c.age,
+            physicalAppearance: c.physicalAppearance,
+            usualClothing: c.usualClothing,
+            personality: c.personality,
+            motivations: c.motivations,
+            fears: c.fears,
+            relationships: c.relationships,
+            isHidden: c.isHidden
+          })),
+          plotContext: {
+            plotPoint: plotPoint,
+            plotOutline: story.plotOutline?.content,
+            plotOutlineStatus: story.plotOutline?.status
+          },
+          requestMetadata: {
+            timestamp: new Date(),
+            requestSource: 'generation_service_streaming'
+          }
+        }
+      };
+
+      // Use streaming API
+      return new Observable<StructuredRaterFeedbackResponse>(observer => {
+        this.apiService.streamRaterFeedback(structuredRequest).subscribe({
+          next: (event) => {
+            if (event.type === 'status' && onProgress) {
+              onProgress({
+                phase: event.phase,
+                message: event.message,
+                progress: event.progress
+              });
+            } else if (event.type === 'result') {
+              // Transform the result to match expected format
+              const response: StructuredRaterFeedbackResponse = {
+                raterName: event.data.raterName,
+                feedback: event.data.feedback,
+                context_metadata: event.data.context_metadata
+              };
+              observer.next(response);
+              observer.complete();
+            }
+          },
+          error: (error) => observer.error(error)
+        });
+      });
+    } catch (error) {
+      throw new Error(`Failed to request streaming rater feedback: ${error}`);
+    }
+  }
+
+  /**
+   * Request rater feedback using structured context (legacy method)
    */
   requestRaterFeedback(
     story: Story,

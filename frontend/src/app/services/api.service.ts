@@ -203,6 +203,72 @@ export class ApiService {
     return this.http.post<StructuredRaterFeedbackResponse>(`${this.baseUrl}/rater-feedback/structured`, request);
   }
 
+  // Streaming Rater Feedback
+  streamRaterFeedback(request: any): Observable<any> {
+    return new Observable(observer => {
+      fetch(`${this.baseUrl}/rater-feedback/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+        },
+        body: JSON.stringify(request)
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        
+        if (!reader) {
+          throw new Error('No response body');
+        }
+        
+        const readStream = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const eventData = JSON.parse(line.slice(6));
+                    observer.next(eventData);
+                    
+                    if (eventData.type === 'result') {
+                      observer.complete();
+                      return;
+                    } else if (eventData.type === 'error') {
+                      observer.error(new Error(eventData.message || 'Streaming error'));
+                      return;
+                    }
+                  } catch (parseError) {
+                    console.warn('Failed to parse SSE event:', line, parseError);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            observer.error(error);
+          }
+        };
+        
+        readStream();
+      }).catch(error => {
+        observer.error(error);
+      });
+      
+      return () => {
+        // Cleanup if needed
+      };
+    });
+  }
+
   // Chapter Generation
   generateChapter(request: StructuredGenerateChapterRequest): Observable<StructuredGenerateChapterResponse> {
     return this.http.post<StructuredGenerateChapterResponse>(`${this.baseUrl}/generate-chapter/structured`, request);

@@ -507,8 +507,13 @@ describe('WorldbuildingChatComponent', () => {
   });
 
   it('should render empty state when no worldbuilding content', () => {
-    const storyWithoutWorldbuilding = { ...mockStory };
-    storyWithoutWorldbuilding.general.worldbuilding = '';
+    const storyWithoutWorldbuilding = {
+      ...mockStory,
+      general: {
+        ...mockStory.general,
+        worldbuilding: ''
+      }
+    };
 
     // Update the mock BehaviorSubject to emit empty string
     (mockWorldbuildingSyncService.worldbuildingUpdated$ as BehaviorSubject<string>).next('');
@@ -707,13 +712,13 @@ describe('WorldbuildingChatComponent', () => {
       expect(component.worldbuildingUpdated.emit).not.toHaveBeenCalled();
     });
 
-    it('should handle empty worldbuilding content', () => {
+    it('should handle empty worldbuilding content', async () => {
       component.story = mockStory;
       fixture.detectChanges();
-      
+
       // Verify initial state
       expect(component.currentWorldbuilding).toBe('Initial worldbuilding content');
-      
+
       const updatedStory = {
         ...mockStory,
         general: {
@@ -721,9 +726,9 @@ describe('WorldbuildingChatComponent', () => {
           worldbuilding: '' // Empty content
         }
       };
-      
+
       spyOn(component.worldbuildingUpdated, 'emit');
-      
+
       component.ngOnChanges({
         story: {
           currentValue: updatedStory,
@@ -732,7 +737,10 @@ describe('WorldbuildingChatComponent', () => {
           isFirstChange: () => false
         }
       });
-      
+
+      // Wait for any async operations to complete
+      await fixture.whenStable();
+
       expect(component.currentWorldbuilding).toBe('');
       expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith('');
     });
