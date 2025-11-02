@@ -48,6 +48,21 @@ export interface SyncError {
   recoverable: boolean;
 }
 
+export interface SyncProgress {
+  phase: 'message_processing' | 'extracting' | 'merging' | 'quality_assessment' | 'complete';
+  message: string;
+  progress: number; // 0-100
+}
+
+export interface SSEEvent {
+  type: 'status' | 'result' | 'error';
+  phase?: string;
+  message?: string;
+  progress?: number;
+  data?: BackendSyncResponse;
+  status?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -55,6 +70,7 @@ export class WorldbuildingSyncService {
   private worldbuildingUpdatedSubject = new BehaviorSubject<string>('');
   private syncInProgressSubject = new BehaviorSubject<boolean>(false);
   private syncErrorSubject = new BehaviorSubject<SyncError | null>(null);
+  private syncProgressSubject = new BehaviorSubject<SyncProgress | null>(null);
   
   // Services
   private conversationService = inject(ConversationService);
@@ -83,6 +99,7 @@ export class WorldbuildingSyncService {
   
   public syncInProgress$ = this.syncInProgressSubject.asObservable();
   public syncError$ = this.syncErrorSubject.asObservable();
+  public syncProgress$ = this.syncProgressSubject.asObservable();
 
   /**
    * Sync worldbuilding content from conversation messages
@@ -170,7 +187,7 @@ export class WorldbuildingSyncService {
   }
 
   /**
-   * Sync with backend API
+   * Sync with backend API using SSE streaming
    */
   private async syncWithBackend(
     storyId: string,
@@ -178,25 +195,143 @@ export class WorldbuildingSyncService {
     currentWorldbuilding: string,
     config: WorldbuildingSyncConfig
   ): Promise<string> {
-    const request: BackendSyncRequest = {
-      story_id: storyId,
-      messages: messages,
-      current_worldbuilding: currentWorldbuilding,
-      force_sync: false
-    };
+    return new Promise((resolve, reject) => {
+      const requestData: BackendSyncRequest = {
+        story_id: storyId,
+        messages: messages,
+        current_worldbuilding: currentWorldbuilding,
+        force_sync: false
+      };
 
-    return firstValueFrom(this.http.post<BackendSyncResponse>(`${this.apiBaseUrl}/worldbuilding/sync`, request)
-      .pipe(
-        timeout(config.timeoutMs!),
-        retry(config.retryAttempts!),
-        catchError(this.handleHttpError.bind(this))
-      ))
-      .then(response => {
-        if (!response || !response.success) {
-          throw new Error(response?.errors?.join(', ') || 'Backend sync failed');
-        }
-        return response.updated_worldbuilding;
+      // Create EventSource for SSE
+      const eventSource = new EventSource(`${this.apiBaseUrl}/worldbuilding/sync`, {
+        // Note: EventSource doesn't support POST directly, so we'll need to modify the backend
+        // For now, we'll use a workaround with query parameters or modify to GET
       });
+
+      let timeoutId: any;
+      
+      // Set timeout
+      if (config.timeoutMs) {
+        timeoutId = setTimeout(() => {
+          eventSource.close();
+          reject(new Error('Request timeout'));
+        }, config.timeoutMs);
+      }
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data: SSEEvent = JSON.parse(event.data);
+          
+          if (data.type === 'status') {
+            // Update progress
+            this.syncProgressSubject.next({
+              phase: data.phase as any,
+              message: data.message || '',
+              progress: data.progress || 0
+            });
+          } else if (data.type === 'result') {
+            // Final result
+            if (timeoutId) clearTimeout(timeoutId);
+            eventSource.close();
+            
+            if (data.data && data.data.success) {
+              this.syncProgressSubject.next(null); // Clear progress
+              resolve(data.data.updated_worldbuilding);
+            } else {
+              reject(new Error(data.data?.errors?.join(', ') || 'Backend sync failed'));
+            }
+          } else if (data.type === 'error') {
+            if (timeoutId) clearTimeout(timeoutId);
+            eventSource.close();
+            reject(new Error(data.message || 'Unknown error'));
+          }
+        } catch (error) {
+          console.error('Error parsing SSE data:', error);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        if (timeoutId) clearTimeout(timeoutId);
+        eventSource.close();
+        reject(new Error('SSE connection error'));
+      };
+
+      // Since EventSource doesn't support POST, we need to send the request data differently
+      // For now, we'll use a fetch POST to initiate the stream
+      fetch(`${this.apiBaseUrl}/worldbuilding/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+        },
+        body: JSON.stringify(requestData)
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          throw new Error('No response body');
+        }
+
+        const readStream = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data: SSEEvent = JSON.parse(line.slice(6));
+                    
+                    if (data.type === 'status') {
+                      this.syncProgressSubject.next({
+                        phase: data.phase as any,
+                        message: data.message || '',
+                        progress: data.progress || 0
+                      });
+                    } else if (data.type === 'result') {
+                      if (timeoutId) clearTimeout(timeoutId);
+                      
+                      if (data.data && data.data.success) {
+                        this.syncProgressSubject.next(null);
+                        resolve(data.data.updated_worldbuilding);
+                        return;
+                      } else {
+                        reject(new Error(data.data?.errors?.join(', ') || 'Backend sync failed'));
+                        return;
+                      }
+                    } else if (data.type === 'error') {
+                      if (timeoutId) clearTimeout(timeoutId);
+                      reject(new Error(data.message || 'Unknown error'));
+                      return;
+                    }
+                  } catch (parseError) {
+                    console.error('Error parsing SSE data:', parseError);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            if (timeoutId) clearTimeout(timeoutId);
+            reject(error);
+          }
+        };
+
+        readStream();
+      }).catch(error => {
+        if (timeoutId) clearTimeout(timeoutId);
+        reject(error);
+      });
+    });
   }
 
   /**
