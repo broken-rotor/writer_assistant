@@ -19,7 +19,7 @@ class TestAPIIntegration:
         """Test workflow: character feedback -> rater feedback -> generate chapter"""
         # Get character feedback
         char_response = client.post("/api/v1/character-feedback", json=sample_character_feedback_request)
-        assert char_response.status_code == 200
+        char_data = extract_final_result_from_streaming_response(char_response)
 
         # Get rater feedback
         rater_response = client.post("/api/v1/rater-feedback", json=sample_rater_feedback_request)
