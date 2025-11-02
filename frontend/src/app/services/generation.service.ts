@@ -17,6 +17,8 @@ import {
   FleshOutResponse,
   GenerateCharacterDetailsRequest,
   GenerateCharacterDetailsResponse,
+  PlotOutline,
+  PlotOutlineFeedback,
   // Enhanced interfaces with phase support
   EnhancedCharacterFeedbackRequest,
   EnhancedRaterFeedbackRequest,
@@ -905,16 +907,59 @@ ${story.plotOutline.content}`;
    * Format plot outline rater feedback for chapter generation
    */
   private formatPlotOutlineFeedback(story: Story): string {
-    if (!story.plotOutline || story.plotOutline.raterFeedback.size === 0) {
+    if (!story.plotOutline || !this.hasRaterFeedback(story.plotOutline)) {
       return 'No rater feedback available on plot outline.';
     }
 
-    const feedbackSummary = Array.from(story.plotOutline.raterFeedback.values())
+    const feedbackSummary = this.getRaterFeedbackValues(story.plotOutline)
       .filter(f => f.status === 'complete' && f.userResponse === 'accepted')
       .map(f => `- ${f.raterName}: ${f.feedback.substring(0, 200)}...`)
       .join('\n');
 
     return feedbackSummary || 'No accepted rater feedback available.';
+  }
+
+  /**
+   * Safely check if plot outline has rater feedback
+   */
+  private hasRaterFeedback(plotOutline: PlotOutline): boolean {
+    if (!plotOutline.raterFeedback) {
+      return false;
+    }
+
+    if (plotOutline.raterFeedback instanceof Map) {
+      return plotOutline.raterFeedback.size > 0;
+    }
+
+    if (typeof plotOutline.raterFeedback === 'object') {
+      return Object.keys(plotOutline.raterFeedback).length > 0;
+    }
+
+    return false;
+  }
+
+  /**
+   * Safely get rater feedback values from plot outline
+   */
+  private getRaterFeedbackValues(plotOutline: PlotOutline): PlotOutlineFeedback[] {
+    if (!plotOutline.raterFeedback) {
+      return [];
+    }
+
+    // Check if it's actually a Map
+    if (plotOutline.raterFeedback instanceof Map) {
+      return Array.from(plotOutline.raterFeedback.values());
+    }
+
+    // If it's a plain object (due to JSON deserialization), convert it
+    if (typeof plotOutline.raterFeedback === 'object') {
+      // Convert plain object to Map
+      const feedbackMap = new Map(Object.entries(plotOutline.raterFeedback as Record<string, PlotOutlineFeedback>));
+      plotOutline.raterFeedback = feedbackMap;
+      return Array.from(feedbackMap.values());
+    }
+
+    return [];
   }
 
   /**

@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Story, ChatMessage, Rater } from '../../models/story.model';
+import { Story, ChatMessage, Rater, PlotOutlineFeedback } from '../../models/story.model';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
 import { ToastService } from '../../services/toast.service';
@@ -386,7 +386,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
 
   private updateOutlineStatus(): void {
     const enabledRaters = this.getEnabledRaters();
-    const completedFeedback = Array.from(this.story.plotOutline.raterFeedback.values())
+    const completedFeedback = this.getRaterFeedbackValues()
       .filter(f => f.status === 'complete');
 
     if (enabledRaters.length === 0) {
@@ -400,13 +400,37 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
 
   getFeedbackProgress(): { completed: number; total: number } {
     const enabledRaters = this.getEnabledRaters();
-    const completedFeedback = Array.from(this.story.plotOutline.raterFeedback.values())
+    const completedFeedback = this.getRaterFeedbackValues()
       .filter(f => f.status === 'complete');
 
     return {
       completed: completedFeedback.length,
       total: enabledRaters.length
     };
+  }
+
+  /**
+   * Safely get rater feedback values, handling cases where raterFeedback might not be a Map
+   */
+  private getRaterFeedbackValues(): PlotOutlineFeedback[] {
+    if (!this.story.plotOutline?.raterFeedback) {
+      return [];
+    }
+
+    // Check if it's actually a Map
+    if (this.story.plotOutline.raterFeedback instanceof Map) {
+      return Array.from(this.story.plotOutline.raterFeedback.values());
+    }
+
+    // If it's a plain object (due to JSON deserialization), convert it
+    if (typeof this.story.plotOutline.raterFeedback === 'object') {
+      // Convert plain object to Map
+      const feedbackMap = new Map(Object.entries(this.story.plotOutline.raterFeedback as Record<string, PlotOutlineFeedback>));
+      this.story.plotOutline.raterFeedback = feedbackMap;
+      return Array.from(feedbackMap.values());
+    }
+
+    return [];
   }
 
   // ============================================================================
