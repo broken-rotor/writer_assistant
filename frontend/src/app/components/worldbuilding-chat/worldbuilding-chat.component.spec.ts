@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChanges } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 import { WorldbuildingChatComponent } from './worldbuilding-chat.component';
-import { Story } from '../../models/story.model';
+import { Story, ConversationThread, ConversationBranch, BranchNavigation } from '../../models/story.model';
 import { ConversationService } from '../../services/conversation.service';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
 
@@ -52,15 +53,51 @@ describe('WorldbuildingChatComponent', () => {
     }
   };
 
+  const mockThread: ConversationThread = {
+    id: 'thread-1',
+    messages: [],
+    currentBranchId: 'main',
+    branches: new Map([
+      ['main', {
+        id: 'main',
+        name: 'Main',
+        parentMessageId: '',
+        messageIds: [],
+        isActive: true,
+        metadata: { created: new Date() }
+      }]
+    ]),
+    metadata: {
+      created: new Date(),
+      lastModified: new Date(),
+      phase: 'worldbuilding' as any
+    }
+  };
+
+  const mockBranchNavigation: BranchNavigation = {
+    currentBranchId: 'main',
+    availableBranches: ['main'],
+    branchHistory: [],
+    canNavigateBack: false,
+    canNavigateForward: false
+  };
+
   beforeEach(async () => {
     const conversationSpy = jasmine.createSpyObj('ConversationService', [
+      'initializeConversation',
       'getConversation',
       'sendMessage',
       'clearConversation',
       'createBranch',
       'switchBranch',
-      'deleteBranch'
-    ]);
+      'deleteBranch',
+      'getCurrentBranchMessages',
+      'getAvailableBranches'
+    ], {
+      currentThread$: new BehaviorSubject<ConversationThread | null>(mockThread),
+      branchNavigation$: new BehaviorSubject<BranchNavigation>(mockBranchNavigation),
+      isProcessing$: new BehaviorSubject<boolean>(false)
+    });
 
     await TestBed.configureTestingModule({
       imports: [WorldbuildingChatComponent, ChatInterfaceComponent],
@@ -72,6 +109,10 @@ describe('WorldbuildingChatComponent', () => {
     fixture = TestBed.createComponent(WorldbuildingChatComponent);
     component = fixture.componentInstance;
     _conversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
+
+    // Setup default return values
+    _conversationService.getCurrentBranchMessages.and.returnValue(mockThread.messages);
+    _conversationService.getAvailableBranches.and.returnValue([mockThread.branches.get('main')!]);
 
     // Set required inputs
     component.story = mockStory;
@@ -122,6 +163,8 @@ describe('WorldbuildingChatComponent', () => {
       }
     };
     
+    // Update the component's story property
+    component.story = newStory;
     component.ngOnChanges(changes);
     
     expect(component.chatConfig?.storyId).toBe('new-story-id');
