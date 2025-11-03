@@ -4,7 +4,6 @@ from app.api.v1.endpoints import archive
 from app.api.v1.endpoints import tokens
 from app.api.v1.endpoints import llm_chat
 from app.api.v1.endpoints import phase_validation
-from app.api.v1.endpoints import worldbuilding
 from app.api.v1.endpoints import regenerate_bio
 
 api_router = APIRouter()
@@ -13,5 +12,4 @@ api_router.include_router(archive.router, prefix="/archive", tags=["archive"])
 api_router.include_router(tokens.router, prefix="/tokens", tags=["tokens"])
 api_router.include_router(llm_chat.router, tags=["llm-chat"])
 api_router.include_router(phase_validation.router, tags=["phase-validation"])
-api_router.include_router(worldbuilding.router, prefix="/worldbuilding", tags=["worldbuilding"])
 api_router.include_router(regenerate_bio.router, tags=["regenerate-bio"])
