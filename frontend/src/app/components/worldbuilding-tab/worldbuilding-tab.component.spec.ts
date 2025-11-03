@@ -141,11 +141,14 @@ describe('WorldbuildingTabComponent', () => {
   });
 
   it('should handle flesh out functionality', () => {
+    // Reset the story to ensure clean state
+    component.story = { ...mockStory, general: { ...mockStory.general } };
+    
     component.aiFleshOutWorldbuilding();
     
     expect(mockLoadingService.show).toHaveBeenCalledWith('Fleshing out worldbuilding...', 'flesh-worldbuilding');
     expect(mockGenerationService.fleshOut).toHaveBeenCalledWith(
-      mockStory,
+      component.story,
       'Test worldbuilding content',
       'worldbuilding expansion'
     );
