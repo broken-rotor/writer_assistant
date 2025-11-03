@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -62,6 +62,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   // Raters tab state
   selectedRaterId: string | null = null;
   editingRater: any = null;
+  @ViewChild('raterFileInput') raterFileInput!: ElementRef<HTMLInputElement>;
 
   // Chapter Creation tab state
   generatingFeedback = new Set<string>();
@@ -206,7 +207,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   // General tab methods
-  loadFileContent(event: Event, target: 'prefix' | 'suffix' | 'worldbuilding') {
+  loadFileContent(event: Event, target: 'prefix' | 'suffix' | 'rater' | 'worldbuilding') {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) {
       return;
@@ -241,6 +242,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           this.story.general.systemPrompts.mainPrefix = content;
         } else if (target === 'suffix') {
           this.story.general.systemPrompts.mainSuffix = content;
+        } else if (target === 'rater' && this.editingRater) {
+          this.editingRater.systemPrompt = content;
         } else if (target === 'worldbuilding') {
           this.story.general.worldbuilding = content;
           this.updateWorldbuildingTokenCounter();
@@ -1228,6 +1231,13 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
   onFieldValidationChange(fieldType: string, result: TokenValidationResult) {
     this.fieldValidationResults[fieldType] = result;
+  }
+
+  onRaterFieldValidationChange(result: TokenValidationResult) {
+    // Store validation result for the current rater's system prompt
+    if (this.editingRater) {
+      this.fieldValidationResults[`rater-${this.editingRater.id}-systemPrompt`] = result;
+    }
   }
 
   canSave(): boolean {
