@@ -110,6 +110,7 @@ export LLM_TOP_P=1.5          # Error: Must be <= 1.0
 | `LLM_N_GPU_LAYERS` | integer | `-1` | -1 to model layers | Number of GPU layers to use | -1=all layers on GPU, 0=CPU only, >0=specific layer count |
 | `LLM_N_THREADS` | integer | `None` | ≥1 | CPU threads for inference | None=auto-detect, otherwise specific thread count |
 | `LLM_VERBOSE` | boolean | `False` | - | Enable verbose model logging | Shows detailed llama.cpp inference logs |
+| `LLM_VERBOSE_GENERATION` | boolean | `False` | - | Enable verbose logging of prompts/messages/outputs | Logs all prompts, messages, and generated outputs from the LLM |
 
 ### LLM Generation Settings
 
@@ -405,6 +406,16 @@ ENDPOINT_GENERATE_CHAPTER_TEMPERATURE=0.9
 ENDPOINT_CHARACTER_FEEDBACK_TEMPERATURE=0.9
 LLM_TOP_P=0.9
 LLM_REPEAT_PENALTY=1.2
+```
+
+### Debug/Development Setup
+
+```bash
+# .env file for debugging with verbose logging
+DEBUG=True
+LLM_VERBOSE=True
+LLM_VERBOSE_GENERATION=True
+MODEL_PATH=/models/model.gguf
 ```
 
 ## Configuration Validation
