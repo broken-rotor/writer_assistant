@@ -10,6 +10,7 @@ import { LoadingService } from '../../services/loading.service';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 import { PhaseNavigationComponent } from '../phase-navigation/phase-navigation.component';
 import { ArchiveService, RAGResponse } from '../../services/archive.service';
+import { SSEProgressUpdate } from '../../services/sse-streaming.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
 import { SystemPromptFieldComponent } from '../system-prompt-field/system-prompt-field.component';
 import { ToastComponent } from '../toast/toast.component';
@@ -77,6 +78,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   researchData: RAGResponse | null = null;
   researchChatHistory: ResearchChatMessage[] = [];
   researchFollowUpInput = '';
+  researchProgress: SSEProgressUpdate | null = null;
 
   // Token validation state
   tokenLimitsState: TokenLimitsState | null = null;
@@ -1203,6 +1205,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.researchData = null;
     this.researchChatHistory = [];
     this.researchFollowUpInput = '';
+    this.researchProgress = null;
 
     // Create a detailed research query
     const researchQuery = `Based on my story archive, provide relevant ideas, themes, plot elements, character archetypes, or writing patterns related to this plot point: "${this.story.chapterCreation.plotPoint}".
@@ -1222,15 +1225,28 @@ Provide actionable insights and creative suggestions to enhance this plot point.
       showSources: false
     });
 
-    this.archiveService.ragQuery(
+    this.archiveService.ragQueryStream(
       researchQuery,
       8, // More context chunks for better coverage
       1500, // Longer response for detailed insights
-      0.4 // Slightly higher temperature for creativity
+      0.4, // Slightly higher temperature for creativity
+      undefined, // filterFileName
+      {
+        onProgress: (progress: SSEProgressUpdate) => {
+          this.researchProgress = progress;
+          this.cdr.detectChanges();
+        },
+        onError: (error: Error) => {
+          console.error('Research streaming error:', error);
+          this.researchError = error.message;
+          this.cdr.detectChanges();
+        }
+      }
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
         this.researchLoading = false;
+        this.researchProgress = null;
         this.cdr.detectChanges();
       })
     ).subscribe({

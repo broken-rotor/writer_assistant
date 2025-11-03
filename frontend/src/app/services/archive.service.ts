@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { SSEStreamingService, SSEStreamingOptions } from './sse-streaming.service';
 
 export interface SearchResult {
   file_path: string;
@@ -72,6 +73,7 @@ export class ArchiveService {
   private apiUrl = `${environment.apiUrl}/archive`;
 
   private http = inject(HttpClient);
+  private sseStreamingService = inject(SSEStreamingService);
 
   /**
    * Search the story archive using semantic search
@@ -137,6 +139,32 @@ export class ArchiveService {
     };
 
     return this.http.post<RAGResponse>(`${this.apiUrl}/rag/query`, body);
+  }
+
+  /**
+   * Ask a question using RAG with streaming progress updates
+   */
+  ragQueryStream(
+    question: string,
+    nContextChunks = 5,
+    maxTokens = 1024,
+    temperature = 0.3,
+    filterFileName?: string,
+    options?: SSEStreamingOptions
+  ): Observable<RAGResponse> {
+    const body = {
+      question: question,
+      n_context_chunks: nContextChunks,
+      max_tokens: maxTokens,
+      temperature: temperature,
+      filter_file_name: filterFileName
+    };
+
+    return this.sseStreamingService.createSSEObservable<RAGResponse>(
+      `${this.apiUrl}/rag/query/stream`,
+      body,
+      options
+    );
   }
 
   /**
