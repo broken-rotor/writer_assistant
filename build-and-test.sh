@@ -104,7 +104,8 @@ run_frontend_build_and_test() {
 
     # Run linting
     log_info "Running ESLint..."
-    if npm run lint 2>&1 | tee frontend-lint.log; then
+    npm run lint 2>&1 | tee frontend-lint.log
+    if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
         log_success "Frontend linting passed!"
         FRONTEND_LINT_STATUS="passed"
     else
@@ -114,7 +115,8 @@ run_frontend_build_and_test() {
 
     # Run build
     log_info "Building frontend production bundle..."
-    if npm run build 2>&1 | tee frontend-build.log; then
+    npm run build 2>&1 | tee frontend-build.log
+    if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
         log_success "Frontend build successful!"
         FRONTEND_BUILD_STATUS="passed"
 
@@ -128,17 +130,17 @@ run_frontend_build_and_test() {
         log_error "Frontend build failed!"
         FRONTEND_BUILD_STATUS="failed"
         cd "$SCRIPT_DIR"
-        exit 1
     fi
 
     # Run tests (if test configuration exists)
     log_info "Running frontend tests..."
-    if npm run test -- --watch=false --code-coverage --browsers=ChromeHeadless 2>&1 | tee frontend-test.log; then
+    npm run test -- --watch=false --code-coverage --browsers=ChromeHeadless 2>&1 | tee frontend-test.log
+    if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
         log_success "Frontend tests passed!"
         FRONTEND_TESTS_STATUS="passed"
     else
         log_warning "Frontend tests skipped or failed (check frontend-test.log)"
-        FRONTEND_TESTS_STATUS="warning"
+        FRONTEND_TESTS_STATUS="failed"
     fi
 
     cd "$SCRIPT_DIR"
@@ -196,15 +198,6 @@ main() {
         echo -e "${YELLOW}⚠${NC} Frontend linting not run"
     fi
 
-    # Frontend tests
-    if [ "$FRONTEND_TESTS_STATUS" == "passed" ]; then
-        echo -e "${GREEN}✓${NC} Frontend tests passed"
-    elif [ "$FRONTEND_TESTS_STATUS" == "warning" ]; then
-        echo -e "${YELLOW}⚠${NC} Frontend tests completed with warnings or skipped"
-    else
-        echo -e "${YELLOW}⚠${NC} Frontend tests not run"
-    fi
-
     # Frontend build
     if [ "$FRONTEND_BUILD_STATUS" == "passed" ]; then
         echo -e "${GREEN}✓${NC} Frontend build successful"
@@ -213,10 +206,19 @@ main() {
     else
         echo -e "${YELLOW}⚠${NC} Frontend build not run"
     fi
+
+    # Frontend tests
+    if [ "$FRONTEND_TESTS_STATUS" == "passed" ]; then
+        echo -e "${GREEN}✓${NC} Frontend tests passed"
+    elif [ "$FRONTEND_TESTS_STATUS" == "failed" ]; then
+        echo -e "${RED}✗${NC} Frontend tests failed"
+    else
+        echo -e "${YELLOW}⚠${NC} Frontend tests not run"
+    fi
     echo ""
 
     # Overall status
-    if [ "$BACKEND_TESTS_STATUS" == "passed" ] && [ "$FRONTEND_BUILD_STATUS" == "passed" ]; then
+    if [ "$BACKEND_TESTS_STATUS" == "passed" ] && [ "$FRONTEND_BUILD_STATUS" == "passed" ] && [ "$FRONTEND_LINT_STATUS" == "passed" ] && [ "$FRONTEND_TESTS_STATUS" == "passed" ]; then
         log_success "All critical tests and builds completed successfully!"
     else
         log_warning "Some components failed or completed with warnings. Check logs above."
