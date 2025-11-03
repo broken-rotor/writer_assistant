@@ -11,6 +11,7 @@ export interface GeneralConfig {
   title: string;
   systemPrompts: SystemPrompts;
   worldbuilding: string;
+  worldbuildingChatHistory?: ChatMessage[];
 }
 
 export interface Character {

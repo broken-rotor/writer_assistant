@@ -54,6 +54,7 @@
   <!-- Tab Navigation -->
   <nav class="tab-nav">
     <button class="tab-button" [class.active]="activeTab === 'general'" (click)="selectTab('general')">General</button>
+    <button class="tab-button" [class.active]="activeTab === 'worldbuilding'" (click)="selectTab('worldbuilding')">Worldbuilding</button>
     <button class="tab-button" [class.active]="activeTab === 'characters'" (click)="selectTab('characters')">Characters</button>
     <button class="tab-button" [class.active]="activeTab === 'raters'" (click)="selectTab('raters')">Raters</button>
     <button class="tab-button" [class.active]="activeTab === 'plot-outline'" (click)="selectTab('plot-outline')">Plot Outline</button>
@@ -131,57 +132,15 @@
           (validationChange)="onFieldValidationChange('editorPrompt', $event)">
         </app-system-prompt-field>
       </div>
+    </div>
 
-      <div class="form-section worldbuilding-section">
-        <h3>Overall Setting / Worldbuilding</h3>
-        
-        <!-- Direct Editing Interface -->
-        <div class="worldbuilding-direct-edit">
-          <label for="worldbuilding-textarea" class="form-label">Worldbuilding Content</label>
-          <textarea
-            id="worldbuilding-textarea"
-            class="form-textarea worldbuilding-textarea"
-            [(ngModel)]="story.general.worldbuilding"
-            (input)="onWorldbuildingDirectEdit()"
-            placeholder="Describe your world, setting, magic systems, cultures, history, and any other worldbuilding details..."
-            rows="8">
-          </textarea>
-          
-          <!-- File Loading and Token Counter Row -->
-          <div class="worldbuilding-controls">
-            <div class="file-controls">
-              <input type="file" #worldbuildingFileInput accept=".txt,.md" (change)="loadFileContent($event, 'worldbuilding')" style="display: none">
-              <button class="secondary-button" (click)="worldbuildingFileInput.click()">Load from File (.txt, .md)</button>
-            </div>
-            
-            <!-- Token Counter -->
-            <div class="token-counter-container" *ngIf="shouldShowWorldbuildingTokenCounter()">
-              <app-token-counter
-                [data]="worldbuildingTokenCounterData"
-                [config]="{ displayMode: TokenCounterDisplayMode.COMPACT, showProgressBar: true }">
-              </app-token-counter>
-            </div>
-          </div>
-        </div>
-
-        <!-- Chat Interface -->
-        <div class="worldbuilding-chat-wrapper">
-          <h4>AI Assistant</h4>
-          <app-worldbuilding-chat
-            [story]="story"
-            [disabled]="loading"
-            [processing]="loadingService.isLoading"
-            (worldbuildingUpdated)="onWorldbuildingUpdated($event)"
-            (conversationStarted)="onWorldbuildingConversationStarted()"
-            (errorOccurred)="onWorldbuildingError($event)">
-          </app-worldbuilding-chat>
-        </div>
-        
-        <div class="button-group">
-          <button class="secondary-button" (click)="aiFleshOutWorldbuilding()">AI Flesh Out</button>
-          <button class="secondary-button">Reset to Original</button>
-        </div>
-      </div>
+    <!-- Worldbuilding Tab -->
+    <div *ngIf="activeTab === 'worldbuilding'" class="tab-pane worldbuilding-tab-pane">
+      <app-worldbuilding-tab
+        [story]="story"
+        [disabled]="loading"
+        (storyUpdated)="onStoryUpdated($event)">
+      </app-worldbuilding-tab>
     </div>
 
     <!-- Characters Tab -->
