@@ -18,7 +18,7 @@ import {
 /**
  * Field types for system prompt components
  */
-export type SystemPromptFieldType = 'mainPrefix' | 'mainSuffix' | 'assistantPrompt' | 'editorPrompt';
+export type SystemPromptFieldType = 'mainPrefix' | 'mainSuffix' | 'assistantPrompt' | 'editorPrompt' | 'raterSystemPrompt';
 
 /**
  * Token limit information for a specific field
@@ -135,7 +135,7 @@ export class TokenLimitsService {
     return this.tokenLimits$.pipe(
       map(limits => {
         const recommendedLimits = limits?.recommended_limits || this.defaultLimits;
-        const fieldTypes: SystemPromptFieldType[] = ['mainPrefix', 'mainSuffix', 'assistantPrompt', 'editorPrompt'];
+        const fieldTypes: SystemPromptFieldType[] = ['mainPrefix', 'mainSuffix', 'assistantPrompt', 'editorPrompt', 'raterSystemPrompt'];
         
         return fieldTypes.map(fieldType => {
           const limit = this.mapFieldTypeToLimit(fieldType, recommendedLimits);
@@ -305,6 +305,8 @@ export class TokenLimitsService {
         return limits.writing_assistant_prompt;
       case 'editorPrompt':
         return limits.writing_editor_prompt;
+      case 'raterSystemPrompt':
+        return limits.writing_assistant_prompt; // Use same limit as assistant prompt for raters
       default:
         return 500; // Default fallback
     }

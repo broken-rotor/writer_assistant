@@ -518,7 +518,8 @@ export class TokenValidationService {
       mainPrefix: 500,
       mainSuffix: 500,
       assistantPrompt: 1000,
-      editorPrompt: 1000
+      editorPrompt: 1000,
+      raterSystemPrompt: 1000
     };
     
     return fallbackLimits[fieldType] || 500;

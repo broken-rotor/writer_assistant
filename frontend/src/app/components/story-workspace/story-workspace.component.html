@@ -311,8 +311,18 @@
           </div>
 
           <div class="form-section">
-            <label for="rater-system-prompt">System Prompt</label>
-            <textarea id="rater-system-prompt" [(ngModel)]="editingRater.systemPrompt" placeholder="Evaluate character consistency, check for..." rows="10"></textarea>
+            <app-system-prompt-field
+              fieldType="raterSystemPrompt"
+              label="System Prompt"
+              placeholder="Evaluate character consistency, check for..."
+              [rows]="10"
+              [(ngModel)]="editingRater.systemPrompt"
+              (validationChange)="onRaterFieldValidationChange($event)">
+            </app-system-prompt-field>
+            <div class="file-upload-section">
+              <input type="file" #raterFileInput accept=".txt,.md" (change)="loadFileContent($event, 'rater')" style="display: none">
+              <button class="secondary-button" (click)="raterFileInput.click()">Load from File (.txt, .md)</button>
+            </div>
           </div>
 
           <div class="button-group">
