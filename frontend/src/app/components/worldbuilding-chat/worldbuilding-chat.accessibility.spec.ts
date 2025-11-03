@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 
 import { WorldbuildingChatComponent } from './worldbuilding-chat.component';
-import { Story, ConversationThread, ConversationBranch, BranchNavigation } from '../../models/story.model';
+import { Story, ConversationThread, BranchNavigation } from '../../models/story.model';
 import { ConversationService } from '../../services/conversation.service';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
 
