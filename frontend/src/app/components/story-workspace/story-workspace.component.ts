@@ -18,13 +18,10 @@ import { TokenLimitsService, TokenLimitsState } from '../../services/token-limit
 import { TokenValidationService, FieldValidationState } from '../../services/token-validation.service';
 import { ToastService } from '../../services/toast.service';
 import { TokenValidationResult } from '../../models/token-validation.model';
-import { TokenCountingService } from '../../services/token-counting.service';
-import { TokenCounterComponent } from '../token-counter/token-counter.component';
-import { TokenCounterData, TokenCounterDisplayMode } from '../../models/token-counter.model';
-import { 
-  ERROR_MESSAGES, 
-  ErrorContext, 
-  RecoveryAction 
+import {
+  ERROR_MESSAGES,
+  ErrorContext,
+  RecoveryAction
 } from '../../constants/token-limits.constants';
 import { PhaseStateService, PhaseType } from '../../services/phase-state.service';
 import { PlotOutlinePhaseComponent } from '../plot-outline-phase/plot-outline-phase.component';
@@ -33,7 +30,6 @@ import { FinalEditPhaseComponent } from '../final-edit-phase/final-edit-phase.co
 import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent, FeedbackRequestEvent, AddToChatEvent } from '../feedback-sidebar/feedback-sidebar.component';
 import { FeedbackService } from '../../services/feedback.service';
 import { ContextBuilderService } from '../../services/context-builder.service';
-import { WorldbuildingChatComponent } from '../worldbuilding-chat/worldbuilding-chat.component';
 import { WorldbuildingTabComponent } from '../worldbuilding-tab/worldbuilding-tab.component';
 
 interface ResearchChatMessage {
@@ -46,7 +42,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, PlotOutlineTabComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingChatComponent, WorldbuildingTabComponent, TokenCounterComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, PlotOutlineTabComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingTabComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -103,10 +99,6 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   showFeedbackSidebar = false;
   feedbackSidebarConfig: FeedbackSidebarConfig | null = null;
 
-  // Worldbuilding token counter state
-  worldbuildingTokenCounterData: TokenCounterData | null = null;
-  readonly TokenCounterDisplayMode = TokenCounterDisplayMode;
-
   private destroy$ = new Subject<void>();
 
   // Dependency injection
@@ -122,7 +114,6 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   private phaseStateService = inject(PhaseStateService);
   private feedbackService = inject(FeedbackService);
   private contextBuilderService = inject(ContextBuilderService);
-  private tokenCountingService = inject(TokenCountingService);
 
   ngOnInit() {
     this.route.params
@@ -155,8 +146,6 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         // Migrate story for plot outline integration (WRI-65)
         this.storyService.migrateStoryForPlotOutline(this.story);
         this.initializePhaseNavigation(storyId);
-        // Initialize worldbuilding token counter
-        this.updateWorldbuildingTokenCounter();
       }
     } catch (err) {
       this.error = 'Failed to load story';
@@ -208,7 +197,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   // General tab methods
-  loadFileContent(event: Event, target: 'prefix' | 'suffix' | 'rater' | 'worldbuilding') {
+  loadFileContent(event: Event, target: 'prefix' | 'suffix' | 'rater') {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) {
       return;
@@ -245,9 +234,6 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           this.story.general.systemPrompts.mainSuffix = content;
         } else if (target === 'rater' && this.editingRater) {
           this.editingRater.systemPrompt = content;
-        } else if (target === 'worldbuilding') {
-          this.story.general.worldbuilding = content;
-          this.updateWorldbuildingTokenCounter();
         }
         this.storyService.saveStory(this.story);
       }
@@ -264,94 +250,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     input.value = '';
   }
 
-  aiFleshOutWorldbuilding() {
-    if (!this.story || !this.story.general.worldbuilding) {
-      this.toastService.showWarning('Please enter worldbuilding text first');
-      return;
-    }
-
-    this.loadingService.show('Fleshing out worldbuilding...', 'flesh-worldbuilding');
-
-    this.generationService.fleshOut(
-      this.story,
-      this.story.general.worldbuilding,
-      'worldbuilding expansion'
-    ).pipe(
-      takeUntil(this.destroy$),
-      finalize(() => this.loadingService.hide())
-    ).subscribe({
-        next: (response) => {
-          if (this.story) {
-            this.story.general.worldbuilding = response.fleshedOutText;
-            this.storyService.saveStory(this.story);
-            this.toastService.showSuccess('Worldbuilding fleshed out successfully! Check the updated content in the worldbuilding panel.');
-          }
-        },
-        error: (err) => {
-          console.error('Error fleshing out worldbuilding:', err);
-          this.toastService.showError('Failed to flesh out worldbuilding. Please try again.');
-        }
-      });
-  }
-
-  // Worldbuilding chat event handlers
-
-  onWorldbuildingUpdated(updatedWorldbuilding: string): void {
-    if (this.story) {
-      this.story.general.worldbuilding = updatedWorldbuilding;
-      this.updateWorldbuildingTokenCounter();
-      this.storyService.saveStory(this.story);
-      this.cdr.detectChanges();
-    }
-  }
-
-  onWorldbuildingConversationStarted(): void {
-    console.log('Worldbuilding conversation started');
-    // Could show a toast or update UI state here
-  }
-
-  onWorldbuildingError(error: string): void {
-    console.error('Worldbuilding chat error:', error);
-    this.toastService.showError('Worldbuilding Error', error);
-  }
-
   // Story update handler for worldbuilding tab
   onStoryUpdated(updatedStory: Story): void {
     this.story = updatedStory;
     this.storyService.saveStory(this.story);
-  }
-
-  // Direct worldbuilding editing methods
-  onWorldbuildingDirectEdit(): void {
-    if (this.story) {
-      this.updateWorldbuildingTokenCounter();
-      this.storyService.saveStory(this.story);
-    }
-  }
-
-  private updateWorldbuildingTokenCounter(): void {
-    if (!this.story?.general.worldbuilding) {
-      this.worldbuildingTokenCounterData = null;
-      return;
-    }
-
-    this.tokenCountingService.countTokens(this.story.general.worldbuilding).subscribe({
-      next: (result) => {
-        this.worldbuildingTokenCounterData = {
-          current: result.token_count,
-          limit: 4000, // Set a reasonable limit for worldbuilding
-          warningThreshold: 3200
-        };
-      },
-      error: (error) => {
-        console.error('Error counting worldbuilding tokens:', error);
-        this.worldbuildingTokenCounterData = null;
-      }
-    });
-  }
-
-  shouldShowWorldbuildingTokenCounter(): boolean {
-    return !!(this.worldbuildingTokenCounterData && this.worldbuildingTokenCounterData.current > 0);
   }
 
   // Helper methods
