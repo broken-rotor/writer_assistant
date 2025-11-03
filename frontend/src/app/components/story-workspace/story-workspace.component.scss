@@ -1622,13 +1622,78 @@ button {
     color: #333;
   }
 
-  app-worldbuilding-chat {
-    display: block;
+  // Direct editing interface styles
+  .worldbuilding-direct-edit {
+    margin-bottom: 24px;
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    .worldbuilding-textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      resize: vertical;
+      transition: border-color 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+      }
+      
+      &::placeholder {
+        color: #6c757d;
+        font-style: italic;
+      }
+    }
+    
+    .worldbuilding-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      gap: 16px;
+      
+      .file-controls {
+        display: flex;
+        align-items: center;
+      }
+      
+      .token-counter-container {
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  // Chat interface wrapper styles
+  .worldbuilding-chat-wrapper {
     margin-bottom: 16px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #ffffff;
+    
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    app-worldbuilding-chat {
+      display: block;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+    }
   }
 
   .button-group {
@@ -1665,8 +1730,26 @@ button {
 // Responsive adjustments for worldbuilding section
 @media (max-width: 768px) {
   .worldbuilding-section {
-    app-worldbuilding-chat {
-      // The component itself handles mobile responsiveness
+    .worldbuilding-direct-edit {
+      .worldbuilding-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        
+        .file-controls {
+          justify-content: center;
+        }
+        
+        .token-counter-container {
+          align-self: center;
+        }
+      }
+    }
+    
+    .worldbuilding-chat-wrapper {
+      app-worldbuilding-chat {
+        // The component itself handles mobile responsiveness
+      }
     }
 
     .button-group {
