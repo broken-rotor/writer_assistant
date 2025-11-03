@@ -99,7 +99,19 @@ describe('WorldbuildingTabComponent', () => {
     mockTokenCountingService.countTokens.and.returnValue(of(mockTokenResult));
     mockGenerationService.fleshOut.and.returnValue(of({ fleshedOutText: 'Expanded content' }));
 
-    component.story = mockStory;
+    // Create a fresh copy of mockStory for each test to ensure test isolation
+    const storyCopy = JSON.parse(JSON.stringify(mockStory));
+    // Restore Date objects (JSON.parse converts them to strings)
+    storyCopy.plotOutline.metadata.created = new Date(storyCopy.plotOutline.metadata.created);
+    storyCopy.plotOutline.metadata.lastModified = new Date(storyCopy.plotOutline.metadata.lastModified);
+    storyCopy.metadata.created = new Date(storyCopy.metadata.created);
+    storyCopy.metadata.lastModified = new Date(storyCopy.metadata.lastModified);
+    // Restore Map objects
+    storyCopy.characters = new Map();
+    storyCopy.raters = new Map();
+    storyCopy.plotOutline.raterFeedback = new Map();
+    storyCopy.chapterCreation.feedbackRequests = new Map();
+    component.story = storyCopy;
   });
 
   it('should create', () => {
@@ -141,14 +153,11 @@ describe('WorldbuildingTabComponent', () => {
   });
 
   it('should handle flesh out functionality', () => {
-    // Reset the story to ensure clean state
-    component.story = { ...mockStory, general: { ...mockStory.general } };
-    
     component.aiFleshOutWorldbuilding();
-    
+
     expect(mockLoadingService.show).toHaveBeenCalledWith('Fleshing out worldbuilding...', 'flesh-worldbuilding');
     expect(mockGenerationService.fleshOut).toHaveBeenCalledWith(
-      component.story,
+      component.story!,
       'Test worldbuilding content',
       'worldbuilding expansion'
     );
