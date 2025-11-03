@@ -82,8 +82,6 @@ run_backend_tests() {
     else
         log_error "Backend tests failed!"
         BACKEND_TESTS_STATUS="failed"
-        deactivate
-        exit 1
     fi
 
     deactivate

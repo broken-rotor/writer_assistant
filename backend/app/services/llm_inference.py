@@ -30,7 +30,8 @@ class LLMInferenceConfig:
         top_k: int = 40,
         max_tokens: int = 2048,
         repeat_penalty: float = 1.1,
-        verbose: bool = False
+        verbose: bool = False,
+        verbose_generation: bool = False
     ):
         """
         Initialize LLM inference configuration.
@@ -46,6 +47,7 @@ class LLMInferenceConfig:
             max_tokens: Maximum tokens to generate
             repeat_penalty: Penalty for repeating tokens
             verbose: Enable verbose logging
+            verbose_generation: Enable verbose logging of prompts and messages
         """
         self.model_path = model_path
         self.n_ctx = n_ctx
@@ -57,6 +59,7 @@ class LLMInferenceConfig:
         self.max_tokens = max_tokens
         self.repeat_penalty = repeat_penalty
         self.verbose = verbose
+        self.verbose_generation = verbose_generation
 
     @classmethod
     def from_settings(cls, settings) -> Optional["LLMInferenceConfig"]:
@@ -82,7 +85,8 @@ class LLMInferenceConfig:
             top_k=settings.LLM_TOP_K,
             max_tokens=settings.LLM_MAX_TOKENS,
             repeat_penalty=settings.LLM_REPEAT_PENALTY,
-            verbose=settings.LLM_VERBOSE
+            verbose=settings.LLM_VERBOSE,
+            verbose_generation=settings.LLM_VERBOSE_GENERATION
         )
 
 
@@ -184,6 +188,10 @@ class LLMInference:
 
         logger.debug(f"Generating with params: {generation_params}")
 
+        # Log prompt if verbose generation is enabled
+        if self.config.verbose_generation:
+            logger.info(f"[LLM Prompt]\n{prompt}")
+
         try:
             response = self.model(
                 prompt,
@@ -240,6 +248,10 @@ class LLMInference:
             "stop": stop or [],
         }
 
+        # Log messages if verbose generation is enabled
+        if self.config.verbose_generation:
+            logger.info(f"[LLM Messages]\n{messages}")
+
         try:
             response = self.model.create_chat_completion(
                 messages=messages,
@@ -295,6 +307,10 @@ class LLMInference:
             "stop": stop or [],
             "stream": True
         }
+
+        # Log messages if verbose generation is enabled
+        if self.config.verbose_generation:
+            logger.info(f"[LLM Messages (streaming)]\n{messages}")
 
         try:
             stream = self.model.create_chat_completion(

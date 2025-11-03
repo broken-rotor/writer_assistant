@@ -78,6 +78,10 @@ class Settings(BaseSettings):
         default=False,
         description="Enable verbose logging for model"
     )
+    LLM_VERBOSE_GENERATION: bool = Field(
+        default=False,
+        description="Enable verbose logging of prompts and messages during generation"
+    )
 
     # Context Management Configuration
     CONTEXT_MAX_TOKENS: int = Field(

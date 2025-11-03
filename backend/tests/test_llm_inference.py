@@ -33,6 +33,7 @@ class TestLLMInferenceConfig:
         assert config.max_tokens == 2048
         assert config.repeat_penalty == 1.1
         assert config.verbose is False
+        assert config.verbose_generation is False
 
     def test_config_custom_values(self):
         """Test custom configuration values"""
@@ -46,7 +47,8 @@ class TestLLMInferenceConfig:
             top_k=50,
             max_tokens=1024,
             repeat_penalty=1.2,
-            verbose=True
+            verbose=True,
+            verbose_generation=True
         )
 
         assert config.model_path == "/custom/path.gguf"
@@ -59,6 +61,7 @@ class TestLLMInferenceConfig:
         assert config.max_tokens == 1024
         assert config.repeat_penalty == 1.2
         assert config.verbose is True
+        assert config.verbose_generation is True
 
     def test_config_from_settings(self):
         """Test creating config from Settings object"""
@@ -73,6 +76,7 @@ class TestLLMInferenceConfig:
         mock_settings.LLM_MAX_TOKENS = 2048
         mock_settings.LLM_REPEAT_PENALTY = 1.1
         mock_settings.LLM_VERBOSE = False
+        mock_settings.LLM_VERBOSE_GENERATION = False
 
         config = LLMInferenceConfig.from_settings(mock_settings)
 
@@ -97,6 +101,7 @@ class TestLLMInferenceConfig:
         mock_settings.LLM_MAX_TOKENS = 2048
         mock_settings.LLM_REPEAT_PENALTY = 1.1
         mock_settings.LLM_VERBOSE = False
+        mock_settings.LLM_VERBOSE_GENERATION = False
 
         config = LLMInferenceConfig.from_settings(mock_settings)
 
@@ -128,10 +133,30 @@ class TestLLMInferenceConfig:
         mock_settings.LLM_MAX_TOKENS = 2048
         mock_settings.LLM_REPEAT_PENALTY = 1.1
         mock_settings.LLM_VERBOSE = True
+        mock_settings.LLM_VERBOSE_GENERATION = False
 
         config = LLMInferenceConfig.from_settings(mock_settings)
 
         assert config.verbose is True
+
+    def test_config_from_settings_with_verbose_generation(self):
+        """Test LLM_VERBOSE_GENERATION from settings"""
+        mock_settings = Mock(spec=Settings)
+        mock_settings.MODEL_PATH = '/test/model.gguf'
+        mock_settings.LLM_N_CTX = 4096
+        mock_settings.LLM_N_GPU_LAYERS = -1
+        mock_settings.LLM_N_THREADS = None
+        mock_settings.LLM_TEMPERATURE = 0.7
+        mock_settings.LLM_TOP_P = 0.95
+        mock_settings.LLM_TOP_K = 40
+        mock_settings.LLM_MAX_TOKENS = 2048
+        mock_settings.LLM_REPEAT_PENALTY = 1.1
+        mock_settings.LLM_VERBOSE = False
+        mock_settings.LLM_VERBOSE_GENERATION = True
+
+        config = LLMInferenceConfig.from_settings(mock_settings)
+
+        assert config.verbose_generation is True
 
 
 class TestLLMInferenceInitialization:
