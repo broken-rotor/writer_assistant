@@ -1,231 +1,31 @@
 <div class="worldbuilding-chat-container" 
      *ngIf="isInitialized && chatConfig"
      role="application"
-     aria-label="Worldbuilding Chat Interface"
-     [attr.aria-describedby]="story ? 'worldbuilding-help-' + story.id : null">
+     aria-label="Worldbuilding Chat Interface">
   
-  <!-- Screen reader instructions -->
-  <div [id]="story ? 'worldbuilding-help-' + story.id : 'worldbuilding-help-default'" class="sr-only">
-    Interactive worldbuilding interface with two panels: current worldbuilding summary and chat assistant. 
-    Use Tab to navigate between elements, Ctrl+Slash for keyboard shortcuts help.
-  </div>
-
-  <!-- Skip links for keyboard navigation -->
-  <div class="skip-links">
-    <a href="#" 
-       class="skip-link" 
-       (click)="focusSummaryPanel($event)"
-       (keydown.enter)="focusSummaryPanel($event)">
-      Skip to worldbuilding summary
-    </a>
-    <a href="#" 
-       class="skip-link" 
-       (click)="focusChatPanel($event)"
-       (keydown.enter)="focusChatPanel($event)">
-      Skip to chat interface
-    </a>
-  </div>
-
-  <!-- Two-panel layout: Current worldbuilding summary + Interactive chat -->
-  <div class="worldbuilding-panels" 
-       [class.mobile-view]="isMobileView"
-       [class.summary-focused]="focusedPanel === 'summary'"
-       [class.chat-focused]="focusedPanel === 'chat'">
-    
-    <!-- Current Worldbuilding Summary Panel -->
-    <section class="worldbuilding-summary-panel" 
-             role="complementary"
-             [attr.aria-label]="'Current worldbuilding summary' + (currentWorldbuilding ? ', ' + currentWorldbuilding.length + ' characters' : ', empty')"
-             [attr.aria-expanded]="!isMobileView || focusedPanel === 'summary'"
-             tabindex="-1"
-             #summaryPanel>
-      
-      <header class="panel-header">
-        <h3 id="summary-heading">Current Worldbuilding</h3>
-        <div class="panel-actions" role="toolbar" aria-label="Worldbuilding actions">
-          <button 
-            class="sync-button" 
-            (click)="syncWorldbuilding()" 
-            [disabled]="disabled || isSyncing"
-            [attr.aria-describedby]="story ? 'sync-help-' + story.id : null"
-            aria-label="Sync worldbuilding content from conversation">
-            <i class="icon-sync" [class.spinning]="isSyncing" aria-hidden="true"></i>
-            <span>{{ isSyncing ? 'Syncing...' : 'Sync' }}</span>
-          </button>
-          <div [id]="story ? 'sync-help-' + story.id : 'sync-help-default'" class="sr-only">
-            Updates the worldbuilding summary with content from your conversation
-          </div>
-          
-          <!-- Progress indicator -->
-          <div *ngIf="syncProgress" 
-               class="sync-progress" 
-               role="status" 
-               aria-live="polite"
-               [attr.aria-label]="'Sync progress: ' + syncProgress.message + ', ' + syncProgress.progress + '% complete'">
-            <div class="progress-bar">
-              <div class="progress-fill" 
-                   [style.width.%]="syncProgress.progress"
-                   [attr.aria-valuenow]="syncProgress.progress"
-                   aria-valuemin="0"
-                   aria-valuemax="100">
-              </div>
-            </div>
-            <div class="progress-text">
-              <span class="progress-phase">{{ getPhaseDisplayName(syncProgress.phase) }}</span>
-              <span class="progress-message">{{ syncProgress.message }}</span>
-              <span class="progress-percentage">{{ syncProgress.progress }}%</span>
-            </div>
-          </div>
-        </div>
-      </header>
-      
-      <div class="worldbuilding-content" 
-           role="region"
-           aria-labelledby="summary-heading"
-           [attr.aria-live]="currentWorldbuilding ? 'polite' : 'off'"
-           tabindex="0">
-        <div *ngIf="currentWorldbuilding; else emptyWorldbuilding" 
-             class="worldbuilding-text"
-             [attr.aria-label]="'Worldbuilding content, ' + currentWorldbuilding.length + ' characters'">
-          <pre aria-label="Current worldbuilding text">{{ currentWorldbuilding }}</pre>
-        </div>
-        <ng-template #emptyWorldbuilding>
-          <div class="empty-state" role="status" aria-live="polite">
-            <p>No worldbuilding content yet.</p>
-            <p>Start a conversation to build your world!</p>
-          </div>
-        </ng-template>
-      </div>
-    </section>
-
-    <!-- Mobile Panel Navigation -->
-    <nav class="mobile-panel-nav" 
-         *ngIf="isMobileView" 
-         role="tablist" 
-         aria-label="Panel navigation">
-      <button role="tab"
-              [attr.aria-selected]="focusedPanel === 'summary'"
-              [attr.aria-controls]="story ? 'summary-panel-' + story.id : null"
-              class="panel-tab"
-              [class.active]="focusedPanel === 'summary'"
-              (click)="switchToPanel('summary')"
-              (keydown.enter)="switchToPanel('summary')"
-              (keydown.space)="switchToPanel('summary')">
-        <i class="icon-document" aria-hidden="true"></i>
-        Summary
-      </button>
-      <button role="tab"
-              [attr.aria-selected]="focusedPanel === 'chat'"
-              [attr.aria-controls]="story ? 'chat-panel-' + story.id : null"
-              class="panel-tab"
-              [class.active]="focusedPanel === 'chat'"
-              (click)="switchToPanel('chat')"
-              (keydown.enter)="switchToPanel('chat')"
-              (keydown.space)="switchToPanel('chat')">
-        <i class="icon-chat" aria-hidden="true"></i>
-        Chat
-      </button>
-    </nav>
-
-    <!-- Interactive Chat Panel -->
-    <section class="chat-panel" 
-             role="main"
-             [attr.aria-label]="'Worldbuilding chat assistant'"
-             [attr.aria-expanded]="!isMobileView || focusedPanel === 'chat'"
-             [attr.id]="story ? 'chat-panel-' + story.id : 'chat-panel-default'"
-             tabindex="-1"
-             #chatPanel>
-      
-      <header class="panel-header">
-        <h3 id="chat-heading">Worldbuilding Assistant</h3>
-        <div class="panel-info">
-          <span class="info-text" 
-                [attr.aria-describedby]="story ? 'chat-help-' + story.id : null">
-            Ask questions, describe your world, or request assistance
-          </span>
-          <div [id]="story ? 'chat-help-' + story.id : 'chat-help-default'" class="sr-only">
-            Interactive chat interface for worldbuilding assistance. Type your message and press Enter to send.
-          </div>
-        </div>
-      </header>
-      
-      <div class="chat-interface-wrapper" 
-           role="region"
-           aria-labelledby="chat-heading"
-           aria-live="polite">
-        <app-chat-interface
-          [config]="chatConfig"
-          [disabled]="disabled"
-          [processing]="processing"
-          (messageSent)="onMessageSent()"
-          (messageAction)="onMessageAction($event)"
-          (branchChanged)="onBranchChanged($event)"
-          (conversationCleared)="onConversationCleared()">
-        </app-chat-interface>
-      </div>
-    </section>
+  <!-- Simplified Full-Width Chat Interface -->
+  <div class="chat-interface-wrapper" 
+       role="region"
+       aria-label="Worldbuilding chat assistant"
+       aria-live="polite">
+    <app-chat-interface
+      [config]="chatConfig"
+      [disabled]="disabled"
+      [processing]="processing"
+      (messageSent)="onMessageSent()"
+      (messageAction)="onMessageAction($event)"
+      (branchChanged)="onBranchChanged($event)"
+      (conversationCleared)="onConversationCleared()">
+    </app-chat-interface>
   </div>
 
   <!-- Error Display -->
   <div *ngIf="error" 
        class="error-message" 
        role="alert" 
-       aria-live="assertive"
-       [attr.aria-describedby]="story ? 'error-help-' + story.id : null">
+       aria-live="assertive">
     <i class="icon-error" aria-hidden="true"></i>
     <span>{{ error }}</span>
-    <div [id]="story ? 'error-help-' + story.id : 'error-help-default'" class="sr-only">
-      An error occurred in the worldbuilding chat interface. Please try refreshing the page or contact support if the problem persists.
-    </div>
-  </div>
-
-  <!-- Keyboard shortcuts help -->
-  <div *ngIf="showKeyboardHelpDialog" 
-       class="keyboard-help-overlay"
-       role="dialog"
-       aria-modal="true"
-       aria-labelledby="keyboard-help-title"
-       (keydown.escape)="hideKeyboardHelp()">
-    <div class="keyboard-help-content">
-      <header>
-        <h3 id="keyboard-help-title">Keyboard Shortcuts</h3>
-        <button class="close-button" 
-                (click)="hideKeyboardHelp()"
-                aria-label="Close keyboard shortcuts help">
-          <i class="icon-close" aria-hidden="true"></i>
-        </button>
-      </header>
-      <div class="shortcuts-list" role="list">
-        <div class="shortcut-item" role="listitem">
-          <kbd>Ctrl + /</kbd>
-          <span>Show/hide this help</span>
-        </div>
-        <div class="shortcut-item" role="listitem">
-          <kbd>Ctrl + S</kbd>
-          <span>Sync worldbuilding content</span>
-        </div>
-        <div class="shortcut-item" role="listitem">
-          <kbd>Tab</kbd>
-          <span>Navigate between elements</span>
-        </div>
-        <div class="shortcut-item" role="listitem">
-          <kbd>Shift + Tab</kbd>
-          <span>Navigate backwards</span>
-        </div>
-        <div class="shortcut-item" role="listitem">
-          <kbd>Escape</kbd>
-          <span>Close dialogs or return focus</span>
-        </div>
-        <div class="shortcut-item" role="listitem" *ngIf="isMobileView">
-          <kbd>Alt + 1</kbd>
-          <span>Switch to summary panel</span>
-        </div>
-        <div class="shortcut-item" role="listitem" *ngIf="isMobileView">
-          <kbd>Alt + 2</kbd>
-          <span>Switch to chat panel</span>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 

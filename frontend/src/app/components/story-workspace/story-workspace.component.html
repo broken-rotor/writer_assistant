@@ -54,6 +54,7 @@
   <!-- Tab Navigation -->
   <nav class="tab-nav">
     <button class="tab-button" [class.active]="activeTab === 'general'" (click)="selectTab('general')">General</button>
+    <button class="tab-button" [class.active]="activeTab === 'worldbuilding'" (click)="selectTab('worldbuilding')">Worldbuilding</button>
     <button class="tab-button" [class.active]="activeTab === 'characters'" (click)="selectTab('characters')">Characters</button>
     <button class="tab-button" [class.active]="activeTab === 'raters'" (click)="selectTab('raters')">Raters</button>
     <button class="tab-button" [class.active]="activeTab === 'plot-outline'" (click)="selectTab('plot-outline')">Plot Outline</button>
@@ -171,7 +172,6 @@
             [story]="story"
             [disabled]="loading"
             [processing]="loadingService.isLoading"
-            (worldbuildingUpdated)="onWorldbuildingUpdated($event)"
             (conversationStarted)="onWorldbuildingConversationStarted()"
             (errorOccurred)="onWorldbuildingError($event)">
           </app-worldbuilding-chat>
@@ -182,6 +182,15 @@
           <button class="secondary-button">Reset to Original</button>
         </div>
       </div>
+    </div>
+
+    <!-- Worldbuilding Tab -->
+    <div *ngIf="activeTab === 'worldbuilding'" class="tab-pane worldbuilding-tab-pane">
+      <app-worldbuilding-tab
+        [story]="story"
+        [disabled]="loading"
+        (storyUpdated)="onStoryUpdated($event)">
+      </app-worldbuilding-tab>
     </div>
 
     <!-- Characters Tab -->

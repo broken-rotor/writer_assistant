@@ -1,0 +1,61 @@
+<div class="worldbuilding-tab">
+  <!-- Editable Worldbuilding Content -->
+  <div class="worldbuilding-content-section">
+    <label for="worldbuilding-textarea" class="form-label">Worldbuilding Content</label>
+    <textarea
+      id="worldbuilding-textarea"
+      class="form-textarea worldbuilding-textarea"
+      [(ngModel)]="story!.general.worldbuilding"
+      (input)="onWorldbuildingDirectEdit()"
+      [disabled]="disabled"
+      placeholder="Describe your world, setting, magic systems, cultures, history, and any other worldbuilding details..."
+      rows="8">
+    </textarea>
+    
+    <!-- Content Modification Controls -->
+    <div class="worldbuilding-controls">
+      <div class="content-modification-buttons">
+        <input 
+          type="file" 
+          #worldbuildingFileInput 
+          accept=".txt,.md" 
+          (change)="loadFileContent($event)" 
+          style="display: none">
+        <button 
+          class="secondary-button" 
+          (click)="worldbuildingFileInput.click()"
+          [disabled]="disabled">
+          Load from File (.txt, .md)
+        </button>
+        <button 
+          class="secondary-button" 
+          (click)="aiFleshOutWorldbuilding()"
+          [disabled]="disabled">
+          AI Flesh Out
+        </button>
+      </div>
+      
+      <!-- Token Counter -->
+      <div class="token-counter-container" *ngIf="shouldShowWorldbuildingTokenCounter()">
+        <app-token-counter
+          [data]="worldbuildingTokenCounterData"
+          [config]="{ displayMode: TokenCounterDisplayMode.COMPACT, showProgressBar: true }">
+        </app-token-counter>
+      </div>
+    </div>
+  </div>
+
+  <!-- Worldbuilding Chat -->
+  <div class="worldbuilding-chat-section">
+    <h3 class="chat-section-title">Worldbuilding Assistant</h3>
+    <div class="chat-wrapper">
+      <app-worldbuilding-chat
+        [story]="story!"
+        [disabled]="disabled"
+        [processing]="loadingService.isLoading"
+        (conversationStarted)="onWorldbuildingConversationStarted()"
+        (errorOccurred)="onWorldbuildingError($event)">
+      </app-worldbuilding-chat>
+    </div>
+  </div>
+</div>

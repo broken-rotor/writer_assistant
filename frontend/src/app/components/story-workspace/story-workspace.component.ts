@@ -34,6 +34,7 @@ import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent
 import { FeedbackService } from '../../services/feedback.service';
 import { ContextBuilderService } from '../../services/context-builder.service';
 import { WorldbuildingChatComponent } from '../worldbuilding-chat/worldbuilding-chat.component';
+import { WorldbuildingTabComponent } from '../worldbuilding-tab/worldbuilding-tab.component';
 
 interface ResearchChatMessage {
   role: string;
@@ -45,13 +46,13 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, PlotOutlineTabComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingChatComponent, TokenCounterComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, PlotOutlineTabComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingChatComponent, WorldbuildingTabComponent, TokenCounterComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
 export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   story: Story | null = null;
-  activeTab: 'general' | 'characters' | 'raters' | 'plot-outline' | 'story' | 'chapter-creation' = 'general';
+  activeTab: 'general' | 'worldbuilding' | 'characters' | 'raters' | 'plot-outline' | 'story' | 'chapter-creation' = 'general';
   loading = true;
   error: string | null = null;
 
@@ -165,7 +166,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  selectTab(tab: 'general' | 'characters' | 'raters' | 'plot-outline' | 'story' | 'chapter-creation') {
+  selectTab(tab: 'general' | 'worldbuilding' | 'characters' | 'raters' | 'plot-outline' | 'story' | 'chapter-creation') {
     this.activeTab = tab;
     
     // Initialize plot outline if selecting plot-outline tab
@@ -312,6 +313,12 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   onWorldbuildingError(error: string): void {
     console.error('Worldbuilding chat error:', error);
     this.toastService.showError('Worldbuilding Error', error);
+  }
+
+  // Story update handler for worldbuilding tab
+  onStoryUpdated(updatedStory: Story): void {
+    this.story = updatedStory;
+    this.storyService.saveStory(this.story);
   }
 
   // Direct worldbuilding editing methods
