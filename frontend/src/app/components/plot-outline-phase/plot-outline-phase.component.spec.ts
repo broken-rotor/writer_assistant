@@ -69,7 +69,7 @@ describe('PlotOutlinePhaseComponent', () => {
 
   beforeEach(async () => {
     const generationServiceSpy = jasmine.createSpyObj('GenerationService', ['fleshOut']);
-    const archiveServiceSpy = jasmine.createSpyObj('ArchiveService', ['ragQuery']);
+    const archiveServiceSpy = jasmine.createSpyObj('ArchiveService', ['ragQuery', 'ragQueryStream']);
     const conversationServiceSpy = jasmine.createSpyObj('ConversationService', ['sendMessage', 'initializeConversation']);
     const phaseStateServiceSpy = jasmine.createSpyObj('PhaseStateService', ['updatePhaseValidation']);
     const storyServiceSpy = jasmine.createSpyObj('StoryService', ['saveStory']);
@@ -192,7 +192,7 @@ describe('PlotOutlinePhaseComponent', () => {
       await component.researchPlotPoint();
       
       expect(mockToastService.showError).toHaveBeenCalledWith('Please enter a plot point to research');
-      expect(mockArchiveService.ragQuery).not.toHaveBeenCalled();
+      expect(mockArchiveService.ragQueryStream).not.toHaveBeenCalled();
     });
 
     it('should call archive service and show results on success', async () => {
@@ -210,13 +210,13 @@ describe('PlotOutlinePhaseComponent', () => {
         total_sources: 1
       };
       
-      mockArchiveService.ragQuery.and.returnValue(of(mockResponse));
+      mockArchiveService.ragQueryStream.and.returnValue(of(mockResponse));
       mockConversationService.sendMessage.and.returnValue({} as ChatMessage);
       
       component.basicOutline = 'Test plot point';
       await component.researchPlotPoint();
       
-      expect(mockArchiveService.ragQuery).toHaveBeenCalledWith('Test plot point');
+      expect(mockArchiveService.ragQueryStream).toHaveBeenCalledWith('Test plot point', 5, 1024, 0.3, undefined, jasmine.any(Object));
       expect(component.researchData).toBe(mockResponse);
       expect(component.showResearchSidebar).toBe(true);
       expect(component.showChat).toBe(true);
@@ -224,7 +224,7 @@ describe('PlotOutlinePhaseComponent', () => {
     });
 
     it('should handle archive service error', async () => {
-      mockArchiveService.ragQuery.and.returnValue(throwError('Research failed'));
+      mockArchiveService.ragQueryStream.and.returnValue(throwError('Research failed'));
       
       component.basicOutline = 'Test plot point';
       await component.researchPlotPoint();

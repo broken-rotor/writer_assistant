@@ -6,12 +6,23 @@ plus RAG-based question answering.
 """
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import logging
+import asyncio
+import json
 
 from app.services.archive_service import get_archive_service
 from app.services.rag_service import get_rag_service, ChatMessage
+from app.models.streaming_models import (
+    StreamingStatusEvent,
+    StreamingResultEvent,
+    StreamingErrorEvent,
+    StreamingPhase,
+    STREAMING_PHASES
+)
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -403,6 +414,159 @@ async def rag_query(request: RAGQueryRequest):
     except Exception as e:
         logger.error(f"RAG query failed: {e}")
         raise HTTPException(status_code=500, detail=f"RAG query failed: {str(e)}")
+
+
+@router.post("/rag/query/stream")
+async def rag_query_stream(request: RAGQueryRequest):
+    """
+    Answer a question using RAG with Server-Sent Events streaming for real-time progress updates.
+
+    Retrieves relevant story sections and uses an LLM to generate an answer
+    based on the retrieved context, providing progress updates through each phase.
+    """
+    
+    async def generate_with_updates():
+        try:
+            # Phase 1: Initializing
+            status_event = StreamingStatusEvent(
+                phase=StreamingPhase.INITIALIZING,
+                message=STREAMING_PHASES[StreamingPhase.INITIALIZING]["message"],
+                progress=STREAMING_PHASES[StreamingPhase.INITIALIZING]["progress"]
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+            
+            rag_service = get_rag_service()
+            
+            # Check if RAG is enabled
+            if not rag_service.is_enabled():
+                archive_enabled = rag_service.archive_service.is_enabled()
+                llm_enabled = rag_service.llm is not None
+                
+                if not archive_enabled:
+                    detail = "Archive feature is not enabled. Please configure ARCHIVE_DB_PATH."
+                elif not llm_enabled:
+                    detail = "LLM is not configured. Please set MODEL_PATH in your environment."
+                else:
+                    detail = "RAG feature is not available."
+                
+                error_event = StreamingErrorEvent(message=detail)
+                yield f"data: {error_event.model_dump_json()}\n\n"
+                return
+            
+            # Phase 2: Retrieving
+            status_event = StreamingStatusEvent(
+                phase=StreamingPhase.RETRIEVING,
+                message=STREAMING_PHASES[StreamingPhase.RETRIEVING]["message"],
+                progress=STREAMING_PHASES[StreamingPhase.RETRIEVING]["progress"]
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+            
+            # Build filter if provided
+            filter_metadata = None
+            if request.filter_file_name:
+                filter_metadata = {'file_name': request.filter_file_name}
+            
+            # Retrieve relevant context from archive
+            search_results = rag_service.archive_service.search(
+                query=request.question,
+                n_results=request.n_context_chunks,
+                filter_metadata=filter_metadata
+            )
+            
+            if not search_results:
+                # No results found - return early with appropriate message
+                result = RAGResponse(
+                    query=request.question,
+                    answer="I couldn't find any relevant information in the archive to answer your question.",
+                    sources=[],
+                    total_sources=0,
+                    info_message="No relevant content was found in the archive."
+                )
+                
+                result_event = StreamingResultEvent(
+                    data=result.model_dump(),
+                    status="complete"
+                )
+                yield f"data: {result_event.model_dump_json()}\n\n"
+                return
+            
+            # Phase 3: Generating
+            status_event = StreamingStatusEvent(
+                phase=StreamingPhase.GENERATING,
+                message=STREAMING_PHASES[StreamingPhase.GENERATING]["message"],
+                progress=STREAMING_PHASES[StreamingPhase.GENERATING]["progress"]
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+            
+            # Build context from search results
+            context = rag_service.build_context(search_results)
+            
+            # Create prompt for LLM
+            prompt = rag_service.build_rag_prompt(request.question, context)
+            
+            # Generate answer using LLM
+            answer = rag_service.llm.generate(
+                prompt=prompt,
+                max_tokens=request.max_tokens or 1024,
+                temperature=request.temperature if request.temperature is not None else settings.ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE,
+                stop=["Question:", "Context:"]
+            )
+            
+            # Phase 4: Formatting
+            status_event = StreamingStatusEvent(
+                phase=StreamingPhase.FORMATTING,
+                message=STREAMING_PHASES[StreamingPhase.FORMATTING]["message"],
+                progress=STREAMING_PHASES[StreamingPhase.FORMATTING]["progress"]
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+            
+            # Convert to response model
+            sources = [
+                RAGSource(
+                    file_path=source.file_path,
+                    file_name=source.file_name,
+                    matching_section=source.chunk_text,
+                    similarity_score=source.similarity_score
+                )
+                for source in search_results
+            ]
+            
+            response = RAGResponse(
+                query=request.question,
+                answer=answer,
+                sources=sources,
+                total_sources=len(sources),
+                info_message=None
+            )
+            
+            # Final result
+            result_event = StreamingResultEvent(
+                data=response.model_dump(),
+                status="complete"
+            )
+            yield f"data: {result_event.model_dump_json()}\n\n"
+            
+        except HTTPException as e:
+            error_event = StreamingErrorEvent(message=e.detail)
+            yield f"data: {error_event.model_dump_json()}\n\n"
+        except ValueError as e:
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
+        except Exception as e:
+            logger.error(f"RAG query failed: {e}")
+            error_event = StreamingErrorEvent(message=f"RAG query failed: {str(e)}")
+            yield f"data: {error_event.model_dump_json()}\n\n"
+    
+    return StreamingResponse(
+        generate_with_updates(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control"
+        }
+    )
 
 
 @router.post("/rag/chat", response_model=RAGResponse)

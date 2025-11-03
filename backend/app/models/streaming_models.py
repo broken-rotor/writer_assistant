@@ -7,11 +7,20 @@ from enum import Enum
 
 
 class StreamingPhase(str, Enum):
-    """Enumeration of streaming phases for rater feedback generation."""
+    """Enumeration of streaming phases for various endpoints."""
+    # Rater feedback phases
     CONTEXT_PROCESSING = "context_processing"
     EVALUATING = "evaluating"
     GENERATING_FEEDBACK = "generating_feedback"
     PARSING = "parsing"
+    
+    # RAG query phases
+    INITIALIZING = "initializing"
+    RETRIEVING = "retrieving"
+    GENERATING = "generating"
+    FORMATTING = "formatting"
+    
+    # Common completion phase
     COMPLETE = "complete"
 
 
@@ -46,6 +55,7 @@ class StreamingErrorEvent(BaseModel):
 
 # Phase configuration with progress percentages and messages
 STREAMING_PHASES = {
+    # Rater feedback phases
     StreamingPhase.CONTEXT_PROCESSING: {
         "progress": 20,
         "message": "Processing rater context and plot point..."
@@ -62,8 +72,28 @@ STREAMING_PHASES = {
         "progress": 90,
         "message": "Processing rater feedback..."
     },
+    
+    # RAG query phases
+    StreamingPhase.INITIALIZING: {
+        "progress": 15,
+        "message": "Initializing RAG query..."
+    },
+    StreamingPhase.RETRIEVING: {
+        "progress": 40,
+        "message": "Searching for relevant context..."
+    },
+    StreamingPhase.GENERATING: {
+        "progress": 70,
+        "message": "Generating answer from context..."
+    },
+    StreamingPhase.FORMATTING: {
+        "progress": 90,
+        "message": "Formatting response and sources..."
+    },
+    
+    # Common completion phase
     StreamingPhase.COMPLETE: {
         "progress": 100,
-        "message": "Rater feedback generation complete"
+        "message": "Processing complete"
     }
 }

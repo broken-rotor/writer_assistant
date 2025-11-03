@@ -12,6 +12,7 @@ import {
 import { ChatInterfaceComponent, ChatInterfaceConfig, MessageActionEvent } from '../chat-interface/chat-interface.component';
 import { GenerationService } from '../../services/generation.service';
 import { ArchiveService, RAGResponse } from '../../services/archive.service';
+import { SSEProgressUpdate } from '../../services/sse-streaming.service';
 import { ConversationService } from '../../services/conversation.service';
 import { PhaseStateService } from '../../services/phase-state.service';
 import { StoryService } from '../../services/story.service';
@@ -76,6 +77,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
   showResearchSidebar = false;
   researchData: RAGResponse | null = null;
   researchError: string | null = null;
+  researchProgress: SSEProgressUpdate | null = null;
   
   private destroy$ = new Subject<void>();
   private generationService = inject(GenerationService);
@@ -207,9 +209,29 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
 
     this.isResearching = true;
     this.researchError = null;
+    this.researchProgress = null;
     
     try {
-      const response = await firstValueFrom(this.archiveService.ragQuery(this.basicOutline));
+      const response = await firstValueFrom(
+        this.archiveService.ragQueryStream(
+          this.basicOutline,
+          5, // nContextChunks
+          1024, // maxTokens
+          0.3, // temperature
+          undefined, // filterFileName
+          {
+            onProgress: (progress: SSEProgressUpdate) => {
+              this.researchProgress = progress;
+              this.cdr.detectChanges();
+            },
+            onError: (error: Error) => {
+              console.error('Research streaming error:', error);
+              this.researchError = error.message;
+              this.cdr.detectChanges();
+            }
+          }
+        )
+      );
       
       if (response) {
         this.researchData = response;
@@ -236,6 +258,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
       this.toastService.showError('Failed to research archive. Please try again.');
     } finally {
       this.isResearching = false;
+      this.researchProgress = null;
     }
   }
 
