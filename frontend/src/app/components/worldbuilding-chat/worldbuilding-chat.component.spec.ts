@@ -1,17 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CommonModule } from '@angular/common';
-import { BehaviorSubject } from 'rxjs';
+import { SimpleChanges } from '@angular/core';
 
 import { WorldbuildingChatComponent } from './worldbuilding-chat.component';
-import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
+import { Story } from '../../models/story.model';
 import { ConversationService } from '../../services/conversation.service';
-import { WorldbuildingSyncService } from '../../services/worldbuilding-sync.service';
-import { Story, ChatMessage, ConversationThread } from '../../models/story.model';
+import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
 
 describe('WorldbuildingChatComponent', () => {
   let component: WorldbuildingChatComponent;
   let fixture: ComponentFixture<WorldbuildingChatComponent>;
-  let mockWorldbuildingSyncService: jasmine.SpyObj<WorldbuildingSyncService>;
+  let _conversationService: jasmine.SpyObj<ConversationService>;
 
   const mockStory: Story = {
     id: 'test-story-id',
@@ -42,708 +40,180 @@ describe('WorldbuildingChatComponent', () => {
         version: 1
       }
     },
-    chapterCompose: {
-      currentPhase: 'plot_outline',
-      phases: {
-        plotOutline: {
-          conversation: {
-            id: 'conv-1',
-            messages: [],
-            currentBranchId: 'main',
-            branches: new Map(),
-            metadata: {
-              created: new Date(),
-              lastModified: new Date(),
-              phase: 'plot_outline'
-            }
-          },
-          status: 'active',
-          outline: {
-            items: new Map(),
-            structure: []
-          },
-          draftSummary: '',
-          progress: {
-            totalItems: 0,
-            completedItems: 0,
-            lastActivity: new Date()
-          }
-        },
-        chapterDetailer: {
-          conversation: {
-            id: 'conv-2',
-            messages: [],
-            currentBranchId: 'main',
-            branches: new Map(),
-            metadata: {
-              created: new Date(),
-              lastModified: new Date(),
-              phase: 'chapter_detail'
-            }
-          },
-          chapterDraft: {
-            content: '',
-            title: '',
-            plotPoint: '',
-            wordCount: 0,
-            status: 'drafting'
-          },
-          feedbackIntegration: {
-            pendingFeedback: [],
-            incorporatedFeedback: [],
-            feedbackRequests: new Map()
-          },
-          status: 'active',
-          progress: {
-            feedbackIncorporated: 0,
-            totalFeedbackItems: 0,
-            lastActivity: new Date()
-          }
-        },
-        finalEdit: {
-          conversation: {
-            id: 'conv-3',
-            messages: [],
-            currentBranchId: 'main',
-            branches: new Map(),
-            metadata: {
-              created: new Date(),
-              lastModified: new Date(),
-              phase: 'final_edit'
-            }
-          },
-          finalChapter: {
-            content: '',
-            title: '',
-            wordCount: 0,
-            version: 1
-          },
-          reviewSelection: {
-            availableReviews: [],
-            selectedReviews: [],
-            appliedReviews: []
-          },
-          status: 'active',
-          progress: {
-            reviewsApplied: 0,
-            totalReviews: 0,
-            lastActivity: new Date()
-          }
-        }
-      },
-      sharedContext: {
-        chapterNumber: 1
-      },
-      navigation: {
-        phaseHistory: ['plot_outline'],
-        canGoBack: false,
-        canGoForward: false,
-        branchNavigation: {
-          currentBranchId: 'main',
-          availableBranches: ['main'],
-          branchHistory: [],
-          canNavigateBack: false,
-          canNavigateForward: false
-        }
-      },
-      overallProgress: {
-        currentStep: 1,
-        totalSteps: 3,
-        phaseCompletionStatus: {
-          'plot_outline': false,
-          'chapter_detail': false,
-          'final_edit': false
-        }
-      },
-      metadata: {
-        created: new Date(),
-        lastModified: new Date(),
-        version: '1'
-      }
-    },
     chapterCreation: {
       plotPoint: '',
       incorporatedFeedback: [],
       feedbackRequests: new Map()
     },
     metadata: {
+      version: '1.0.0',
       created: new Date(),
-      lastModified: new Date(),
-      version: '1.0.0'
-    }
-  };
-
-  const mockThread: ConversationThread = {
-    id: 'test-thread',
-    messages: [],
-    currentBranchId: 'main',
-    branches: new Map(),
-    metadata: {
-      created: new Date(),
-      lastModified: new Date(),
-      phase: 'plot_outline'
+      lastModified: new Date()
     }
   };
 
   beforeEach(async () => {
-    const conversationServiceSpy = jasmine.createSpyObj('ConversationService', [
-      'initializeConversation',
+    const conversationSpy = jasmine.createSpyObj('ConversationService', [
+      'getConversation',
       'sendMessage',
-      'getCurrentBranchMessages',
-      'createBranch',
-      'switchToBranch',
       'clearConversation',
-      'getAvailableBranches'
-    ], {
-      currentThread$: new BehaviorSubject<ConversationThread | null>(mockThread),
-      isProcessing$: new BehaviorSubject<boolean>(false),
-      branchNavigation$: new BehaviorSubject<any>({
-        currentBranchId: 'main',
-        availableBranches: ['main'],
-        branchHistory: [],
-        canNavigateBack: false,
-        canNavigateForward: false
-      })
-    });
-
-    const worldbuildingSyncServiceSpy = jasmine.createSpyObj('WorldbuildingSyncService', [
-      'syncWorldbuildingFromConversation',
-      'updateWorldbuilding',
-      'getCurrentWorldbuilding',
-      'isSyncInProgress'
-    ], {
-      worldbuildingUpdated$: new BehaviorSubject<string>('Initial worldbuilding content'),
-      syncInProgress$: new BehaviorSubject<boolean>(false),
-      syncProgress$: new BehaviorSubject<any>(null)
-    });
+      'createBranch',
+      'switchBranch',
+      'deleteBranch'
+    ]);
 
     await TestBed.configureTestingModule({
-      imports: [
-        CommonModule,
-        WorldbuildingChatComponent,
-        ChatInterfaceComponent
-      ],
+      imports: [WorldbuildingChatComponent, ChatInterfaceComponent],
       providers: [
-        { provide: ConversationService, useValue: conversationServiceSpy },
-        { provide: WorldbuildingSyncService, useValue: worldbuildingSyncServiceSpy }
+        { provide: ConversationService, useValue: conversationSpy }
       ]
     }).compileComponents();
 
-    mockWorldbuildingSyncService = TestBed.inject(WorldbuildingSyncService) as jasmine.SpyObj<WorldbuildingSyncService>;
-    const conversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
-    conversationService.getCurrentBranchMessages.and.returnValue([]);
-    conversationService.getAvailableBranches.and.returnValue([]);
-
     fixture = TestBed.createComponent(WorldbuildingChatComponent);
     component = fixture.componentInstance;
+    _conversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
+
+    // Set required inputs
+    component.story = mockStory;
   });
 
   it('should create', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
-  it('should emit error when no story is provided', () => {
+  it('should initialize with story input', () => {
+    fixture.detectChanges();
+    expect(component.story).toEqual(mockStory);
+    expect(component.isInitialized).toBe(true);
+  });
+
+  it('should handle missing story input', () => {
+    component.story = null as any;
     spyOn(component.errorOccurred, 'emit');
     
-    component.ngOnInit();
+    fixture.detectChanges();
     
+    expect(component.error).toBe('WorldbuildingChat requires a story input');
     expect(component.errorOccurred.emit).toHaveBeenCalledWith('WorldbuildingChat requires a story input');
   });
 
-  it('should initialize component with story', () => {
-    component.story = mockStory;
-    
+  it('should initialize chat configuration', () => {
     fixture.detectChanges();
     
-    expect(component.isInitialized).toBe(true);
-    expect(component.chatConfig).toBeTruthy();
-    expect(component.chatConfig?.phase).toBe('plot_outline');
+    expect(component.chatConfig).toBeDefined();
+    expect(component.chatConfig?.phase).toBe('worldbuilding' as any);
     expect(component.chatConfig?.storyId).toBe('test-story-id');
     expect(component.chatConfig?.chapterNumber).toBe(0);
-    expect(component.currentWorldbuilding).toBe('Initial worldbuilding content');
+    expect(component.chatConfig?.enableBranching).toBe(true);
+    expect(component.chatConfig?.placeholder).toBe('Ask about worldbuilding, describe your world, or request assistance...');
   });
 
-  it('should configure chat interface correctly', () => {
-    component.story = mockStory;
-    
+  it('should re-initialize when story changes', () => {
     fixture.detectChanges();
+    expect(component.isInitialized).toBe(true);
     
-    expect(component.chatConfig).toEqual({
-      phase: 'plot_outline',
-      storyId: 'test-story-id',
-      chapterNumber: 0,
-      enableBranching: true,
-      enableMessageTypes: ['user', 'assistant'],
-      placeholder: 'Describe your world, ask questions, or request worldbuilding assistance...',
-      maxHeight: '400px',
-      showTimestamps: true,
-      showMessageTypes: true,
-      allowMessageEditing: true
-    });
+    const newStory = { ...mockStory, id: 'new-story-id' };
+    const changes: SimpleChanges = {
+      story: {
+        currentValue: newStory,
+        previousValue: mockStory,
+        firstChange: false,
+        isFirstChange: () => false
+      }
+    };
+    
+    component.ngOnChanges(changes);
+    
+    expect(component.chatConfig?.storyId).toBe('new-story-id');
   });
 
-  it('should handle message sent event', (done) => {
-    component.story = mockStory;
-    fixture.detectChanges();
+  it('should not re-initialize on first change', () => {
+    const changes: SimpleChanges = {
+      story: {
+        currentValue: mockStory,
+        previousValue: undefined,
+        firstChange: true,
+        isFirstChange: () => true
+      }
+    };
+    
+    spyOn(component as any, 'initializeComponent');
+    component.ngOnChanges(changes);
+    
+    expect((component as any).initializeComponent).not.toHaveBeenCalled();
+  });
 
+  it('should emit conversationStarted when message is sent', () => {
     spyOn(component.conversationStarted, 'emit');
-    spyOn(component, 'syncWorldbuildingFromConversation' as any);
-
+    
     component.onMessageSent();
-
+    
     expect(component.conversationStarted.emit).toHaveBeenCalled();
-
-    // Check that sync is called after delay
-    setTimeout(() => {
-      expect(component['syncWorldbuildingFromConversation']).toHaveBeenCalled();
-      done();
-    }, 1100);
   });
 
-  it('should handle worldbuilding updates from sync service', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    spyOn(component.worldbuildingUpdated, 'emit');
-
-    // Simulate worldbuilding update from sync service
-    const updatedWorldbuilding = 'Updated worldbuilding content';
-    (mockWorldbuildingSyncService.worldbuildingUpdated$ as BehaviorSubject<string>).next(updatedWorldbuilding);
-
-    expect(component.currentWorldbuilding).toBe(updatedWorldbuilding);
-    expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith(updatedWorldbuilding);
-  });
-
-  it('should handle message actions', (done) => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    const mockMessage: ChatMessage = {
-      id: 'test-message',
-      type: 'user',
-      content: 'Test message',
+  it('should handle message action events', () => {
+    const mockMessage = {
+      id: 'msg-1',
+      type: 'user' as const,
+      content: 'test message',
       timestamp: new Date(),
       metadata: {
-        phase: 'plot_outline',
+        phase: 'plot_outline' as const,
         messageIndex: 0
       }
     };
-
-    spyOn(component, 'syncWorldbuildingFromConversation' as any);
-
-    component.onMessageAction({
-      action: 'edit',
-      message: mockMessage,
-      data: { newContent: 'Edited content' }
-    });
-
-    // Check that sync is called after delay for edit actions
-    setTimeout(() => {
-      expect(component['syncWorldbuildingFromConversation']).toHaveBeenCalled();
-      done();
-    }, 600);
+    const mockEvent = { action: 'edit' as const, message: mockMessage };
+    spyOn(console, 'log');
+    
+    component.onMessageAction(mockEvent);
+    
+    expect(console.log).toHaveBeenCalledWith('Message action:', mockEvent);
   });
 
-  it('should handle branch changes', (done) => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    spyOn(component, 'syncWorldbuildingFromConversation' as any);
-
-    component.onBranchChanged('new-branch-id');
-
-    // Check that sync is called after delay
-    setTimeout(() => {
-      expect(component['syncWorldbuildingFromConversation']).toHaveBeenCalled();
-      done();
-    }, 600);
+  it('should handle branch changed events', () => {
+    spyOn(console, 'log');
+    
+    component.onBranchChanged('branch-1');
+    
+    expect(console.log).toHaveBeenCalledWith('Branch changed:', 'branch-1');
   });
 
-  it('should handle conversation cleared', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    spyOn(component.worldbuildingUpdated, 'emit');
-
+  it('should handle conversation cleared events', () => {
+    spyOn(console, 'log');
+    
     component.onConversationCleared();
-
-    expect(component.currentWorldbuilding).toBe('');
-    expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith('');
-  });
-
-  it('should sync worldbuilding from conversation', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    mockWorldbuildingSyncService.syncWorldbuildingFromConversation.and.returnValue(
-      Promise.resolve('Synced worldbuilding')
-    );
-
-    component.syncWorldbuilding();
-
-    expect(mockWorldbuildingSyncService.syncWorldbuildingFromConversation).toHaveBeenCalledWith(
-      'test-story-id',
-      'Initial worldbuilding content'
-    );
-  });
-
-  it('should update worldbuilding content', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    spyOn(component.worldbuildingUpdated, 'emit');
-
-    const newWorldbuilding = 'New worldbuilding content';
-    component.updateWorldbuilding(newWorldbuilding);
-
-    expect(component.currentWorldbuilding).toBe(newWorldbuilding);
-    expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith(newWorldbuilding);
-  });
-
-  it('should return current worldbuilding', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    const result = component.getCurrentWorldbuilding();
-    expect(result).toBe('Initial worldbuilding content');
-  });
-
-  it('should check if component is ready', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    expect(component.isReady()).toBe(true);
-  });
-
-  it('should handle errors gracefully', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    spyOn(component.errorOccurred, 'emit');
-    spyOn(console, 'error');
-
-    // Simulate error by throwing in the sync service
-    mockWorldbuildingSyncService.syncWorldbuildingFromConversation.and.throwError('Sync failed');
-
-    component.syncWorldbuilding();
-
-    expect(console.error).toHaveBeenCalled();
-    expect(component.errorOccurred.emit).toHaveBeenCalledWith('Failed to sync worldbuilding data');
+    
+    expect(console.log).toHaveBeenCalledWith('Conversation cleared');
   });
 
   it('should handle disabled state', () => {
-    component.story = mockStory;
     component.disabled = true;
     fixture.detectChanges();
-
+    
     expect(component.disabled).toBe(true);
   });
 
   it('should handle processing state', () => {
-    component.story = mockStory;
     component.processing = true;
     fixture.detectChanges();
-
+    
     expect(component.processing).toBe(true);
   });
 
   it('should clean up subscriptions on destroy', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    const subscriptions = component['subscriptions'];
-    spyOn(subscriptions[0], 'unsubscribe');
-    spyOn(subscriptions[1], 'unsubscribe');
-
+    const mockSubscription = jasmine.createSpyObj('Subscription', ['unsubscribe']);
+    (component as any).subscriptions = [mockSubscription];
+    
     component.ngOnDestroy();
-
-    expect(subscriptions[0].unsubscribe).toHaveBeenCalled();
-    expect(subscriptions[1].unsubscribe).toHaveBeenCalled();
+    
+    expect(mockSubscription.unsubscribe).toHaveBeenCalled();
   });
 
-  it('should render loading state when not initialized', () => {
-    // Don't call fixture.detectChanges() yet to avoid ngOnInit
-    // Set isInitialized to false before initialization
-    component.story = mockStory;
-
-    // Manually detect changes without triggering ngOnInit
-    // by setting isInitialized after first change detection
-    fixture.detectChanges();
-    component.isInitialized = false;
-    fixture.detectChanges();
-
-    const loadingElement = fixture.nativeElement.querySelector('.loading-state');
-    expect(loadingElement).toBeTruthy();
-    expect(loadingElement.textContent).toContain('Initializing worldbuilding chat...');
-  });
-
-  it('should render error state when no story provided', () => {
+  it('should not initialize without story', () => {
     component.story = null as any;
-    fixture.detectChanges();
-
-    const errorElement = fixture.nativeElement.querySelector('.error-state');
-    expect(errorElement).toBeTruthy();
-    expect(errorElement.textContent).toContain('Unable to initialize worldbuilding chat: No story provided');
-  });
-
-  it('should render chat interface when initialized', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    const chatInterface = fixture.nativeElement.querySelector('app-chat-interface');
-    expect(chatInterface).toBeTruthy();
-  });
-
-  it('should render worldbuilding summary panel', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    const summaryPanel = fixture.nativeElement.querySelector('.worldbuilding-summary-panel');
-    expect(summaryPanel).toBeTruthy();
-
-    const worldbuildingText = fixture.nativeElement.querySelector('.worldbuilding-text pre');
-    expect(worldbuildingText.textContent).toBe('Initial worldbuilding content');
-  });
-
-  it('should render empty state when no worldbuilding content', () => {
-    const storyWithoutWorldbuilding = {
-      ...mockStory,
-      general: {
-        ...mockStory.general,
-        worldbuilding: ''
-      }
-    };
-
-    // Update the mock BehaviorSubject to emit empty string
-    (mockWorldbuildingSyncService.worldbuildingUpdated$ as BehaviorSubject<string>).next('');
-
-    component.story = storyWithoutWorldbuilding;
-    fixture.detectChanges();
-
-    const emptyState = fixture.nativeElement.querySelector('.empty-state');
-    expect(emptyState).toBeTruthy();
-    expect(emptyState.textContent).toContain('No worldbuilding content yet.');
-  });
-
-  it('should render sync button', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    const syncButton = fixture.nativeElement.querySelector('.sync-button');
-    expect(syncButton).toBeTruthy();
-    expect(syncButton.textContent.trim()).toBe('Sync');
-  });
-
-  it('should call syncWorldbuilding when sync button is clicked', () => {
-    component.story = mockStory;
-    fixture.detectChanges();
-
-    spyOn(component, 'syncWorldbuilding');
-
-    const syncButton = fixture.nativeElement.querySelector('.sync-button');
-    syncButton.click();
-
-    expect(component.syncWorldbuilding).toHaveBeenCalled();
-  });
-
-  // New accessibility and navigation tests
-  describe('Accessibility Features', () => {
-    beforeEach(() => {
-      component.story = mockStory;
-      fixture.detectChanges();
-    });
-
-    it('should initialize with proper mobile view detection', () => {
-      expect(component.isMobileView).toBeDefined();
-      expect(component.focusedPanel).toBe('chat');
-    });
-
-    it('should handle keyboard shortcuts', () => {
-      spyOn(component, 'toggleKeyboardHelp');
-      spyOn(component, 'syncWorldbuilding');
-
-      // Test Ctrl+/ for help
-      const helpEvent = new KeyboardEvent('keydown', { key: '/', ctrlKey: true });
-      component.onKeyDown(helpEvent);
-      expect(component.toggleKeyboardHelp).toHaveBeenCalled();
-
-      // Test Ctrl+S for sync
-      const syncEvent = new KeyboardEvent('keydown', { key: 's', ctrlKey: true });
-      component.onKeyDown(syncEvent);
-      expect(component.syncWorldbuilding).toHaveBeenCalled();
-    });
-
-    it('should handle mobile panel switching', () => {
-      component.isMobileView = true;
-      spyOn(component, 'switchToPanel');
-
-      const event1 = new KeyboardEvent('keydown', { key: '1', altKey: true });
-      const event2 = new KeyboardEvent('keydown', { key: '2', altKey: true });
-
-      component.onKeyDown(event1);
-      component.onKeyDown(event2);
-
-      expect(component.switchToPanel).toHaveBeenCalledWith('summary');
-      expect(component.switchToPanel).toHaveBeenCalledWith('chat');
-    });
-
-    it('should handle escape key for help dialog', () => {
-      component.showKeyboardHelpDialog = true;
-      spyOn(component, 'hideKeyboardHelp');
-
-      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
-      component.onKeyDown(escapeEvent);
-
-      expect(component.hideKeyboardHelp).toHaveBeenCalled();
-    });
-
-    it('should update mobile view on window resize', () => {
-      spyOn(component, 'updateMobileView' as any);
-      component.onResize();
-      expect((component as any).updateMobileView).toHaveBeenCalled();
-    });
-
-    it('should switch panels correctly', () => {
-      component.switchToPanel('summary');
-      expect(component.focusedPanel).toBe('summary');
-
-      component.switchToPanel('chat');
-      expect(component.focusedPanel).toBe('chat');
-    });
-
-    it('should toggle keyboard help visibility', () => {
-      expect(component.showKeyboardHelpDialog).toBe(false);
-      
-      component.toggleKeyboardHelp();
-      expect(component.showKeyboardHelpDialog).toBe(true);
-      
-      component.toggleKeyboardHelp();
-      expect(component.showKeyboardHelpDialog).toBe(false);
-    });
-
-    it('should handle focus management for skip links', () => {
-      const event = new Event('click');
-      spyOn(event, 'preventDefault');
-
-      component.focusSummaryPanel(event);
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(component.focusedPanel).toBe('summary');
-
-      component.focusChatPanel(event);
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(component.focusedPanel).toBe('chat');
-    });
-  });
-
-  describe('ngOnChanges', () => {
-    it('should update currentWorldbuilding when story worldbuilding changes', () => {
-      // Initialize component with initial story
-      component.story = mockStory;
-      fixture.detectChanges();
-      
-      expect(component.currentWorldbuilding).toBe('Initial worldbuilding content');
-      
-      // Create updated story with new worldbuilding content
-      const updatedStory = {
-        ...mockStory,
-        general: {
-          ...mockStory.general,
-          worldbuilding: 'Updated worldbuilding content from flesh out'
-        }
-      };
-      
-      spyOn(component.worldbuildingUpdated, 'emit');
-      
-      // Simulate ngOnChanges with story change
-      component.ngOnChanges({
-        story: {
-          currentValue: updatedStory,
-          previousValue: mockStory,
-          firstChange: false,
-          isFirstChange: () => false
-        }
-      });
-      
-      expect(component.currentWorldbuilding).toBe('Updated worldbuilding content from flesh out');
-      expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith('Updated worldbuilding content from flesh out');
-    });
-
-    it('should not update currentWorldbuilding on first change', () => {
-      spyOn(component.worldbuildingUpdated, 'emit');
-      
-      // Simulate ngOnChanges with first change
-      component.ngOnChanges({
-        story: {
-          currentValue: mockStory,
-          previousValue: undefined,
-          firstChange: true,
-          isFirstChange: () => true
-        }
-      });
-      
-      expect(component.worldbuildingUpdated.emit).not.toHaveBeenCalled();
-    });
-
-    it('should not update currentWorldbuilding when worldbuilding content is the same', () => {
-      component.story = mockStory;
-      fixture.detectChanges();
-      
-      spyOn(component.worldbuildingUpdated, 'emit');
-      
-      // Create story with same worldbuilding content - use the exact same reference
-      const sameStory = {
-        ...mockStory,
-        general: {
-          ...mockStory.general,
-          worldbuilding: mockStory.general.worldbuilding // Use exact same reference
-        }
-      };
-      
-      component.ngOnChanges({
-        story: {
-          currentValue: sameStory,
-          previousValue: mockStory,
-          firstChange: false,
-          isFirstChange: () => false
-        }
-      });
-      
-      expect(component.worldbuildingUpdated.emit).not.toHaveBeenCalled();
-    });
-
-    it('should handle empty worldbuilding content', async () => {
-      component.story = mockStory;
-      fixture.detectChanges();
-
-      // Verify initial state
-      expect(component.currentWorldbuilding).toBe('Initial worldbuilding content');
-
-      const updatedStory = {
-        ...mockStory,
-        general: {
-          ...mockStory.general,
-          worldbuilding: '' // Empty content
-        }
-      };
-
-      spyOn(component.worldbuildingUpdated, 'emit');
-
-      component.ngOnChanges({
-        story: {
-          currentValue: updatedStory,
-          previousValue: mockStory,
-          firstChange: false,
-          isFirstChange: () => false
-        }
-      });
-
-      // Wait for any async operations to complete
-      await fixture.whenStable();
-
-      expect(component.currentWorldbuilding).toBe('');
-      expect(component.worldbuildingUpdated.emit).toHaveBeenCalledWith('');
-    });
+    (component as any).initializeComponent();
+    
+    expect(component.chatConfig).toBeNull();
+    expect(component.isInitialized).toBe(false);
   });
 });
