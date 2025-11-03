@@ -15,6 +15,7 @@ export enum ContentType {
   CHARACTER_DESCRIPTION = 'character_description',
   SCENE_DESCRIPTION = 'scene_description',
   INTERNAL_MONOLOGUE = 'internal_monologue',
+  WORLDBUILDING = 'worldbuilding',
   METADATA = 'metadata',
   UNKNOWN = 'unknown'
 }
