@@ -186,12 +186,19 @@ describe('WorldbuildingChatComponent', () => {
     expect((component as any).initializeComponent).not.toHaveBeenCalled();
   });
 
-  it('should emit conversationStarted when message is sent', () => {
-    spyOn(component.conversationStarted, 'emit');
-    
-    component.onMessageSent();
-    
-    expect(component.conversationStarted.emit).toHaveBeenCalled();
+  it('should emit messageSent when message is sent', () => {
+    const mockMessage = {
+      id: 'msg-1',
+      type: 'user' as const,
+      content: 'test message',
+      timestamp: new Date()
+    };
+
+    spyOn(component.messageSent, 'emit');
+
+    component.onMessageSent(mockMessage);
+
+    expect(component.messageSent.emit).toHaveBeenCalledWith(mockMessage);
   });
 
   it('should handle message action events', () => {

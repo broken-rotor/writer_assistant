@@ -53,7 +53,7 @@
         [story]="story!"
         [disabled]="disabled"
         [processing]="loadingService.isLoading"
-        (conversationStarted)="onWorldbuildingConversationStarted()"
+        (messageSent)="onMessageSent($event)"
         (errorOccurred)="onWorldbuildingError($event)">
       </app-worldbuilding-chat>
     </div>

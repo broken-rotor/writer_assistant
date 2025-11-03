@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Story } from '../../models/story.model';
+import { Story, ChatMessage } from '../../models/story.model';
 import { TokenCounterComponent } from '../token-counter/token-counter.component';
 import { TokenCounterData, TokenCounterDisplayMode } from '../../models/token-counter.model';
 import { WorldbuildingChatComponent } from '../worldbuilding-chat/worldbuilding-chat.component';
@@ -9,6 +9,7 @@ import { TokenCountingService } from '../../services/token-counting.service';
 import { ToastService } from '../../services/toast.service';
 import { LoadingService } from '../../services/loading.service';
 import { GenerationService } from '../../services/generation.service';
+import { ConversationService } from '../../services/conversation.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -33,6 +34,7 @@ export class WorldbuildingTabComponent implements OnInit, OnDestroy {
   private toastService = inject(ToastService);
   public loadingService = inject(LoadingService);
   private generationService = inject(GenerationService);
+  private conversationService = inject(ConversationService);
 
   // Token counter state
   worldbuildingTokenCounterData: TokenCounterData | null = null;
@@ -124,10 +126,46 @@ export class WorldbuildingTabComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle worldbuilding chat conversation started
+   * Handle message sent from worldbuilding chat
    */
-  onWorldbuildingConversationStarted(): void {
-    console.log('Worldbuilding conversation started');
+  onMessageSent(message: ChatMessage): void {
+    if (!this.story) {
+      return;
+    }
+
+    // Initialize chat history if it doesn't exist
+    if (!this.story.general.worldbuildingChatHistory) {
+      this.story.general.worldbuildingChatHistory = [];
+    }
+
+    // Add user message to chat history
+    this.story.general.worldbuildingChatHistory.push(message);
+
+    // Generate AI response
+    this.loadingService.show('Generating AI response...', 'worldbuilding-chat');
+
+    const subscription = this.generationService.generateWorldbuildingResponse(
+      this.story,
+      message.content,
+      this.story.general.worldbuildingChatHistory
+    ).subscribe({
+      next: (response: string) => {
+        if (this.story) {
+          // Add AI response to both the conversation service (for display) and story (for persistence)
+          const aiMessage = this.conversationService.sendMessage(response, 'assistant');
+          this.story.general.worldbuildingChatHistory!.push(aiMessage);
+          this.emitStoryUpdate();
+        }
+        this.loadingService.hide();
+      },
+      error: (err: any) => {
+        console.error('Error generating worldbuilding response:', err);
+        this.toastService.showError('Failed to generate AI response. Please try again.');
+        this.loadingService.hide();
+      }
+    });
+
+    this.subscriptions.push(subscription);
   }
 
   /**

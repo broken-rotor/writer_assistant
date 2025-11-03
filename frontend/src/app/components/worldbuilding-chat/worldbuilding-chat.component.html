@@ -12,7 +12,7 @@
       [config]="chatConfig"
       [disabled]="disabled"
       [processing]="processing"
-      (messageSent)="onMessageSent()"
+      (messageSent)="onMessageSent($event)"
       (messageAction)="onMessageAction($event)"
       (branchChanged)="onBranchChanged($event)"
       (conversationCleared)="onConversationCleared()">

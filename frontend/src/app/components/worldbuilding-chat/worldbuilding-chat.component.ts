@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 
 import { ChatInterfaceComponent, ChatInterfaceConfig, MessageActionEvent } from '../chat-interface/chat-interface.component';
-import { Story } from '../../models/story.model';
+import { Story, ChatMessage } from '../../models/story.model';
 import { ConversationService } from '../../services/conversation.service';
 
 @Component({
@@ -18,7 +18,7 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
   @Input() disabled = false;
   @Input() processing = false;
 
-  @Output() conversationStarted = new EventEmitter<void>();
+  @Output() messageSent = new EventEmitter<ChatMessage>();
   @Output() errorOccurred = new EventEmitter<string>();
 
   // Chat interface configuration
@@ -80,8 +80,8 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
   /**
    * Handle message sent event
    */
-  onMessageSent(): void {
-    this.conversationStarted.emit();
+  onMessageSent(message: ChatMessage): void {
+    this.messageSent.emit(message);
   }
 
   /**

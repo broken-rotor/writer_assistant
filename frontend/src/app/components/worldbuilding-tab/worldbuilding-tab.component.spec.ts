@@ -6,8 +6,9 @@ import { TokenCountingService } from '../../services/token-counting.service';
 import { ToastService } from '../../services/toast.service';
 import { LoadingService } from '../../services/loading.service';
 import { GenerationService } from '../../services/generation.service';
+import { ConversationService } from '../../services/conversation.service';
 import { Story } from '../../models/story.model';
-import { of, throwError } from 'rxjs';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 import { TokenCountResultItem, ContentType, CountingStrategy } from '../../models/token.model';
 
 describe('WorldbuildingTabComponent', () => {
@@ -17,6 +18,7 @@ describe('WorldbuildingTabComponent', () => {
   let mockToastService: jasmine.SpyObj<ToastService>;
   let mockLoadingService: jasmine.SpyObj<LoadingService>;
   let mockGenerationService: jasmine.SpyObj<GenerationService>;
+  let mockConversationService: jasmine.SpyObj<ConversationService>;
 
   const mockStory: Story = {
     id: 'test-story',
@@ -71,8 +73,28 @@ describe('WorldbuildingTabComponent', () => {
   beforeEach(async () => {
     const tokenCountingSpy = jasmine.createSpyObj('TokenCountingService', ['countTokens']);
     const toastSpy = jasmine.createSpyObj('ToastService', ['show', 'showError', 'showSuccess', 'showWarning']);
-    const loadingSpy = jasmine.createSpyObj('LoadingService', ['show', 'hide']);
-    const generationSpy = jasmine.createSpyObj('GenerationService', ['fleshOut']);
+    const loadingSpy = jasmine.createSpyObj('LoadingService', ['show', 'hide'], { isLoading: false });
+    const generationSpy = jasmine.createSpyObj('GenerationService', ['fleshOut', 'generateWorldbuildingResponse']);
+
+    // Create mock observables for ConversationService
+    const currentThreadSubject = new BehaviorSubject(null);
+    const branchNavigationSubject = new BehaviorSubject({
+      currentBranchId: 'main',
+      availableBranches: ['main'],
+      branchHistory: [],
+      canNavigateBack: false,
+      canNavigateForward: false
+    });
+    const isProcessingSubject = new BehaviorSubject(false);
+
+    const conversationSpy = jasmine.createSpyObj('ConversationService',
+      ['sendMessage', 'initializeConversation', 'getCurrentBranchMessages', 'getAvailableBranches', 'createBranch', 'switchToBranch'],
+      {
+        currentThread$: currentThreadSubject.asObservable(),
+        branchNavigation$: branchNavigationSubject.asObservable(),
+        isProcessing$: isProcessingSubject.asObservable()
+      }
+    );
 
     await TestBed.configureTestingModule({
       imports: [
@@ -84,7 +106,8 @@ describe('WorldbuildingTabComponent', () => {
         { provide: TokenCountingService, useValue: tokenCountingSpy },
         { provide: ToastService, useValue: toastSpy },
         { provide: LoadingService, useValue: loadingSpy },
-        { provide: GenerationService, useValue: generationSpy }
+        { provide: GenerationService, useValue: generationSpy },
+        { provide: ConversationService, useValue: conversationSpy }
       ]
     }).compileComponents();
 
@@ -94,10 +117,50 @@ describe('WorldbuildingTabComponent', () => {
     mockToastService = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     mockLoadingService = TestBed.inject(LoadingService) as jasmine.SpyObj<LoadingService>;
     mockGenerationService = TestBed.inject(GenerationService) as jasmine.SpyObj<GenerationService>;
+    mockConversationService = TestBed.inject(ConversationService) as jasmine.SpyObj<ConversationService>;
 
     // Setup default mock behavior
     mockTokenCountingService.countTokens.and.returnValue(of(mockTokenResult));
     mockGenerationService.fleshOut.and.returnValue(of({ fleshedOutText: 'Expanded content' }));
+    mockGenerationService.generateWorldbuildingResponse.and.returnValue(of('AI generated worldbuilding response'));
+    mockConversationService.sendMessage.and.returnValue({
+      id: 'ai-msg-1',
+      type: 'assistant',
+      content: 'AI generated worldbuilding response',
+      timestamp: new Date()
+    });
+    mockConversationService.initializeConversation.and.returnValue({
+      id: 'thread-1',
+      messages: [],
+      branches: new Map(),
+      metadata: {
+        phase: 'plot_outline' as const,
+        created: new Date(),
+        lastModified: new Date()
+      }
+    } as any);
+    mockConversationService.getCurrentBranchMessages.and.returnValue([]);
+    mockConversationService.getAvailableBranches.and.returnValue([{
+      id: 'main',
+      name: 'Main',
+      parentMessageId: '',
+      messageIds: [],
+      isActive: true,
+      metadata: {
+        created: new Date()
+      }
+    }]);
+    mockConversationService.createBranch.and.returnValue({
+      id: 'branch-1',
+      name: 'Branch 1',
+      parentMessageId: '',
+      messageIds: [],
+      isActive: false,
+      metadata: {
+        created: new Date()
+      }
+    });
+    mockConversationService.switchToBranch.and.returnValue(undefined);
 
     // Create a fresh copy of mockStory for each test to ensure test isolation
     const storyCopy = JSON.parse(JSON.stringify(mockStory));
@@ -174,12 +237,22 @@ describe('WorldbuildingTabComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should handle worldbuilding conversation started', () => {
-    spyOn(console, 'log');
-    
-    component.onWorldbuildingConversationStarted();
-    
-    expect(console.log).toHaveBeenCalledWith('Worldbuilding conversation started');
+  it('should handle message sent and generate AI response', () => {
+    const mockMessage = {
+      id: 'msg-1',
+      type: 'user' as const,
+      content: 'Tell me about magic systems',
+      timestamp: new Date()
+    };
+
+    component.onMessageSent(mockMessage);
+
+    expect(mockGenerationService.generateWorldbuildingResponse).toHaveBeenCalledWith(
+      component.story!,
+      mockMessage.content,
+      jasmine.any(Array)
+    );
+    expect(mockLoadingService.show).toHaveBeenCalledWith('Generating AI response...', 'worldbuilding-chat');
   });
 
   it('should handle worldbuilding errors', () => {
