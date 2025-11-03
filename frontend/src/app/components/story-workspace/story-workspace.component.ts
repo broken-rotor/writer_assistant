@@ -455,6 +455,43 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       });
   }
 
+  regenerateBio() {
+    if (!this.story || !this.editingCharacter) {
+      alert('Please select a character first');
+      return;
+    }
+
+    // Check if character has sufficient details to regenerate bio
+    const hasDetails = this.editingCharacter.name || 
+                      this.editingCharacter.personality || 
+                      this.editingCharacter.motivations || 
+                      this.editingCharacter.physicalAppearance;
+    
+    if (!hasDetails) {
+      alert('Please fill in some character details first (name, personality, motivations, etc.)');
+      return;
+    }
+
+    this.loadingService.show('Regenerating bio summary...', 'regenerate-bio');
+
+    this.generationService.regenerateBio(
+      this.story,
+      this.editingCharacter
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loadingService.hide())
+    ).subscribe({
+        next: (response) => {
+          // Update the basic bio with the generated summary
+          this.editingCharacter.basicBio = response.basicBio;
+        },
+        error: (err) => {
+          console.error('Error regenerating bio:', err);
+          alert('Failed to regenerate bio');
+        }
+      });
+  }
+
   regenerateRelationships() {
     if (!this.story || !this.editingCharacter) {
       alert('Please select a character first');
