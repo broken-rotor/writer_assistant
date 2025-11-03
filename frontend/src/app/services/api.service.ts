@@ -9,6 +9,8 @@ import {
   FleshOutResponse,
   GenerateCharacterDetailsRequest,
   GenerateCharacterDetailsResponse,
+  RegenerateBioRequest,
+  RegenerateBioResponse,
   // New LLM Chat interfaces
   LLMChatRequest,
   LLMChatResponse,
@@ -72,6 +74,23 @@ export class ApiService {
         onProgress: onProgress,
         onError: (error) => {
           console.error('Character details generation streaming error:', error);
+        }
+      }
+    );
+  }
+
+  // Regenerate Bio - with SSE streaming
+  regenerateBio(
+    request: RegenerateBioRequest,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
+  ): Observable<RegenerateBioResponse> {
+    return this.sseStreamingService.createSSEObservable<RegenerateBioResponse>(
+      `${this.baseUrl}/regenerate-bio`,
+      request,
+      {
+        onProgress: onProgress,
+        onError: (error) => {
+          console.error('Bio regeneration streaming error:', error);
         }
       }
     );

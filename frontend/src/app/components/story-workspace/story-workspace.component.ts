@@ -18,6 +18,9 @@ import { TokenLimitsService, TokenLimitsState } from '../../services/token-limit
 import { TokenValidationService, FieldValidationState } from '../../services/token-validation.service';
 import { ToastService } from '../../services/toast.service';
 import { TokenValidationResult } from '../../models/token-validation.model';
+import { TokenCountingService } from '../../services/token-counting.service';
+import { TokenCounterComponent } from '../token-counter/token-counter.component';
+import { TokenCounterData, TokenCounterDisplayMode } from '../../models/token-counter.model';
 import { 
   ERROR_MESSAGES, 
   ErrorContext, 
@@ -42,7 +45,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, PlotOutlineTabComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingChatComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, PhaseNavigationComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlinePhaseComponent, PlotOutlineTabComponent, FinalEditPhaseComponent, FeedbackSidebarComponent, WorldbuildingChatComponent, TokenCounterComponent],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -99,6 +102,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   showFeedbackSidebar = false;
   feedbackSidebarConfig: FeedbackSidebarConfig | null = null;
 
+  // Worldbuilding token counter state
+  worldbuildingTokenCounterData: TokenCounterData | null = null;
+  readonly TokenCounterDisplayMode = TokenCounterDisplayMode;
+
   private destroy$ = new Subject<void>();
 
   // Dependency injection
@@ -114,6 +121,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   private phaseStateService = inject(PhaseStateService);
   private feedbackService = inject(FeedbackService);
   private contextBuilderService = inject(ContextBuilderService);
+  private tokenCountingService = inject(TokenCountingService);
 
   ngOnInit() {
     this.route.params
@@ -146,6 +154,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         // Migrate story for plot outline integration (WRI-65)
         this.storyService.migrateStoryForPlotOutline(this.story);
         this.initializePhaseNavigation(storyId);
+        // Initialize worldbuilding token counter
+        this.updateWorldbuildingTokenCounter();
       }
     } catch (err) {
       this.error = 'Failed to load story';
@@ -197,7 +207,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   // General tab methods
-  loadFileContent(event: Event, target: 'prefix' | 'suffix' | 'rater') {
+  loadFileContent(event: Event, target: 'prefix' | 'suffix' | 'rater' | 'worldbuilding') {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) {
       return;
@@ -234,6 +244,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           this.story.general.systemPrompts.mainSuffix = content;
         } else if (target === 'rater' && this.editingRater) {
           this.editingRater.systemPrompt = content;
+        } else if (target === 'worldbuilding') {
+          this.story.general.worldbuilding = content;
+          this.updateWorldbuildingTokenCounter();
         }
         this.storyService.saveStory(this.story);
       }
@@ -285,6 +298,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   onWorldbuildingUpdated(updatedWorldbuilding: string): void {
     if (this.story) {
       this.story.general.worldbuilding = updatedWorldbuilding;
+      this.updateWorldbuildingTokenCounter();
       this.storyService.saveStory(this.story);
       this.cdr.detectChanges();
     }
@@ -298,6 +312,39 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   onWorldbuildingError(error: string): void {
     console.error('Worldbuilding chat error:', error);
     this.toastService.showError('Worldbuilding Error', error);
+  }
+
+  // Direct worldbuilding editing methods
+  onWorldbuildingDirectEdit(): void {
+    if (this.story) {
+      this.updateWorldbuildingTokenCounter();
+      this.storyService.saveStory(this.story);
+    }
+  }
+
+  private updateWorldbuildingTokenCounter(): void {
+    if (!this.story?.general.worldbuilding) {
+      this.worldbuildingTokenCounterData = null;
+      return;
+    }
+
+    this.tokenCountingService.countTokens(this.story.general.worldbuilding).subscribe({
+      next: (result) => {
+        this.worldbuildingTokenCounterData = {
+          current: result.token_count,
+          limit: 4000, // Set a reasonable limit for worldbuilding
+          warningThreshold: 3200
+        };
+      },
+      error: (error) => {
+        console.error('Error counting worldbuilding tokens:', error);
+        this.worldbuildingTokenCounterData = null;
+      }
+    });
+  }
+
+  shouldShowWorldbuildingTokenCounter(): boolean {
+    return !!(this.worldbuildingTokenCounterData && this.worldbuildingTokenCounterData.current > 0);
   }
 
   // Helper methods
@@ -454,6 +501,43 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error('Error generating character details:', err);
           alert('Failed to generate character details');
+        }
+      });
+  }
+
+  regenerateBio() {
+    if (!this.story || !this.editingCharacter) {
+      alert('Please select a character first');
+      return;
+    }
+
+    // Check if character has sufficient details to regenerate bio
+    const hasDetails = this.editingCharacter.name || 
+                      this.editingCharacter.personality || 
+                      this.editingCharacter.motivations || 
+                      this.editingCharacter.physicalAppearance;
+    
+    if (!hasDetails) {
+      alert('Please fill in some character details first (name, personality, motivations, etc.)');
+      return;
+    }
+
+    this.loadingService.show('Regenerating bio summary...', 'regenerate-bio');
+
+    this.generationService.regenerateBio(
+      this.story,
+      this.editingCharacter
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loadingService.hide())
+    ).subscribe({
+        next: (response) => {
+          // Update the basic bio with the generated summary
+          this.editingCharacter.basicBio = response.basicBio;
+        },
+        error: (err) => {
+          console.error('Error regenerating bio:', err);
+          alert('Failed to regenerate bio');
         }
       });
   }
