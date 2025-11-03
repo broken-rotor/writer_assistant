@@ -171,13 +171,14 @@ describe('TokenLimitsService', () => {
       req.flush(mockTokenStrategiesResponse);
 
       service.getAllFieldLimits().subscribe(results => {
-        expect(results.length).toBe(4);
+        expect(results.length).toBe(5);
         
         const fieldTypes = results.map(r => r.fieldType);
         expect(fieldTypes).toContain('mainPrefix');
         expect(fieldTypes).toContain('mainSuffix');
         expect(fieldTypes).toContain('assistantPrompt');
         expect(fieldTypes).toContain('editorPrompt');
+        expect(fieldTypes).toContain('raterSystemPrompt');
         
         const mainPrefixResult = results.find(r => r.fieldType === 'mainPrefix');
         expect(mainPrefixResult?.limit).toBe(600);
@@ -446,7 +447,7 @@ describe('TokenLimitsService', () => {
       req.flush(mockTokenStrategiesResponse);
 
       const fieldTypes: SystemPromptFieldType[] = ['mainPrefix', 'mainSuffix', 'assistantPrompt', 'editorPrompt', 'raterSystemPrompt'];
-      const expectedLimits = [600, 400, 1200, 800, 500]; // 500 is the default fallback for raterSystemPrompt
+      const expectedLimits = [600, 400, 1200, 800, 1200]; // raterSystemPrompt uses same limit as assistantPrompt
 
       let completedCount = 0;
       fieldTypes.forEach((fieldType, index) => {
