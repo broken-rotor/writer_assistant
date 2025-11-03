@@ -445,8 +445,8 @@ describe('TokenLimitsService', () => {
       const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
       req.flush(mockTokenStrategiesResponse);
 
-      const fieldTypes: SystemPromptFieldType[] = ['mainPrefix', 'mainSuffix', 'assistantPrompt', 'editorPrompt'];
-      const expectedLimits = [600, 400, 1200, 800];
+      const fieldTypes: SystemPromptFieldType[] = ['mainPrefix', 'mainSuffix', 'assistantPrompt', 'editorPrompt', 'raterSystemPrompt'];
+      const expectedLimits = [600, 400, 1200, 800, 500]; // 500 is the default fallback for raterSystemPrompt
 
       let completedCount = 0;
       fieldTypes.forEach((fieldType, index) => {
