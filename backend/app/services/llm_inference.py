@@ -47,7 +47,7 @@ class LLMInferenceConfig:
             max_tokens: Maximum tokens to generate
             repeat_penalty: Penalty for repeating tokens
             verbose: Enable verbose logging
-            verbose_generation: Enable verbose logging of prompts and messages
+            verbose_generation: Enable verbose logging of prompts, messages, and outputs
         """
         self.model_path = model_path
         self.n_ctx = n_ctx
@@ -204,7 +204,13 @@ class LLMInference:
             else:
                 generated_text = str(response)
 
-            return generated_text.strip()
+            generated_text = generated_text.strip()
+
+            # Log output if verbose generation is enabled
+            if self.config.verbose_generation:
+                logger.info(f"[LLM Output]\n{generated_text}")
+
+            return generated_text
 
         except Exception as e:
             logger.error(f"Error during generation: {str(e)}")
@@ -264,7 +270,13 @@ class LLMInference:
             else:
                 generated_text = str(response)
 
-            return generated_text.strip()
+            generated_text = generated_text.strip()
+
+            # Log output if verbose generation is enabled
+            if self.config.verbose_generation:
+                logger.info(f"[LLM Output]\n{generated_text}")
+
+            return generated_text
 
         except Exception as e:
             logger.error(f"Error during chat completion: {str(e)}")
@@ -318,11 +330,22 @@ class LLMInference:
                 **generation_params
             )
 
+            # Accumulate output for logging if verbose generation is enabled
+            accumulated_output = [] if self.config.verbose_generation else None
+
             for chunk in stream:
                 if 'choices' in chunk and len(chunk['choices']) > 0:
                     delta = chunk['choices'][0].get('delta', {})
                     if 'content' in delta:
-                        yield delta['content']
+                        content = delta['content']
+                        if accumulated_output is not None:
+                            accumulated_output.append(content)
+                        yield content
+
+            # Log complete output if verbose generation is enabled
+            if self.config.verbose_generation and accumulated_output:
+                complete_output = ''.join(accumulated_output)
+                logger.info(f"[LLM Output (streaming)]\n{complete_output}")
 
         except Exception as e:
             logger.error(f"Error during streaming chat completion: {str(e)}")

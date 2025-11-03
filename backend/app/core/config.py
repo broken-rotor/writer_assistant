@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     )
     LLM_VERBOSE_GENERATION: bool = Field(
         default=False,
-        description="Enable verbose logging of prompts and messages during generation"
+        description="Enable verbose logging of prompts, messages, and outputs during generation"
     )
 
     # Context Management Configuration
