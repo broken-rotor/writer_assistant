@@ -256,7 +256,11 @@ class LLMInference:
 
         # Log messages if verbose generation is enabled
         if self.config.verbose_generation:
-            logger.info(f"[LLM Messages]\n{messages}")
+            debug_messages = ''
+            for msg in messages:
+                for k, v in msg.items():
+                    debug_messages += f"\n**{k}**: {v}"
+            logger.info(f"[LLM Messages]{debug_messages}")
 
         try:
             response = self.model.create_chat_completion(
@@ -322,7 +326,11 @@ class LLMInference:
 
         # Log messages if verbose generation is enabled
         if self.config.verbose_generation:
-            logger.info(f"[LLM Messages (streaming)]\n{messages}")
+            debug_messages = ''
+            for msg in messages:
+                for k, v in msg.items():
+                    debug_messages += f"\n{k}: {v}"
+            logger.info(f"[LLM Messages (streaming)]{debug_messages}")
 
         try:
             stream = self.model.create_chat_completion(
