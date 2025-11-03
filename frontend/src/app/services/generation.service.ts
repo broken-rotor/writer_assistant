@@ -17,6 +17,8 @@ import {
   FleshOutResponse,
   GenerateCharacterDetailsRequest,
   GenerateCharacterDetailsResponse,
+  RegenerateBioRequest,
+  RegenerateBioResponse,
   PlotOutline,
   PlotOutlineFeedback,
   // Enhanced interfaces with phase support
@@ -211,6 +213,43 @@ export class GenerationService {
     };
 
     return this.apiService.generateCharacterDetails(request);
+  }
+
+  // Regenerate Bio from Character Details
+  regenerateBio(
+    story: Story,
+    character: Character
+  ): Observable<RegenerateBioResponse> {
+    // Transform legacy data to structured context (optional for bio regeneration)
+    const legacyData = {
+      systemPrompts: {
+        mainPrefix: story.general.systemPrompts.mainPrefix,
+        mainSuffix: story.general.systemPrompts.mainSuffix
+      },
+      worldbuilding: story.general.worldbuilding,
+      storySummary: story.story.summary,
+      basicBio: character.basicBio,
+      existingCharacters: []
+    };
+
+    const structuredContext = transformToStructuredContext(legacyData);
+
+    const request: RegenerateBioRequest = {
+      name: character.name,
+      sex: character.sex,
+      gender: character.gender,
+      sexualPreference: character.sexualPreference,
+      age: character.age,
+      physicalAppearance: character.physicalAppearance,
+      usualClothing: character.usualClothing,
+      personality: character.personality,
+      motivations: character.motivations,
+      fears: character.fears,
+      relationships: character.relationships,
+      structured_context: structuredContext
+    };
+
+    return this.apiService.regenerateBio(request);
   }
 
   // Regenerate Relationships for a Character

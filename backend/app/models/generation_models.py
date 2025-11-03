@@ -591,3 +591,39 @@ class GenerateCharacterDetailsResponse(BaseModel):
         None,
         description="Metadata about how context was processed for this response"
     )
+
+
+# Regenerate Bio Request/Response
+class RegenerateBioRequest(BaseModel):
+    # Character details to summarize into bio
+    name: str = Field(description="Character name")
+    sex: str = Field(default="", description="Character sex")
+    gender: str = Field(default="", description="Character gender identity")
+    sexualPreference: str = Field(default="", description="Character sexual preference")
+    age: int = Field(default=0, description="Character age")
+    physicalAppearance: str = Field(default="", description="Character physical appearance")
+    usualClothing: str = Field(default="", description="Character usual clothing")
+    personality: str = Field(default="", description="Character personality traits")
+    motivations: str = Field(default="", description="Character motivations")
+    fears: str = Field(default="", description="Character fears")
+    relationships: str = Field(default="", description="Character relationships")
+    
+    # Context fields (optional for bio regeneration)
+    compose_phase: Optional[ComposePhase] = None
+    phase_context: Optional[PhaseContext] = None
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="Optional structured context container"
+    )
+    context_processing_config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Configuration for context processing"
+    )
+
+
+class RegenerateBioResponse(BaseModel):
+    basicBio: str = Field(description="Generated bio summary from character details")
+    context_metadata: Optional[ContextMetadata] = Field(
+        None,
+        description="Metadata about how context was processed for this response"
+    )

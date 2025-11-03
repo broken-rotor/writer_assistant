@@ -704,6 +704,38 @@ export interface GenerateCharacterDetailsResponse {
   context_metadata?: ContextMetadata;
 }
 
+export interface RegenerateBioRequest {
+  name: string;
+  sex?: string;
+  gender?: string;
+  sexualPreference?: string;
+  age?: number;
+  physicalAppearance?: string;
+  usualClothing?: string;
+  personality?: string;
+  motivations?: string;
+  fears?: string;
+  relationships?: string;
+  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
+  phase_context?: {
+    previous_phase_output?: string;
+    phase_specific_instructions?: string;
+    conversation_history?: {
+      role: 'user' | 'assistant';
+      content: string;
+      timestamp?: string;
+    }[];
+    conversation_branch_id?: string;
+  };
+  structured_context?: StructuredContextContainer;
+  context_processing_config?: Record<string, any>;
+}
+
+export interface RegenerateBioResponse {
+  basicBio: string;
+  context_metadata?: ContextMetadata;
+}
+
 // ============================================================================
 // NEW API MODELS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
 // ============================================================================
