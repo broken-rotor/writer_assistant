@@ -569,74 +569,131 @@ async def rag_query_stream(request: RAGQueryRequest):
     )
 
 
-@router.post("/rag/chat", response_model=RAGResponse)
+@router.post("/rag/chat")
 async def rag_chat(request: RAGChatRequest):
     """
-    Conduct a multi-turn chat conversation with RAG context.
+    Conduct a multi-turn chat conversation with RAG context using Server-Sent Events streaming.
 
     Maintains conversation history while retrieving relevant context
-    for each user question.
+    for each user question, providing real-time progress updates.
     """
-    try:
-        rag_service = get_rag_service()
-
-        # Check if RAG is enabled
-        if not rag_service.is_enabled():
-            archive_enabled = rag_service.archive_service.is_enabled()
-            llm_enabled = rag_service.llm is not None
-
-            if not archive_enabled:
-                detail = "Archive feature is not enabled. Please configure ARCHIVE_DB_PATH."
-            elif not llm_enabled:
-                detail = "LLM is not configured. Please set MODEL_PATH in your environment."
-            else:
-                detail = "RAG feature is not available."
-
-            raise HTTPException(status_code=503, detail=detail)
-
-        # Convert Pydantic models to ChatMessage objects
-        messages = [
-            ChatMessage(role=msg.role, content=msg.content)
-            for msg in request.messages
-        ]
-
-        # Build filter if provided
-        filter_metadata = None
-        if request.filter_file_name:
-            filter_metadata = {'file_name': request.filter_file_name}
-
-        # Perform RAG chat
-        result = rag_service.chat(
-            messages=messages,
-            n_context_chunks=request.n_context_chunks,
-            max_tokens=request.max_tokens,
-            temperature=request.temperature if request.temperature is not None else settings.ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE,
-            filter_metadata=filter_metadata
-        )
-
-        # Convert to response model
-        sources = [
-            RAGSource(
-                file_path=source.file_path,
-                file_name=source.file_name,
-                matching_section=source.chunk_text,
-                similarity_score=source.similarity_score
+    
+    async def generate_with_updates():
+        try:
+            # Phase 1: Initializing
+            status_event = StreamingStatusEvent(
+                phase=StreamingPhase.INITIALIZING,
+                message="Initializing RAG chat session...",
+                progress=15
             )
-            for source in result.sources
-        ]
-
-        return RAGResponse(
-            query=result.query,
-            answer=result.answer,
-            sources=sources,
-            total_sources=len(sources),
-            info_message=result.info_message
-        )
-
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-    except Exception as e:
-        logger.error(f"RAG chat failed: {e}")
-        raise HTTPException(status_code=500, detail=f"RAG chat failed: {str(e)}")
+            yield f"data: {status_event.model_dump_json()}\n\n"
+            
+            rag_service = get_rag_service()
+            
+            # Check if RAG is enabled
+            if not rag_service.is_enabled():
+                archive_enabled = rag_service.archive_service.is_enabled()
+                llm_enabled = rag_service.llm is not None
+                
+                if not archive_enabled:
+                    detail = "Archive feature is not enabled. Please configure ARCHIVE_DB_PATH."
+                elif not llm_enabled:
+                    detail = "LLM is not configured. Please set MODEL_PATH in your environment."
+                else:
+                    detail = "RAG feature is not available."
+                
+                error_event = StreamingErrorEvent(message=detail)
+                yield f"data: {error_event.model_dump_json()}\n\n"
+                return
+            
+            # Convert Pydantic models to ChatMessage objects
+            messages = [
+                ChatMessage(role=msg.role, content=msg.content)
+                for msg in request.messages
+            ]
+            
+            # Phase 2: Retrieving
+            status_event = StreamingStatusEvent(
+                phase=StreamingPhase.RETRIEVING,
+                message="Searching for relevant context from conversation...",
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+            
+            # Build filter if provided
+            filter_metadata = None
+            if request.filter_file_name:
+                filter_metadata = {'file_name': request.filter_file_name}
+            
+            # Phase 3: Generating
+            status_event = StreamingStatusEvent(
+                phase=StreamingPhase.GENERATING,
+                message="Generating contextual response...",
+                progress=70
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+            
+            # Perform RAG chat
+            result = rag_service.chat(
+                messages=messages,
+                n_context_chunks=request.n_context_chunks,
+                max_tokens=request.max_tokens,
+                temperature=request.temperature if request.temperature is not None else settings.ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE,
+                filter_metadata=filter_metadata
+            )
+            
+            # Phase 4: Formatting
+            status_event = StreamingStatusEvent(
+                phase=StreamingPhase.FORMATTING,
+                message="Formatting chat response and sources...",
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+            
+            # Convert to response model
+            sources = [
+                RAGSource(
+                    file_path=source.file_path,
+                    file_name=source.file_name,
+                    matching_section=source.chunk_text,
+                    similarity_score=source.similarity_score
+                )
+                for source in result.sources
+            ]
+            
+            response = RAGResponse(
+                query=result.query,
+                answer=result.answer,
+                sources=sources,
+                total_sources=len(sources),
+                info_message=result.info_message
+            )
+            
+            # Final result
+            result_event = StreamingResultEvent(
+                data=response.model_dump(),
+                status="complete"
+            )
+            yield f"data: {result_event.model_dump_json()}\n\n"
+            
+        except HTTPException as e:
+            error_event = StreamingErrorEvent(message=e.detail)
+            yield f"data: {error_event.model_dump_json()}\n\n"
+        except ValueError as e:
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
+        except Exception as e:
+            logger.error(f"RAG chat failed: {e}")
+            error_event = StreamingErrorEvent(message=f"RAG chat failed: {str(e)}")
+            yield f"data: {error_event.model_dump_json()}\n\n"
+    
+    return StreamingResponse(
+        generate_with_updates(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control"
+        }
+    )
