@@ -46,6 +46,11 @@ export class ArchiveComponent implements OnInit, OnDestroy {
   chatInfoMessage: string | null = null;
   currentChatSources: RAGSource[] = [];
   selectedMessageIndex: number | null = null;
+  
+  // Progress tracking for streaming
+  chatProgress = 0;
+  chatProgressMessage = '';
+  chatProgressPhase = '';
 
   private subscriptions: Subscription[] = [];
   private archiveService = inject(ArchiveService);
@@ -250,9 +255,26 @@ export class ArchiveComponent implements OnInit, OnDestroy {
     const currentInput = this.chatInput;
     this.chatInput = '';
 
-    // Send to RAG service
+    // Reset progress tracking
+    this.chatProgress = 0;
+    this.chatProgressMessage = '';
+    this.chatProgressPhase = '';
+
+    // Send to RAG service with progress tracking
     this.subscriptions.push(
-      this.archiveService.ragChat(this.chatMessages).subscribe({
+      this.archiveService.ragChat(
+        this.chatMessages,
+        5, // nContextChunks
+        1024, // maxTokens
+        0.4, // temperature
+        undefined, // filterFileName
+        (update) => {
+          // Handle progress updates
+          this.chatProgress = update.progress;
+          this.chatProgressMessage = update.message;
+          this.chatProgressPhase = update.phase;
+        }
+      ).subscribe({
         next: (response) => {
           // Add assistant response to chat with sources
           const assistantMessage: RAGChatMessage = {
@@ -267,6 +289,11 @@ export class ArchiveComponent implements OnInit, OnDestroy {
           this.selectedMessageIndex = this.chatMessages.length - 1;
           this.currentChatSources = response.sources;
           this.isChatProcessing = false;
+
+          // Reset progress tracking
+          this.chatProgress = 100;
+          this.chatProgressMessage = 'Complete';
+          this.chatProgressPhase = 'complete';
 
           // Display info message if present (document retrieval warnings/errors)
           if (response.info_message) {
@@ -301,6 +328,11 @@ export class ArchiveComponent implements OnInit, OnDestroy {
           }
 
           this.isChatProcessing = false;
+          
+          // Reset progress tracking on error
+          this.chatProgress = 0;
+          this.chatProgressMessage = '';
+          this.chatProgressPhase = '';
         }
       })
     );

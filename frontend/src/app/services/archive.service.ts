@@ -168,14 +168,15 @@ export class ArchiveService {
   }
 
   /**
-   * Chat with RAG context (multi-turn conversation)
+   * Chat with RAG context (multi-turn conversation) with streaming progress updates
    */
   ragChat(
     messages: RAGChatMessage[],
     nContextChunks = 5,
     maxTokens = 1024,
     temperature = 0.4,
-    filterFileName?: string
+    filterFileName?: string,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
   ): Observable<RAGResponse> {
     const body = {
       messages: messages,
@@ -185,6 +186,15 @@ export class ArchiveService {
       filter_file_name: filterFileName
     };
 
-    return this.http.post<RAGResponse>(`${this.apiUrl}/rag/chat`, body);
+    return this.sseStreamingService.createSSEObservable<RAGResponse>(
+      `${this.apiUrl}/rag/chat`,
+      body,
+      {
+        onProgress: onProgress,
+        onError: (error) => {
+          console.error('RAG chat streaming error:', error);
+        }
+      }
+    );
   }
 }

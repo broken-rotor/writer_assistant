@@ -1308,7 +1308,9 @@ Provide actionable insights and creative suggestions to enhance this plot point.
       messages,
       5, // Fewer chunks for follow-ups
       1000, // Shorter responses for follow-ups
-      0.5 // Slightly more creative for conversation
+      0.5, // Slightly more creative for conversation
+      undefined, // No file filter
+      undefined // No progress callback for this usage
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
