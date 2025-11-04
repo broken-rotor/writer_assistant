@@ -21,15 +21,6 @@ from app.models.generation_models import (
     AgentType,
     ComposePhase
 )
-# Legacy imports for backward compatibility during transition
-from app.models.context_models import (
-    StructuredContextContainer as LegacyStructuredContextContainer,
-    BaseContextElement
-)
-from app.utils.context_conversion import (
-    convert_new_to_legacy_context,
-    convert_legacy_to_new_context
-)
 
 logger = logging.getLogger(__name__)
 

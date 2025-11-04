@@ -21,10 +21,7 @@ from app.models.generation_models import (
     AgentType,
     ComposePhase,
     SummarizationRule,
-    ContextProcessingConfig
-)
-# Legacy imports for backward compatibility during transition
-from app.models.context_models import (
+    ContextProcessingConfig,
     StructuredContextContainer,
     BaseContextElement,
     SystemContextElement,

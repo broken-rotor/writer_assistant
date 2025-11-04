@@ -957,3 +957,165 @@ class RegenerateBioResponse(BaseModel):
         None,
         description="Metadata about how context was processed for this response"
     )
+
+
+# Legacy Context Element Classes for backward compatibility
+class BaseContextElement(BaseModel):
+    """Base class for all context elements."""
+
+    id: str = Field(
+        description="Unique identifier for this context element"
+    )
+
+    type: ContextType = Field(
+        description="Type of context element from the taxonomy"
+    )
+
+    content: str = Field(
+        description="The actual content of this context element"
+    )
+
+    metadata: ContextMetadata = Field(
+        default_factory=ContextMetadata,
+        description="Metadata for prioritization and management"
+    )
+
+    source: Optional[str] = Field(
+        default=None,
+        description="Source of this context (user, agent, system, etc.)"
+    )
+
+    version: int = Field(
+        default=1,
+        description="Version number for tracking changes"
+    )
+
+
+class SystemContextElement(BaseContextElement):
+    """Context elements for system-level prompts and instructions."""
+
+    type: Literal[
+        ContextType.SYSTEM_PROMPT,
+        ContextType.SYSTEM_INSTRUCTION,
+        ContextType.SYSTEM_PREFERENCE
+    ]
+
+    prompt_type: Optional[str] = Field(
+        default=None,
+        description="Specific type of system prompt (main_prefix, main_suffix, assistant_prompt, etc.)"
+    )
+
+    applies_to_agents: List[AgentType] = Field(
+        default_factory=lambda: [AgentType.WRITER],
+        description="Which agents this system context applies to"
+    )
+
+
+class StoryContextElement(BaseContextElement):
+    """Context elements for story-level information."""
+
+    type: Literal[
+        ContextType.STORY_SUMMARY,
+        ContextType.STORY_OUTLINE,
+        ContextType.STORY_THEME,
+        ContextType.STORY_SETTING,
+        ContextType.STORY_TONE,
+        ContextType.STORY_GENRE,
+        ContextType.STORY_PACING,
+        ContextType.STORY_CONFLICT
+    ]
+
+    story_id: Optional[str] = Field(
+        default=None,
+        description="ID of the story this context belongs to"
+    )
+
+    chapter_id: Optional[str] = Field(
+        default=None,
+        description="ID of the chapter this context belongs to"
+    )
+
+
+class CharacterContextElement(BaseContextElement):
+    """Context elements for character-specific information."""
+
+    type: Literal[
+        ContextType.CHARACTER_PROFILE,
+        ContextType.CHARACTER_DIALOGUE,
+        ContextType.CHARACTER_MOTIVATION,
+        ContextType.CHARACTER_RELATIONSHIP
+    ]
+
+    character_id: Optional[str] = Field(
+        default=None,
+        description="ID of the character this context belongs to"
+    )
+
+    character_name: Optional[str] = Field(
+        default=None,
+        description="Name of the character for easy reference"
+    )
+
+    relationship_target: Optional[str] = Field(
+        default=None,
+        description="Target character for relationship contexts"
+    )
+
+
+class UserContextElement(BaseContextElement):
+    """Context elements for user-provided information."""
+
+    type: Literal[
+        ContextType.USER_REQUEST,
+        ContextType.USER_FEEDBACK,
+        ContextType.USER_PREFERENCE
+    ]
+
+    user_id: Optional[str] = Field(
+        default=None,
+        description="ID of the user who provided this context"
+    )
+
+    request_type: Optional[str] = Field(
+        default=None,
+        description="Type of user request (generation, revision, feedback, etc.)"
+    )
+
+
+class PhaseContextElement(BaseContextElement):
+    """Context elements for phase-specific information."""
+
+    type: Literal[
+        ContextType.PHASE_INSTRUCTION,
+        ContextType.PHASE_CONSTRAINT
+    ]
+
+    target_phase: ComposePhase = Field(
+        description="Which composition phase this context applies to"
+    )
+
+    phase_priority: float = Field(
+        default=1.0,
+        description="Priority within the target phase"
+    )
+
+
+class ConversationContextElement(BaseContextElement):
+    """Context elements for conversation history."""
+
+    type: Literal[ContextType.CONVERSATION_HISTORY]
+
+    conversation_id: Optional[str] = Field(
+        default=None,
+        description="ID of the conversation this context belongs to"
+    )
+
+    turn_number: Optional[int] = Field(
+        default=None,
+        description="Turn number in the conversation"
+    )
+
+    speaker: Optional[str] = Field(
+        default=None,
+        description="Who spoke in this turn (user, assistant, character, etc.)"
+    )
