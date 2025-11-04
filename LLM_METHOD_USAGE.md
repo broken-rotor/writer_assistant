@@ -18,7 +18,7 @@ This document provides a comprehensive mapping of LLM inference methods through 
 | **`chat_completion()`**<br>*llm_inference.py:219* | `POST /character-feedback`<br>*character_feedback.py:92* | `ApiService.requestCharacterFeedback()`<br>*api.service.ts* | **FeedbackSidebarComponent**<br>*feedback-sidebar.component.ts* | Request feedback from specific character on plot point |
 | **`chat_completion()`**<br>*llm_inference.py:219* | `POST /rater-feedback`<br>*rater_feedback.py:85* | `ApiService.requestRaterFeedback()`<br>*api.service.ts* | **FeedbackSidebarComponent**<br>*feedback-sidebar.component.ts* | Request structured feedback from rater agent |
 | **`chat_completion_stream()`**<br>*llm_inference.py:289* | `POST /rater-feedback/stream`<br>*rater_feedback.py:189* | `ApiService.streamRaterFeedback()`<br>*api.service.ts* | **FeedbackSidebarComponent**<br>*feedback-sidebar.component.ts* | Stream rater feedback with SSE progress updates |
-| **`chat_completion()`**<br>*llm_inference.py:219* | `POST /editor-review`<br>*editor_review.py:92* | `ApiService.requestEditorReview()`<br>*api.service.ts* | **FinalEditPhaseComponent**<br>*final-edit-phase.component.ts* | Request editor review for chapter improvements |
+| **`chat_completion_stream()`**<br>*llm_inference.py:289* | `POST /editor-review`<br>*editor_review.py:93* | `ApiService.requestEditorReview()`<br>*api.service.ts* | **FinalEditPhaseComponent**<br>*final-edit-phase.component.ts* | Request editor review for chapter improvements with streaming |
 | **`chat_completion_stream()`**<br>*llm_inference.py:289* | `POST /flesh-out`<br>*flesh_out.py:87* | `ApiService.fleshOut()`<br>*api.service.ts* | **PlotOutlinePhaseComponent**<br>*plot-outline-phase.component.ts* | Expand brief text into detailed content |
 | **`chat_completion_stream()`**<br>*llm_inference.py:289* | `POST /generate-character-details`<br>*generate_character_details.py:88* | `ApiService.generateCharacterDetails()`<br>*api.service.ts* | **StoryWorkspaceComponent**<br>*story-workspace.component.ts* | Generate detailed character from bio with streaming |
 | **`chat_completion_stream()`**<br>*llm_inference.py:289* | `POST /regenerate-bio`<br>*regenerate_bio.py:121* | `ApiService.regenerateBio()`<br>*api.service.ts* | **StoryWorkspaceComponent**<br>*story-workspace.component.ts* | Regenerate concise bio from character details with SSE |
@@ -242,7 +242,7 @@ Archive service provides semantic search + LLM generation:
 | 3 | `/character-feedback` | POST | ✗ | character_feedback.py |
 | 4 | `/rater-feedback` | POST | ✗ | rater_feedback.py |
 | 5 | `/rater-feedback/stream` | POST | ✓ SSE | rater_feedback.py |
-| 6 | `/editor-review` | POST | ✗ | editor_review.py |
+| 6 | `/editor-review` | POST | ✓ SSE | editor_review.py |
 | 7 | `/flesh-out` | POST | ✓ SSE | flesh_out.py |
 | 8 | `/generate-character-details` | POST | ✓ SSE | generate_character_details.py |
 | 9 | `/regenerate-bio` | POST | ✓ SSE | regenerate_bio.py |
