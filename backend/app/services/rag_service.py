@@ -32,7 +32,8 @@ class RAGResponse:
     answer: str
     sources: List[ArchiveSearchResult]
     context_used: str
-    info_message: Optional[str] = None  # Informational message for user (not included in future prompts)
+    # Informational message for user (not included in future prompts)
+    info_message: Optional[str] = None
 
 
 class RAGService:
@@ -119,8 +120,7 @@ class RAGService:
                     query=question,
                     answer="I couldn't find any relevant information in the archive to answer your question.",
                     sources=[],
-                    context_used=""
-                )
+                    context_used="")
 
             # Step 2: Build context from search results
             context = self.build_context(search_results)
@@ -129,13 +129,16 @@ class RAGService:
             prompt = self.build_rag_prompt(question, context)
 
             # Step 4: Generate answer using LLM
-            logger.info(f"Generating answer with {len(search_results)} context chunks")
+            logger.info(
+                f"Generating answer with {
+                    len(search_results)} context chunks")
             answer = self.llm.generate(
                 prompt=prompt,
                 max_tokens=max_tokens or 1024,
                 temperature=temperature if temperature is not None else settings.RAG_DEFAULT_TEMPERATURE,
-                stop=["Question:", "Context:"]
-            )
+                stop=[
+                    "Question:",
+                    "Context:"])
 
             return RAGResponse(
                 query=question,
@@ -195,14 +198,16 @@ class RAGService:
             latest_question = user_messages[-1].content
 
             # Step 1: Analyze the query to determine retrieval strategy
-            previous_msg_dicts = [{"role": m.role, "content": m.content} for m in messages[:-1]]
+            previous_msg_dicts = [
+                {"role": m.role, "content": m.content} for m in messages[:-1]]
             query_analysis = self.query_analyzer.analyze(
                 query=latest_question,
                 previous_messages=previous_msg_dicts
             )
 
             logger.debug(
-                f"Query analysis: needs_full_doc={query_analysis.needs_full_document}, "
+                f"Query analysis: needs_full_doc={
+                    query_analysis.needs_full_document}, "
                 f"sources={query_analysis.specified_sources}"
             )
             logger.info("Analyzing query for retrieval strategy")
@@ -218,33 +223,44 @@ class RAGService:
             if query_analysis.specified_sources:
                 # User specified sources - retrieve those full documents
                 for source_name in query_analysis.specified_sources:
-                    file_path = self.archive_service.find_file_by_name(source_name)
+                    file_path = self.archive_service.find_file_by_name(
+                        source_name)
                     if file_path:
-                        content = self.archive_service.get_file_content(file_path)
+                        content = self.archive_service.get_file_content(
+                            file_path)
                         if content:
                             full_documents.append({
                                 'file_name': source_name,
                                 'file_path': file_path,
                                 'content': content
                             })
-                            logger.debug(f"Retrieved full document: {source_name}")
+                            logger.debug(
+                                f"Retrieved full document: {source_name}")
                             logger.info("Retrieved requested full document")
                         else:
                             # Document found but content couldn't be read
-                            logger.debug(f"Could not read content for: {source_name}")
-                            logger.warning("Could not read content for requested document")
+                            logger.debug(
+                                f"Could not read content for: {source_name}")
+                            logger.warning(
+                                "Could not read content for requested document")
                             retrieval_warnings.append(
                                 f"Document '{source_name}' was found but could not be read from the archive.")
                     else:
                         # Document not found in archive
                         logger.debug(f"Source not found: {source_name}")
-                        logger.warning("Requested document not found in archive")
-                        retrieval_warnings.append(f"Document '{source_name}' was not found in the archive.")
+                        logger.warning(
+                            "Requested document not found in archive")
+                        retrieval_warnings.append(
+                            f"Document '{source_name}' was not found in the archive.")
 
             elif query_analysis.needs_full_document:
-                # Query indicates need for full documents - retrieve chunks first, then full docs
-                logger.debug(f"Retrieving full documents based on query indicators: {query_analysis.detail_indicators}")
-                logger.info("Retrieving full documents based on query indicators")
+                # Query indicates need for full documents - retrieve chunks
+                # first, then full docs
+                logger.debug(
+                    f"Retrieving full documents based on query indicators: {
+                        query_analysis.detail_indicators}")
+                logger.info(
+                    "Retrieving full documents based on query indicators")
                 search_results = self.archive_service.search(
                     query=clean_query,
                     n_results=n_context_chunks,
@@ -253,9 +269,11 @@ class RAGService:
 
                 # Get full documents for the top matching files
                 seen_files = set()
-                for result in search_results[:3]:  # Get full docs for top 3 results
+                # Get full docs for top 3 results
+                for result in search_results[:3]:
                     if result.file_path not in seen_files:
-                        content = self.archive_service.get_file_content(result.file_path)
+                        content = self.archive_service.get_file_content(
+                            result.file_path)
                         if content:
                             full_documents.append({
                                 'file_name': result.file_name,
@@ -263,12 +281,19 @@ class RAGService:
                                 'content': content
                             })
                             seen_files.add(result.file_path)
-                            logger.debug(f"Retrieved full document: {result.file_name}")
+                            logger.debug(
+                                f"Retrieved full document: {
+                                    result.file_name}")
                             logger.info("Retrieved full document")
                         else:
-                            logger.debug(f"Could not read content for: {result.file_name}")
-                            logger.warning("Could not read content for document")
-                            retrieval_warnings.append(f"Document '{result.file_name}' could not be read from the archive.")
+                            logger.debug(
+                                f"Could not read content for: {
+                                    result.file_name}")
+                            logger.warning(
+                                "Could not read content for document")
+                            retrieval_warnings.append(
+                                f"Document '{
+                                    result.file_name}' could not be read from the archive.")
 
             else:
                 # Standard chunk-based retrieval
@@ -280,19 +305,20 @@ class RAGService:
                 )
 
             # Step 3: Check if we should proceed with generation
-            # If user explicitly requested sources but none were successfully retrieved, don't generate
+            # If user explicitly requested sources but none were successfully
+            # retrieved, don't generate
             if query_analysis.specified_sources and not full_documents:
                 info_msg = " ".join(retrieval_warnings) if retrieval_warnings else \
                     "Could not retrieve the requested document(s)."
-                logger.warning(f"Skipping generation - no requested documents available: {info_msg}")
+                logger.warning(
+                    f"Skipping generation - no requested documents available: {info_msg}")
                 return RAGResponse(
                     query=latest_question,
                     answer="I was unable to retrieve the requested document(s) from the archive. "
-                           "Please check that the document name is correct and has been indexed.",
+                    "Please check that the document name is correct and has been indexed.",
                     sources=[],
                     context_used="",
-                    info_message=info_msg
-                )
+                    info_message=info_msg)
 
             # Check if we have any context at all
             if not search_results and not full_documents:
@@ -301,11 +327,11 @@ class RAGService:
                     answer="I couldn't find any relevant information in the archive to answer your question.",
                     sources=[],
                     context_used="",
-                    info_message="No relevant content was found in the archive."
-                )
+                    info_message="No relevant content was found in the archive.")
 
             # Step 4: Build context from chunks and/or full documents
-            context = self._build_enhanced_context(search_results, full_documents)
+            context = self._build_enhanced_context(
+                search_results, full_documents)
 
             # Step 5: Build chat messages with context
             chat_messages = self._build_chat_messages(messages, context)
@@ -324,7 +350,8 @@ class RAGService:
             # Build info message if there were partial failures
             info_msg = None
             if retrieval_warnings:
-                info_msg = " ".join(retrieval_warnings) + " The response is based on other available context."
+                info_msg = " ".join(
+                    retrieval_warnings) + " The response is based on other available context."
 
             return RAGResponse(
                 query=latest_question,
@@ -398,7 +425,9 @@ class RAGService:
             context_parts.append("=== RELEVANT EXCERPTS ===\n")
             for i, result in enumerate(search_results, 1):
                 context_parts.append(
-                    f"[Excerpt {i} from {result.file_name}]\n{result.chunk_text}\n"
+                    f"[Excerpt {i} from {
+                        result.file_name}]\n{
+                        result.chunk_text}\n"
                 )
 
         return "\n".join(context_parts) if context_parts else ""

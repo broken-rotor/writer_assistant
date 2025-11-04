@@ -47,7 +47,8 @@ class DistillationConfig:
     """Configuration for context distillation operations."""
 
     # Token thresholds
-    rolling_summary_threshold: int = 25000  # 25k token threshold as per requirements
+    # 25k token threshold as per requirements
+    rolling_summary_threshold: int = 25000
     emergency_compression_threshold: int = 30000
 
     # Compression ratios by content type
@@ -77,7 +78,9 @@ class DistillationConfig:
     min_summary_quality_score: float = 0.7
 
     # LLM settings for summarization
-    llm_temperature: float = field(default_factory=lambda: settings.DISTILLATION_GENERAL_TEMPERATURE)  # Lower temperature for consistent summaries
+    # Lower temperature for consistent summaries
+    llm_temperature: float = field(
+        default_factory=lambda: settings.DISTILLATION_GENERAL_TEMPERATURE)
     llm_max_tokens: int = 2048
 
     # Summary-of-summary settings
@@ -149,7 +152,9 @@ class ContextDistiller:
         # Track distillation history
         self._distillation_history: List[DistillationResult] = []
 
-        logger.info("ContextDistiller initialized with config: %s", self.config)
+        logger.info(
+            "ContextDistiller initialized with config: %s",
+            self.config)
 
     def _initialize_strategies(self) -> None:
         """Initialize summarization strategies for different content types."""
@@ -166,7 +171,8 @@ class ContextDistiller:
             ContentType.EVENT_SEQUENCE: EventSequenceStrategy(self.llm_service),
             ContentType.EMOTIONAL_MOMENT: EmotionalMomentStrategy(self.llm_service),
             ContentType.WORLD_BUILDING: WorldBuildingStrategy(self.llm_service),
-            ContentType.MIXED_CONTENT: PlotSummaryStrategy(self.llm_service)  # Default strategy
+            ContentType.MIXED_CONTENT: PlotSummaryStrategy(
+                self.llm_service)  # Default strategy
         }
 
     def check_distillation_needed(
@@ -195,7 +201,9 @@ class ContextDistiller:
 
         # Check rolling summary threshold
         if total_tokens >= self.config.rolling_summary_threshold:
-            logger.info(f"Rolling summary threshold reached: {total_tokens} >= {self.config.rolling_summary_threshold}")
+            logger.info(
+                f"Rolling summary threshold reached: {total_tokens} >= {
+                    self.config.rolling_summary_threshold}")
             return True, DistillationTrigger.TOKEN_THRESHOLD, None
 
         # Check emergency compression threshold
@@ -209,7 +217,8 @@ class ContextDistiller:
         for layer_type, usage in layer_usage.items():
             allocated = current_allocation.get(layer_type, 0)
             if usage > allocated * 1.1:  # 10% overflow tolerance
-                logger.info(f"Layer overflow detected in {layer_type}: {usage} > {allocated}")
+                logger.info(
+                    f"Layer overflow detected in {layer_type}: {usage} > {allocated}")
                 return True, DistillationTrigger.LAYER_OVERFLOW, layer_type
 
         return False, DistillationTrigger.MANUAL_REQUEST, None
@@ -236,17 +245,20 @@ class ContextDistiller:
             DistillationResult with compression details
         """
         try:
-            logger.info(f"Starting distillation: {content_type} for {target_layer} (trigger: {trigger})")
+            logger.info(
+                f"Starting distillation: {content_type} for {target_layer} (trigger: {trigger})")
 
             # Count original tokens
             original_tokens = self.token_counter.count_tokens(content)
 
             # Get target compression ratio
-            compression_ratio = self.config.compression_ratios.get(content_type, 0.35)
+            compression_ratio = self.config.compression_ratios.get(
+                content_type, 0.35)
             target_tokens = int(original_tokens * compression_ratio)
 
             # Get appropriate strategy
-            strategy = self._strategies.get(content_type, self._strategies[ContentType.MIXED_CONTENT])
+            strategy = self._strategies.get(
+                content_type, self._strategies[ContentType.MIXED_CONTENT])
 
             # Perform summarization
             summary_result = strategy.summarize(
@@ -257,8 +269,10 @@ class ContextDistiller:
             )
 
             # Count compressed tokens
-            compressed_tokens = self.token_counter.count_tokens(summary_result.summary)
-            actual_compression_ratio = compressed_tokens / original_tokens if original_tokens > 0 else 0
+            compressed_tokens = self.token_counter.count_tokens(
+                summary_result.summary)
+            actual_compression_ratio = compressed_tokens / \
+                original_tokens if original_tokens > 0 else 0
 
             # Create result
             result = DistillationResult(
@@ -322,7 +336,8 @@ class ContextDistiller:
             key=lambda x: self.config.layer_priorities.get(x, 0)
         )
 
-        logger.info(f"Handling overflow in {overflow_layer}, need to reduce by {target_reduction} tokens")
+        logger.info(
+            f"Handling overflow in {overflow_layer}, need to reduce by {target_reduction} tokens")
 
         for layer_type in sorted_layers:
             if remaining_reduction <= 0:
@@ -341,7 +356,9 @@ class ContextDistiller:
 
             # Calculate how much to compress from this layer
             current_tokens = self.token_counter.count_tokens(content)
-            max_reduction = int(current_tokens * 0.7)  # Don't compress more than 70%
+            max_reduction = int(
+                current_tokens *
+                0.7)  # Don't compress more than 70%
             layer_reduction = min(remaining_reduction, max_reduction)
 
             if layer_reduction > 0:
@@ -358,10 +375,12 @@ class ContextDistiller:
                     remaining_reduction -= actual_reduction
                     results.append(result)
 
-                    logger.info(f"Compressed {layer_type}: reduced by {actual_reduction} tokens")
+                    logger.info(
+                        f"Compressed {layer_type}: reduced by {actual_reduction} tokens")
 
         if remaining_reduction > 0:
-            logger.warning(f"Could not achieve full reduction target. {remaining_reduction} tokens still needed.")
+            logger.warning(
+                f"Could not achieve full reduction target. {remaining_reduction} tokens still needed.")
 
         return results
 
@@ -400,12 +419,16 @@ class ContextDistiller:
 
         # Set target tokens if not provided
         if target_tokens is None:
-            target_tokens = int(original_tokens * 0.5)  # 50% compression for meta-summaries
+            # 50% compression for meta-summaries
+            target_tokens = int(original_tokens * 0.5)
 
-        logger.info(f"Creating summary of {len(summaries)} summaries: {original_tokens} -> {target_tokens} tokens")
+        logger.info(
+            f"Creating summary of {
+                len(summaries)} summaries: {original_tokens} -> {target_tokens} tokens")
 
         # Use appropriate strategy for meta-summarization
-        strategy = self._strategies.get(content_type, self._strategies[ContentType.MIXED_CONTENT])
+        strategy = self._strategies.get(
+            content_type, self._strategies[ContentType.MIXED_CONTENT])
 
         # Add meta-summary context
         context = {
@@ -435,11 +458,13 @@ class ContextDistiller:
         content_lower = content.lower()
 
         # Simple keyword-based classification
-        if any(word in content_lower for word in ["plot", "story", "narrative", "chapter"]):
+        if any(word in content_lower for word in [
+               "plot", "story", "narrative", "chapter"]):
             return ContentType.PLOT_SUMMARY
         elif any(word in content_lower for word in ["character", "personality", "trait", "development"]):
             return ContentType.CHARACTER_DEVELOPMENT
-        elif content.count('"') > 10 or content.count("'") > 10:  # Lots of quotes = dialogue
+        # Lots of quotes = dialogue
+        elif content.count('"') > 10 or content.count("'") > 10:
             return ContentType.DIALOGUE
         elif any(word in content_lower for word in ["world", "setting", "location", "environment"]):
             return ContentType.WORLD_BUILDING
@@ -462,7 +487,8 @@ class ContextDistiller:
         successful_ops = [r for r in self._distillation_history if r.success]
 
         total_original = sum(r.original_token_count for r in successful_ops)
-        total_compressed = sum(r.compressed_token_count for r in successful_ops)
+        total_compressed = sum(
+            r.compressed_token_count for r in successful_ops)
 
         return {
             "total_operations": len(self._distillation_history),
@@ -479,11 +505,14 @@ class ContextDistiller:
         stats = {}
 
         for content_type in ContentType:
-            type_results = [r for r in self._distillation_history if r.content_type == content_type and r.success]
+            type_results = [
+                r for r in self._distillation_history if r.content_type == content_type and r.success]
 
             if type_results:
-                total_original = sum(r.original_token_count for r in type_results)
-                total_compressed = sum(r.compressed_token_count for r in type_results)
+                total_original = sum(
+                    r.original_token_count for r in type_results)
+                total_compressed = sum(
+                    r.compressed_token_count for r in type_results)
 
                 stats[content_type.value] = {
                     "operations": len(type_results),
@@ -500,11 +529,14 @@ class ContextDistiller:
         stats = {}
 
         for layer_type in LayerType:
-            layer_results = [r for r in self._distillation_history if r.layer_affected == layer_type and r.success]
+            layer_results = [
+                r for r in self._distillation_history if r.layer_affected == layer_type and r.success]
 
             if layer_results:
-                total_original = sum(r.original_token_count for r in layer_results)
-                total_compressed = sum(r.compressed_token_count for r in layer_results)
+                total_original = sum(
+                    r.original_token_count for r in layer_results)
+                total_compressed = sum(
+                    r.compressed_token_count for r in layer_results)
 
                 stats[layer_type.value] = {
                     "operations": len(layer_results),

@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _build_agent_system_prompt(agent_type: str, compose_context=None, system_prompts=None) -> str:
+def _build_agent_system_prompt(
+        agent_type: str, compose_context=None, system_prompts=None) -> str:
     """Build system prompt based on agent type and context."""
     base_prompts = {
         'writer': "You are a skilled writer assistant helping with story creation. "
@@ -37,11 +38,11 @@ def _build_agent_system_prompt(agent_type: str, compose_context=None, system_pro
         phase_guidance = {
             'plot_outline': "Focus on plot structure, story beats, and narrative arc development.",
             'chapter_detail': "Help with scene development, character interactions, and detailed storytelling.",
-            'final_edit': "Provide polishing suggestions, consistency checks, and final refinements."
-        }
+            'final_edit': "Provide polishing suggestions, consistency checks, and final refinements."}
         phase_context = phase_guidance.get(compose_context.current_phase, "")
         if phase_context:
-            prompt += f"\n\nCurrent phase: {compose_context.current_phase}. {phase_context}"
+            prompt += f"\n\nCurrent phase: {
+                compose_context.current_phase}. {phase_context}"
 
     # Add custom system prompts if provided
     if system_prompts:
@@ -64,7 +65,9 @@ def _build_conversation_context(messages, compose_context=None) -> str:
                 context_parts.append(f"- {key}: {value}")
 
     if compose_context and compose_context.chapter_draft:
-        context_parts.append(f"\nCurrent Chapter Draft:\n{compose_context.chapter_draft}")
+        context_parts.append(
+            f"\nCurrent Chapter Draft:\n{
+                compose_context.chapter_draft}")
 
     return "\n".join(context_parts) if context_parts else ""
 
@@ -77,58 +80,63 @@ async def llm_chat(request: LLMChatRequest):
     """
     llm = get_llm()
     if not llm:
-        raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
+        raise HTTPException(
+            status_code=503,
+            detail="LLM not initialized. Start server with --model-path")
 
     async def generate_with_updates():
         try:
             # Phase 1: Context Building
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_building', 'message': f'Building {request.agent_type} agent context...', 'progress': 30})}\n\n"
-            
+
             # Build system prompt based on agent type and context
             system_prompt = _build_agent_system_prompt(
                 request.agent_type,
                 request.compose_context,
                 request.system_prompts
             )
-            
+
             # Build conversation context
-            context = _build_conversation_context(request.messages, request.compose_context)
-            
+            context = _build_conversation_context(
+                request.messages, request.compose_context)
+
             # Prepare messages for LLM
             llm_messages = [{"role": "system", "content": system_prompt}]
-            
+
             # Add context as first user message if available
             if context:
-                llm_messages.append({"role": "user", "content": f"Context:\n{context}"})
-                llm_messages.append({"role": "assistant", "content": "I understand the context. How can I help you?"})
-            
+                llm_messages.append(
+                    {"role": "user", "content": f"Context:\n{context}"})
+                llm_messages.append(
+                    {"role": "assistant", "content": "I understand the context. How can I help you?"})
+
             # Add conversation history
             for msg in request.messages:
                 llm_messages.append({
                     "role": msg.role,
                     "content": msg.content
                 })
-            
+
             # Phase 2: Generation
             yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': f'{request.agent_type.title()} agent is thinking...', 'progress': 70})}\n\n"
-            
+
             # Get LLM response
             response_text = llm.chat_completion(
                 llm_messages,
                 max_tokens=request.max_tokens,
                 temperature=request.temperature
             )
-            
+
             # Phase 3: Formatting
             yield f"data: {json.dumps({'type': 'status', 'phase': 'formatting', 'message': 'Formatting response...', 'progress': 90})}\n\n"
-            
+
             # Create response message
             response_message = ConversationMessage(
                 role="assistant",
                 content=response_text.strip(),
                 timestamp=datetime.now(UTC).isoformat()
             )
-            
+
             # Final result
             result = LLMChatResponse(
                 message=response_message,
@@ -136,17 +144,16 @@ async def llm_chat(request: LLMChatRequest):
                 metadata={
                     "generatedAt": datetime.now(UTC).isoformat(),
                     "phase": request.compose_context.current_phase if request.compose_context else None,
-                    "conversationLength": len(request.messages),
-                    "contextProvided": bool(context)
-                }
-            )
-            
+                    "conversationLength": len(
+                        request.messages),
+                    "contextProvided": bool(context)})
+
             yield f"data: {json.dumps({'type': 'result', 'data': result.dict(), 'status': 'complete'})}\n\n"
-            
+
         except Exception as e:
             logger.error(f"Error in llm_chat: {str(e)}")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
-    
+
     return StreamingResponse(
         generate_with_updates(),
         media_type="text/event-stream",
@@ -155,5 +162,3 @@ async def llm_chat(request: LLMChatRequest):
             "Connection": "keep-alive",
         }
     )
-
-

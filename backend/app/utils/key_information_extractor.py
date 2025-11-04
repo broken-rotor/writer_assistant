@@ -84,7 +84,9 @@ class KeyInformationExtractor:
         if not content or not content.strip():
             return ExtractionResult(warnings=["Empty content provided"])
 
-        logger.info(f"Extracting key information from {len(content)} characters of content")
+        logger.info(
+            f"Extracting key information from {
+                len(content)} characters of content")
 
         key_info = []
 
@@ -101,7 +103,8 @@ class KeyInformationExtractor:
         key_info.extend(self._extract_causal_relationships(content))
 
         # Filter by importance threshold
-        filtered_info = [info for info in key_info if info.importance_score >= preserve_threshold]
+        filtered_info = [
+            info for info in key_info if info.importance_score >= preserve_threshold]
 
         # Sort by importance
         filtered_info.sort(key=lambda x: x.importance_score, reverse=True)
@@ -109,7 +112,9 @@ class KeyInformationExtractor:
         # Generate statistics
         stats = self._generate_statistics(key_info, filtered_info)
 
-        logger.info(f"Extracted {len(filtered_info)} key information items (threshold: {preserve_threshold})")
+        logger.info(
+            f"Extracted {
+                len(filtered_info)} key information items (threshold: {preserve_threshold})")
 
         return ExtractionResult(
             key_information=filtered_info,
@@ -120,17 +125,52 @@ class KeyInformationExtractor:
         """Extract character names and references."""
         characters = []
 
-        # Find potential character names (capitalized words that appear multiple times)
+        # Find potential character names (capitalized words that appear
+        # multiple times)
         potential_names = re.findall(r'\b[A-Z][a-z]+\b', content)
         name_counts = Counter(potential_names)
 
         # Filter out common words that aren't names
         common_words = {
-            'The', 'This', 'That', 'They', 'Then', 'There', 'When', 'Where', 'What', 'Who',
-            'How', 'Why', 'But', 'And', 'Or', 'So', 'If', 'As', 'At', 'In', 'On', 'To',
-            'For', 'With', 'By', 'From', 'Up', 'About', 'Into', 'Through', 'During',
-            'Before', 'After', 'Above', 'Below', 'Between', 'Among', 'Chapter', 'Part'
-        }
+            'The',
+            'This',
+            'That',
+            'They',
+            'Then',
+            'There',
+            'When',
+            'Where',
+            'What',
+            'Who',
+            'How',
+            'Why',
+            'But',
+            'And',
+            'Or',
+            'So',
+            'If',
+            'As',
+            'At',
+            'In',
+            'On',
+            'To',
+            'For',
+            'With',
+            'By',
+            'From',
+            'Up',
+            'About',
+            'Into',
+            'Through',
+            'During',
+            'Before',
+            'After',
+            'Above',
+            'Below',
+            'Between',
+            'Among',
+            'Chapter',
+            'Part'}
 
         for name, count in name_counts.items():
             if name not in common_words and count >= 2:  # Appears at least twice
@@ -146,9 +186,17 @@ class KeyInformationExtractor:
                     contexts.append(content[start:end])
 
                 # Boost importance if found with character indicators
-                character_indicators = ['said', 'thought', 'felt', 'walked', 'ran', 'smiled', 'frowned']
+                character_indicators = [
+                    'said',
+                    'thought',
+                    'felt',
+                    'walked',
+                    'ran',
+                    'smiled',
+                    'frowned']
                 for context in contexts:
-                    if any(indicator in context.lower() for indicator in character_indicators):
+                    if any(indicator in context.lower()
+                           for indicator in character_indicators):
                         importance = min(importance + 0.2, 1.0)
                         break
 
@@ -188,7 +236,9 @@ class KeyInformationExtractor:
                     content=matched_text,
                     importance_score=importance,
                     context=context,
-                    metadata={"pattern": pattern.pattern, "keywords_found": keywords}
+                    metadata={
+                        "pattern": pattern.pattern,
+                        "keywords_found": keywords}
                 ))
 
         return plot_points
@@ -224,9 +274,18 @@ class KeyInformationExtractor:
 
         # Look for relationship indicators
         relationship_patterns = [
-            (re.compile(r'\b(\w+)\s+(?:loves?|hates?|fears?|trusts?|betrays?)\s+(\w+)\b', re.IGNORECASE), 0.7),
-            (re.compile(r'\b(\w+)\s+(?:and|with)\s+(\w+)\s+(?:were|are)\s+(?:friends?|enemies?|lovers?)\b', re.IGNORECASE), 0.8),
-            (re.compile(r'\b(\w+)(?:\'s)?\s+(?:mother|father|sister|brother|son|daughter|wife|husband)\s+(\w+)\b', re.IGNORECASE), 0.9),
+            (re.compile(
+                r'\b(\w+)\s+(?:loves?|hates?|fears?|trusts?|betrays?)\s+(\w+)\b',
+                re.IGNORECASE),
+                0.7),
+            (re.compile(
+                r'\b(\w+)\s+(?:and|with)\s+(\w+)\s+(?:were|are)\s+(?:friends?|enemies?|lovers?)\b',
+                re.IGNORECASE),
+                0.8),
+            (re.compile(
+                r'\b(\w+)(?:\'s)?\s+(?:mother|father|sister|brother|son|daughter|wife|husband)\s+(\w+)\b',
+                re.IGNORECASE),
+                0.9),
         ]
 
         for pattern, importance in relationship_patterns:
@@ -253,9 +312,18 @@ class KeyInformationExtractor:
         conflicts = []
 
         conflict_patterns = [
-            (re.compile(r'\b(?:conflict|fight|battle|war|struggle|confrontation)\b.*?[.!?]', re.IGNORECASE | re.DOTALL), 0.8),
-            (re.compile(r'\b(?:against|versus|opposed|enemy|rival)\b.*?[.!?]', re.IGNORECASE | re.DOTALL), 0.7),
-            (re.compile(r'\b(?:tension|disagreement|argument|dispute)\b.*?[.!?]', re.IGNORECASE | re.DOTALL), 0.6),
+            (re.compile(
+                r'\b(?:conflict|fight|battle|war|struggle|confrontation)\b.*?[.!?]',
+                re.IGNORECASE | re.DOTALL),
+                0.8),
+            (re.compile(
+                r'\b(?:against|versus|opposed|enemy|rival)\b.*?[.!?]',
+                re.IGNORECASE | re.DOTALL),
+             0.7),
+            (re.compile(
+                r'\b(?:tension|disagreement|argument|dispute)\b.*?[.!?]',
+                re.IGNORECASE | re.DOTALL),
+                0.6),
         ]
 
         for pattern, importance in conflict_patterns:
@@ -315,7 +383,15 @@ class KeyInformationExtractor:
             importance = 0.5
 
             # Boost importance for plot-relevant dialogue
-            plot_keywords = ['secret', 'truth', 'lie', 'plan', 'kill', 'love', 'hate', 'betrayal']
+            plot_keywords = [
+                'secret',
+                'truth',
+                'lie',
+                'plan',
+                'kill',
+                'love',
+                'hate',
+                'betrayal']
             for keyword in plot_keywords:
                 if keyword.lower() in dialogue_text.lower():
                     importance = min(importance + 0.2, 1.0)
@@ -339,9 +415,18 @@ class KeyInformationExtractor:
         world_building = []
 
         world_patterns = [
-            (re.compile(r'\b(?:kingdom|realm|empire|land|world|dimension)\s+of\s+\w+\b', re.IGNORECASE | re.DOTALL), 0.8),
-            (re.compile(r'\b(?:magic|spell|enchantment|curse|prophecy)\b.*?[.!?]', re.IGNORECASE | re.DOTALL), 0.7),
-            (re.compile(r'\b(?:ancient|legendary|mythical|sacred)\s+\w+\b', re.IGNORECASE | re.DOTALL), 0.6),
+            (re.compile(
+                r'\b(?:kingdom|realm|empire|land|world|dimension)\s+of\s+\w+\b',
+                re.IGNORECASE | re.DOTALL),
+                0.8),
+            (re.compile(
+                r'\b(?:magic|spell|enchantment|curse|prophecy)\b.*?[.!?]',
+                re.IGNORECASE | re.DOTALL),
+                0.7),
+            (re.compile(
+                r'\b(?:ancient|legendary|mythical|sacred)\s+\w+\b',
+                re.IGNORECASE | re.DOTALL),
+                0.6),
         ]
 
         for pattern, importance in world_patterns:
@@ -387,7 +472,8 @@ class KeyInformationExtractor:
 
         return temporal_markers
 
-    def _extract_causal_relationships(self, content: str) -> List[KeyInformation]:
+    def _extract_causal_relationships(
+            self, content: str) -> List[KeyInformation]:
         """Extract cause-and-effect relationships."""
         causal_relationships = []
 
@@ -411,54 +497,98 @@ class KeyInformationExtractor:
 
         return causal_relationships
 
-    def _build_character_patterns(self) -> List[Tuple[re.Pattern, List[str], float]]:
+    def _build_character_patterns(
+            self) -> List[Tuple[re.Pattern, List[str], float]]:
         """Build patterns for character detection."""
-        return [(re.compile(r'\b[A-Z][a-z]+\s+(?:said|thought|felt|walked|ran|smiled)\b', re.IGNORECASE), ['dialogue', 'action'],
-                 0.8), (re.compile(r'\b(?:he|she|they)\s+(?:was|were|is|are)\s+\w+\b', re.IGNORECASE), ['description'], 0.6), ]
+        return [(re.compile(r'\b[A-Z][a-z]+\s+(?:said|thought|felt|walked|ran|smiled)\b',
+                            re.IGNORECASE),
+                 ['dialogue',
+                  'action'],
+                 0.8),
+                (re.compile(r'\b(?:he|she|they)\s+(?:was|were|is|are)\s+\w+\b',
+                            re.IGNORECASE),
+                 ['description'],
+                 0.6),
+                ]
 
-    def _build_plot_patterns(self) -> List[Tuple[re.Pattern, List[str], float]]:
+    def _build_plot_patterns(
+            self) -> List[Tuple[re.Pattern, List[str], float]]:
         """Build patterns for plot point detection."""
-        return [
-            (re.compile(r'\b(?:suddenly|unexpectedly|meanwhile|however)\b.*?[.!?]', re.IGNORECASE), ['transition', 'surprise'], 0.7),
-            (re.compile(r'\b(?:revealed|discovered|realized|understood)\b.*?[.!?]', re.IGNORECASE), ['revelation'], 0.8),
-            (re.compile(r'\b(?:died|killed|murdered|destroyed)\b.*?[.!?]', re.IGNORECASE), ['death', 'violence'], 0.9),
-            (re.compile(r'\b(?:married|wedding|born|birth)\b.*?[.!?]', re.IGNORECASE), ['life_event'], 0.8),
-        ]
+        return [(re.compile(r'\b(?:suddenly|unexpectedly|meanwhile|however)\b.*?[.!?]',
+                            re.IGNORECASE),
+                 ['transition',
+                  'surprise'],
+                 0.7),
+                (re.compile(r'\b(?:revealed|discovered|realized|understood)\b.*?[.!?]',
+                            re.IGNORECASE),
+                 ['revelation'],
+                 0.8),
+                (re.compile(r'\b(?:died|killed|murdered|destroyed)\b.*?[.!?]',
+                            re.IGNORECASE),
+                 ['death',
+                  'violence'],
+                 0.9),
+                (re.compile(r'\b(?:married|wedding|born|birth)\b.*?[.!?]',
+                            re.IGNORECASE),
+                 ['life_event'],
+                 0.8),
+                ]
 
     def _build_location_patterns(self) -> List[Tuple[re.Pattern, float]]:
         """Build patterns for location detection."""
         return [
-            (re.compile(r'\b(?:castle|palace|tower|fortress|stronghold)\s+\w+\b', re.IGNORECASE), 0.8),
+            (re.compile(
+                r'\b(?:castle|palace|tower|fortress|stronghold)\s+\w+\b', re.IGNORECASE), 0.8),
             (re.compile(r'\b(?:city|town|village|hamlet)\s+of\s+\w+\b', re.IGNORECASE), 0.7),
-            (re.compile(r'\b(?:forest|mountain|river|lake|sea|ocean)\s+\w+\b', re.IGNORECASE), 0.6),
-            (re.compile(r'\b(?:in|at|near|by)\s+(?:the\s+)?\w+(?:\s+\w+)?\b', re.IGNORECASE), 0.5),
+            (re.compile(r'\b(?:forest|mountain|river|lake|sea|ocean)\s+\w+\b',
+             re.IGNORECASE), 0.6),
+            (re.compile(r'\b(?:in|at|near|by)\s+(?:the\s+)?\w+(?:\s+\w+)?\b',
+             re.IGNORECASE), 0.5),
         ]
 
     def _build_emotion_patterns(self) -> List[Tuple[str, re.Pattern, float]]:
         """Build patterns for emotion detection."""
         return [
             ('love', re.compile(r'\b(?:love|adore|cherish|treasure)\b', re.IGNORECASE), 0.8),
-            ('fear', re.compile(r'\b(?:fear|afraid|terrified|scared|frightened)\b', re.IGNORECASE), 0.7),
-            ('anger', re.compile(r'\b(?:angry|furious|rage|mad|enraged)\b', re.IGNORECASE), 0.7),
-            ('sadness', re.compile(r'\b(?:sad|depressed|melancholy|grief|sorrow)\b', re.IGNORECASE), 0.7),
-            ('joy', re.compile(r'\b(?:happy|joyful|elated|delighted|ecstatic)\b', re.IGNORECASE), 0.6),
-            ('surprise', re.compile(r'\b(?:surprised|shocked|amazed|astonished)\b', re.IGNORECASE), 0.6),
+            ('fear', re.compile(
+                r'\b(?:fear|afraid|terrified|scared|frightened)\b', re.IGNORECASE), 0.7),
+            ('anger', re.compile(
+                r'\b(?:angry|furious|rage|mad|enraged)\b', re.IGNORECASE), 0.7),
+            ('sadness', re.compile(
+                r'\b(?:sad|depressed|melancholy|grief|sorrow)\b', re.IGNORECASE), 0.7),
+            ('joy', re.compile(
+                r'\b(?:happy|joyful|elated|delighted|ecstatic)\b', re.IGNORECASE), 0.6),
+            ('surprise', re.compile(
+                r'\b(?:surprised|shocked|amazed|astonished)\b', re.IGNORECASE), 0.6),
         ]
 
     def _build_temporal_patterns(self) -> List[Tuple[re.Pattern, float]]:
         """Build patterns for temporal marker detection."""
         return [
-            (re.compile(r'\b(?:then|next|after|before|during|while|when|meanwhile)\b', re.IGNORECASE), 0.6),
-            (re.compile(r'\b(?:years?|months?|weeks?|days?|hours?|minutes?)\s+(?:ago|later|before|after)\b', re.IGNORECASE), 0.7),
-            (re.compile(r'\b(?:yesterday|today|tomorrow|now|soon|eventually)\b', re.IGNORECASE), 0.5),
+            (
+                re.compile(
+                    r'\b(?:then|next|after|before|during|while|when|meanwhile)\b',
+                    re.IGNORECASE),
+                0.6),
+            (re.compile(
+                r'\b(?:years?|months?|weeks?|days?|hours?|minutes?)\s+(?:ago|later|before|after)\b',
+                re.IGNORECASE),
+                0.7),
+            (re.compile(
+                r'\b(?:yesterday|today|tomorrow|now|soon|eventually)\b',
+                re.IGNORECASE),
+             0.5),
         ]
 
     def _build_causal_patterns(self) -> List[Tuple[re.Pattern, float]]:
         """Build patterns for causal relationship detection."""
         return [
-            (re.compile(r'\b(?:because|since|as|due to|owing to)\b.*?[.!?]', re.IGNORECASE), 0.8),
-            (re.compile(r'\b(?:therefore|thus|consequently|as a result)\b.*?[.!?]', re.IGNORECASE), 0.8),
-            (re.compile(r'\b(?:if|when|unless|provided that)\b.*?[.!?]', re.IGNORECASE), 0.7),
+            (re.compile(
+                r'\b(?:because|since|as|due to|owing to)\b.*?[.!?]', re.IGNORECASE), 0.8),
+            (re.compile(
+                r'\b(?:therefore|thus|consequently|as a result)\b.*?[.!?]', re.IGNORECASE), 0.8),
+            (re.compile(
+                r'\b(?:if|when|unless|provided that)\b.*?[.!?]', re.IGNORECASE), 0.7),
         ]
 
     def _generate_statistics(
@@ -470,20 +600,30 @@ class KeyInformationExtractor:
 
         # Count by type
         type_counts = Counter(info.info_type for info in all_info)
-        filtered_type_counts = Counter(info.info_type for info in filtered_info)
+        filtered_type_counts = Counter(
+            info.info_type for info in filtered_info)
 
         # Calculate average importance scores
-        avg_importance = sum(info.importance_score for info in all_info) / len(all_info) if all_info else 0
+        avg_importance = sum(
+            info.importance_score for info in all_info) / len(all_info) if all_info else 0
 
         return {
             "total_extracted": len(all_info),
             "total_preserved": len(filtered_info),
-            "preservation_ratio": len(filtered_info) / len(all_info) if all_info else 0,
+            "preservation_ratio": len(filtered_info) /
+            len(all_info) if all_info else 0,
             "average_importance": avg_importance,
-            "type_counts": {info_type.value: count for info_type, count in type_counts.items()},
-            "filtered_type_counts": {info_type.value: count for info_type, count in filtered_type_counts.items()},
-            "top_importance_scores": sorted([info.importance_score for info in filtered_info], reverse=True)[:10]
-        }
+            "type_counts": {
+                info_type.value: count for info_type,
+                count in type_counts.items()},
+            "filtered_type_counts": {
+                info_type.value: count for info_type,
+                count in filtered_type_counts.items()},
+            "top_importance_scores": sorted(
+                [
+                    info.importance_score for info in filtered_info],
+                reverse=True)[
+                :10]}
 
     def get_preservation_recommendations(
         self,
@@ -503,13 +643,18 @@ class KeyInformationExtractor:
         key_info = extraction_result.key_information
 
         if not key_info:
-            return {"recommendations": [], "warnings": ["No key information found"]}
+            return {"recommendations": [], "warnings": [
+                "No key information found"]}
 
         # Calculate how many items to preserve based on compression ratio
         target_items = max(1, int(len(key_info) * target_compression_ratio))
 
         # Sort by importance and take top items
-        top_items = sorted(key_info, key=lambda x: x.importance_score, reverse=True)[:target_items]
+        top_items = sorted(
+            key_info,
+            key=lambda x: x.importance_score,
+            reverse=True)[
+            :target_items]
 
         # Group recommendations by type
         recommendations_by_type = {}
@@ -527,10 +672,12 @@ class KeyInformationExtractor:
             "target_items": target_items,
             "recommendations_by_type": recommendations_by_type,
             "preservation_strategy": self._suggest_preservation_strategy(top_items),
-            "quality_indicators": self._assess_preservation_quality(top_items, extraction_result.statistics)
-        }
+            "quality_indicators": self._assess_preservation_quality(
+                top_items,
+                extraction_result.statistics)}
 
-    def _suggest_preservation_strategy(self, preserved_items: List[KeyInformation]) -> Dict[str, str]:
+    def _suggest_preservation_strategy(
+            self, preserved_items: List[KeyInformation]) -> Dict[str, str]:
         """Suggest preservation strategy based on preserved items."""
         type_counts = Counter(item.info_type for item in preserved_items)
 
@@ -561,10 +708,12 @@ class KeyInformationExtractor:
             return {"quality_score": 0.0, "issues": ["No items preserved"]}
 
         # Calculate quality metrics
-        avg_importance = sum(item.importance_score for item in preserved_items) / len(preserved_items)
+        avg_importance = sum(
+            item.importance_score for item in preserved_items) / len(preserved_items)
         type_diversity = len(set(item.info_type for item in preserved_items))
 
-        quality_score = (avg_importance * 0.7) + (min(type_diversity / 5, 1.0) * 0.3)
+        quality_score = (avg_importance * 0.7) + \
+            (min(type_diversity / 5, 1.0) * 0.3)
 
         issues = []
         if avg_importance < 0.6:

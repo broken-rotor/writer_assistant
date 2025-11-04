@@ -109,17 +109,22 @@ Please provide a well-structured summary that captures the most important elemen
         formatted_parts = []
         for key, value in context.items():
             if key == "is_meta_summary" and value:
-                formatted_parts.append("- This is a summary of multiple existing summaries")
+                formatted_parts.append(
+                    "- This is a summary of multiple existing summaries")
             elif key == "source_summary_count":
-                formatted_parts.append(f"- Combining {value} previous summaries")
+                formatted_parts.append(
+                    f"- Combining {value} previous summaries")
             elif key == "preserve_narrative_flow" and value:
-                formatted_parts.append("- Maintain narrative flow and story progression")
+                formatted_parts.append(
+                    "- Maintain narrative flow and story progression")
             else:
                 formatted_parts.append(f"- {key}: {value}")
 
-        return "\n".join(formatted_parts) if formatted_parts else "No additional context provided."
+        return "\n".join(
+            formatted_parts) if formatted_parts else "No additional context provided."
 
-    def _extract_key_information(self, content: str, summary: str) -> List[str]:
+    def _extract_key_information(
+            self, content: str, summary: str) -> List[str]:
         """
         Extract key information that should be preserved.
         This is a simple implementation - could be enhanced with NLP techniques.
@@ -130,7 +135,8 @@ Please provide a well-structured summary that captures the most important elemen
         content_lower = content.lower()
         summary_lower = summary.lower()
 
-        # Check for character names (capitalized words that appear multiple times)
+        # Check for character names (capitalized words that appear multiple
+        # times)
         import re
         potential_names = re.findall(r'\b[A-Z][a-z]+\b', content)
         name_counts = {}
@@ -138,20 +144,31 @@ Please provide a well-structured summary that captures the most important elemen
             name_counts[name] = name_counts.get(name, 0) + 1
 
         # Names that appear 3+ times are likely important characters
-        important_names = [name for name, count in name_counts.items() if count >= 3]
+        important_names = [
+            name for name,
+            count in name_counts.items() if count >= 3]
         for name in important_names:
             if name.lower() in summary_lower:
                 key_info.append(f"Character: {name}")
 
         # Look for plot keywords
-        plot_keywords = ["conflict", "resolution", "climax", "turning point", "revelation", "death", "birth", "marriage"]
+        plot_keywords = [
+            "conflict",
+            "resolution",
+            "climax",
+            "turning point",
+            "revelation",
+            "death",
+            "birth",
+            "marriage"]
         for keyword in plot_keywords:
             if keyword in content_lower and keyword in summary_lower:
                 key_info.append(f"Plot element: {keyword}")
 
         return key_info
 
-    def _calculate_quality_score(self, content: str, summary: str, target_tokens: int) -> float:
+    def _calculate_quality_score(
+            self, content: str, summary: str, target_tokens: int) -> float:
         """
         Calculate a quality score for the summary.
         This is a simple implementation - could be enhanced with more sophisticated metrics.
@@ -203,13 +220,15 @@ class PlotSummaryStrategy(SummarizationStrategy):
 Preserve the narrative flow and story coherence while condensing descriptions and minor details. Maintain plot causality and story logic."""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             # Generate summary using LLM
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,  # Allow some buffer
-                temperature=settings.DISTILLATION_GENERAL_TEMPERATURE  # Lower temperature for consistency
+                # Lower temperature for consistency
+                temperature=settings.DISTILLATION_GENERAL_TEMPERATURE
             )
 
             # Extract key information
@@ -219,7 +238,8 @@ Preserve the narrative flow and story coherence while condensing descriptions an
                 key_info.extend(self._extract_plot_elements(content, summary))
 
             # Calculate quality score
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -244,19 +264,40 @@ Preserve the narrative flow and story coherence while condensing descriptions an
         elements = []
 
         # Look for story structure elements
-        structure_words = ["beginning", "middle", "end", "climax", "resolution", "conflict", "setup", "rising action", "falling action"]
+        structure_words = [
+            "beginning",
+            "middle",
+            "end",
+            "climax",
+            "resolution",
+            "conflict",
+            "setup",
+            "rising action",
+            "falling action"]
         for word in structure_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Story structure: {word}")
 
         # Look for plot devices
-        plot_devices = ["foreshadowing", "twist", "revelation", "turning point", "catalyst", "inciting incident"]
+        plot_devices = [
+            "foreshadowing",
+            "twist",
+            "revelation",
+            "turning point",
+            "catalyst",
+            "inciting incident"]
         for device in plot_devices:
             if device in content.lower() and device in summary.lower():
                 elements.append(f"Plot device: {device}")
 
         # Look for story beats
-        story_beats = ["hook", "plot point", "midpoint", "crisis", "climax", "denouement"]
+        story_beats = [
+            "hook",
+            "plot point",
+            "midpoint",
+            "crisis",
+            "climax",
+            "denouement"]
         for beat in story_beats:
             if beat in content.lower() and beat in summary.lower():
                 elements.append(f"Story beat: {beat}")
@@ -289,7 +330,8 @@ class CharacterDevelopmentStrategy(SummarizationStrategy):
 Preserve character authenticity and relationship coherence while condensing physical descriptions and minor interactions. Maintain character voice consistency and relationship dynamics."""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             summary = self.llm_service.generate(
                 prompt=prompt,
@@ -299,9 +341,12 @@ Preserve character authenticity and relationship coherence while condensing phys
 
             key_info = self._extract_key_information(content, summary)
             if preserve_key_info:
-                key_info.extend(self._extract_character_elements(content, summary))
+                key_info.extend(
+                    self._extract_character_elements(
+                        content, summary))
 
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -321,24 +366,43 @@ Preserve character authenticity and relationship coherence while condensing phys
                 warnings=[f"Summarization failed: {str(e)}"]
             )
 
-    def _extract_character_elements(self, content: str, summary: str) -> List[str]:
+    def _extract_character_elements(
+            self, content: str, summary: str) -> List[str]:
         """Extract character-specific elements."""
         elements = []
 
         # Look for character development keywords
-        development_words = ["growth", "change", "learns", "realizes", "becomes", "transforms"]
+        development_words = [
+            "growth",
+            "change",
+            "learns",
+            "realizes",
+            "becomes",
+            "transforms"]
         for word in development_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Character development: {word}")
 
         # Look for relationship keywords
-        relationship_words = ["relationship", "friendship", "romance", "conflict", "alliance", "rivalry"]
+        relationship_words = [
+            "relationship",
+            "friendship",
+            "romance",
+            "conflict",
+            "alliance",
+            "rivalry"]
         for word in relationship_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Character relationship: {word}")
 
         # Look for personality traits
-        trait_words = ["personality", "trait", "characteristic", "behavior", "motivation", "goal"]
+        trait_words = [
+            "personality",
+            "trait",
+            "characteristic",
+            "behavior",
+            "motivation",
+            "goal"]
         for word in trait_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Character trait: {word}")
@@ -368,7 +432,8 @@ class DialogueSummaryStrategy(SummarizationStrategy):
 Convert lengthy dialogue into concise narrative summary while preserving essential exchanges."""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             summary = self.llm_service.generate(
                 prompt=prompt,
@@ -378,9 +443,12 @@ Convert lengthy dialogue into concise narrative summary while preserving essenti
 
             key_info = self._extract_key_information(content, summary)
             if preserve_key_info:
-                key_info.extend(self._extract_dialogue_elements(content, summary))
+                key_info.extend(
+                    self._extract_dialogue_elements(
+                        content, summary))
 
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -400,14 +468,16 @@ Convert lengthy dialogue into concise narrative summary while preserving essenti
                 warnings=[f"Summarization failed: {str(e)}"]
             )
 
-    def _extract_dialogue_elements(self, content: str, summary: str) -> List[str]:
+    def _extract_dialogue_elements(
+            self, content: str, summary: str) -> List[str]:
         """Extract dialogue-specific elements."""
         elements = []
 
         # Count dialogue markers
         quote_count = content.count('"') + content.count("'")
         if quote_count > 10:
-            elements.append(f"Dialogue-heavy content: {quote_count} quote marks")
+            elements.append(
+                f"Dialogue-heavy content: {quote_count} quote marks")
 
         return elements
 
@@ -434,7 +504,8 @@ class EventSequenceStrategy(SummarizationStrategy):
 Maintain the logical flow while condensing detailed descriptions."""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             summary = self.llm_service.generate(
                 prompt=prompt,
@@ -446,7 +517,8 @@ Maintain the logical flow while condensing detailed descriptions."""
             if preserve_key_info:
                 key_info.extend(self._extract_event_elements(content, summary))
 
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -471,7 +543,14 @@ Maintain the logical flow while condensing detailed descriptions."""
         elements = []
 
         # Look for temporal markers
-        time_words = ["then", "next", "after", "before", "during", "while", "when"]
+        time_words = [
+            "then",
+            "next",
+            "after",
+            "before",
+            "during",
+            "while",
+            "when"]
         for word in time_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Temporal sequence: {word}")
@@ -502,19 +581,24 @@ class EmotionalMomentStrategy(SummarizationStrategy):
 Preserve the emotional resonance while condensing excessive detail."""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=settings.DISTILLATION_DIALOGUE_SUMMARY_TEMPERATURE  # Slightly higher temperature for emotional nuance
+                # Slightly higher temperature for emotional nuance
+                temperature=settings.DISTILLATION_DIALOGUE_SUMMARY_TEMPERATURE
             )
 
             key_info = self._extract_key_information(content, summary)
             if preserve_key_info:
-                key_info.extend(self._extract_emotional_elements(content, summary))
+                key_info.extend(
+                    self._extract_emotional_elements(
+                        content, summary))
 
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -534,12 +618,21 @@ Preserve the emotional resonance while condensing excessive detail."""
                 warnings=[f"Summarization failed: {str(e)}"]
             )
 
-    def _extract_emotional_elements(self, content: str, summary: str) -> List[str]:
+    def _extract_emotional_elements(
+            self, content: str, summary: str) -> List[str]:
         """Extract emotion-specific elements."""
         elements = []
 
         # Look for emotional keywords
-        emotion_words = ["love", "fear", "anger", "joy", "sadness", "hope", "despair", "anxiety"]
+        emotion_words = [
+            "love",
+            "fear",
+            "anger",
+            "joy",
+            "sadness",
+            "hope",
+            "despair",
+            "anxiety"]
         for word in emotion_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Emotion: {word}")
@@ -575,7 +668,8 @@ class WorldBuildingStrategy(SummarizationStrategy):
 Preserve essential world-building elements that affect story logic while condensing excessive descriptive detail. Maintain world consistency and internal logic."""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             summary = self.llm_service.generate(
                 prompt=prompt,
@@ -585,9 +679,12 @@ Preserve essential world-building elements that affect story logic while condens
 
             key_info = self._extract_key_information(content, summary)
             if preserve_key_info:
-                key_info.extend(self._extract_worldbuilding_elements(content, summary))
+                key_info.extend(
+                    self._extract_worldbuilding_elements(
+                        content, summary))
 
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -607,30 +704,61 @@ Preserve essential world-building elements that affect story logic while condens
                 warnings=[f"Summarization failed: {str(e)}"]
             )
 
-    def _extract_worldbuilding_elements(self, content: str, summary: str) -> List[str]:
+    def _extract_worldbuilding_elements(
+            self, content: str, summary: str) -> List[str]:
         """Extract world-building specific elements."""
         elements = []
 
         # Look for setting keywords
-        setting_words = ["kingdom", "city", "forest", "mountain", "castle", "village", "realm", "empire", "nation"]
+        setting_words = [
+            "kingdom",
+            "city",
+            "forest",
+            "mountain",
+            "castle",
+            "village",
+            "realm",
+            "empire",
+            "nation"]
         for word in setting_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Setting: {word}")
 
         # Look for world systems
-        system_words = ["magic", "technology", "politics", "religion", "economy", "government", "law"]
+        system_words = [
+            "magic",
+            "technology",
+            "politics",
+            "religion",
+            "economy",
+            "government",
+            "law"]
         for word in system_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"World system: {word}")
 
         # Look for cultural elements
-        culture_words = ["culture", "tradition", "custom", "ritual", "ceremony", "belief", "value"]
+        culture_words = [
+            "culture",
+            "tradition",
+            "custom",
+            "ritual",
+            "ceremony",
+            "belief",
+            "value"]
         for word in culture_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"Cultural element: {word}")
 
         # Look for world rules
-        rule_words = ["rule", "law", "principle", "constraint", "limitation", "power", "ability"]
+        rule_words = [
+            "rule",
+            "law",
+            "principle",
+            "constraint",
+            "limitation",
+            "power",
+            "ability"]
         for word in rule_words:
             if word in content.lower() and word in summary.lower():
                 elements.append(f"World rule: {word}")
@@ -661,19 +789,24 @@ class FeedbackSummaryStrategy(SummarizationStrategy):
 Preserve all unaddressed feedback in full detail. Compress repetitive or less important feedback while maintaining the essence of user input."""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=settings.DISTILLATION_FEEDBACK_SUMMARY_TEMPERATURE  # Very low temperature for consistency with feedback
+                # Very low temperature for consistency with feedback
+                temperature=settings.DISTILLATION_FEEDBACK_SUMMARY_TEMPERATURE
             )
 
             key_info = self._extract_key_information(content, summary)
             if preserve_key_info:
-                key_info.extend(self._extract_feedback_elements(content, summary, context))
+                key_info.extend(
+                    self._extract_feedback_elements(
+                        content, summary, context))
 
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -682,10 +815,9 @@ Preserve all unaddressed feedback in full detail. Compress repetitive or less im
                 metadata={
                     "strategy": "feedback_summary",
                     "target_tokens": target_tokens,
-                    "actual_tokens": len(summary.split()),
-                    "unaddressed_feedback_preserved": self._count_unaddressed_feedback(context)
-                }
-            )
+                    "actual_tokens": len(
+                        summary.split()),
+                    "unaddressed_feedback_preserved": self._count_unaddressed_feedback(context)})
 
         except Exception as e:
             logger.error(f"Feedback summarization failed: {e}")
@@ -694,25 +826,37 @@ Preserve all unaddressed feedback in full detail. Compress repetitive or less im
                 warnings=[f"Summarization failed: {str(e)}"]
             )
 
-    def _extract_feedback_elements(self, content: str, summary: str, context: Dict[str, Any]) -> List[str]:
+    def _extract_feedback_elements(
+            self, content: str, summary: str, context: Dict[str, Any]) -> List[str]:
         """Extract feedback-specific elements."""
         elements = []
 
         # Check for feedback types
-        feedback_types = ["positive", "negative", "suggestion", "request", "constraint"]
+        feedback_types = [
+            "positive",
+            "negative",
+            "suggestion",
+            "request",
+            "constraint"]
         for feedback_type in feedback_types:
             if feedback_type in content.lower() and feedback_type in summary.lower():
                 elements.append(f"Feedback type: {feedback_type}")
 
         # Check for unaddressed feedback indicators
-        unaddressed_indicators = ["not incorporated", "unaddressed", "pending", "todo"]
+        unaddressed_indicators = [
+            "not incorporated",
+            "unaddressed",
+            "pending",
+            "todo"]
         for indicator in unaddressed_indicators:
             if indicator in content.lower():
                 elements.append(f"Unaddressed feedback: {indicator}")
 
         # Add context-specific information
         if context.get("unaddressed_count", 0) > 0:
-            elements.append(f"Unaddressed feedback count: {context['unaddressed_count']}")
+            elements.append(
+                f"Unaddressed feedback count: {
+                    context['unaddressed_count']}")
 
         return elements
 
@@ -751,19 +895,24 @@ Remove or consolidate:
 Preserve the functional integrity of the system prompt while making it more concise."""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=settings.DISTILLATION_SYSTEM_PROMPT_TEMPERATURE  # Very low temperature for system prompt consistency
+                # Very low temperature for system prompt consistency
+                temperature=settings.DISTILLATION_SYSTEM_PROMPT_TEMPERATURE
             )
 
             key_info = self._extract_key_information(content, summary)
             if preserve_key_info:
-                key_info.extend(self._extract_system_prompt_elements(content, summary))
+                key_info.extend(
+                    self._extract_system_prompt_elements(
+                        content, summary))
 
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -772,10 +921,11 @@ Preserve the functional integrity of the system prompt while making it more conc
                 metadata={
                     "strategy": "system_prompt_optimization",
                     "target_tokens": target_tokens,
-                    "actual_tokens": len(summary.split()),
-                    "core_instructions_preserved": self._count_core_instructions(content, summary)
-                }
-            )
+                    "actual_tokens": len(
+                        summary.split()),
+                    "core_instructions_preserved": self._count_core_instructions(
+                        content,
+                        summary)})
 
         except Exception as e:
             logger.error(f"System prompt optimization failed: {e}")
@@ -784,18 +934,31 @@ Preserve the functional integrity of the system prompt while making it more conc
                 warnings=[f"Optimization failed: {str(e)}"]
             )
 
-    def _extract_system_prompt_elements(self, content: str, summary: str) -> List[str]:
+    def _extract_system_prompt_elements(
+            self, content: str, summary: str) -> List[str]:
         """Extract system prompt specific elements."""
         elements = []
 
         # Check for core instruction keywords
-        core_keywords = ["you are", "your role", "always", "never", "must", "required", "format"]
+        core_keywords = [
+            "you are",
+            "your role",
+            "always",
+            "never",
+            "must",
+            "required",
+            "format"]
         for keyword in core_keywords:
             if keyword in content.lower() and keyword in summary.lower():
                 elements.append(f"Core instruction: {keyword}")
 
         # Check for agent types
-        agent_types = ["writer", "editor", "character", "rater", "worldbuilding"]
+        agent_types = [
+            "writer",
+            "editor",
+            "character",
+            "rater",
+            "worldbuilding"]
         for agent_type in agent_types:
             if agent_type in content.lower() and agent_type in summary.lower():
                 elements.append(f"Agent type: {agent_type}")
@@ -804,13 +967,19 @@ Preserve the functional integrity of the system prompt while making it more conc
 
     def _count_core_instructions(self, content: str, summary: str) -> int:
         """Count preserved core instructions."""
-        core_patterns = ["you are", "your role", "always", "never", "must", "required"]
+        core_patterns = [
+            "you are",
+            "your role",
+            "always",
+            "never",
+            "must",
+            "required"]
         preserved_count = 0
-        
+
         for pattern in core_patterns:
             if pattern in content.lower() and pattern in summary.lower():
                 preserved_count += 1
-                
+
         return preserved_count
 
 
@@ -842,19 +1011,24 @@ Use sliding window approach:
 - Preserve user preferences and established context"""
 
         try:
-            prompt = self._build_prompt(content, target_tokens, specific_instructions, context)
+            prompt = self._build_prompt(
+                content, target_tokens, specific_instructions, context)
 
             summary = self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=target_tokens + 100,
-                temperature=settings.DISTILLATION_CONVERSATION_TEMPERATURE  # Moderate temperature for natural conversation flow
+                # Moderate temperature for natural conversation flow
+                temperature=settings.DISTILLATION_CONVERSATION_TEMPERATURE
             )
 
             key_info = self._extract_key_information(content, summary)
             if preserve_key_info:
-                key_info.extend(self._extract_conversation_elements(content, summary, context))
+                key_info.extend(
+                    self._extract_conversation_elements(
+                        content, summary, context))
 
-            quality_score = self._calculate_quality_score(content, summary, target_tokens)
+            quality_score = self._calculate_quality_score(
+                content, summary, target_tokens)
 
             return SummaryResult(
                 summary=summary,
@@ -863,10 +1037,11 @@ Use sliding window approach:
                 metadata={
                     "strategy": "conversation_history_summary",
                     "target_tokens": target_tokens,
-                    "actual_tokens": len(summary.split()),
-                    "conversation_turns_preserved": self._count_conversation_turns(content, summary)
-                }
-            )
+                    "actual_tokens": len(
+                        summary.split()),
+                    "conversation_turns_preserved": self._count_conversation_turns(
+                        content,
+                        summary)})
 
         except Exception as e:
             logger.error(f"Conversation history summarization failed: {e}")
@@ -875,25 +1050,39 @@ Use sliding window approach:
                 warnings=[f"Summarization failed: {str(e)}"]
             )
 
-    def _extract_conversation_elements(self, content: str, summary: str, context: Dict[str, Any]) -> List[str]:
+    def _extract_conversation_elements(
+            self, content: str, summary: str, context: Dict[str, Any]) -> List[str]:
         """Extract conversation-specific elements."""
         elements = []
 
         # Check for conversation markers
-        conversation_markers = ["user:", "assistant:", "human:", "ai:", "question:", "answer:"]
+        conversation_markers = [
+            "user:",
+            "assistant:",
+            "human:",
+            "ai:",
+            "question:",
+            "answer:"]
         for marker in conversation_markers:
             if marker in content.lower() and marker in summary.lower():
                 elements.append(f"Conversation marker: {marker}")
 
         # Check for decision indicators
-        decision_indicators = ["decided", "chose", "selected", "agreed", "confirmed"]
+        decision_indicators = [
+            "decided",
+            "chose",
+            "selected",
+            "agreed",
+            "confirmed"]
         for indicator in decision_indicators:
             if indicator in content.lower() and indicator in summary.lower():
                 elements.append(f"Decision point: {indicator}")
 
         # Add context-specific information
         if context.get("recent_turns_count", 0) > 0:
-            elements.append(f"Recent turns preserved: {context['recent_turns_count']}")
+            elements.append(
+                f"Recent turns preserved: {
+                    context['recent_turns_count']}")
 
         return elements
 
@@ -902,8 +1091,8 @@ Use sliding window approach:
         # Simple heuristic: count conversation markers
         markers = ["user:", "assistant:", "human:", "ai:"]
         turn_count = 0
-        
+
         for marker in markers:
             turn_count += summary.lower().count(marker)
-            
+
         return turn_count
