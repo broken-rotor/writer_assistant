@@ -10,8 +10,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import logging
-import asyncio
-import json
 
 from app.services.archive_service import get_archive_service
 from app.services.rag_service import get_rag_service, ChatMessage
@@ -33,8 +31,13 @@ router = APIRouter()
 class SearchRequest(BaseModel):
     """Request model for archive search."""
     query: str = Field(..., description="Search query text", min_length=1)
-    max_results: int = Field(10, description="Maximum number of results to return", ge=1, le=50)
-    filter_file_name: Optional[str] = Field(None, description="Optional file name filter")
+    max_results: int = Field(
+        10,
+        description="Maximum number of results to return",
+        ge=1,
+        le=50)
+    filter_file_name: Optional[str] = Field(
+        None, description="Optional file name filter")
 
 
 class SearchResult(BaseModel):
@@ -42,17 +45,23 @@ class SearchResult(BaseModel):
     file_path: str = Field(..., description="Path to the story file")
     file_name: str = Field(..., description="Name of the story file")
     matching_section: str = Field(..., description="Relevant section of text")
-    chunk_index: int = Field(..., description="Index of the chunk within the file")
-    similarity_score: float = Field(..., description="Similarity score (higher is better)")
-    char_start: int = Field(..., description="Character start position in original file")
-    char_end: int = Field(..., description="Character end position in original file")
+    chunk_index: int = Field(...,
+                             description="Index of the chunk within the file")
+    similarity_score: float = Field(...,
+                                    description="Similarity score (higher is better)")
+    char_start: int = Field(...,
+                            description="Character start position in original file")
+    char_end: int = Field(...,
+                          description="Character end position in original file")
 
 
 class SearchResponse(BaseModel):
     """Response model for archive search."""
     query: str = Field(..., description="The search query that was executed")
-    results: List[SearchResult] = Field(..., description="List of search results")
-    total_results: int = Field(..., description="Total number of results returned")
+    results: List[SearchResult] = Field(...,
+                                        description="List of search results")
+    total_results: int = Field(...,
+                               description="Total number of results returned")
 
 
 class FileInfo(BaseModel):
@@ -63,15 +72,19 @@ class FileInfo(BaseModel):
 
 class FileListResponse(BaseModel):
     """Response model for file list."""
-    files: List[FileInfo] = Field(..., description="List of files in the archive")
+    files: List[FileInfo] = Field(...,
+                                  description="List of files in the archive")
     total_files: int = Field(..., description="Total number of files")
 
 
 class ArchiveStats(BaseModel):
     """Model for archive statistics."""
-    total_chunks: int = Field(..., description="Total number of text chunks in the archive")
-    total_files: int = Field(..., description="Total number of unique files in the archive")
-    collection_name: str = Field(..., description="Name of the ChromaDB collection")
+    total_chunks: int = Field(...,
+                              description="Total number of text chunks in the archive")
+    total_files: int = Field(...,
+                             description="Total number of unique files in the archive")
+    collection_name: str = Field(...,
+                                 description="Name of the ChromaDB collection")
     db_path: str = Field(..., description="Path to the ChromaDB database")
 
 
@@ -90,8 +103,7 @@ async def search_archive(request: SearchRequest):
             raise HTTPException(
                 status_code=503,
                 detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. "
-                       "See ARCHIVE_SETUP.md for instructions."
-            )
+                "See ARCHIVE_SETUP.md for instructions.")
 
         # Build filter if file name is provided
         filter_metadata = None
@@ -150,8 +162,7 @@ async def list_files():
             raise HTTPException(
                 status_code=503,
                 detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. "
-                       "See ARCHIVE_SETUP.md for instructions."
-            )
+                "See ARCHIVE_SETUP.md for instructions.")
 
         files = archive_service.get_file_list()
 
@@ -174,7 +185,10 @@ async def list_files():
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to list files: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to list files: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to list files: {
+                str(e)}")
 
 
 @router.get("/files/content")
@@ -194,13 +208,14 @@ async def get_file_content(
             raise HTTPException(
                 status_code=503,
                 detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. "
-                       "See ARCHIVE_SETUP.md for instructions."
-            )
+                "See ARCHIVE_SETUP.md for instructions.")
 
         content = archive_service.get_file_content(file_path)
 
         if content is None:
-            raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"File not found: {file_path}")
 
         return {
             "file_path": file_path,
@@ -213,7 +228,9 @@ async def get_file_content(
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to get file content: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve file: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve file: {str(e)}")
 
 
 @router.get("/stats", response_model=ArchiveStats)
@@ -231,8 +248,7 @@ async def get_archive_stats():
             raise HTTPException(
                 status_code=503,
                 detail="Archive feature is not enabled. Please configure ARCHIVE_DB_PATH to enable this feature. "
-                       "See ARCHIVE_SETUP.md for instructions."
-            )
+                "See ARCHIVE_SETUP.md for instructions.")
 
         stats = archive_service.get_stats()
 
@@ -249,7 +265,9 @@ async def get_archive_stats():
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to get archive stats: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get stats: {str(e)}")
 
 
 # ============================================================================
@@ -259,10 +277,17 @@ async def get_archive_stats():
 class RAGQueryRequest(BaseModel):
     """Request model for RAG query."""
     question: str = Field(..., description="Question to answer", min_length=1)
-    n_context_chunks: int = Field(5, description="Number of context chunks to retrieve", ge=1, le=20)
-    max_tokens: Optional[int] = Field(1024, description="Maximum tokens for answer", ge=50, le=4096)
-    temperature: Optional[float] = Field(None, description="Sampling temperature (uses ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE if not specified)", ge=0.0, le=1.0)
-    filter_file_name: Optional[str] = Field(None, description="Optional file name filter")
+    n_context_chunks: int = Field(
+        5, description="Number of context chunks to retrieve", ge=1, le=20)
+    max_tokens: Optional[int] = Field(
+        1024, description="Maximum tokens for answer", ge=50, le=4096)
+    temperature: Optional[float] = Field(
+        None,
+        description="Sampling temperature (uses ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE if not specified)",
+        ge=0.0,
+        le=1.0)
+    filter_file_name: Optional[str] = Field(
+        None, description="Optional file name filter")
 
 
 class RAGChatMessageModel(BaseModel):
@@ -273,11 +298,19 @@ class RAGChatMessageModel(BaseModel):
 
 class RAGChatRequest(BaseModel):
     """Request model for RAG chat."""
-    messages: List[RAGChatMessageModel] = Field(..., description="Chat history including current question")
-    n_context_chunks: int = Field(5, description="Number of context chunks to retrieve", ge=1, le=20)
-    max_tokens: Optional[int] = Field(1024, description="Maximum tokens for answer", ge=50, le=4096)
-    temperature: Optional[float] = Field(None, description="Sampling temperature (uses ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE if not specified)", ge=0.0, le=1.0)
-    filter_file_name: Optional[str] = Field(None, description="Optional file name filter")
+    messages: List[RAGChatMessageModel] = Field(
+        ..., description="Chat history including current question")
+    n_context_chunks: int = Field(
+        5, description="Number of context chunks to retrieve", ge=1, le=20)
+    max_tokens: Optional[int] = Field(
+        1024, description="Maximum tokens for answer", ge=50, le=4096)
+    temperature: Optional[float] = Field(
+        None,
+        description="Sampling temperature (uses ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE if not specified)",
+        ge=0.0,
+        le=1.0)
+    filter_file_name: Optional[str] = Field(
+        None, description="Optional file name filter")
 
 
 class RAGSource(BaseModel):
@@ -292,17 +325,21 @@ class RAGResponse(BaseModel):
     """Response model for RAG queries."""
     query: str = Field(..., description="The question that was asked")
     answer: str = Field(..., description="Generated answer")
-    sources: List[RAGSource] = Field(..., description="Source chunks used for context")
+    sources: List[RAGSource] = Field(...,
+                                     description="Source chunks used for context")
     total_sources: int = Field(..., description="Total number of sources used")
     info_message: Optional[str] = Field(
-        None, description="Informational message about retrieval status (not included in future prompts)")
+        None,
+        description="Informational message about retrieval status (not included in future prompts)")
 
 
 class RAGStatusResponse(BaseModel):
     """Response model for RAG status check."""
-    archive_enabled: bool = Field(..., description="Whether archive is enabled")
+    archive_enabled: bool = Field(...,
+                                  description="Whether archive is enabled")
     llm_enabled: bool = Field(..., description="Whether LLM is configured")
-    llm_loading: bool = Field(..., description="Whether LLM is currently loading")
+    llm_loading: bool = Field(...,
+                              description="Whether LLM is currently loading")
     rag_enabled: bool = Field(..., description="Whether RAG is fully enabled")
     message: str = Field(..., description="Status message")
 
@@ -346,7 +383,10 @@ async def get_rag_status():
 
     except Exception as e:
         logger.error(f"Failed to check RAG status: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to check RAG status: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to check RAG status: {
+                str(e)}")
 
 
 @router.post("/rag/query", response_model=RAGResponse)
@@ -384,9 +424,10 @@ async def rag_query(request: RAGQueryRequest):
             question=request.question,
             n_context_chunks=request.n_context_chunks,
             max_tokens=request.max_tokens,
-            temperature=request.temperature if request.temperature is not None else settings.ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE,
-            filter_metadata=filter_metadata
-        )
+            temperature=(request.temperature
+                         if request.temperature is not None
+                         else settings.ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE),
+            filter_metadata=filter_metadata)
 
         # Convert to response model
         sources = [
@@ -413,7 +454,9 @@ async def rag_query(request: RAGQueryRequest):
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"RAG query failed: {e}")
-        raise HTTPException(status_code=500, detail=f"RAG query failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"RAG query failed: {str(e)}")
 
 
 @router.post("/rag/query/stream")
@@ -424,7 +467,7 @@ async def rag_query_stream(request: RAGQueryRequest):
     Retrieves relevant story sections and uses an LLM to generate an answer
     based on the retrieved context, providing progress updates through each phase.
     """
-    
+
     async def generate_with_updates():
         try:
             # Phase 1: Initializing
@@ -434,25 +477,25 @@ async def rag_query_stream(request: RAGQueryRequest):
                 progress=STREAMING_PHASES[StreamingPhase.INITIALIZING]["progress"]
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
-            
+
             rag_service = get_rag_service()
-            
+
             # Check if RAG is enabled
             if not rag_service.is_enabled():
                 archive_enabled = rag_service.archive_service.is_enabled()
                 llm_enabled = rag_service.llm is not None
-                
+
                 if not archive_enabled:
                     detail = "Archive feature is not enabled. Please configure ARCHIVE_DB_PATH."
                 elif not llm_enabled:
                     detail = "LLM is not configured. Please set MODEL_PATH in your environment."
                 else:
                     detail = "RAG feature is not available."
-                
+
                 error_event = StreamingErrorEvent(message=detail)
                 yield f"data: {error_event.model_dump_json()}\n\n"
                 return
-            
+
             # Phase 2: Retrieving
             status_event = StreamingStatusEvent(
                 phase=StreamingPhase.RETRIEVING,
@@ -460,19 +503,19 @@ async def rag_query_stream(request: RAGQueryRequest):
                 progress=STREAMING_PHASES[StreamingPhase.RETRIEVING]["progress"]
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
-            
+
             # Build filter if provided
             filter_metadata = None
             if request.filter_file_name:
                 filter_metadata = {'file_name': request.filter_file_name}
-            
+
             # Retrieve relevant context from archive
             search_results = rag_service.archive_service.search(
                 query=request.question,
                 n_results=request.n_context_chunks,
                 filter_metadata=filter_metadata
             )
-            
+
             if not search_results:
                 # No results found - return early with appropriate message
                 result = RAGResponse(
@@ -480,16 +523,15 @@ async def rag_query_stream(request: RAGQueryRequest):
                     answer="I couldn't find any relevant information in the archive to answer your question.",
                     sources=[],
                     total_sources=0,
-                    info_message="No relevant content was found in the archive."
-                )
-                
+                    info_message="No relevant content was found in the archive.")
+
                 result_event = StreamingResultEvent(
                     data=result.model_dump(),
                     status="complete"
                 )
                 yield f"data: {result_event.model_dump_json()}\n\n"
                 return
-            
+
             # Phase 3: Generating
             status_event = StreamingStatusEvent(
                 phase=StreamingPhase.GENERATING,
@@ -497,21 +539,24 @@ async def rag_query_stream(request: RAGQueryRequest):
                 progress=STREAMING_PHASES[StreamingPhase.GENERATING]["progress"]
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
-            
+
             # Build context from search results
             context = rag_service.build_context(search_results)
-            
+
             # Create prompt for LLM
             prompt = rag_service.build_rag_prompt(request.question, context)
-            
+
             # Generate answer using LLM
             answer = rag_service.llm.generate(
                 prompt=prompt,
                 max_tokens=request.max_tokens or 1024,
-                temperature=request.temperature if request.temperature is not None else settings.ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE,
-                stop=["Question:", "Context:"]
-            )
-            
+                temperature=(request.temperature
+                             if request.temperature is not None
+                             else settings.ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE),
+                stop=[
+                    "Question:",
+                    "Context:"])
+
             # Phase 4: Formatting
             status_event = StreamingStatusEvent(
                 phase=StreamingPhase.FORMATTING,
@@ -519,7 +564,7 @@ async def rag_query_stream(request: RAGQueryRequest):
                 progress=STREAMING_PHASES[StreamingPhase.FORMATTING]["progress"]
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
-            
+
             # Convert to response model
             sources = [
                 RAGSource(
@@ -530,7 +575,7 @@ async def rag_query_stream(request: RAGQueryRequest):
                 )
                 for source in search_results
             ]
-            
+
             response = RAGResponse(
                 query=request.question,
                 answer=answer,
@@ -538,14 +583,14 @@ async def rag_query_stream(request: RAGQueryRequest):
                 total_sources=len(sources),
                 info_message=None
             )
-            
+
             # Final result
             result_event = StreamingResultEvent(
                 data=response.model_dump(),
                 status="complete"
             )
             yield f"data: {result_event.model_dump_json()}\n\n"
-            
+
         except HTTPException as e:
             error_event = StreamingErrorEvent(message=e.detail)
             yield f"data: {error_event.model_dump_json()}\n\n"
@@ -554,9 +599,10 @@ async def rag_query_stream(request: RAGQueryRequest):
             yield f"data: {error_event.model_dump_json()}\n\n"
         except Exception as e:
             logger.error(f"RAG query failed: {e}")
-            error_event = StreamingErrorEvent(message=f"RAG query failed: {str(e)}")
+            error_event = StreamingErrorEvent(
+                message=f"RAG query failed: {str(e)}")
             yield f"data: {error_event.model_dump_json()}\n\n"
-    
+
     return StreamingResponse(
         generate_with_updates(),
         media_type="text/event-stream",
@@ -577,7 +623,7 @@ async def rag_chat(request: RAGChatRequest):
     Maintains conversation history while retrieving relevant context
     for each user question, providing real-time progress updates.
     """
-    
+
     async def generate_with_updates():
         try:
             # Phase 1: Initializing
@@ -587,31 +633,31 @@ async def rag_chat(request: RAGChatRequest):
                 progress=15
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
-            
+
             rag_service = get_rag_service()
-            
+
             # Check if RAG is enabled
             if not rag_service.is_enabled():
                 archive_enabled = rag_service.archive_service.is_enabled()
                 llm_enabled = rag_service.llm is not None
-                
+
                 if not archive_enabled:
                     detail = "Archive feature is not enabled. Please configure ARCHIVE_DB_PATH."
                 elif not llm_enabled:
                     detail = "LLM is not configured. Please set MODEL_PATH in your environment."
                 else:
                     detail = "RAG feature is not available."
-                
+
                 error_event = StreamingErrorEvent(message=detail)
                 yield f"data: {error_event.model_dump_json()}\n\n"
                 return
-            
+
             # Convert Pydantic models to ChatMessage objects
             messages = [
                 ChatMessage(role=msg.role, content=msg.content)
                 for msg in request.messages
             ]
-            
+
             # Phase 2: Retrieving
             status_event = StreamingStatusEvent(
                 phase=StreamingPhase.RETRIEVING,
@@ -619,12 +665,12 @@ async def rag_chat(request: RAGChatRequest):
                 progress=40
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
-            
+
             # Build filter if provided
             filter_metadata = None
             if request.filter_file_name:
                 filter_metadata = {'file_name': request.filter_file_name}
-            
+
             # Phase 3: Generating
             status_event = StreamingStatusEvent(
                 phase=StreamingPhase.GENERATING,
@@ -632,16 +678,17 @@ async def rag_chat(request: RAGChatRequest):
                 progress=70
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
-            
+
             # Perform RAG chat
             result = rag_service.chat(
                 messages=messages,
                 n_context_chunks=request.n_context_chunks,
                 max_tokens=request.max_tokens,
-                temperature=request.temperature if request.temperature is not None else settings.ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE,
-                filter_metadata=filter_metadata
-            )
-            
+                temperature=(request.temperature
+                             if request.temperature is not None
+                             else settings.ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE),
+                filter_metadata=filter_metadata)
+
             # Phase 4: Formatting
             status_event = StreamingStatusEvent(
                 phase=StreamingPhase.FORMATTING,
@@ -649,7 +696,7 @@ async def rag_chat(request: RAGChatRequest):
                 progress=90
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
-            
+
             # Convert to response model
             sources = [
                 RAGSource(
@@ -660,7 +707,7 @@ async def rag_chat(request: RAGChatRequest):
                 )
                 for source in result.sources
             ]
-            
+
             response = RAGResponse(
                 query=result.query,
                 answer=result.answer,
@@ -668,14 +715,14 @@ async def rag_chat(request: RAGChatRequest):
                 total_sources=len(sources),
                 info_message=result.info_message
             )
-            
+
             # Final result
             result_event = StreamingResultEvent(
                 data=response.model_dump(),
                 status="complete"
             )
             yield f"data: {result_event.model_dump_json()}\n\n"
-            
+
         except HTTPException as e:
             error_event = StreamingErrorEvent(message=e.detail)
             yield f"data: {error_event.model_dump_json()}\n\n"
@@ -684,9 +731,10 @@ async def rag_chat(request: RAGChatRequest):
             yield f"data: {error_event.model_dump_json()}\n\n"
         except Exception as e:
             logger.error(f"RAG chat failed: {e}")
-            error_event = StreamingErrorEvent(message=f"RAG chat failed: {str(e)}")
+            error_event = StreamingErrorEvent(
+                message=f"RAG chat failed: {str(e)}")
             yield f"data: {error_event.model_dump_json()}\n\n"
-    
+
     return StreamingResponse(
         generate_with_updates(),
         media_type="text/event-stream",

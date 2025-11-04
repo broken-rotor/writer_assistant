@@ -24,13 +24,15 @@ async def modify_chapter(request: ModifyChapterRequest):
     """Modify an existing chapter using LLM with structured context and SSE streaming."""
     llm = get_llm()
     if not llm:
-        raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
+        raise HTTPException(
+            status_code=503,
+            detail="LLM not initialized. Start server with --model-path")
 
     async def generate_with_updates():
         try:
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing modification context...', 'progress': 20})}\n\n"
-            
+
             # Get unified context processor
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_modify_chapter_context(
@@ -45,19 +47,23 @@ async def modify_chapter(request: ModifyChapterRequest):
                 context_mode="structured",
                 context_processing_config=request.context_processing_config
             )
-            
+
             # Log context processing results
             if context_result.optimization_applied:
-                logger.info(f"Modify chapter context processing applied ({context_result.processing_mode} mode): "
-                           f"{context_result.total_tokens} tokens, "
-                           f"compression ratio: {context_result.compression_ratio:.2f}")
+                logger.info(
+                    f"Modify chapter context processing applied ({
+                        context_result.processing_mode} mode): " f"{
+                        context_result.total_tokens} tokens, " f"compression ratio: {
+                        context_result.compression_ratio:.2f}")
             else:
-                logger.debug(f"No modify chapter context optimization needed ({context_result.processing_mode} mode): "
-                            f"{context_result.total_tokens} tokens")
-            
+                logger.debug(
+                    f"No modify chapter context optimization needed ({
+                        context_result.processing_mode} mode): " f"{
+                        context_result.total_tokens} tokens")
+
             # Phase 2: Analyzing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing chapter and modification request...', 'progress': 40})}\n\n"
-            
+
             # For modify chapter, we need to ensure the user message includes the current chapter and modification request
             # if it's not already included in the structured context
             modification_content = f"""
@@ -79,26 +85,27 @@ Rewrite the chapter incorporating the requested changes while maintaining consis
                 {"role": "system", "content": context_result.system_prompt.strip()},
                 {"role": "user", "content": user_message.strip()}
             ]
-            
+
             # Phase 3: Modifying
             yield f"data: {json.dumps({'type': 'status', 'phase': 'modifying', 'message': 'Rewriting chapter with requested changes...', 'progress': 70})}\n\n"
-            
+
             # Collect generated text from streaming
             response_text = ""
             for token in llm.chat_completion_stream(
-                messages, 
-                max_tokens=settings.ENDPOINT_MODIFY_CHAPTER_MAX_TOKENS, 
+                messages,
+                max_tokens=settings.ENDPOINT_MODIFY_CHAPTER_MAX_TOKENS,
                 temperature=settings.ENDPOINT_MODIFY_CHAPTER_TEMPERATURE
             ):
                 response_text += token
                 # Optional: yield partial content updates (uncomment if desired)
-                # yield f"data: {json.dumps({'type': 'partial', 'content': token})}\n\n"
-            
+                # yield f"data: {json.dumps({'type': 'partial', 'content':
+                # token})}\n\n"
+
             # Phase 4: Finalizing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'finalizing', 'message': 'Finalizing modified chapter...', 'progress': 90})}\n\n"
-            
+
             word_count = len(response_text.split())
-            
+
             # Final result
             result = ModifyChapterResponse(
                 modifiedChapter=response_text.strip(),
@@ -114,13 +121,13 @@ Rewrite the chapter incorporating the requested changes while maintaining consis
                     "processingMode": context_result.processing_mode
                 }
             )
-            
+
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
-            
+
         except Exception as e:
             logger.error(f"Error in modify_chapter: {str(e)}")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
-    
+
     return StreamingResponse(
         generate_with_updates(),
         media_type="text/event-stream",

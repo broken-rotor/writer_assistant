@@ -100,7 +100,8 @@ class TokenAllocator:
         """
         self.total_budget = total_budget
         self.hierarchy = hierarchy or LayerHierarchy()
-        self.token_counter = token_counter or TokenCounter(model_path=settings.MODEL_PATH)
+        self.token_counter = token_counter or TokenCounter(
+            model_path=settings.MODEL_PATH)
         self.mode = mode
         self.overflow_strategy = overflow_strategy
 
@@ -117,11 +118,14 @@ class TokenAllocator:
         self._max_borrow_ratio = 0.3  # Maximum 30% of layer budget can be borrowed
         self._reallocation_threshold = 0.8  # Trigger reallocation at 80% utilization
 
-        logger.info(f"TokenAllocator initialized with budget {total_budget}, mode {mode.value}")
+        logger.info(
+            f"TokenAllocator initialized with budget {total_budget}, mode {
+                mode.value}")
 
     def _initialize_allocations(self) -> Dict[LayerType, LayerAllocation]:
         """Initialize layer allocations based on hierarchy and budget."""
-        suggested_allocations = self.hierarchy.suggest_balanced_allocation(self.total_budget)
+        suggested_allocations = self.hierarchy.suggest_balanced_allocation(
+            self.total_budget)
 
         allocations = {}
         for layer_type, allocated_tokens in suggested_allocations.items():
@@ -159,7 +163,8 @@ class TokenAllocator:
                 result = self._grant_direct_allocation(request, start_time)
             else:
                 # Need to handle overflow
-                result = self._handle_overflow(request, available_tokens, start_time)
+                result = self._handle_overflow(
+                    request, available_tokens, start_time)
 
             # Update statistics
             self._update_stats(result)
@@ -181,7 +186,8 @@ class TokenAllocator:
                 error_message=str(e)
             )
 
-    def _grant_direct_allocation(self, request: AllocationRequest, start_time: float) -> AllocationResult:
+    def _grant_direct_allocation(
+            self, request: AllocationRequest, start_time: float) -> AllocationResult:
         """Grant tokens directly from the layer's available budget."""
         layer_allocation = self._layer_allocations[request.layer_type]
         layer_allocation.used_tokens += request.requested_tokens
@@ -204,10 +210,12 @@ class TokenAllocator:
         self._stats.overflow_events += 1
 
         if self.overflow_strategy == OverflowStrategy.REJECT:
-            return self._reject_request(request, start_time, "Insufficient tokens")
+            return self._reject_request(
+                request, start_time, "Insufficient tokens")
 
         elif self.overflow_strategy == OverflowStrategy.TRUNCATE:
-            return self._truncate_request(request, available_tokens, start_time)
+            return self._truncate_request(
+                request, available_tokens, start_time)
 
         elif self.overflow_strategy == OverflowStrategy.BORROW:
             return self._borrow_tokens(request, available_tokens, start_time)
@@ -216,9 +224,11 @@ class TokenAllocator:
             return self._reallocate_and_retry(request, start_time)
 
         else:
-            return self._reject_request(request, start_time, "Unknown overflow strategy")
+            return self._reject_request(
+                request, start_time, "Unknown overflow strategy")
 
-    def _reject_request(self, request: AllocationRequest, start_time: float, reason: str) -> AllocationResult:
+    def _reject_request(self, request: AllocationRequest,
+                        start_time: float, reason: str) -> AllocationResult:
         """Reject a token allocation request."""
         return AllocationResult(
             request=request,
@@ -237,7 +247,8 @@ class TokenAllocator:
     ) -> AllocationResult:
         """Truncate request to fit available tokens."""
         if not request.can_be_truncated or available_tokens <= 0:
-            return self._reject_request(request, start_time, "Cannot truncate request")
+            return self._reject_request(
+                request, start_time, "Cannot truncate request")
 
         # Grant available tokens
         layer_allocation = self._layer_allocations[request.layer_type]
@@ -249,7 +260,8 @@ class TokenAllocator:
             success=True,
             truncated=True,
             wait_time=time.time() - start_time,
-            metadata={"allocation_type": "truncated", "original_request": request.requested_tokens}
+            metadata={"allocation_type": "truncated",
+                      "original_request": request.requested_tokens}
         )
 
     def _borrow_tokens(
@@ -260,20 +272,24 @@ class TokenAllocator:
     ) -> AllocationResult:
         """Attempt to borrow tokens from other layers."""
         if not self._borrowing_enabled:
-            return self._reject_request(request, start_time, "Borrowing disabled")
+            return self._reject_request(
+                request, start_time, "Borrowing disabled")
 
         needed_tokens = request.requested_tokens - available_tokens
-        borrowed_tokens = self._find_borrowable_tokens(request.layer_type, needed_tokens)
+        borrowed_tokens = self._find_borrowable_tokens(
+            request.layer_type, needed_tokens)
 
         if borrowed_tokens < needed_tokens:
-            # Partial borrowing - check if we can fulfill with available + borrowed
+            # Partial borrowing - check if we can fulfill with available +
+            # borrowed
             total_available = available_tokens + borrowed_tokens
             if total_available >= request.requested_tokens:
                 granted_tokens = request.requested_tokens
             elif request.can_be_truncated:
                 granted_tokens = total_available
             else:
-                return self._reject_request(request, start_time, "Insufficient tokens even with borrowing")
+                return self._reject_request(
+                    request, start_time, "Insufficient tokens even with borrowing")
         else:
             granted_tokens = request.requested_tokens
 
@@ -295,12 +311,14 @@ class TokenAllocator:
             metadata={"allocation_type": "borrowed"}
         )
 
-    def _find_borrowable_tokens(self, requesting_layer: LayerType, needed_tokens: int) -> int:
+    def _find_borrowable_tokens(
+            self, requesting_layer: LayerType, needed_tokens: int) -> int:
         """Find tokens that can be borrowed from other layers."""
         borrowable_tokens = 0
         layer_config = self.hierarchy.get_layer_config(requesting_layer)
 
-        # Check layers in order of preference (siblings, then ancestors, then descendants)
+        # Check layers in order of preference (siblings, then ancestors, then
+        # descendants)
         candidate_layers = self._get_borrowing_candidates(requesting_layer)
 
         for candidate_layer in candidate_layers:
@@ -311,7 +329,9 @@ class TokenAllocator:
                 continue
 
             # Calculate how much this layer can lend
-            max_lendable = int(candidate_allocation.allocated_tokens * self._max_borrow_ratio)
+            max_lendable = int(
+                candidate_allocation.allocated_tokens *
+                self._max_borrow_ratio)
             current_lent = candidate_allocation.lent_tokens
             available_to_lend = max_lendable - current_lent
 
@@ -320,7 +340,11 @@ class TokenAllocator:
             min_tokens = candidate_config.min_tokens
             safe_to_lend = max(0, available_tokens - min_tokens)
 
-            lendable = min(available_to_lend, safe_to_lend, needed_tokens - borrowable_tokens)
+            lendable = min(
+                available_to_lend,
+                safe_to_lend,
+                needed_tokens -
+                borrowable_tokens)
 
             if lendable > 0:
                 borrowable_tokens += lendable
@@ -330,7 +354,8 @@ class TokenAllocator:
 
         return borrowable_tokens
 
-    def _get_borrowing_candidates(self, requesting_layer: LayerType) -> List[LayerType]:
+    def _get_borrowing_candidates(
+            self, requesting_layer: LayerType) -> List[LayerType]:
         """Get candidate layers for borrowing in order of preference."""
         candidates = []
 
@@ -338,7 +363,8 @@ class TokenAllocator:
         parent = self.hierarchy.get_parent_layer(requesting_layer)
         if parent:
             siblings = self.hierarchy.get_child_layers(parent)
-            candidates.extend([layer for layer in siblings if layer != requesting_layer])
+            candidates.extend(
+                [layer for layer in siblings if layer != requesting_layer])
 
         # Add ancestor layers
         ancestors = self.hierarchy.get_ancestor_layers(requesting_layer)
@@ -348,12 +374,15 @@ class TokenAllocator:
         descendants = self.hierarchy.get_descendant_layers(requesting_layer)
         candidates.extend(descendants)
 
-        # Sort by priority (higher priority layers are less preferred for lending)
-        candidates.sort(key=lambda l: self.hierarchy.get_layer_config(l).priority)
+        # Sort by priority (higher priority layers are less preferred for
+        # lending)
+        candidates.sort(
+            key=lambda l: self.hierarchy.get_layer_config(l).priority)
 
         return candidates
 
-    def _execute_borrowing(self, borrowing_layer: LayerType, total_borrowed: int):
+    def _execute_borrowing(
+            self, borrowing_layer: LayerType, total_borrowed: int):
         """Execute the actual borrowing from candidate layers."""
         remaining_to_borrow = total_borrowed
         candidates = self._get_borrowing_candidates(borrowing_layer)
@@ -366,7 +395,9 @@ class TokenAllocator:
             candidate_config = self.hierarchy.get_layer_config(candidate_layer)
 
             # Calculate how much to borrow from this layer
-            max_lendable = int(candidate_allocation.allocated_tokens * self._max_borrow_ratio)
+            max_lendable = int(
+                candidate_allocation.allocated_tokens *
+                self._max_borrow_ratio)
             current_lent = candidate_allocation.lent_tokens
             available_to_lend = max_lendable - current_lent
 
@@ -374,13 +405,17 @@ class TokenAllocator:
             min_tokens = candidate_config.min_tokens
             safe_to_lend = max(0, available_tokens - min_tokens)
 
-            to_borrow = min(available_to_lend, safe_to_lend, remaining_to_borrow)
+            to_borrow = min(
+                available_to_lend,
+                safe_to_lend,
+                remaining_to_borrow)
 
             if to_borrow > 0:
                 candidate_allocation.lent_tokens += to_borrow
                 remaining_to_borrow -= to_borrow
 
-    def _reallocate_and_retry(self, request: AllocationRequest, start_time: float) -> AllocationResult:
+    def _reallocate_and_retry(
+            self, request: AllocationRequest, start_time: float) -> AllocationResult:
         """Reallocate tokens dynamically and retry the request."""
         # Trigger dynamic reallocation
         self._perform_dynamic_reallocation()
@@ -426,18 +461,23 @@ class TokenAllocator:
                 under_excess = under_allocation.allocated_tokens - under_config.min_tokens
                 over_need = over_config.max_tokens - over_allocation.allocated_tokens
 
-                reallocation_amount = min(under_excess, over_need, under_allocation.available_tokens)
+                reallocation_amount = min(
+                    under_excess, over_need, under_allocation.available_tokens)
 
                 if reallocation_amount > 0:
                     under_allocation.allocated_tokens -= reallocation_amount
                     over_allocation.allocated_tokens += reallocation_amount
 
-                    logger.info(f"Reallocated {reallocation_amount} tokens from {under_layer.value} to {over_layer.value}")
+                    logger.info(
+                        f"Reallocated {reallocation_amount} tokens from {
+                            under_layer.value} to {
+                            over_layer.value}")
 
     def _check_reallocation_trigger(self):
         """Check if dynamic reallocation should be triggered."""
         # Check overall utilization
-        total_used = sum(alloc.used_tokens for alloc in self._layer_allocations.values())
+        total_used = sum(
+            alloc.used_tokens for alloc in self._layer_allocations.values())
         overall_utilization = total_used / self.total_budget
 
         if overall_utilization > self._reallocation_threshold:
@@ -459,12 +499,14 @@ class TokenAllocator:
             self._stats.rejected_requests += 1
 
         # Update average wait time
-        total_wait_time = self._stats.average_wait_time * (self._stats.total_requests - 1) + result.wait_time
+        total_wait_time = self._stats.average_wait_time * \
+            (self._stats.total_requests - 1) + result.wait_time
         self._stats.average_wait_time = total_wait_time / self._stats.total_requests
 
         # Update peak utilization
         current_utilization = self.get_overall_utilization()
-        self._stats.peak_utilization = max(self._stats.peak_utilization, current_utilization)
+        self._stats.peak_utilization = max(
+            self._stats.peak_utilization, current_utilization)
 
     def release_tokens(self, layer_type: LayerType, tokens: int) -> bool:
         """
@@ -485,7 +527,10 @@ class TokenAllocator:
                 logger.debug(f"Released {tokens} tokens to {layer_type.value}")
                 return True
             else:
-                logger.warning(f"Cannot release {tokens} tokens from {layer_type.value}, only {allocation.used_tokens} in use")
+                logger.warning(
+                    f"Cannot release {tokens} tokens from {
+                        layer_type.value}, only {
+                        allocation.used_tokens} in use")
                 return False
 
         except Exception as e:
@@ -531,7 +576,9 @@ class TokenAllocator:
 
     def get_overall_utilization(self) -> float:
         """Get overall token utilization across all layers."""
-        total_used = sum(alloc.used_tokens + alloc.reserved_tokens for alloc in self._layer_allocations.values())
+        total_used = sum(
+            alloc.used_tokens +
+            alloc.reserved_tokens for alloc in self._layer_allocations.values())
         return total_used / self.total_budget if self.total_budget > 0 else 0.0
 
     def get_layer_usage_stats(self) -> Dict[str, Any]:
@@ -579,13 +626,18 @@ class TokenAllocator:
             for layer_type, allocation in self._layer_allocations.items()
         }
 
-        validation_result = self.hierarchy.validate_layer_allocation(current_allocations)
+        validation_result = self.hierarchy.validate_layer_allocation(
+            current_allocations)
 
         # Add runtime validation
-        total_allocated = sum(alloc.allocated_tokens for alloc in self._layer_allocations.values())
-        total_used = sum(alloc.used_tokens for alloc in self._layer_allocations.values())
-        total_borrowed = sum(alloc.borrowed_tokens for alloc in self._layer_allocations.values())
-        total_lent = sum(alloc.lent_tokens for alloc in self._layer_allocations.values())
+        total_allocated = sum(
+            alloc.allocated_tokens for alloc in self._layer_allocations.values())
+        total_used = sum(
+            alloc.used_tokens for alloc in self._layer_allocations.values())
+        total_borrowed = sum(
+            alloc.borrowed_tokens for alloc in self._layer_allocations.values())
+        total_lent = sum(
+            alloc.lent_tokens for alloc in self._layer_allocations.values())
 
         validation_result.update({
             "runtime_validation": {

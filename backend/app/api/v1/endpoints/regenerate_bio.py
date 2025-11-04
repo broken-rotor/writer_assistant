@@ -23,13 +23,15 @@ async def regenerate_bio(request: RegenerateBioRequest):
     """Regenerate character bio from detailed character information using LLM with SSE streaming."""
     llm = get_llm()
     if not llm:
-        raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
+        raise HTTPException(
+            status_code=503,
+            detail="LLM not initialized. Start server with --model-path")
 
     async def generate_with_updates():
         try:
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character details...', 'progress': 20})}\n\n"
-            
+
             # Build character details summary for context
             character_details = []
             if request.name:
@@ -39,13 +41,19 @@ async def regenerate_bio(request: RegenerateBioRequest):
             if request.gender:
                 character_details.append(f"Gender: {request.gender}")
             if request.sexualPreference:
-                character_details.append(f"Sexual Preference: {request.sexualPreference}")
+                character_details.append(
+                    f"Sexual Preference: {
+                        request.sexualPreference}")
             if request.age and request.age > 0:
                 character_details.append(f"Age: {request.age}")
             if request.physicalAppearance:
-                character_details.append(f"Physical Appearance: {request.physicalAppearance}")
+                character_details.append(
+                    f"Physical Appearance: {
+                        request.physicalAppearance}")
             if request.usualClothing:
-                character_details.append(f"Usual Clothing: {request.usualClothing}")
+                character_details.append(
+                    f"Usual Clothing: {
+                        request.usualClothing}")
             if request.personality:
                 character_details.append(f"Personality: {request.personality}")
             if request.motivations:
@@ -53,10 +61,12 @@ async def regenerate_bio(request: RegenerateBioRequest):
             if request.fears:
                 character_details.append(f"Fears: {request.fears}")
             if request.relationships:
-                character_details.append(f"Relationships: {request.relationships}")
-            
+                character_details.append(
+                    f"Relationships: {
+                        request.relationships}")
+
             character_summary = "\n".join(character_details)
-            
+
             # Use context processor if structured context is provided
             context_result = None
             if request.structured_context:
@@ -70,22 +80,26 @@ async def regenerate_bio(request: RegenerateBioRequest):
                     context_mode="structured",
                     context_processing_config=request.context_processing_config
                 )
-                
+
                 # Log context processing results
                 if context_result.optimization_applied:
-                    logger.info(f"Bio regeneration context processing applied ({context_result.processing_mode} mode): "
-                               f"{context_result.total_tokens} tokens, "
-                               f"compression ratio: {context_result.compression_ratio:.2f}")
+                    logger.info(
+                        f"Bio regeneration context processing applied ({
+                            context_result.processing_mode} mode): " f"{
+                            context_result.total_tokens} tokens, " f"compression ratio: {
+                            context_result.compression_ratio:.2f}")
                 else:
-                    logger.debug(f"No bio regeneration context optimization needed ({context_result.processing_mode} mode): "
-                                f"{context_result.total_tokens} tokens")
+                    logger.debug(
+                        f"No bio regeneration context optimization needed ({
+                            context_result.processing_mode} mode): " f"{
+                            context_result.total_tokens} tokens")
 
             # Phase 2: Analyzing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing character details...', 'progress': 40})}\n\n"
-            
+
             # Phase 3: Generating
             yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating bio summary...', 'progress': 70})}\n\n"
-            
+
             # Prepare system prompt and user message
             system_prompt = """You are a skilled writer assistant specializing in character development. Your task is to create a concise, engaging character bio that captures the essence of a character based on their detailed attributes.
 
@@ -107,20 +121,20 @@ Please respond with just the bio text directly."""
             # Use context result if available
             if context_result:
                 system_prompt = context_result.system_prompt.strip()
-                user_message = context_result.user_message + f"\n\n{user_message}"
-            
+                user_message = context_result.user_message + \
+                    f"\n\n{user_message}"
+
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message.strip()}
             ]
-            
+
             # Collect generated text from streaming
             response_text = ""
             for token in llm.chat_completion_stream(
-                messages, 
-                max_tokens=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_MAX_TOKENS, 
-                temperature=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_TEMPERATURE
-            ):
+                    messages,
+                    max_tokens=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_MAX_TOKENS,
+                    temperature=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_TEMPERATURE):
                 response_text += token
             
             # Phase 4: Processing
@@ -133,11 +147,11 @@ Please respond with just the bio text directly."""
             )
             
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
-            
+
         except Exception as e:
             logger.error(f"Error in regenerate_bio: {str(e)}")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
-    
+
     return StreamingResponse(
         generate_with_updates(),
         media_type="text/event-stream",

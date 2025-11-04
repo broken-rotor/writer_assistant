@@ -13,13 +13,13 @@ class StreamingPhase(str, Enum):
     EVALUATING = "evaluating"
     GENERATING_FEEDBACK = "generating_feedback"
     PARSING = "parsing"
-    
+
     # RAG query phases
     INITIALIZING = "initializing"
     RETRIEVING = "retrieving"
     GENERATING = "generating"
     FORMATTING = "formatting"
-    
+
     # Common completion phase
     COMPLETE = "complete"
 
@@ -72,7 +72,7 @@ STREAMING_PHASES = {
         "progress": 90,
         "message": "Processing rater feedback..."
     },
-    
+
     # RAG query phases
     StreamingPhase.INITIALIZING: {
         "progress": 15,
@@ -90,7 +90,7 @@ STREAMING_PHASES = {
         "progress": 90,
         "message": "Formatting response and sources..."
     },
-    
+
     # Common completion phase
     StreamingPhase.COMPLETE: {
         "progress": 100,

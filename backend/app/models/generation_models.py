@@ -5,7 +5,7 @@ Based on the requirements in api_requirements.md and ui_requirements.md.
 Updated for Phase 2.2: Backend API Migration to Structured Context Only.
 All API endpoints now accept only structured context data.
 
-The structured context approach uses granular, structured elements that enable 
+The structured context approach uses granular, structured elements that enable
 better context management and preservation:
 
 ## Structured Context Format
@@ -127,7 +127,8 @@ class PhaseContext(BaseModel):
 # Structured Context Models
 class PlotElement(BaseModel):
     """Individual plot element with metadata."""
-    id: Optional[str] = Field(None, description="Unique identifier for the plot element")
+    id: Optional[str] = Field(
+        None, description="Unique identifier for the plot element")
     type: Literal["scene", "conflict", "resolution", "twist", "setup", "payoff", "transition"] = Field(
         description="Type of plot element"
     )
@@ -148,7 +149,8 @@ class PlotElement(BaseModel):
 
 class CharacterContext(BaseModel):
     """Character-specific context information."""
-    character_id: str = Field(description="Unique identifier for the character")
+    character_id: str = Field(
+        description="Unique identifier for the character")
     character_name: str = Field(description="Character name")
     current_state: Dict[str, Any] = Field(
         default_factory=dict,
@@ -178,7 +180,8 @@ class CharacterContext(BaseModel):
 
 class UserRequest(BaseModel):
     """User-provided request or instruction."""
-    id: Optional[str] = Field(None, description="Unique identifier for the request")
+    id: Optional[str] = Field(
+        None, description="Unique identifier for the request")
     type: Literal["modification", "addition", "removal", "style_change", "tone_adjustment", "general"] = Field(
         description="Type of user request"
     )
@@ -203,7 +206,8 @@ class UserRequest(BaseModel):
 
 class SystemInstruction(BaseModel):
     """System-level instruction for AI behavior."""
-    id: Optional[str] = Field(None, description="Unique identifier for the instruction")
+    id: Optional[str] = Field(
+        None, description="Unique identifier for the instruction")
     type: Literal["behavior", "style", "constraint", "preference", "rule"] = Field(
         description="Type of system instruction"
     )
@@ -229,7 +233,8 @@ class SystemInstruction(BaseModel):
 class ContextMetadata(BaseModel):
     """Metadata about context processing and optimization."""
     total_elements: int = Field(description="Total number of context elements")
-    processing_applied: bool = Field(description="Whether context processing was applied")
+    processing_applied: bool = Field(
+        description="Whether context processing was applied")
     processing_mode: Literal["legacy", "structured", "hybrid"] = Field(
         default="legacy",
         description="Which context processing mode was used"
@@ -292,7 +297,8 @@ class StructuredContextContainer(BaseModel):
             raise ValueError("Duplicate character contexts found")
 
         # Validate character references in plot elements
-        character_names = {ctx.character_name.lower() for ctx in self.character_contexts}
+        character_names = {ctx.character_name.lower()
+                           for ctx in self.character_contexts}
         for plot_element in self.plot_elements:
             # Check if plot element mentions characters that aren't in context
             content_lower = plot_element.content.lower()
@@ -307,7 +313,8 @@ class StructuredContextContainer(BaseModel):
 # Character Feedback Request/Response
 class CharacterFeedbackRequest(BaseModel):
     # Core request fields
-    plotPoint: str = Field(description="The plot point or scene for character feedback")
+    plotPoint: str = Field(
+        description="The plot point or scene for character feedback")
 
     # Phase-specific fields
     compose_phase: Optional[ComposePhase] = None
@@ -394,7 +401,7 @@ class RaterFeedbackResponse(BaseModel):
 class GenerateChapterRequest(BaseModel):
     # Core request fields
     plotPoint: str = Field(description="The plot point or scene to generate")
-    
+
     # Phase-specific fields
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
@@ -509,8 +516,10 @@ class EditorReviewResponse(BaseModel):
 # Flesh Out Request/Response (for plot points or worldbuilding)
 class FleshOutRequest(BaseModel):
     # Core request fields
-    textToFleshOut: str = Field(description="Text content to be expanded or fleshed out")
-    context: Optional[str] = Field(default="", description="Additional context for the flesh out operation")
+    textToFleshOut: str = Field(
+        description="Text content to be expanded or fleshed out")
+    context: Optional[str] = Field(
+        default="", description="Additional context for the flesh out operation")
 
     # Phase-specific fields
     compose_phase: Optional[ComposePhase] = None
@@ -547,7 +556,8 @@ class FleshOutResponse(BaseModel):
 # Generate Character Details Request/Response
 class GenerateCharacterDetailsRequest(BaseModel):
     # Core request fields
-    basicBio: str = Field(description="Basic biography or description of the character to generate details for")
+    basicBio: str = Field(
+        description="Basic biography or description of the character to generate details for")
     existingCharacters: List[Dict[str, str]] = Field(
         default_factory=list,
         description="List of existing characters with name, basicBio, and relationships"
@@ -599,15 +609,20 @@ class RegenerateBioRequest(BaseModel):
     name: str = Field(description="Character name")
     sex: str = Field(default="", description="Character sex")
     gender: str = Field(default="", description="Character gender identity")
-    sexualPreference: str = Field(default="", description="Character sexual preference")
+    sexualPreference: str = Field(default="",
+                                  description="Character sexual preference")
     age: int = Field(default=0, description="Character age")
-    physicalAppearance: str = Field(default="", description="Character physical appearance")
-    usualClothing: str = Field(default="", description="Character usual clothing")
-    personality: str = Field(default="", description="Character personality traits")
+    physicalAppearance: str = Field(
+        default="", description="Character physical appearance")
+    usualClothing: str = Field(default="",
+                               description="Character usual clothing")
+    personality: str = Field(default="",
+                             description="Character personality traits")
     motivations: str = Field(default="", description="Character motivations")
     fears: str = Field(default="", description="Character fears")
-    relationships: str = Field(default="", description="Character relationships")
-    
+    relationships: str = Field(default="",
+                               description="Character relationships")
+
     # Context fields (optional for bio regeneration)
     compose_phase: Optional[ComposePhase] = None
     phase_context: Optional[PhaseContext] = None
@@ -622,7 +637,8 @@ class RegenerateBioRequest(BaseModel):
 
 
 class RegenerateBioResponse(BaseModel):
-    basicBio: str = Field(description="Generated bio summary from character details")
+    basicBio: str = Field(
+        description="Generated bio summary from character details")
     context_metadata: Optional[ContextMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
