@@ -193,6 +193,10 @@ describe('GenerationService', () => {
         feedback: {
           opinion: 'Good pacing',
           suggestions: []
+        },
+        context_metadata: {
+          totalTokens: 100,
+          contextSections: ['system', 'plot']
         }
       };
 
