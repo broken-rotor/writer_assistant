@@ -126,28 +126,9 @@ Please respond with just the bio text directly."""
             # Phase 4: Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'processing', 'message': 'Processing bio summary...', 'progress': 90})}\n\n"
             
-            # Process the plain text response directly
-            bio_text = response_text.strip()
-            
-            # Apply length validation and truncation if needed
-            if len(bio_text) > 500:  # If response is too long, truncate
-                bio_text = bio_text[:500] + "..."
-            
-            # If no reasonable bio found, create a basic one from the character name and key traits
-            if not bio_text or len(bio_text) < 10:
-                key_traits = []
-                if request.personality:
-                    key_traits.append(request.personality.split('.')[0])  # First sentence of personality
-                if request.motivations:
-                    key_traits.append(request.motivations.split('.')[0])  # First sentence of motivations
-                
-                if key_traits:
-                    bio_text = f"{request.name} is a character who {'. '.join(key_traits).lower()}."
-                else:
-                    bio_text = f"{request.name} is a unique character with their own story to tell."
-            
+            # Use the LLM response directly without any validation or fallback
             result = RegenerateBioResponse(
-                basicBio=bio_text,
+                basicBio=response_text.strip(),
                 context_metadata=context_result.context_metadata if context_result else None
             )
             
