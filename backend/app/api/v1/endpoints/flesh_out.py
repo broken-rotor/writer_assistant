@@ -44,7 +44,6 @@ async def flesh_out(request: FleshOutRequest):
                 phase_context=request.phase_context,
                 # Structured context (required)
                 structured_context=request.structured_context,
-                context_mode="structured",
                 context_processing_config=request.context_processing_config
             )
 

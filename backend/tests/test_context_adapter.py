@@ -171,7 +171,7 @@ class TestContextAdapter:
             phase_specific_instructions="Focus on dialogue"
         )
         
-        container, mapping = self.adapter.legacy_to_structured(
+        container = self.adapter.legacy_to_structured(
             system_prompts=system_prompts,
             worldbuilding=worldbuilding,
             story_summary=story_summary,
@@ -187,31 +187,19 @@ class TestContextAdapter:
         assert container.global_metadata["converted_from_legacy"] is True
         assert "conversion_timestamp" in container.global_metadata
         assert container.global_metadata["legacy_compose_phase"] == "chapter_detail"
-        
-        # Check mapping
-        assert len(mapping.system_prompts_mapping) == 2
-        assert len(mapping.worldbuilding_elements) == 1
-        assert len(mapping.story_summary_elements) == 1
-        assert len(mapping.phase_context_elements) == 2
     
     def test_legacy_to_structured_partial(self):
         """Test legacy to structured conversion with only some fields."""
         system_prompts = SystemPrompts(mainPrefix="You are a writer")
         # Only system prompts provided
         
-        container, mapping = self.adapter.legacy_to_structured(
+        container = self.adapter.legacy_to_structured(
             system_prompts=system_prompts
         )
         
         # Should create only 1 element
         assert len(container.elements) == 1
         assert container.elements[0].type == ContextType.SYSTEM_PROMPT
-        
-        # Mapping should reflect what was provided
-        assert len(mapping.system_prompts_mapping) == 1
-        assert len(mapping.worldbuilding_elements) == 0
-        assert len(mapping.story_summary_elements) == 0
-        assert len(mapping.phase_context_elements) == 0
     
     def test_extract_system_prompts(self):
         """Test extracting SystemPrompts from structured context."""
@@ -339,7 +327,7 @@ class TestContextAdapter:
         )
         
         # Convert to structured
-        container, mapping = self.adapter.legacy_to_structured(
+        container = self.adapter.legacy_to_structured(
             system_prompts=original_system_prompts,
             worldbuilding=original_worldbuilding,
             story_summary=original_story_summary,
@@ -348,7 +336,7 @@ class TestContextAdapter:
         
         # Convert back to legacy
         converted_system_prompts, converted_worldbuilding, converted_story_summary, converted_phase_context = self.adapter.structured_to_legacy(
-            container, mapping
+            container
         )
         
         # Should match original values
@@ -431,19 +419,17 @@ class TestContextAdapter:
     def test_empty_legacy_fields(self):
         """Test handling empty legacy fields."""
         # Test with empty strings
-        container, mapping = self.adapter.legacy_to_structured(
+        container = self.adapter.legacy_to_structured(
             worldbuilding="",
             story_summary="   ",  # Whitespace only
         )
         
         # Should not create elements for empty content
         assert len(container.elements) == 0
-        assert len(mapping.worldbuilding_elements) == 0
-        assert len(mapping.story_summary_elements) == 0
     
     def test_none_legacy_fields(self):
         """Test handling None legacy fields."""
-        container, mapping = self.adapter.legacy_to_structured(
+        container = self.adapter.legacy_to_structured(
             system_prompts=None,
             worldbuilding=None,
             story_summary=None,
@@ -452,8 +438,3 @@ class TestContextAdapter:
         
         # Should not create any elements
         assert len(container.elements) == 0
-        assert len(mapping.system_prompts_mapping) == 0
-        assert len(mapping.worldbuilding_elements) == 0
-        assert len(mapping.story_summary_elements) == 0
-        assert len(mapping.phase_context_elements) == 0
-

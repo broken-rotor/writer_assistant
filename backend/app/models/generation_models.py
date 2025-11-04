@@ -235,8 +235,8 @@ class ContextMetadata(BaseModel):
     total_elements: int = Field(description="Total number of context elements")
     processing_applied: bool = Field(
         description="Whether context processing was applied")
-    processing_mode: Literal["legacy", "structured", "hybrid"] = Field(
-        default="legacy",
+    processing_mode: Literal["structured"] = Field(
+        default="structured",
         description="Which context processing mode was used"
     )
     optimization_level: Literal["none", "light", "moderate", "aggressive"] = Field(
