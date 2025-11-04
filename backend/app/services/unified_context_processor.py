@@ -20,7 +20,6 @@ import hashlib
 import json
 
 from app.services.context_manager import ContextManager
-from app.services.context_adapter import ContextAdapter
 from app.core.config import settings
 from app.models.context_models import (
     StructuredContextContainer as LegacyStructuredContextContainer,
@@ -162,7 +161,6 @@ class UnifiedContextProcessor:
     def __init__(self, enable_caching: bool = True):
         """Initialize the unified context processor."""
         self.context_manager = ContextManager()
-        self.context_adapter = ContextAdapter()
         self.enable_caching = enable_caching
         self._cache: Dict[str, UnifiedContextResult] = {}
 
