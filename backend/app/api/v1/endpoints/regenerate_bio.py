@@ -73,7 +73,6 @@ async def regenerate_bio(request: RegenerateBioRequest):
                     compose_phase=request.compose_phase,
                     phase_context=request.phase_context,
                     structured_context=request.structured_context,
-                    context_mode="structured",
                     context_processing_config=request.context_processing_config
                 )
 

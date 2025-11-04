@@ -304,10 +304,8 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config,
                     endpoint_strategy="review_focused_filtering"
                 )
-            elif context_mode == "hybrid":
-                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
             else:
-                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
+                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -357,10 +355,8 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config,
                     endpoint_strategy="rater_specific_preparation"
                 )
-            elif context_mode == "hybrid":
-                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
             else:
-                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
+                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -414,10 +410,8 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config,
                     endpoint_strategy="change_focused_management"
                 )
-            elif context_mode == "hybrid":
-                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
             else:
-                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
+                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -470,10 +464,8 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config,
                     endpoint_strategy="expansion_specific_assembly"
                 )
-            elif context_mode == "hybrid":
-                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
             else:
-                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
+                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -519,7 +511,7 @@ class UnifiedContextProcessor:
                         f"Cache hit for character_generation: {cache_key}")
                     return self._cache[cache_key]
 
-            if context_mode == "structured" and structured_context:
+            if structured_context:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
@@ -527,10 +519,7 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config,
                     endpoint_strategy="character_generation_prioritization"
                 )
-            elif context_mode == "hybrid":
-                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
             else:
-                # Legacy mode processing
                 raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
             # Cache the result

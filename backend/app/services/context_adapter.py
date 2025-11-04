@@ -60,25 +60,21 @@ class ContextAdapter:
         if system_prompts:
             system_elements, system_mapping = self._convert_system_prompts(system_prompts)
             elements.extend(system_elements)
-            mapping.system_prompts_mapping.update(system_mapping)
 
         # Convert worldbuilding
         if worldbuilding and worldbuilding.strip():
             wb_elements = self._convert_worldbuilding(worldbuilding)
             elements.extend(wb_elements)
-            mapping.worldbuilding_elements.extend([e.id for e in wb_elements])
 
         # Convert story summary
         if story_summary and story_summary.strip():
             summary_elements = self._convert_story_summary(story_summary)
             elements.extend(summary_elements)
-            mapping.story_summary_elements.extend([e.id for e in summary_elements])
 
         # Convert PhaseContext
         if phase_context:
             phase_elements = self._convert_phase_context(phase_context, compose_phase)
             elements.extend(phase_elements)
-            mapping.phase_context_elements.extend([e.id for e in phase_elements])
 
         # Create container
         container = StructuredContextContainer(
@@ -464,7 +460,7 @@ class ContextAdapter:
 
         compose_phase = legacy_data.get('compose_phase')
 
-        container, mapping = self.legacy_to_structured(
+        container = self.legacy_to_structured(
             system_prompts=system_prompts,
             worldbuilding=worldbuilding,
             story_summary=story_summary,

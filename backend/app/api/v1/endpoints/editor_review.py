@@ -40,15 +40,11 @@ async def editor_review(request: EditorReviewRequest):
 
             # Process context using structured context only
             context_result = context_processor.process_editor_review_context(
-                # Core fields
-                # Use first 200 chars as plot point
-                plot_point=request.chapterToReview[:200],
                 # Phase context
                 compose_phase=request.compose_phase,
                 phase_context=request.phase_context,
                 # Structured context (required)
                 structured_context=request.structured_context,
-                context_mode="structured",
                 context_processing_config=request.context_processing_config
             )
 
