@@ -1118,3 +1118,14 @@ class ConversationContextElement(BaseContextElement):
         default=None,
         description="Who spoke in this turn (user, assistant, character, etc.)"
     )
+
+
+# Context Relationships
+class ContextRelationship(BaseModel):
+    """Defines relationships between context elements."""
+
+    source_id: str = Field(description="ID of the source context element")
+    target_id: str = Field(description="ID of the target context element")
+    relationship_type: str = Field(description="Type of relationship (depends_on, conflicts_with, enhances, etc.)")
+    strength: float = Field(default=1.0, ge=0.0, le=1.0, description="Strength of the relationship")
+    description: Optional[str] = Field(default=None, description="Description of the relationship")
