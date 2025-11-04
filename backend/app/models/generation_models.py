@@ -1015,14 +1015,11 @@ class StoryContextElement(BaseContextElement):
     """Context elements for story-level information."""
 
     type: Literal[
-        ContextType.STORY_SUMMARY,
-        ContextType.STORY_OUTLINE,
+        ContextType.WORLD_BUILDING,
         ContextType.STORY_THEME,
-        ContextType.STORY_SETTING,
-        ContextType.STORY_TONE,
-        ContextType.STORY_GENRE,
-        ContextType.STORY_PACING,
-        ContextType.STORY_CONFLICT
+        ContextType.NARRATIVE_STATE,
+        ContextType.STORY_SUMMARY,
+        ContextType.PLOT_OUTLINE
     ]
 
     story_id: Optional[str] = Field(
@@ -1041,9 +1038,9 @@ class CharacterContextElement(BaseContextElement):
 
     type: Literal[
         ContextType.CHARACTER_PROFILE,
-        ContextType.CHARACTER_DIALOGUE,
-        ContextType.CHARACTER_MOTIVATION,
-        ContextType.CHARACTER_RELATIONSHIP
+        ContextType.CHARACTER_RELATIONSHIP,
+        ContextType.CHARACTER_MEMORY,
+        ContextType.CHARACTER_STATE
     ]
 
     character_id: Optional[str] = Field(
@@ -1066,9 +1063,10 @@ class UserContextElement(BaseContextElement):
     """Context elements for user-provided information."""
 
     type: Literal[
-        ContextType.USER_REQUEST,
+        ContextType.USER_PREFERENCE,
         ContextType.USER_FEEDBACK,
-        ContextType.USER_PREFERENCE
+        ContextType.USER_REQUEST,
+        ContextType.USER_INSTRUCTION
     ]
 
     user_id: Optional[str] = Field(
@@ -1087,7 +1085,8 @@ class PhaseContextElement(BaseContextElement):
 
     type: Literal[
         ContextType.PHASE_INSTRUCTION,
-        ContextType.PHASE_CONSTRAINT
+        ContextType.PHASE_OUTPUT,
+        ContextType.PHASE_GUIDANCE
     ]
 
     target_phase: ComposePhase = Field(
