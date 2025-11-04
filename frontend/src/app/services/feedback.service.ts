@@ -115,9 +115,14 @@ export class FeedbackService {
   }
 
   /**
-   * Request rater feedback
+   * Request rater feedback with streaming support
    */
-  requestRaterFeedback(story: Story, rater: Rater, chapterNumber: number): Observable<boolean> {
+  requestRaterFeedback(
+    story: Story, 
+    rater: Rater, 
+    chapterNumber: number,
+    onProgress?: (progress: { phase: string; message: string; progress: number }) => void
+  ): Observable<boolean> {
     const requestId = `rater_${rater.id}_${chapterNumber}`;
     
     // Add to pending requests
@@ -126,7 +131,7 @@ export class FeedbackService {
     // Get plot point for the chapter
     const plotPoint = this.getPlotPointForChapter(story, chapterNumber);
 
-    return this.generationService.requestRaterFeedback(story, rater, plotPoint).pipe(
+    return this.generationService.requestRaterFeedback(story, rater, plotPoint, onProgress).pipe(
       map(response => {
         // Convert response to enhanced feedback items
         const enhancedFeedback = this.convertRaterFeedbackToEnhanced(

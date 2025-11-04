@@ -377,7 +377,8 @@ describe('FeedbackService', () => {
         expect(mockGenerationService.requestRaterFeedback).toHaveBeenCalledWith(
           mockStory,
           mockRater,
-          'Test plot point'
+          'Test plot point',
+          undefined  // onProgress callback is optional
         );
         done();
       });

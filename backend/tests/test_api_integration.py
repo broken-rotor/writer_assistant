@@ -53,7 +53,7 @@ class TestAPIIntegration:
 
         # Get rater feedback
         rater_response = client.post("/api/v1/rater-feedback", json=sample_rater_feedback_request)
-        assert rater_response.status_code == 200
+        rater_data = extract_final_result_from_streaming_response(rater_response)
 
         # Generate chapter with feedback
         chapter_response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)

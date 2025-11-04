@@ -1174,15 +1174,17 @@ ${story.plotOutline.content}`;
     }
   }
 
+
+
   /**
    * Request rater feedback using structured context with streaming support
    */
-  requestRaterFeedbackWithStreaming(
+  requestRaterFeedback(
     story: Story,
     rater: Rater,
     plotPoint: string,
     onProgress?: (progress: { phase: string; message: string; progress: number }) => void,
-    _options: { validate?: boolean; optimize?: boolean } = {}
+    options: { validate?: boolean; optimize?: boolean } = {}
   ): Observable<StructuredRaterFeedbackResponse> {
     try {
       // Build structured request using ContextBuilderService
@@ -1277,83 +1279,6 @@ ${story.plotOutline.content}`;
       });
     } catch (error) {
       throw new Error(`Failed to request streaming rater feedback: ${error}`);
-    }
-  }
-
-  /**
-   * Request rater feedback using structured context (legacy method)
-   */
-  requestRaterFeedback(
-    story: Story,
-    rater: Rater,
-    plotPoint: string,
-    options: { validate?: boolean; optimize?: boolean } = {}
-  ): Observable<StructuredRaterFeedbackResponse> {
-    try {
-      // Build structured request using ContextBuilderService
-      const systemPromptsResult = this.contextBuilderService.buildSystemPromptsContext(story);
-      const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
-      const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
-      const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
-
-      // Check if context building was successful
-      if (!systemPromptsResult.success || !worldbuildingResult.success || 
-          !storySummaryResult.success || !chaptersResult.success) {
-        throw new Error('Failed to build required context for structured rater feedback request');
-      }
-
-      // Build structured request
-      let structuredRequest: StructuredRaterFeedbackRequest = {
-        systemPrompts: {
-          mainPrefix: systemPromptsResult.data!.mainPrefix,
-          mainSuffix: systemPromptsResult.data!.mainSuffix
-        },
-        worldbuilding: {
-          content: worldbuildingResult.data!.content,
-          lastModified: new Date(),
-          wordCount: worldbuildingResult.data!.content.split(/\s+/).length
-        },
-        storySummary: {
-          summary: storySummaryResult.data!.summary,
-          lastModified: new Date(),
-          wordCount: storySummaryResult.data!.summary.split(/\s+/).length
-        },
-        previousChapters: chaptersResult.data!.chapters.map(ch => ({
-          number: ch.number,
-          title: ch.title,
-          content: ch.content,
-          wordCount: ch.content.split(/\s+/).length
-        })),
-        raterPrompt: rater.systemPrompt,
-        raterName: rater.name,
-        plotContext: {
-          plotPoint: plotPoint,
-          plotOutline: story.plotOutline?.content,
-          plotOutlineStatus: story.plotOutline?.status
-        },
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
-        }
-      };
-
-      // Validate request if requested
-      if (options.validate !== false) {
-        const validationResult = this.requestValidatorService.validateRaterFeedbackRequest(structuredRequest);
-        if (!validationResult.isValid) {
-          throw new Error(`Request validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
-        }
-      }
-
-      // Optimize request if requested
-      if (options.optimize !== false) {
-        const optimizationResult = this.requestOptimizerService.optimizeRaterFeedbackRequest(structuredRequest);
-        structuredRequest = optimizationResult.optimizedRequest;
-      }
-
-      return this.apiService.requestRaterFeedback(structuredRequest);
-    } catch (error) {
-      throw new Error(`Failed to request structured rater feedback: ${error}`);
     }
   }
 

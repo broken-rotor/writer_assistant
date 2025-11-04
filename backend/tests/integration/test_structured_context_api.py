@@ -205,7 +205,21 @@ class TestStructuredContextAPI:
         response = client.post("/api/v1/rater-feedback", json=request_data)
         
         assert response.status_code == 200
-        data = response.json()
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+        
+        # Parse streaming response to get final result
+        events = []
+        for line in response.text.split('\n'):
+            if line.startswith('data: '):
+                try:
+                    event_data = json.loads(line[6:])
+                    events.append(event_data)
+                except json.JSONDecodeError:
+                    pass
+        
+        result_event = next((e for e in events if e.get('type') == 'result'), None)
+        assert result_event is not None
+        data = result_event['data']
         
         # Validate response structure
         assert "feedback" in data

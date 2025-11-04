@@ -293,7 +293,8 @@ describe('FeedbackSidebarComponent', () => {
     expect(mockFeedbackService.requestRaterFeedback).toHaveBeenCalledWith(
       mockStory,
       mockRater,
-      mockConfig.chapterNumber
+      mockConfig.chapterNumber,
+      jasmine.any(Function)  // onProgress callback
     );
   });
 

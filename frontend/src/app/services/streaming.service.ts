@@ -115,6 +115,6 @@ export class StreamingService {
     requestData: any,
     onProgress?: (progress: StreamingProgress) => void
   ): Observable<any> {
-    return this.createSSEConnection('/rater-feedback/stream', requestData, onProgress);
+    return this.createSSEConnection('/rater-feedback', requestData, onProgress);
   }
 }
