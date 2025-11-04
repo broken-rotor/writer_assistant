@@ -28,8 +28,7 @@ from app.models.context_models import (
     AgentType,
     ComposePhase,
     SummarizationRule,
-    ContextMetadata,
-    LegacyContextMapping
+    ContextMetadata
 )
 from app.models.generation_models import SystemPrompts, PhaseContext, ConversationMessage
 
@@ -48,20 +47,14 @@ class ContextAdapter:
         story_summary: Optional[str] = None,
         phase_context: Optional[PhaseContext] = None,
         compose_phase: Optional[str] = None
-    ) -> Tuple[StructuredContextContainer, LegacyContextMapping]:
+    ) -> StructuredContextContainer:
         """
         Convert legacy context fields to structured context container.
 
         Returns:
-            Tuple of (StructuredContextContainer, LegacyContextMapping)
+            StructuredContextContainer
         """
         elements = []
-        mapping = LegacyContextMapping(
-            system_prompts_mapping={},
-            worldbuilding_elements=[],
-            story_summary_elements=[],
-            phase_context_elements=[]
-        )
 
         # Convert SystemPrompts
         if system_prompts:
@@ -97,12 +90,11 @@ class ContextAdapter:
             }
         )
 
-        return container, mapping
+        return container
 
     def structured_to_legacy(
         self,
-        container: StructuredContextContainer,
-        mapping: Optional[LegacyContextMapping] = None
+        container: StructuredContextContainer
     ) -> Tuple[SystemPrompts, str, str, PhaseContext]:
         """
         Convert structured context container back to legacy format.
@@ -111,16 +103,16 @@ class ContextAdapter:
             Tuple of (SystemPrompts, worldbuilding, story_summary, PhaseContext)
         """
         # Convert to SystemPrompts
-        system_prompts = self._extract_system_prompts(container, mapping)
+        system_prompts = self._extract_system_prompts(container)
 
         # Convert to worldbuilding string
-        worldbuilding = self._extract_worldbuilding(container, mapping)
+        worldbuilding = self._extract_worldbuilding(container)
 
         # Convert to story summary string
-        story_summary = self._extract_story_summary(container, mapping)
+        story_summary = self._extract_story_summary(container)
 
         # Convert to PhaseContext
-        phase_context = self._extract_phase_context(container, mapping)
+        phase_context = self._extract_phase_context(container)
 
         return system_prompts, worldbuilding, story_summary, phase_context
 
@@ -352,8 +344,7 @@ class ContextAdapter:
 
     def _extract_system_prompts(
         self,
-        container: StructuredContextContainer,
-        mapping: Optional[LegacyContextMapping] = None
+        container: StructuredContextContainer
     ) -> SystemPrompts:
         """Extract SystemPrompts from structured context."""
         system_prompts = SystemPrompts()
@@ -375,8 +366,7 @@ class ContextAdapter:
 
     def _extract_worldbuilding(
         self,
-        container: StructuredContextContainer,
-        mapping: Optional[LegacyContextMapping] = None
+        container: StructuredContextContainer
     ) -> str:
         """Extract worldbuilding string from structured context."""
         wb_elements = container.get_elements_by_type(ContextType.WORLD_BUILDING)
@@ -393,8 +383,7 @@ class ContextAdapter:
 
     def _extract_story_summary(
         self,
-        container: StructuredContextContainer,
-        mapping: Optional[LegacyContextMapping] = None
+        container: StructuredContextContainer
     ) -> str:
         """Extract story summary string from structured context."""
         summary_elements = container.get_elements_by_type(ContextType.STORY_SUMMARY)
@@ -411,8 +400,7 @@ class ContextAdapter:
 
     def _extract_phase_context(
         self,
-        container: StructuredContextContainer,
-        mapping: Optional[LegacyContextMapping] = None
+        container: StructuredContextContainer
     ) -> PhaseContext:
         """Extract PhaseContext from structured context."""
         phase_context = PhaseContext()

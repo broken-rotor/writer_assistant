@@ -405,26 +405,6 @@ class StructuredContextContainer(BaseModel):
         return v
 
 
-# Legacy Compatibility Models
-class LegacyContextMapping(BaseModel):
-    """Mapping between legacy fields and structured context elements."""
-
-    system_prompts_mapping: Dict[str, str] = Field(
-        description="Mapping from SystemPrompts fields to context element IDs"
-    )
-
-    worldbuilding_elements: List[str] = Field(
-        description="List of context element IDs that comprise worldbuilding"
-    )
-
-    story_summary_elements: List[str] = Field(
-        description="List of context element IDs that comprise story summary"
-    )
-
-    phase_context_elements: List[str] = Field(
-        description="List of context element IDs that comprise phase context"
-    )
-
 
 # Context Processing Configuration
 class ContextProcessingConfig(BaseModel):

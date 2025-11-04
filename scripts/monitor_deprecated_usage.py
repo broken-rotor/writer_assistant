@@ -120,12 +120,7 @@ class DeprecatedUsageMonitor:
                 "removal_phase": 2
             },
             
-            # Classes
-            "LegacyContextMapping": {
-                "type": "class",
-                "file": "context_models.py",
-                "removal_phase": 4
-            }
+            # Classes (removed)
         }
     
     def _initialize_usage_patterns(self) -> Dict[str, List[str]]:
@@ -169,11 +164,7 @@ class DeprecatedUsageMonitor:
                 r'\.process_legacy_context_for_chapter\('
             ],
             
-            # Class usage patterns
-            "LegacyContextMapping": [
-                r'LegacyContextMapping\(',
-                r'from.*context_models.*import.*LegacyContextMapping'
-            ]
+            # Class usage patterns (removed)
         }
     
     def analyze_log_files(self, days_back: int = 7) -> Dict[str, UsageMetric]:
@@ -456,4 +447,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

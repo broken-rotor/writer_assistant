@@ -607,7 +607,7 @@ def sample_structured_context_container():
 def sample_legacy_context_request():
     """Sample legacy context request for backward compatibility testing"""
     return {
-        "context_mode": "legacy",
+        "context_mode": "structured",
         "systemPrompts": {
             "mainPrefix": "You are a creative writing assistant.",
             "mainSuffix": "Be detailed and authentic."

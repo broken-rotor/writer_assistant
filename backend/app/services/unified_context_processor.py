@@ -145,7 +145,7 @@ class UnifiedContextResult:
     system_prompt: str
     user_message: str
     context_metadata: ContextMetadata
-    processing_mode: Literal["legacy", "structured", "hybrid"]
+    processing_mode: Literal["structured"]
     optimization_applied: bool
     total_tokens: int
     compression_ratio: float = 1.0
@@ -170,20 +170,11 @@ class UnifiedContextProcessor:
 
     def process_generate_chapter_context(
         self,
-        # Legacy fields
-        system_prompts: Optional[SystemPrompts] = None,
-        worldbuilding: Optional[str] = None,
-        story_summary: Optional[str] = None,
-        characters: Optional[List[CharacterInfo]] = None,
-        plot_point: Optional[str] = None,
-        incorporated_feedback: Optional[List[FeedbackItem]] = None,
-        previous_chapters: Optional[List[ChapterInfo]] = None,
         # Phase context
         compose_phase: Optional[ComposePhase] = None,
         phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
-        context_mode: Literal["legacy", "structured", "hybrid"] = "legacy",
         context_processing_config: Optional[Dict[str, Any]] = None
     ) -> UnifiedContextResult:
         """
@@ -204,7 +195,7 @@ class UnifiedContextProcessor:
                         f"Cache hit for generate_chapter: {cache_key}")
                     return self._cache[cache_key]
 
-            if context_mode == "structured" and structured_context:
+            if structured_context:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
@@ -212,36 +203,8 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config,
                     endpoint_strategy="full_narrative_assembly"
                 )
-            elif context_mode == "hybrid":
-                result = self._process_hybrid_context(
-                    # Legacy params
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    characters=characters,
-                    plot_point=plot_point,
-                    incorporated_feedback=incorporated_feedback,
-                    previous_chapters=previous_chapters,
-                    compose_phase=compose_phase,
-                    phase_context=phase_context,
-                    # Structured params
-                    structured_context=structured_context,
-                    agent_type=AgentType.WRITER,
-                    endpoint_strategy="full_narrative_assembly",
-                    context_processing_config=context_processing_config
-                )
-            else:  # legacy mode
-                result = self._process_legacy_context_fallback(
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    characters=characters or [],
-                    plot_point=plot_point or "",
-                    incorporated_feedback=incorporated_feedback or [],
-                    previous_chapters=previous_chapters,
-                    compose_phase=compose_phase,
-                    phase_context=phase_context
-                )
+            else:
+                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -256,32 +219,15 @@ class UnifiedContextProcessor:
                 f"Error in process_generate_chapter_context: {
                     str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_fallback(
-                system_prompts=system_prompts,
-                worldbuilding=worldbuilding,
-                story_summary=story_summary,
-                characters=characters or [],
-                plot_point=plot_point or "",
-                incorporated_feedback=incorporated_feedback or [],
-                previous_chapters=previous_chapters,
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
+            raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
     def process_character_feedback_context(
         self,
-        # Legacy fields
-        system_prompts: Optional[SystemPrompts] = None,
-        worldbuilding: Optional[str] = None,
-        story_summary: Optional[str] = None,
-        character: Optional[CharacterInfo] = None,
-        plot_point: Optional[str] = None,
         # Phase context
         compose_phase: Optional[ComposePhase] = None,
         phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
-        context_mode: Literal["legacy", "structured", "hybrid"] = "legacy",
         context_processing_config: Optional[Dict[str, Any]] = None
     ) -> UnifiedContextResult:
         """
@@ -302,7 +248,7 @@ class UnifiedContextProcessor:
                         f"Cache hit for character_feedback: {cache_key}")
                     return self._cache[cache_key]
 
-            if context_mode == "structured" and structured_context:
+            if structured_context:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.CHARACTER,
@@ -310,32 +256,8 @@ class UnifiedContextProcessor:
                     context_processing_config=context_processing_config,
                     endpoint_strategy="character_specific_prioritization"
                 )
-            elif context_mode == "hybrid":
-                result = self._process_hybrid_context(
-                    # Legacy params
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    character=character,
-                    plot_point=plot_point,
-                    compose_phase=compose_phase,
-                    phase_context=phase_context,
-                    # Structured params
-                    structured_context=structured_context,
-                    agent_type=AgentType.CHARACTER,
-                    endpoint_strategy="character_specific_prioritization",
-                    context_processing_config=context_processing_config
-                )
-            else:  # legacy mode
-                result = self._process_legacy_context_fallback(
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    character=character,
-                    plot_point=plot_point or "",
-                    compose_phase=compose_phase,
-                    phase_context=phase_context
-                )
+            else:
+                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -345,33 +267,16 @@ class UnifiedContextProcessor:
 
         except Exception as e:
             logger.error(
-                f"Error in process_character_feedback_context: {
-                    str(e)}")
-            # Fallback to legacy processing
-            return self._process_legacy_context_fallback(
-                system_prompts=system_prompts,
-                worldbuilding=worldbuilding,
-                story_summary=story_summary,
-                character=character,
-                plot_point=plot_point or "",
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
+                f"Error in process_character_feedback_context: {str(e)}")
+            raise
 
     def process_editor_review_context(
         self,
-        # Legacy fields
-        system_prompts: Optional[SystemPrompts] = None,
-        worldbuilding: Optional[str] = None,
-        story_summary: Optional[str] = None,
-        previous_chapters: Optional[List[ChapterInfo]] = None,
-        plot_point: Optional[str] = None,
         # Phase context
         compose_phase: Optional[ComposePhase] = None,
         phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
-        context_mode: Literal["legacy", "structured", "hybrid"] = "legacy",
         context_processing_config: Optional[Dict[str, Any]] = None
     ) -> UnifiedContextResult:
         """
@@ -391,7 +296,7 @@ class UnifiedContextProcessor:
                     logger.debug(f"Cache hit for editor_review: {cache_key}")
                     return self._cache[cache_key]
 
-            if context_mode == "structured" and structured_context:
+            if structured_context:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.EDITOR,
@@ -400,31 +305,9 @@ class UnifiedContextProcessor:
                     endpoint_strategy="review_focused_filtering"
                 )
             elif context_mode == "hybrid":
-                result = self._process_hybrid_context(
-                    # Legacy params
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    previous_chapters=previous_chapters,
-                    plot_point=plot_point,
-                    compose_phase=compose_phase,
-                    phase_context=phase_context,
-                    # Structured params
-                    structured_context=structured_context,
-                    agent_type=AgentType.EDITOR,
-                    endpoint_strategy="review_focused_filtering",
-                    context_processing_config=context_processing_config
-                )
-            else:  # legacy mode
-                result = self._process_legacy_context_fallback(
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    previous_chapters=previous_chapters or [],
-                    plot_point=plot_point or "",
-                    compose_phase=compose_phase,
-                    phase_context=phase_context
-                )
+                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
+            else:
+                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -435,32 +318,18 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_editor_review_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_fallback(
-                system_prompts=system_prompts,
-                worldbuilding=worldbuilding,
-                story_summary=story_summary,
-                previous_chapters=previous_chapters or [],
-                plot_point=plot_point or "",
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
+            raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
     def process_rater_feedback_context(
         self,
-        # Legacy fields
-        system_prompts: Optional[SystemPrompts] = None,
+        # Legacy fields (kept for backward compatibility in method signature)
         rater_prompt: Optional[str] = None,
-        worldbuilding: Optional[str] = None,
-        story_summary: Optional[str] = None,
-        previous_chapters: Optional[List[ChapterInfo]] = None,
         plot_point: Optional[str] = None,
-        incorporated_feedback: Optional[List[FeedbackItem]] = None,
         # Phase context
         compose_phase: Optional[ComposePhase] = None,
         phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
-        context_mode: Literal["legacy", "structured", "hybrid"] = "legacy",
         context_processing_config: Optional[Dict[str, Any]] = None
     ) -> UnifiedContextResult:
         """
@@ -480,7 +349,7 @@ class UnifiedContextProcessor:
                     logger.debug(f"Cache hit for rater_feedback: {cache_key}")
                     return self._cache[cache_key]
 
-            if context_mode == "structured" and structured_context:
+            if structured_context:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.RATER,
@@ -489,35 +358,9 @@ class UnifiedContextProcessor:
                     endpoint_strategy="rater_specific_preparation"
                 )
             elif context_mode == "hybrid":
-                result = self._process_hybrid_context(
-                    # Legacy params
-                    system_prompts=system_prompts,
-                    rater_prompt=rater_prompt,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    previous_chapters=previous_chapters,
-                    plot_point=plot_point,
-                    incorporated_feedback=incorporated_feedback,
-                    compose_phase=compose_phase,
-                    phase_context=phase_context,
-                    # Structured params
-                    structured_context=structured_context,
-                    agent_type=AgentType.RATER,
-                    endpoint_strategy="rater_specific_preparation",
-                    context_processing_config=context_processing_config
-                )
-            else:  # legacy mode
-                result = self._process_legacy_context_fallback(
-                    system_prompts=system_prompts,
-                    rater_prompt=rater_prompt or "",
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    previous_chapters=previous_chapters or [],
-                    plot_point=plot_point or "",
-                    incorporated_feedback=incorporated_feedback or [],
-                    compose_phase=compose_phase,
-                    phase_context=phase_context
-                )
+                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
+            else:
+                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -528,17 +371,7 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_rater_feedback_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_fallback(
-                system_prompts=system_prompts,
-                rater_prompt=rater_prompt or "",
-                worldbuilding=worldbuilding,
-                story_summary=story_summary,
-                previous_chapters=previous_chapters or [],
-                plot_point=plot_point or "",
-                incorporated_feedback=incorporated_feedback or [],
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
+            raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
     def process_modify_chapter_context(
         self,
@@ -554,7 +387,6 @@ class UnifiedContextProcessor:
         phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
-        context_mode: Literal["legacy", "structured", "hybrid"] = "legacy",
         context_processing_config: Optional[Dict[str, Any]] = None
     ) -> UnifiedContextResult:
         """
@@ -574,7 +406,7 @@ class UnifiedContextProcessor:
                     logger.debug(f"Cache hit for modify_chapter: {cache_key}")
                     return self._cache[cache_key]
 
-            if context_mode == "structured" and structured_context:
+            if structured_context:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
@@ -583,33 +415,9 @@ class UnifiedContextProcessor:
                     endpoint_strategy="change_focused_management"
                 )
             elif context_mode == "hybrid":
-                result = self._process_hybrid_context(
-                    # Legacy params
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    characters=characters,
-                    original_chapter=original_chapter,
-                    modification_request=modification_request,
-                    compose_phase=compose_phase,
-                    phase_context=phase_context,
-                    # Structured params
-                    structured_context=structured_context,
-                    agent_type=AgentType.WRITER,
-                    endpoint_strategy="change_focused_management",
-                    context_processing_config=context_processing_config
-                )
-            else:  # legacy mode
-                result = self._process_legacy_context_fallback(
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    characters=characters or [],
-                    current_chapter=original_chapter or "",
-                    user_request=modification_request or "",
-                    compose_phase=compose_phase,
-                    phase_context=phase_context
-                )
+                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
+            else:
+                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -620,16 +428,7 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_modify_chapter_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_fallback(
-                system_prompts=system_prompts,
-                worldbuilding=worldbuilding,
-                story_summary=story_summary,
-                characters=characters or [],
-                current_chapter=original_chapter or "",
-                user_request=modification_request or "",
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
+            raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
     def process_flesh_out_context(
         self,
@@ -644,7 +443,6 @@ class UnifiedContextProcessor:
         phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
-        context_mode: Literal["legacy", "structured", "hybrid"] = "legacy",
         context_processing_config: Optional[Dict[str, Any]] = None
     ) -> UnifiedContextResult:
         """
@@ -664,7 +462,7 @@ class UnifiedContextProcessor:
                     logger.debug(f"Cache hit for flesh_out: {cache_key}")
                     return self._cache[cache_key]
 
-            if context_mode == "structured" and structured_context:
+            if structured_context:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
@@ -673,31 +471,9 @@ class UnifiedContextProcessor:
                     endpoint_strategy="expansion_specific_assembly"
                 )
             elif context_mode == "hybrid":
-                result = self._process_hybrid_context(
-                    # Legacy params
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    characters=characters,
-                    outline_section=outline_section,
-                    compose_phase=compose_phase,
-                    phase_context=phase_context,
-                    # Structured params
-                    structured_context=structured_context,
-                    agent_type=AgentType.WRITER,
-                    endpoint_strategy="expansion_specific_assembly",
-                    context_processing_config=context_processing_config
-                )
-            else:  # legacy mode
-                result = self._process_legacy_context_fallback(
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    characters=characters or [],
-                    text_to_flesh_out=outline_section or "",
-                    compose_phase=compose_phase,
-                    phase_context=phase_context
-                )
+                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
+            else:
+                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -708,15 +484,7 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error in process_flesh_out_context: {str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_fallback(
-                system_prompts=system_prompts,
-                worldbuilding=worldbuilding,
-                story_summary=story_summary,
-                characters=characters or [],
-                text_to_flesh_out=outline_section or "",
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
+            raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
     def process_character_generation_context(
         self,
@@ -731,7 +499,6 @@ class UnifiedContextProcessor:
         phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
-        context_mode: Literal["legacy", "structured", "hybrid"] = "legacy",
         context_processing_config: Optional[Dict[str, Any]] = None
     ) -> UnifiedContextResult:
         """
@@ -761,31 +528,10 @@ class UnifiedContextProcessor:
                     endpoint_strategy="character_generation_prioritization"
                 )
             elif context_mode == "hybrid":
-                result = self._process_hybrid_context(
-                    structured_context=structured_context,
-                    agent_type=AgentType.WRITER,
-                    endpoint_strategy="character_generation_prioritization",
-                    context_processing_config=context_processing_config,
-                    # Legacy params as kwargs
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    basic_bio=basic_bio,
-                    existing_characters=existing_characters,
-                    compose_phase=compose_phase,
-                    phase_context=phase_context
-                )
+                raise ValueError("Hybrid context processing is no longer supported. Please provide structured_context.")
             else:
                 # Legacy mode processing
-                result = self._process_legacy_context_fallback(
-                    system_prompts=system_prompts,
-                    worldbuilding=worldbuilding,
-                    story_summary=story_summary,
-                    characters=existing_characters or [],
-                    basic_bio=basic_bio or "",
-                    compose_phase=compose_phase,
-                    phase_context=phase_context
-                )
+                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -798,15 +544,7 @@ class UnifiedContextProcessor:
                 f"Error in process_character_generation_context: {
                     str(e)}")
             # Fallback to legacy processing
-            return self._process_legacy_context_fallback(
-                system_prompts=system_prompts,
-                worldbuilding=worldbuilding,
-                story_summary=story_summary,
-                characters=existing_characters or [],
-                basic_bio=basic_bio or "",
-                compose_phase=compose_phase,
-                phase_context=phase_context
-            )
+            raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
     def _process_structured_context(
         self,
@@ -871,58 +609,6 @@ class UnifiedContextProcessor:
 
         except Exception as e:
             logger.error(f"Error processing structured context: {str(e)}")
-            raise
-
-    def _process_hybrid_context(
-        self,
-        structured_context: StructuredContextContainer,
-        agent_type: AgentType,
-        endpoint_strategy: str,
-        context_processing_config: Optional[Dict[str, Any]],
-        **legacy_params
-    ) -> UnifiedContextResult:
-        """Process hybrid context using both legacy and structured data."""
-        try:
-            # Convert legacy context to structured format
-            legacy_container, mapping = self.context_adapter.legacy_to_structured(
-                system_prompts=legacy_params.get("system_prompts"),
-                worldbuilding=legacy_params.get("worldbuilding"),
-                story_summary=legacy_params.get("story_summary"),
-                phase_context=legacy_params.get("phase_context"),
-                compose_phase=legacy_params.get("compose_phase")
-            )
-
-            # Convert API structured context to legacy format for processing
-            legacy_structured_context = convert_api_to_legacy_context(
-                structured_context)
-
-            # Merge legacy and structured contexts
-            merged_elements = list(
-                legacy_structured_context.elements) + list(legacy_container.elements)
-            merged_container = LegacyStructuredContextContainer(
-                elements=merged_elements,
-                relationships=legacy_structured_context.relationships +
-                legacy_container.relationships,
-                global_metadata={
-                    **legacy_structured_context.global_metadata,
-                    **legacy_container.global_metadata,
-                    "processing_mode": "hybrid",
-                    "legacy_mapping": mapping.model_dump()
-                }
-            )
-
-            # Process the merged context
-            return self._process_structured_context(
-                structured_context=merged_container,
-                agent_type=agent_type,
-                compose_phase=legacy_params.get(
-                    "compose_phase", ComposePhase.CHAPTER_DETAIL),
-                context_processing_config=context_processing_config,
-                endpoint_strategy=endpoint_strategy
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing hybrid context: {str(e)}")
             raise
 
     def _parse_formatted_context(
@@ -1003,144 +689,6 @@ class UnifiedContextProcessor:
             "cache_size": len(self._cache),
             "cache_enabled": self.enable_caching
         }
-
-    def _process_legacy_context_fallback(
-        self,
-        system_prompts: Optional[SystemPrompts] = None,
-        worldbuilding: Optional[str] = None,
-        story_summary: Optional[str] = None,
-        characters: Optional[List[CharacterInfo]] = None,
-        character: Optional[CharacterInfo] = None,
-        plot_point: Optional[str] = None,
-        previous_chapters: Optional[List[ChapterInfo]] = None,
-        chapter_to_review: Optional[str] = None,
-        current_chapter: Optional[str] = None,
-        user_request: Optional[str] = None,
-        text_to_flesh_out: Optional[str] = None,
-        context: Optional[str] = None,
-        rater_prompt: Optional[str] = None,
-        incorporated_feedback: Optional[List[FeedbackItem]] = None,
-        compose_phase: Optional[ComposePhase] = None,
-        phase_context: Optional[PhaseContext] = None
-    ) -> UnifiedContextResult:
-        """
-        Simple fallback for legacy context processing when structured processing fails.
-
-        This creates a basic context without advanced optimization, ensuring the API
-        continues to function even when structured processing encounters errors.
-        """
-        logger.warning(
-            "Using legacy context fallback - structured processing failed")
-
-        # Build a simple system prompt
-        system_parts = []
-
-        if system_prompts:
-            if system_prompts.mainPrefix:
-                system_parts.append(system_prompts.mainPrefix)
-            if system_prompts.assistantPrompt:
-                system_parts.append(system_prompts.assistantPrompt)
-            if system_prompts.editorPrompt:
-                system_parts.append(system_prompts.editorPrompt)
-            if system_prompts.mainSuffix:
-                system_parts.append(system_prompts.mainSuffix)
-
-        if worldbuilding:
-            system_parts.append(f"World Context: {worldbuilding}")
-
-        if story_summary:
-            system_parts.append(f"Story Summary: {story_summary}")
-
-        # Build user message
-        user_parts = []
-
-        if plot_point:
-            user_parts.append(f"Plot Point: {plot_point}")
-
-        if character:
-            user_parts.append(
-                f"Character: {character.name} - {character.basicBio}")
-
-        if characters:
-            char_info = []
-            for char in characters[:3]:  # Limit to first 3 characters
-                char_info.append(f"{char.name}: {char.basicBio}")
-            if char_info:
-                user_parts.append(f"Characters: {'; '.join(char_info)}")
-
-        if previous_chapters:
-            chapter_summaries = []
-            for i, chapter in enumerate(
-                    previous_chapters[-2:]):  # Last 2 chapters
-                if hasattr(chapter, 'content') and chapter.content:
-                    summary = chapter.content[:200] + "..." if len(
-                        chapter.content) > 200 else chapter.content
-                    chapter_summaries.append(f"Chapter {i + 1}: {summary}")
-            if chapter_summaries:
-                user_parts.append(
-                    f"Previous Chapters: {
-                        '; '.join(chapter_summaries)}")
-
-        if chapter_to_review:
-            review_text = chapter_to_review[:500] + "..." if len(
-                chapter_to_review) > 500 else chapter_to_review
-            user_parts.append(f"Chapter to Review: {review_text}")
-
-        if current_chapter:
-            current_text = current_chapter[:500] + \
-                "..." if len(current_chapter) > 500 else current_chapter
-            user_parts.append(f"Current Chapter: {current_text}")
-
-        if user_request:
-            user_parts.append(f"User Request: {user_request}")
-
-        if text_to_flesh_out:
-            user_parts.append(f"Text to Expand: {text_to_flesh_out}")
-
-        if context:
-            user_parts.append(f"Context: {context}")
-
-        if rater_prompt:
-            user_parts.append(f"Rating Instructions: {rater_prompt}")
-
-        if incorporated_feedback:
-            feedback_items = []
-            # Limit to first 3 feedback items
-            for feedback in incorporated_feedback[:3]:
-                if hasattr(feedback, 'content') and feedback.content:
-                    feedback_items.append(feedback.content[:100])
-            if feedback_items:
-                user_parts.append(
-                    f"Feedback to Incorporate: {
-                        '; '.join(feedback_items)}")
-
-        # Create basic metadata
-        context_metadata = ContextMetadata(
-            total_elements=1,
-            processing_applied=False,
-            processing_mode="legacy",
-            optimization_level="none",
-            compression_ratio=1.0,
-            processing_time_ms=0,
-            created_at=datetime.now(timezone.utc).isoformat()
-        )
-
-        return UnifiedContextResult(
-            system_prompt="\n\n".join(
-                system_parts) if system_parts else "You are a helpful writing assistant.",
-            user_message="\n\n".join(
-                user_parts) if user_parts else "Please help with this writing task.",
-            context_metadata=context_metadata,
-            processing_mode="legacy",
-            optimization_applied=False,
-            total_tokens=len(
-                " ".join(
-                    system_parts +
-                    user_parts).split()) if (
-                system_parts or user_parts) else 10,
-            compression_ratio=1.0
-        )
-
 
 # Global instance
 _unified_context_processor = None
