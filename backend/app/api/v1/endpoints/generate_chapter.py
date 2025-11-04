@@ -47,15 +47,15 @@ async def generate_chapter(request: GenerateChapterRequest):
             # Log context processing results
             if context_result.optimization_applied:
                 logger.info(
-                    f"Context processing applied ({
-                        context_result.processing_mode} mode): " f"{
-                        context_result.total_tokens} tokens, " f"compression ratio: {
-                        context_result.compression_ratio:.2f}")
+                    "Context processing applied ("
+                    f"{context_result.processing_mode} mode): "
+                    f"{context_result.total_tokens} tokens, "
+                    f"compression ratio: {context_result.compression_ratio:.2f}")
             else:
                 logger.debug(
-                    f"No context optimization needed ({
-                        context_result.processing_mode} mode): " f"{
-                        context_result.total_tokens} tokens")
+                    "No context optimization needed ("
+                    f"{context_result.processing_mode} mode): "
+                    f"{context_result.total_tokens} tokens")
 
             # Phase 2: Generation
             yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating chapter content...', 'progress': 60})}\n\n"

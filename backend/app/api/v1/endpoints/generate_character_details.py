@@ -48,15 +48,15 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
             # Log context processing results
             if context_result.optimization_applied:
                 logger.info(
-                    f"Character generation context processing applied ({
-                        context_result.processing_mode} mode): " f"{
-                        context_result.total_tokens} tokens, " f"compression ratio: {
-                        context_result.compression_ratio:.2f}")
+                    "Character generation context processing applied ("
+                    f"{context_result.processing_mode} mode): "
+                    f"{context_result.total_tokens} tokens, "
+                    f"compression ratio: {context_result.compression_ratio:.2f}")
             else:
                 logger.debug(
-                    f"No character generation context optimization needed ({
-                        context_result.processing_mode} mode): " f"{
-                        context_result.total_tokens} tokens")
+                    "No character generation context optimization needed ("
+                    f"{context_result.processing_mode} mode): "
+                    f"{context_result.total_tokens} tokens")
 
             # Phase 2: Analyzing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing character bio and existing characters...', 'progress': 40})}\n\n"
@@ -136,9 +136,9 @@ Generate complete character details in JSON format:
                     gender="",
                     sexualPreference="",
                     age=30,
-                    physicalAppearance=f"A person matching the description: {
-                        request.basicBio[
-                            :100]}",
+                    physicalAppearance=(
+                        "A person matching the description: "
+                        f"{request.basicBio[:100]}"),
                     usualClothing="Practical, comfortable clothing",
                     personality=request.basicBio,
                     motivations="To achieve their goals",
