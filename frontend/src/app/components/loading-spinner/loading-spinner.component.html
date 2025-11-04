@@ -2,8 +2,17 @@
   <div class="loading-content">
     <div class="spinner"></div>
     <div class="loading-text">
+      <p class="loading-phase" *ngIf="loadingState.phase">{{ loadingState.phase }}</p>
       <p class="loading-message" *ngIf="loadingState.message">{{ loadingState.message }}</p>
-      <p class="loading-message default" *ngIf="!loadingState.message">Processing...</p>
+      <p class="loading-message default" *ngIf="!loadingState.message && !loadingState.phase">Processing...</p>
+      
+      <!-- Progress bar -->
+      <div class="progress-container" *ngIf="loadingState.progress !== undefined">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="loadingState.progress"></div>
+        </div>
+        <span class="progress-text">{{ loadingState.progress }}%</span>
+      </div>
     </div>
   </div>
 </div>
