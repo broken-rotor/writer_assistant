@@ -253,6 +253,7 @@ describe('GenerationService', () => {
         data: {
           characters: [],
           totalCharacters: 0,
+          visibleCharacters: 0,
           lastUpdated: new Date()
         },
         errors: undefined,
