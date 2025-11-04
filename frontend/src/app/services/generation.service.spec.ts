@@ -270,10 +270,13 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.streamRaterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotContext: jasmine.objectContaining({
-              plotPoint: 'Enter dungeon'
-            }),
-            raterPrompt: 'Evaluate pacing'
+            plotPoint: 'Enter dungeon',
+            raterPrompt: 'Evaluate pacing',
+            structured_context: jasmine.objectContaining({
+              plotContext: jasmine.objectContaining({
+                plotPoint: 'Enter dungeon'
+              })
+            })
           })
         );
         done();
