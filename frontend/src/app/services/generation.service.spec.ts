@@ -26,7 +26,7 @@ describe('GenerationService', () => {
   beforeEach(() => {
     const spy = jasmine.createSpyObj('ApiService', [
       'requestCharacterFeedback',
-      'requestRaterFeedback',
+      'streamRaterFeedback',
       'generateChapter',
       'modifyChapter',
       'requestEditorReview',
@@ -193,6 +193,15 @@ describe('GenerationService', () => {
         feedback: {
           opinion: 'Good pacing',
           suggestions: []
+        },
+        context_metadata: {
+          requestId: 'test-request-123',
+          processingTime: 1500,
+          tokenUsage: {
+            inputTokens: 50,
+            outputTokens: 50,
+            totalTokens: 100
+          }
         }
       };
 
@@ -248,16 +257,35 @@ describe('GenerationService', () => {
         fromCache: false
       });
 
-      apiServiceSpy.requestRaterFeedback.and.returnValue(of(mockResponse));
+      contextBuilderSpy.buildCharacterContext.and.returnValue({
+        success: true,
+        data: {
+          characters: [],
+          totalCharacters: 0,
+          visibleCharacters: 0,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
+      // Mock streaming response
+      apiServiceSpy.streamRaterFeedback.and.returnValue(of(
+        { type: 'result', data: mockResponse }
+      ));
 
       service.requestRaterFeedback(mockStory, mockRater, 'Enter dungeon').subscribe(response => {
         expect(response).toEqual(mockResponse);
-        expect(apiServiceSpy.requestRaterFeedback).toHaveBeenCalledWith(
+        expect(apiServiceSpy.streamRaterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotContext: jasmine.objectContaining({
-              plotPoint: 'Enter dungeon'
-            }),
-            raterPrompt: 'Evaluate pacing'
+            plotPoint: 'Enter dungeon',
+            raterPrompt: 'Evaluate pacing',
+            structured_context: jasmine.objectContaining({
+              plotContext: jasmine.objectContaining({
+                plotPoint: 'Enter dungeon'
+              })
+            })
           })
         );
         done();

@@ -91,7 +91,7 @@ describe('ApiService', () => {
   });
 
   describe('requestRaterFeedback', () => {
-    it('should send POST request to rater-feedback/structured endpoint', () => {
+    it('should use streaming API and return final result', () => {
       const request: StructuredRaterFeedbackRequest = {
         systemPrompts: {
           mainPrefix: '',
@@ -121,17 +121,24 @@ describe('ApiService', () => {
               priority: 'medium'
             }
           ]
-        }
+        },
+        context_metadata: undefined
       };
+
+      // Mock the streamRaterFeedback method to return streaming events
+      spyOn(service, 'streamRaterFeedback').and.returnValue(of(
+        { type: 'status', phase: 'PROCESSING', message: 'Processing...', progress: 50 },
+        { type: 'result', data: mockResponse }
+      ));
 
       service.requestRaterFeedback(request).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/rater-feedback/structured`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(request);
-      req.flush(mockResponse);
+      expect(service.streamRaterFeedback).toHaveBeenCalledWith(jasmine.objectContaining({
+        raterPrompt: 'Evaluate pacing',
+        plotPoint: 'The hero enters the dungeon'
+      }));
     });
   });
 

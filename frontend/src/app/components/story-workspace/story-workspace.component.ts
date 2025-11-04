@@ -697,7 +697,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.loadingService.show(`Getting feedback from ${rater.name}...`, 'rater-feedback');
 
     // Use streaming version with progress updates
-    this.generationService.requestRaterFeedbackWithStreaming(
+    this.generationService.requestRaterFeedback(
       this.story,
       rater,
       this.story.chapterCreation.plotPoint,

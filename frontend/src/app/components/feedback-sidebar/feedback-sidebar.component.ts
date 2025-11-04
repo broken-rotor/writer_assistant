@@ -30,6 +30,7 @@ export interface FeedbackRequestEvent {
   agentId: string;
   agentType: 'character' | 'rater';
   agentName: string;
+  progress?: { phase: string; message: string; progress: number };
 }
 
 export interface AddToChatEvent {
@@ -210,7 +211,16 @@ export class FeedbackSidebarComponent implements OnInit, OnDestroy {
     this.feedbackService.requestRaterFeedback(
       this.story,
       rater,
-      this.config.chapterNumber
+      this.config.chapterNumber,
+      (progress) => {
+        // Emit progress updates for parent components to handle
+        this.feedbackRequested.emit({
+          agentId: raterId,
+          agentType: 'rater',
+          agentName: rater.name,
+          progress: progress
+        });
+      }
     );
   }
 

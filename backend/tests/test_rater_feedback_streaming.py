@@ -38,7 +38,7 @@ def sample_streaming_request():
 def test_streaming_endpoint_exists(client):
     """Test that the streaming endpoint exists and accepts POST requests."""
     # This will fail if the endpoint doesn't exist or has wrong method
-    response = client.post("/api/v1/rater-feedback/stream", json={})
+    response = client.post("/api/v1/rater-feedback", json={})
     # We expect some response (even if it's an error due to missing data)
     assert response.status_code in [200, 422, 500]  # 422 for validation error, 500 for missing LLM
 
@@ -71,7 +71,7 @@ def test_streaming_rater_feedback_success(mock_context_processor, mock_get_llm, 
     mock_context_processor.return_value = mock_processor
     
     # Make streaming request
-    response = client.post("/api/v1/rater-feedback/stream", json=sample_streaming_request)
+    response = client.post("/api/v1/rater-feedback", json=sample_streaming_request)
     
     assert response.status_code == 200
     assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
@@ -126,7 +126,7 @@ def test_streaming_rater_feedback_no_llm(client, sample_streaming_request):
     # Override the global mock to return None
     with patch('app.services.llm_inference.get_llm', return_value=None):
         with patch('app.api.v1.endpoints.rater_feedback.get_llm', return_value=None):
-            response = client.post("/api/v1/rater-feedback/stream", json=sample_streaming_request)
+            response = client.post("/api/v1/rater-feedback", json=sample_streaming_request)
             
             assert response.status_code == 200
             assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
@@ -151,7 +151,7 @@ def test_streaming_rater_feedback_invalid_request(client):
     """Test streaming rater feedback with invalid request data."""
     invalid_request = {"invalid": "data"}
     
-    response = client.post("/api/v1/rater-feedback/stream", json=invalid_request)
+    response = client.post("/api/v1/rater-feedback", json=invalid_request)
     
     # Should return validation error
     assert response.status_code == 422
@@ -176,7 +176,7 @@ def test_streaming_rater_feedback_llm_error(client, sample_streaming_request):
     with patch('app.services.llm_inference.get_llm', return_value=mock_llm):
         with patch('app.api.v1.endpoints.rater_feedback.get_llm', return_value=mock_llm):
             with patch('app.services.unified_context_processor.get_unified_context_processor', return_value=mock_processor):
-                response = client.post("/api/v1/rater-feedback/stream", json=sample_streaming_request)
+                response = client.post("/api/v1/rater-feedback", json=sample_streaming_request)
                 
                 assert response.status_code == 200
                 assert response.headers["content-type"] == "text/event-stream; charset=utf-8"

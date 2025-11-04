@@ -243,15 +243,47 @@ export class ApiService {
     return this.http.post<StructuredCharacterFeedbackResponse>(`${this.baseUrl}/character-feedback/structured`, request);
   }
 
-  // Rater Feedback
+  // Rater Feedback (now uses streaming internally)
   requestRaterFeedback(request: StructuredRaterFeedbackRequest): Observable<StructuredRaterFeedbackResponse> {
-    return this.http.post<StructuredRaterFeedbackResponse>(`${this.baseUrl}/rater-feedback/structured`, request);
+    // Convert structured request to streaming format
+    const streamingRequest = {
+      raterPrompt: request.raterPrompt,
+      plotPoint: request.plotContext?.plotPoint || '',
+      structured_context: {
+        systemPrompts: request.systemPrompts,
+        worldbuilding: request.worldbuilding,
+        storySummary: request.storySummary,
+        previousChapters: request.previousChapters,
+        plotContext: request.plotContext,
+        requestMetadata: request.requestMetadata
+      }
+    };
+
+    // Use streaming API but return only the final result
+    return new Observable<StructuredRaterFeedbackResponse>(observer => {
+      this.streamRaterFeedback(streamingRequest).subscribe({
+        next: (event) => {
+          if (event.type === 'result') {
+            // Transform the result to match expected format
+            const response: StructuredRaterFeedbackResponse = {
+              raterName: event.data.raterName,
+              feedback: event.data.feedback,
+              context_metadata: event.data.context_metadata
+            };
+            observer.next(response);
+            observer.complete();
+          }
+          // Ignore progress events for this compatibility method
+        },
+        error: (error) => observer.error(error)
+      });
+    });
   }
 
   // Streaming Rater Feedback
   streamRaterFeedback(request: any): Observable<any> {
     return new Observable(observer => {
-      fetch(`${this.baseUrl}/rater-feedback/stream`, {
+      fetch(`${this.baseUrl}/rater-feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
