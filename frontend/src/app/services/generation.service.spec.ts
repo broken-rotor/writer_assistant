@@ -248,6 +248,18 @@ describe('GenerationService', () => {
         fromCache: false
       });
 
+      contextBuilderSpy.buildCharacterContext.and.returnValue({
+        success: true,
+        data: {
+          characters: [],
+          totalCharacters: 0,
+          lastUpdated: new Date()
+        },
+        errors: undefined,
+        warnings: undefined,
+        fromCache: false
+      });
+
       apiServiceSpy.requestRaterFeedback.and.returnValue(of(mockResponse));
 
       service.requestRaterFeedback(mockStory, mockRater, 'Enter dungeon').subscribe(response => {
