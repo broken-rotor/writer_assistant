@@ -186,7 +186,8 @@ export class GenerationService {
   generateCharacterDetails(
     story: Story,
     basicBio: string,
-    existingCharacters: Character[]
+    existingCharacters: Character[],
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
   ): Observable<GenerateCharacterDetailsResponse> {
     // Transform legacy data to structured context
     const legacyData = {
@@ -212,13 +213,14 @@ export class GenerationService {
       structured_context: structuredContext
     };
 
-    return this.apiService.generateCharacterDetails(request);
+    return this.apiService.generateCharacterDetails(request, onProgress);
   }
 
   // Regenerate Bio from Character Details
   regenerateBio(
     story: Story,
-    character: Character
+    character: Character,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
   ): Observable<RegenerateBioResponse> {
     // Transform legacy data to structured context (optional for bio regeneration)
     const legacyData = {
@@ -249,7 +251,7 @@ export class GenerationService {
       structured_context: structuredContext
     };
 
-    return this.apiService.regenerateBio(request);
+    return this.apiService.regenerateBio(request, onProgress);
   }
 
   // Regenerate Relationships for a Character
