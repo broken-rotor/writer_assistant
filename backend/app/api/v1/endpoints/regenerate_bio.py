@@ -9,7 +9,6 @@ from app.models.generation_models import (
 )
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
-from app.api.v1.endpoints.shared_utils import parse_json_response
 from app.core.config import settings
 import logging
 import json
@@ -103,8 +102,7 @@ Focus on what makes this character unique and interesting."""
 
 {character_summary}
 
-Please respond with a JSON object containing the bio:
-{{"basicBio": "your generated bio here"}}"""
+Please respond with just the bio text directly."""
 
             # Use context result if available
             if context_result:
@@ -125,40 +123,14 @@ Please respond with a JSON object containing the bio:
             ):
                 response_text += token
             
-            # Phase 4: Parsing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Processing bio summary...', 'progress': 90})}\n\n"
+            # Phase 4: Processing
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'processing', 'message': 'Processing bio summary...', 'progress': 90})}\n\n"
             
-            parsed = parse_json_response(response_text)
-            
-            if parsed and 'basicBio' in parsed:
-                result = RegenerateBioResponse(
-                    basicBio=parsed.get('basicBio', ''),
-                    context_metadata=context_result.context_metadata if context_result else None
-                )
-            else:
-                logger.warning("Failed to parse bio JSON, using fallback")
-                # Fallback: try to extract bio from response text or create a simple one
-                bio_text = response_text.strip()
-                if len(bio_text) > 500:  # If response is too long, truncate
-                    bio_text = bio_text[:500] + "..."
-                
-                # If no reasonable bio found, create a basic one from the character name and key traits
-                if not bio_text or len(bio_text) < 10:
-                    key_traits = []
-                    if request.personality:
-                        key_traits.append(request.personality.split('.')[0])  # First sentence of personality
-                    if request.motivations:
-                        key_traits.append(request.motivations.split('.')[0])  # First sentence of motivations
-                    
-                    if key_traits:
-                        bio_text = f"{request.name} is a character who {'. '.join(key_traits).lower()}."
-                    else:
-                        bio_text = f"{request.name} is a unique character with their own story to tell."
-                
-                result = RegenerateBioResponse(
-                    basicBio=bio_text,
-                    context_metadata=context_result.context_metadata if context_result else None
-                )
+            # Use the LLM response directly without any validation or fallback
+            result = RegenerateBioResponse(
+                basicBio=response_text.strip(),
+                context_metadata=context_result.context_metadata if context_result else None
+            )
             
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
             
