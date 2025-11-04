@@ -20,6 +20,7 @@ import hashlib
 import json
 
 from app.services.context_manager import ContextManager
+from app.services.plot_outline_extractor import get_plot_outline_extractor
 from app.core.config import settings
 from app.models.context_models import (
     StructuredContextContainer as LegacyStructuredContextContainer,
@@ -194,8 +195,13 @@ class UnifiedContextProcessor:
                     return self._cache[cache_key]
 
             if structured_context:
+                # Enhance structured context with plot outline information if available
+                enhanced_context = self._enhance_with_plot_outline_context(
+                    structured_context, phase_context, context_processing_config
+                )
+                
                 result = self._process_structured_context(
-                    structured_context=structured_context,
+                    structured_context=enhanced_context,
                     agent_type=AgentType.WRITER,
                     compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
                     context_processing_config=context_processing_config,
@@ -640,6 +646,73 @@ class UnifiedContextProcessor:
             user_sections) if user_sections else formatted_context
 
         return system_prompt, user_message
+
+    def _enhance_with_plot_outline_context(
+        self,
+        structured_context: StructuredContextContainer,
+        phase_context: Optional[PhaseContext] = None,
+        context_processing_config: Optional[Dict[str, Any]] = None
+    ) -> StructuredContextContainer:
+        """
+        Enhance structured context with plot outline information when available.
+        
+        This method extracts relevant plot outline information and adds it as
+        PlotElement objects to the structured context for chapter generation.
+        """
+        try:
+            # Extract plot outline information from phase context or config
+            plot_outline_content = None
+            draft_outline_items = None
+            chapter_number = 1
+            story_context = None
+            
+            # Try to extract plot outline data from various sources
+            if phase_context and hasattr(phase_context, 'previous_phase_output'):
+                # Check if previous phase output contains plot outline
+                if phase_context.previous_phase_output:
+                    plot_outline_content = phase_context.previous_phase_output
+            
+            # Try to extract from context processing config
+            if context_processing_config:
+                plot_outline_content = context_processing_config.get('plot_outline_content')
+                draft_outline_items = context_processing_config.get('draft_outline_items')
+                chapter_number = context_processing_config.get('chapter_number', 1)
+                story_context = context_processing_config.get('story_context')
+            
+            # If no plot outline data is available, return original context
+            if not plot_outline_content and not draft_outline_items:
+                logger.debug("No plot outline data available for context enhancement")
+                return structured_context
+            
+            # Extract plot outline elements using the plot outline extractor
+            plot_extractor = get_plot_outline_extractor()
+            plot_outline_elements = plot_extractor.extract_chapter_outline_elements(
+                plot_outline_content=plot_outline_content,
+                draft_outline_items=draft_outline_items,
+                chapter_number=chapter_number,
+                story_context=story_context
+            )
+            
+            if not plot_outline_elements:
+                logger.debug(f"No relevant plot outline elements found for chapter {chapter_number}")
+                return structured_context
+            
+            # Create a copy of the structured context and add plot outline elements
+            enhanced_context = StructuredContextContainer(
+                plot_elements=structured_context.plot_elements + plot_outline_elements,
+                character_contexts=structured_context.character_contexts,
+                user_requests=structured_context.user_requests,
+                system_instructions=structured_context.system_instructions,
+                metadata=structured_context.metadata
+            )
+            
+            logger.info(f"Enhanced context with {len(plot_outline_elements)} plot outline elements for chapter {chapter_number}")
+            return enhanced_context
+            
+        except Exception as e:
+            logger.warning(f"Error enhancing context with plot outline: {str(e)}")
+            # Return original context on error to maintain backward compatibility
+            return structured_context
 
     def _generate_cache_key(self, endpoint: str,
                             params: Dict[str, Any]) -> str:

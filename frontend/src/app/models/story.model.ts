@@ -566,7 +566,7 @@ export interface FleshOutRequest {
 // Structured Context Models
 export interface PlotElement {
   id?: string;
-  type: 'scene' | 'conflict' | 'resolution' | 'twist' | 'setup' | 'payoff' | 'transition';
+  type: 'scene' | 'conflict' | 'resolution' | 'twist' | 'setup' | 'payoff' | 'transition' | 'chapter_outline';
   content: string;
   priority?: 'high' | 'medium' | 'low';
   tags?: string[];
@@ -591,7 +591,7 @@ export interface UserRequest {
   priority?: 'high' | 'medium' | 'low';
   target?: string;
   context?: string;
-  timestamp?: string;
+  timestamp?: string | Date;
 }
 
 export interface SystemInstruction {

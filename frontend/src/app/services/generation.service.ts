@@ -5,6 +5,7 @@ import { ContextBuilderService } from './context-builder.service';
 import { RequestConverterService } from './request-converter.service';
 import { RequestValidatorService } from './request-validator.service';
 import { RequestOptimizerService } from './request-optimizer.service';
+import { PlotOutlineContextService } from './plot-outline-context.service';
 import {
   Story,
   Character,
@@ -59,6 +60,7 @@ export class GenerationService {
   private requestConverterService = inject(RequestConverterService);
   private requestValidatorService = inject(RequestValidatorService);
   private requestOptimizerService = inject(RequestOptimizerService);
+  private plotOutlineContextService = inject(PlotOutlineContextService);
 
 
 
@@ -293,9 +295,13 @@ export class GenerationService {
   // Generate Chapter from Plot Outline
   generateChapterFromOutline(
     story: Story,
-    outlineItems: {title: string, description: string}[]
+    outlineItems: {title: string, description: string}[],
+    chapterNumber: number = 1
   ): Observable<StructuredGenerateChapterResponse> {
     const plotPoint = outlineItems.map(item => `${item.title}: ${item.description}`).join('\n\n');
+    
+    // Extract plot outline context for enhanced chapter generation
+    const plotOutlineContext = this.plotOutlineContextService.extractChapterPlotContext(story, chapterNumber);
     
     const request: StructuredGenerateChapterRequest = {
       systemPrompts: {
@@ -327,10 +333,67 @@ export class GenerationService {
           motivations: c.motivations,
           fears: c.fears,
           relationships: c.relationships
-        }))
+        })),
+      // Enhanced with plot outline context
+      structured_context: {
+        plot_elements: plotOutlineContext.plotElements,
+        character_contexts: [],
+        user_requests: plotOutlineContext.userRequests,
+        system_instructions: []
+      },
+      context_processing_config: {
+        plot_outline_content: story.plotOutline?.content,
+        draft_outline_items: this.extractDraftOutlineItems(story),
+        chapter_number: chapterNumber,
+        story_context: {
+          title: story.general.title,
+          summary: story.story.summary,
+          worldbuilding: story.general.worldbuilding
+        }
+      }
     };
 
     return this.apiService.generateChapter(request);
+  }
+
+  /**
+   * Extract draft outline items from story for backend processing
+   */
+  private extractDraftOutlineItems(story: Story): any[] {
+    const items: any[] = [];
+
+    try {
+      // Check if story has chapter compose state with plot outline phase
+      if (story.chapterCompose?.phases?.plotOutline?.outline?.items) {
+        const outlineItems = story.chapterCompose.phases.plotOutline.outline.items;
+        
+        // Convert Map to array if needed
+        if (outlineItems instanceof Map) {
+          outlineItems.forEach((item: any, id: string) => {
+            items.push({
+              id: id,
+              title: item.title,
+              description: item.description,
+              order: item.order,
+              type: item.type
+            });
+          });
+        } else if (Array.isArray(outlineItems)) {
+          // Handle if it's already an array
+          items.push(...outlineItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            order: item.order,
+            type: item.type
+          })));
+        }
+      }
+    } catch (error) {
+      console.warn('Error extracting draft outline items for backend:', error);
+    }
+
+    return items;
   }
 
   // Continue Writing Chapter

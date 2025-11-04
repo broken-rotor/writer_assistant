@@ -129,7 +129,7 @@ class PlotElement(BaseModel):
     """Individual plot element with metadata."""
     id: Optional[str] = Field(
         None, description="Unique identifier for the plot element")
-    type: Literal["scene", "conflict", "resolution", "twist", "setup", "payoff", "transition"] = Field(
+    type: Literal["scene", "conflict", "resolution", "twist", "setup", "payoff", "transition", "chapter_outline"] = Field(
         description="Type of plot element"
     )
     content: str = Field(description="The actual plot content or description")
@@ -143,7 +143,7 @@ class PlotElement(BaseModel):
     )
     metadata: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Additional metadata for the plot element"
+        description="Additional metadata for the plot element (e.g., chapter_number, target_word_count, outline_summary)"
     )
 
 
