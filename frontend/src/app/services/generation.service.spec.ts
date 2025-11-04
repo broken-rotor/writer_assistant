@@ -681,7 +681,8 @@ describe('GenerationService', () => {
                 name: 'Existing Character'
               })
             ])
-          })
+          }),
+          undefined // onProgress callback parameter
         );
         done();
       });

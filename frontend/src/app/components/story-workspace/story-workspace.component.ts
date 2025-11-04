@@ -388,7 +388,11 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.generationService.generateCharacterDetails(
       this.story,
       this.editingCharacter.basicBio,
-      this.activeCharacters
+      this.activeCharacters,
+      (update) => {
+        // Update loading with progress, phase, and message
+        this.loadingService.updateProgress(update.progress, update.message, update.phase);
+      }
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => this.loadingService.hide())
@@ -435,7 +439,11 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
     this.generationService.regenerateBio(
       this.story,
-      this.editingCharacter
+      this.editingCharacter,
+      (update) => {
+        // Update loading with progress, phase, and message
+        this.loadingService.updateProgress(update.progress, update.message, update.phase);
+      }
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => this.loadingService.hide())
