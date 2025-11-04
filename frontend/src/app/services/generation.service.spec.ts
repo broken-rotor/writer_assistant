@@ -195,8 +195,13 @@ describe('GenerationService', () => {
           suggestions: []
         },
         context_metadata: {
-          totalTokens: 100,
-          contextSections: ['system', 'plot']
+          requestId: 'test-request-123',
+          processingTime: 1500,
+          tokenUsage: {
+            inputTokens: 50,
+            outputTokens: 50,
+            totalTokens: 100
+          }
         }
       };
 
