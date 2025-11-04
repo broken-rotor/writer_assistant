@@ -59,7 +59,7 @@ class TestContextManager:
     
     def _create_context_container_from_scenario(self, scenario):
         """Helper method to convert test scenario to StructuredContextContainer."""
-        from app.models.context_models import (
+        from app.models.generation_models import (
             StructuredContextContainer, SystemContextElement, StoryContextElement, 
             CharacterContextElement, UserContextElement, PhaseContextElement, 
             ConversationContextElement, ComposePhase
@@ -120,7 +120,7 @@ class TestContextManager:
 
     def test_context_analysis_functionality(self):
         """Test context processing functionality with various scenarios."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         # Generate test scenario
         scenario = self.generator.generate_context_scenario("test_analysis", StoryComplexity.MODERATE)
@@ -153,7 +153,7 @@ class TestContextManager:
     
     def test_context_optimization_workflow(self):
         """Test the complete context processing workflow with token limits."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         scenario = self.generator.generate_context_scenario("test_optimization", StoryComplexity.COMPLEX)
         
@@ -187,7 +187,7 @@ class TestContextManager:
     
     def test_priority_based_context_filtering(self):
         """Test context filtering based on priority thresholds."""
-        from app.models.context_models import (
+        from app.models.generation_models import (
             ContextProcessingConfig, AgentType, ComposePhase, StructuredContextContainer,
             SystemContextElement, StoryContextElement, CharacterContextElement, ContextMetadata
         )
@@ -296,7 +296,7 @@ class TestContextManager:
     
     def test_token_budget_enforcement(self):
         """Test enforcement of token budgets and limits."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
@@ -332,7 +332,7 @@ class TestContextManager:
     
     def test_context_assembly_performance(self):
         """Test context assembly performance and timeout handling."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         scenario = self.generator.generate_context_scenario("test_performance", StoryComplexity.MODERATE)
         
@@ -369,7 +369,7 @@ class TestContextManager:
     
     def test_configuration_integration_with_settings(self):
         """Test integration with configuration settings."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         # Test with custom configuration
         custom_env = {
@@ -418,7 +418,7 @@ class TestContextManager:
     
     def test_error_handling_and_recovery(self):
         """Test error handling and recovery mechanisms."""
-        from app.models.context_models import (
+        from app.models.generation_models import (
             ContextProcessingConfig, AgentType, ComposePhase, StructuredContextContainer,
             SystemContextElement, StoryContextElement, ContextMetadata
         )
@@ -466,7 +466,7 @@ class TestContextManager:
     
     def test_context_caching_functionality(self):
         """Test context caching when enabled."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         scenario = self.generator.generate_context_scenario("test_caching", StoryComplexity.MODERATE)
         
@@ -500,7 +500,7 @@ class TestContextManager:
     
     def test_monitoring_and_analytics_integration(self):
         """Test monitoring and analytics when enabled."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         scenario = self.generator.generate_context_scenario("test_monitoring", StoryComplexity.MODERATE)
         
@@ -535,7 +535,7 @@ class TestContextManager:
     
     def test_rag_integration_when_enabled(self):
         """Test RAG (Retrieval-Augmented Generation) integration."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         scenario = self.generator.generate_context_scenario("test_rag", StoryComplexity.COMPLEX)
         
@@ -569,7 +569,7 @@ class TestContextManager:
     
     def test_stress_testing_with_large_contexts(self):
         """Test system behavior under stress with large context scenarios."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         # Generate a very large context scenario
         large_scenario = self.generator.generate_context_scenario("stress_test", StoryComplexity.EPIC)

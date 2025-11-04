@@ -43,7 +43,7 @@ def extract_editor_review_result_from_streaming_response(response):
     return result_messages[0].get('data', {})
 
 from app.main import app
-from app.models.context_models import (
+from app.models.generation_models import (
     BaseContextElement,
     StoryContextElement,
     UserContextElement,

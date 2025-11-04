@@ -20,7 +20,7 @@ from .summarization_strategies import (
     ConversationHistorySummaryStrategy
 )
 from ..llm_inference import LLMInference
-from ...models.context_models import ContextType, AgentType, ComposePhase
+from ...models.generation_models import ContextType, AgentType, ComposePhase
 
 logger = logging.getLogger(__name__)
 

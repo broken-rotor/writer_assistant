@@ -16,14 +16,17 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 
-from app.models.context_models import (
-    StructuredContextContainer,
-    BaseContextElement,
+from app.models.generation_models import (
     ContextType,
     AgentType,
     ComposePhase,
     SummarizationRule,
-    ContextProcessingConfig,
+    ContextProcessingConfig
+)
+# Legacy imports for backward compatibility during transition
+from app.models.context_models import (
+    StructuredContextContainer,
+    BaseContextElement,
     SystemContextElement,
     StoryContextElement,
     CharacterContextElement,

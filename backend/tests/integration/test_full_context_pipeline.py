@@ -26,7 +26,7 @@ class TestFullContextPipeline:
     
     def _create_context_container_from_scenario(self, scenario):
         """Helper method to convert scenario context items to structured container."""
-        from app.models.context_models import (
+        from app.models.generation_models import (
             StructuredContextContainer, SystemContextElement, StoryContextElement, 
             CharacterContextElement, ContextMetadata
         )
@@ -72,7 +72,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_end_to_end_context_processing(self, mock_get_llm):
         """Test complete end-to-end context processing pipeline."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         mock_get_llm.return_value = Mock()
         
@@ -121,7 +121,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_configuration_driven_pipeline(self, mock_get_llm):
         """Test that pipeline behavior is properly driven by configuration."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         mock_get_llm.return_value = Mock()
         
@@ -182,7 +182,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_layer_allocation_integration(self, mock_get_llm):
         """Test integration between context manager and token allocation layers."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         mock_get_llm.return_value = Mock()
         
@@ -218,7 +218,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_overflow_handling_integration(self, mock_get_llm):
         """Test integration of overflow handling across the pipeline."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         mock_get_llm.return_value = Mock()
         
@@ -259,7 +259,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_priority_and_layer_interaction(self, mock_get_llm):
         """Test interaction between priority-based filtering and layer allocation."""
-        from app.models.context_models import (
+        from app.models.generation_models import (
             ContextProcessingConfig, AgentType, ComposePhase,
             StructuredContextContainer, SystemContextElement, StoryContextElement, 
             CharacterContextElement, ContextMetadata
@@ -341,7 +341,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_feature_toggle_integration(self, mock_get_llm):
         """Test integration with feature toggles from configuration."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         mock_get_llm.return_value = Mock()
         
@@ -385,7 +385,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_error_recovery_integration(self, mock_get_llm):
         """Test error recovery across the integrated pipeline."""
-        from app.models.context_models import (
+        from app.models.generation_models import (
             ContextProcessingConfig, AgentType, ComposePhase,
             StructuredContextContainer, StoryContextElement, CharacterContextElement, ContextMetadata
         )
@@ -452,7 +452,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_memory_efficiency_integration(self, mock_get_llm):
         """Test memory efficiency across the integrated pipeline."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import ContextProcessingConfig, AgentType, ComposePhase
         
         mock_get_llm.return_value = Mock()
         

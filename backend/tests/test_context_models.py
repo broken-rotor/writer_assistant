@@ -6,7 +6,7 @@ import pytest
 from datetime import datetime, timedelta, timezone
 from pydantic import ValidationError
 
-from app.models.context_models import (
+from app.models.generation_models import (
     StructuredContextContainer,
     SystemContextElement,
     StoryContextElement,
