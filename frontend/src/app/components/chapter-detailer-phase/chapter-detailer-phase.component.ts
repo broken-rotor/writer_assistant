@@ -20,6 +20,7 @@ import { StoryService } from '../../services/story.service';
 import { ToastService } from '../../services/toast.service';
 import { TokenCountingService } from '../../services/token-counting.service';
 import { ContextBuilderService } from '../../services/context-builder.service';
+import { LoadingService } from '../../services/loading.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
 
 interface ChapterDraftVersion {
@@ -113,6 +114,7 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
   private toastService = inject(ToastService);
   private tokenCountingService = inject(TokenCountingService);
   private contextBuilderService = inject(ContextBuilderService);
+  private loadingService = inject(LoadingService);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
@@ -375,13 +377,16 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
       const currentVersion = this.getCurrentVersion();
       const currentContent = currentVersion?.content || '';
       
+      // Show loading indicator
+      this.loadingService.show('Modifying chapter...', 'modify-chapter');
+      
       const response = await firstValueFrom(this.generationService.modifyChapter(
         this.story,
         currentContent,
         message.content,
         (phase: string, message: string, progress: number) => {
-          // Update loading message with current phase
-          console.log(`Chapter modification progress: ${phase} - ${message} (${progress}%)`);
+          // Update loading with progress, phase, and message
+          this.loadingService.updateProgress(progress, message, phase);
         }
       ));
 
@@ -393,10 +398,12 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
           message.id
         );
         this.switchToVersion(versionId);
+        this.loadingService.hide();
       }
     } catch (error) {
       console.error('Error processing chapter development message:', error);
       this.toastService.showError('Failed to process chapter development request');
+      this.loadingService.hide();
     }
   }
 

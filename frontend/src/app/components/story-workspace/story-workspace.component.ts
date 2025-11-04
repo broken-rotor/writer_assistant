@@ -702,8 +702,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       rater,
       this.story.chapterCreation.plotPoint,
       (progress) => {
-        // Update loading message with current phase
-        this.loadingService.show(`${rater.name}: ${progress.message}`, 'rater-feedback');
+        // Update loading with progress, phase, and message
+        this.loadingService.updateProgress(progress.progress, `${rater.name}: ${progress.message}`, progress.phase);
       }
     ).pipe(
       takeUntil(this.destroy$),
@@ -836,8 +836,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       this.story.chapterCreation.generatedChapter.text,
       this.changeRequest,
       (phase: string, message: string, progress: number) => {
-        // Update loading message with current phase
-        this.loadingService.updateMessage(`${message} (${progress}%)`, 'modify-chapter');
+        // Update loading with progress, phase, and message
+        this.loadingService.updateProgress(progress, message, phase);
       }
     ).pipe(
       takeUntil(this.destroy$),
@@ -927,8 +927,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       this.story.chapterCreation.generatedChapter.text,
       modificationRequest,
       (phase: string, message: string, progress: number) => {
-        // Update loading message with current phase
-        this.loadingService.updateMessage(`${message} (${progress}%)`, 'apply-suggestions');
+        // Update loading with progress, phase, and message
+        this.loadingService.updateProgress(progress, message, phase);
       }
     ).pipe(
       takeUntil(this.destroy$),

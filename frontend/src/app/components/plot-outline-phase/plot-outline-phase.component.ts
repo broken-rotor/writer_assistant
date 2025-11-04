@@ -17,6 +17,7 @@ import { ConversationService } from '../../services/conversation.service';
 import { PhaseStateService } from '../../services/phase-state.service';
 import { StoryService } from '../../services/story.service';
 import { ToastService } from '../../services/toast.service';
+import { LoadingService } from '../../services/loading.service';
 import { NewlineToBrPipe } from '../../pipes/newline-to-br.pipe';
 
 interface DraftOutlineItem {
@@ -86,6 +87,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
   private phaseStateService = inject(PhaseStateService);
   private storyService = inject(StoryService);
   private toastService = inject(ToastService);
+  private loadingService = inject(LoadingService);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
@@ -211,6 +213,9 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     this.researchError = null;
     this.researchProgress = null;
     
+    // Show loading indicator
+    this.loadingService.show('Researching plot outline...', 'research-outline');
+    
     try {
       const response = await firstValueFrom(
         this.archiveService.ragQueryStream(
@@ -222,11 +227,14 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
           {
             onProgress: (progress: SSEProgressUpdate) => {
               this.researchProgress = progress;
+              // Update loading service with progress
+              this.loadingService.updateProgress(progress.progress, progress.message, progress.phase);
               this.cdr.detectChanges();
             },
             onError: (error: Error) => {
               console.error('Research streaming error:', error);
               this.researchError = error.message;
+              this.loadingService.hide();
               this.cdr.detectChanges();
             }
           }
@@ -250,6 +258,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
         );
         
         this.showChat = true;
+        this.loadingService.hide();
         this.toastService.showSuccess('Archive research completed! Check the chat and sidebar for results.');
       }
     } catch (error) {
@@ -259,6 +268,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     } finally {
       this.isResearching = false;
       this.researchProgress = null;
+      this.loadingService.hide();
     }
   }
 
