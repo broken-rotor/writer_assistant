@@ -186,6 +186,10 @@ class EnhancedContextMetadata(BaseModel):
     )
 
 
+# Alias for backward compatibility with tests and legacy context elements
+ContextMetadata = EnhancedContextMetadata
+
+
 class ContextProcessingConfig(BaseModel):
     """Configuration for how context should be processed and filtered."""
     
@@ -436,10 +440,6 @@ class ContextProcessingMetadata(BaseModel):
         default="1.0",
         description="Context processing version"
     )
-
-
-# Alias for backward compatibility with tests and legacy context elements
-ContextMetadata = EnhancedContextMetadata
 
 
 class EnhancedStructuredContextContainer(BaseModel):

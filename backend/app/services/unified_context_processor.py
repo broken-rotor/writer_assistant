@@ -51,7 +51,7 @@ class UnifiedContextResult:
     """Result of unified context processing."""
     system_prompt: str
     user_message: str
-    context_metadata: ContextMetadata
+    context_metadata: EnhancedContextMetadata
     processing_mode: Literal["structured"]
     optimization_applied: bool
     total_tokens: int
