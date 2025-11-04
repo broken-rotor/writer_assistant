@@ -582,7 +582,8 @@ export class GenerationService {
     plotPoint: string,
     chapterComposeState?: ChapterComposeState,
     conversationThread?: ConversationThread,
-    additionalInstructions?: string
+    additionalInstructions?: string,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
   ): Observable<CharacterFeedbackResponse> {
     const baseRequest: CharacterFeedbackRequest = {
       systemPrompts: {
@@ -635,7 +636,7 @@ export class GenerationService {
         conversationBranchId: enhancedRequest.phase_context.conversation_branch_id
       } : undefined
     };
-    return this.apiService.requestCharacterFeedback(structuredRequest);
+    return this.apiService.requestCharacterFeedback(structuredRequest, onProgress);
   }
 
   /**
@@ -1091,7 +1092,11 @@ ${story.plotOutline.content}`;
     story: Story,
     character: Character,
     plotPoint: string,
-    options: { validate?: boolean; optimize?: boolean } = {}
+    options: { 
+      validate?: boolean; 
+      optimize?: boolean;
+      onProgress?: (update: { phase: string; message: string; progress: number }) => void;
+    } = {}
   ): Observable<StructuredCharacterFeedbackResponse> {
     try {
       // Build structured request using ContextBuilderService
@@ -1168,7 +1173,7 @@ ${story.plotOutline.content}`;
         structuredRequest = optimizationResult.optimizedRequest;
       }
 
-      return this.apiService.requestCharacterFeedback(structuredRequest);
+      return this.apiService.requestCharacterFeedback(structuredRequest, options.onProgress);
     } catch (error) {
       throw new Error(`Failed to request structured character feedback: ${error}`);
     }

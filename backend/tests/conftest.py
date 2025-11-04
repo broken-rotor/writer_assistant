@@ -138,16 +138,52 @@ What had seemed simple moments ago now revealed layers of complexity. The charac
 
     mock_llm_instance.chat_completion_stream.side_effect = chat_completion_stream_side_effect
 
-    # Patch get_llm to return our mock in all endpoint modules
+    # Mock unified context processor
+    mock_context_processor = MagicMock()
+    mock_context_result = MagicMock()
+    mock_context_result.processed_context = "Processed context for testing"
+    mock_context_result.context_summary = "Test context summary"
+    mock_context_result.total_tokens = 100
+    mock_context_result.optimization_applied = False
+    mock_context_result.processing_mode = "structured"
+    mock_context_result.compression_ratio = 1.0
+    mock_context_result.system_prompt = "You are a creative writing assistant helping with character feedback."
+    mock_context_result.user_message = "Please provide feedback for the character in this plot point."
+    mock_context_result.context_metadata = {
+        "total_elements": 5,
+        "processing_applied": False,
+        "processing_mode": "structured",
+        "optimization_level": "none",
+        "compression_ratio": 1.0,
+        "filtered_elements": None,
+        "processing_time_ms": 10.0
+    }
+    mock_context_processor.process_character_feedback_context.return_value = mock_context_result
+    mock_context_processor.process_rater_feedback_context.return_value = mock_context_result
+    mock_context_processor.process_chapter_generation_context.return_value = mock_context_result
+    mock_context_processor.process_chapter_modification_context.return_value = mock_context_result
+    mock_context_processor.process_editor_review_context.return_value = mock_context_result
+    mock_context_processor.process_flesh_out_context.return_value = mock_context_result
+    mock_context_processor.process_character_details_context.return_value = mock_context_result
+
+    # Patch get_llm and get_unified_context_processor to return our mocks in all endpoint modules
     with patch('app.services.llm_inference.get_llm', return_value=mock_llm_instance):
-        with patch('app.api.v1.endpoints.character_feedback.get_llm', return_value=mock_llm_instance):
-            with patch('app.api.v1.endpoints.rater_feedback.get_llm', return_value=mock_llm_instance):
-                with patch('app.api.v1.endpoints.generate_chapter.get_llm', return_value=mock_llm_instance):
-                    with patch('app.api.v1.endpoints.modify_chapter.get_llm', return_value=mock_llm_instance):
-                        with patch('app.api.v1.endpoints.editor_review.get_llm', return_value=mock_llm_instance):
-                            with patch('app.api.v1.endpoints.flesh_out.get_llm', return_value=mock_llm_instance):
-                                with patch('app.api.v1.endpoints.generate_character_details.get_llm', return_value=mock_llm_instance):
-                                    yield mock_llm_instance
+        with patch('app.services.unified_context_processor.get_unified_context_processor', return_value=mock_context_processor):
+            with patch('app.api.v1.endpoints.character_feedback.get_llm', return_value=mock_llm_instance):
+                with patch('app.api.v1.endpoints.character_feedback.get_unified_context_processor', return_value=mock_context_processor):
+                    with patch('app.api.v1.endpoints.rater_feedback.get_llm', return_value=mock_llm_instance):
+                        with patch('app.api.v1.endpoints.rater_feedback.get_unified_context_processor', return_value=mock_context_processor):
+                            with patch('app.api.v1.endpoints.generate_chapter.get_llm', return_value=mock_llm_instance):
+                                with patch('app.api.v1.endpoints.generate_chapter.get_unified_context_processor', return_value=mock_context_processor):
+                                    with patch('app.api.v1.endpoints.modify_chapter.get_llm', return_value=mock_llm_instance):
+                                        with patch('app.api.v1.endpoints.modify_chapter.get_unified_context_processor', return_value=mock_context_processor):
+                                            with patch('app.api.v1.endpoints.editor_review.get_llm', return_value=mock_llm_instance):
+                                                with patch('app.api.v1.endpoints.editor_review.get_unified_context_processor', return_value=mock_context_processor):
+                                                    with patch('app.api.v1.endpoints.flesh_out.get_llm', return_value=mock_llm_instance):
+                                                        with patch('app.api.v1.endpoints.flesh_out.get_unified_context_processor', return_value=mock_context_processor):
+                                                            with patch('app.api.v1.endpoints.generate_character_details.get_llm', return_value=mock_llm_instance):
+                                                                with patch('app.api.v1.endpoints.generate_character_details.get_unified_context_processor', return_value=mock_context_processor):
+                                                                    yield mock_llm_instance
 
 
 @pytest.fixture

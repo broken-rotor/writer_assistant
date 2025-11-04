@@ -650,7 +650,12 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.generationService.requestCharacterFeedback(
       this.story,
       character,
-      this.story.chapterCreation.plotPoint
+      this.story.chapterCreation.plotPoint,
+      {
+        onProgress: (update) => {
+          this.loadingService.updateMessage(`${character.name}: ${update.message}`, 'character-feedback');
+        }
+      }
     ).pipe(
       takeUntil(this.destroy$),
       finalize(() => {

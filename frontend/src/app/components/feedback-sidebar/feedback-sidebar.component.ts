@@ -193,7 +193,11 @@ export class FeedbackSidebarComponent implements OnInit, OnDestroy {
     this.feedbackService.requestCharacterFeedback(
       this.story,
       character,
-      this.config.chapterNumber
+      this.config.chapterNumber,
+      (update) => {
+        // Could emit progress updates or show in UI
+        console.log(`Character feedback progress: ${update.phase} - ${update.message} (${update.progress}%)`);
+      }
     );
   }
 

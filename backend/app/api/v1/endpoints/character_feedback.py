@@ -1,7 +1,7 @@
 """
 Character feedback endpoint for Writer Assistant.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from app.models.generation_models import (
     CharacterFeedbackRequest,
@@ -11,6 +11,10 @@ from app.models.generation_models import (
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
+from app.utils.request_transformers import (
+    transform_structured_character_feedback_request,
+    is_structured_request
+)
 from app.core.config import settings
 import logging
 import json
@@ -22,21 +26,40 @@ router = APIRouter()
 
 
 @router.post("/character-feedback")
-async def character_feedback(request: CharacterFeedbackRequest):
-    """Generate character feedback for a plot point using LLM with structured context and SSE streaming."""
+async def character_feedback(request: Request):
+    """Generate character feedback for a plot point using LLM with structured context and SSE streaming.
+    
+    Supports both legacy CharacterFeedbackRequest format and new StructuredCharacterFeedbackRequest format.
+    """
     llm = get_llm()
     if not llm:
         raise HTTPException(status_code=503, detail="LLM not initialized. Start server with --model-path")
 
     async def generate_with_updates():
         try:
+            # Parse and transform request based on format
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'request_processing', 'message': 'Processing request format...', 'progress': 10})}\n\n"
+            
+            # Get raw request data
+            request_data = await request.json()
+            
+            # Determine request format and transform if needed
+            if is_structured_request(request_data):
+                # Transform structured request to backend format
+                backend_request = transform_structured_character_feedback_request(request_data)
+                logger.info("Transformed structured character feedback request to backend format")
+            else:
+                # Parse as legacy format
+                backend_request = CharacterFeedbackRequest(**request_data)
+                logger.info("Using legacy character feedback request format")
+            
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context and plot point...', 'progress': 25})}\n\n"
             
             # Extract character name from structured context
             character_name = "Character"
-            if request.structured_context.character_contexts:
-                character_name = request.structured_context.character_contexts[0].character_name
+            if backend_request.structured_context.character_contexts:
+                character_name = backend_request.structured_context.character_contexts[0].character_name
 
             # Get unified context processor
             context_processor = get_unified_context_processor()
@@ -44,14 +67,14 @@ async def character_feedback(request: CharacterFeedbackRequest):
             # Process context using structured context only
             context_result = context_processor.process_character_feedback_context(
                 # Core fields
-                plot_point=request.plotPoint,
+                plot_point=backend_request.plotPoint,
                 # Phase context
-                compose_phase=request.compose_phase,
-                phase_context=request.phase_context,
+                compose_phase=backend_request.compose_phase,
+                phase_context=backend_request.phase_context,
                 # Structured context (required)
-                structured_context=request.structured_context,
+                structured_context=backend_request.structured_context,
                 context_mode="structured",
-                context_processing_config=request.context_processing_config
+                context_processing_config=backend_request.context_processing_config
             )
 
             # Log context processing results

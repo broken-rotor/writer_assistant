@@ -79,7 +79,12 @@ export class FeedbackService {
   /**
    * Request character feedback
    */
-  requestCharacterFeedback(story: Story, character: Character, chapterNumber: number): Observable<boolean> {
+  requestCharacterFeedback(
+    story: Story, 
+    character: Character, 
+    chapterNumber: number,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
+  ): Observable<boolean> {
     const requestId = `character_${character.id}_${chapterNumber}`;
     
     // Add to pending requests
@@ -88,7 +93,7 @@ export class FeedbackService {
     // Get plot point for the chapter
     const plotPoint = this.getPlotPointForChapter(story, chapterNumber);
 
-    return this.generationService.requestCharacterFeedback(story, character, plotPoint).pipe(
+    return this.generationService.requestCharacterFeedback(story, character, plotPoint, { onProgress }).pipe(
       map(response => {
         // Convert response to enhanced feedback items
         const enhancedFeedback = this.convertCharacterFeedbackToEnhanced(
@@ -523,7 +528,8 @@ export class FeedbackService {
     chapterNumber: number,
     chapterComposeState?: ChapterComposeState,
     conversationThread?: ConversationThread,
-    additionalInstructions?: string
+    additionalInstructions?: string,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
   ): Observable<EnhancedFeedbackItem[]> {
     const requestId = `character_${character.id}_${Date.now()}`;
     this.addPendingRequest(requestId);
@@ -536,7 +542,8 @@ export class FeedbackService {
       plotPoint,
       chapterComposeState,
       conversationThread,
-      additionalInstructions
+      additionalInstructions,
+      onProgress
     ).pipe(
       map(response => {
         const enhancedFeedback = this.convertCharacterFeedbackToEnhanced(

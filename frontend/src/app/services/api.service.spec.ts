@@ -83,7 +83,7 @@ describe('ApiService', () => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/character-feedback/structured`);
+      const req = httpMock.expectOne(`${baseUrl}/character-feedback`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(request);
       req.flush(mockResponse);
