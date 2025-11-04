@@ -42,18 +42,15 @@ async def regenerate_bio(request: RegenerateBioRequest):
                 character_details.append(f"Gender: {request.gender}")
             if request.sexualPreference:
                 character_details.append(
-                    f"Sexual Preference: {
-                        request.sexualPreference}")
+                    f"Sexual Preference: {request.sexualPreference}")
             if request.age and request.age > 0:
                 character_details.append(f"Age: {request.age}")
             if request.physicalAppearance:
                 character_details.append(
-                    f"Physical Appearance: {
-                        request.physicalAppearance}")
+                    f"Physical Appearance: {request.physicalAppearance}")
             if request.usualClothing:
                 character_details.append(
-                    f"Usual Clothing: {
-                        request.usualClothing}")
+                    f"Usual Clothing: {request.usualClothing}")
             if request.personality:
                 character_details.append(f"Personality: {request.personality}")
             if request.motivations:
@@ -62,8 +59,7 @@ async def regenerate_bio(request: RegenerateBioRequest):
                 character_details.append(f"Fears: {request.fears}")
             if request.relationships:
                 character_details.append(
-                    f"Relationships: {
-                        request.relationships}")
+                    f"Relationships: {request.relationships}")
 
             character_summary = "\n".join(character_details)
 
@@ -84,15 +80,13 @@ async def regenerate_bio(request: RegenerateBioRequest):
                 # Log context processing results
                 if context_result.optimization_applied:
                     logger.info(
-                        f"Bio regeneration context processing applied ({
-                            context_result.processing_mode} mode): " f"{
-                            context_result.total_tokens} tokens, " f"compression ratio: {
-                            context_result.compression_ratio:.2f}")
+                        f"Bio regeneration context processing applied ({context_result.processing_mode} mode): "
+                        f"{context_result.total_tokens} tokens, "
+                        f"compression ratio: {context_result.compression_ratio:.2f}")
                 else:
                     logger.debug(
-                        f"No bio regeneration context optimization needed ({
-                            context_result.processing_mode} mode): " f"{
-                            context_result.total_tokens} tokens")
+                        f"No bio regeneration context optimization needed ({context_result.processing_mode} mode): "
+                        f"{context_result.total_tokens} tokens")
 
             # Phase 2: Analyzing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing character details...', 'progress': 40})}\n\n"

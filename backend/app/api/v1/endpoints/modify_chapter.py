@@ -51,15 +51,13 @@ async def modify_chapter(request: ModifyChapterRequest):
             # Log context processing results
             if context_result.optimization_applied:
                 logger.info(
-                    f"Modify chapter context processing applied ({
-                        context_result.processing_mode} mode): " f"{
-                        context_result.total_tokens} tokens, " f"compression ratio: {
-                        context_result.compression_ratio:.2f}")
+                    f"Modify chapter context processing applied ({context_result.processing_mode} mode): "
+                    f"{context_result.total_tokens} tokens, "
+                    f"compression ratio: {context_result.compression_ratio:.2f}")
             else:
                 logger.debug(
-                    f"No modify chapter context optimization needed ({
-                        context_result.processing_mode} mode): " f"{
-                        context_result.total_tokens} tokens")
+                    f"No modify chapter context optimization needed ({context_result.processing_mode} mode): "
+                    f"{context_result.total_tokens} tokens")
 
             # Phase 2: Analyzing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing chapter and modification request...', 'progress': 40})}\n\n"

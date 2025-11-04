@@ -51,15 +51,15 @@ async def flesh_out(request: FleshOutRequest):
             # Log context processing results
             if context_result.optimization_applied:
                 logger.info(
-                    f"Flesh out context processing applied ({
-                        context_result.processing_mode} mode): " f"{
-                        context_result.total_tokens} tokens, " f"compression ratio: {
-                        context_result.compression_ratio:.2f}")
+                    "Flesh out context processing applied ("
+                    f"{context_result.processing_mode} mode): "
+                    f"{context_result.total_tokens} tokens, "
+                    f"compression ratio: {context_result.compression_ratio:.2f}")
             else:
                 logger.debug(
-                    f"No flesh out context optimization needed ({
-                        context_result.processing_mode} mode): " f"{
-                        context_result.total_tokens} tokens")
+                    "No flesh out context optimization needed ("
+                    f"{context_result.processing_mode} mode): "
+                    f"{context_result.total_tokens} tokens")
 
             # Phase 2: Analyzing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing text for expansion opportunities...', 'progress': 40})}\n\n"

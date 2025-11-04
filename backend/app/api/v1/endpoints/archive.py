@@ -187,8 +187,7 @@ async def list_files():
         logger.error(f"Failed to list files: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list files: {
-                str(e)}")
+            detail=f"Failed to list files: {str(e)}")
 
 
 @router.get("/files/content")
@@ -385,8 +384,7 @@ async def get_rag_status():
         logger.error(f"Failed to check RAG status: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to check RAG status: {
-                str(e)}")
+            detail=f"Failed to check RAG status: {str(e)}")
 
 
 @router.post("/rag/query", response_model=RAGResponse)

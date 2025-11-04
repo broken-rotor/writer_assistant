@@ -41,8 +41,7 @@ def _build_agent_system_prompt(
             'final_edit': "Provide polishing suggestions, consistency checks, and final refinements."}
         phase_context = phase_guidance.get(compose_context.current_phase, "")
         if phase_context:
-            prompt += f"\n\nCurrent phase: {
-                compose_context.current_phase}. {phase_context}"
+            prompt += f"\n\nCurrent phase: {compose_context.current_phase}. {phase_context}"
 
     # Add custom system prompts if provided
     if system_prompts:
@@ -66,8 +65,7 @@ def _build_conversation_context(messages, compose_context=None) -> str:
 
     if compose_context and compose_context.chapter_draft:
         context_parts.append(
-            f"\nCurrent Chapter Draft:\n{
-                compose_context.chapter_draft}")
+            f"\nCurrent Chapter Draft:\n{compose_context.chapter_draft}")
 
     return "\n".join(context_parts) if context_parts else ""
 
