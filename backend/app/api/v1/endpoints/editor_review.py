@@ -88,12 +88,16 @@ Provide 4-6 suggestions in JSON format:
             # Phase 3: Generating Suggestions
             yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 75})}\n\n"
             
-            # Generate editor review using LLM
-            response_text = llm.chat_completion(
+            # Generate editor review using streaming LLM
+            response_text = ""
+            for token in llm.chat_completion_stream(
                 messages, 
                 max_tokens=settings.ENDPOINT_EDITOR_REVIEW_MAX_TOKENS, 
                 temperature=settings.ENDPOINT_EDITOR_REVIEW_TEMPERATURE
-            )
+            ):
+                response_text += token
+                # Optional: yield partial content updates (uncomment if desired)
+                # yield f"data: {json.dumps({'type': 'partial', 'content': token})}\n\n"
             
             # Phase 4: Parsing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Processing editor suggestions...', 'progress': 90})}\n\n"
