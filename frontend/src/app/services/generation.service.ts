@@ -5,6 +5,7 @@ import { ContextBuilderService } from './context-builder.service';
 import { RequestConverterService } from './request-converter.service';
 import { RequestValidatorService } from './request-validator.service';
 import { RequestOptimizerService } from './request-optimizer.service';
+import { PlotOutlineContextService } from './plot-outline-context.service';
 import {
   Story,
   Character,
@@ -59,6 +60,7 @@ export class GenerationService {
   private requestConverterService = inject(RequestConverterService);
   private requestValidatorService = inject(RequestValidatorService);
   private requestOptimizerService = inject(RequestOptimizerService);
+  private plotOutlineContextService = inject(PlotOutlineContextService);
 
 
 
@@ -293,9 +295,13 @@ export class GenerationService {
   // Generate Chapter from Plot Outline
   generateChapterFromOutline(
     story: Story,
-    outlineItems: {title: string, description: string}[]
+    outlineItems: {title: string, description: string}[],
+    chapterNumber = 1
   ): Observable<StructuredGenerateChapterResponse> {
     const plotPoint = outlineItems.map(item => `${item.title}: ${item.description}`).join('\n\n');
+    
+    // Extract plot outline context for enhanced chapter generation
+    const plotOutlineContext = this.plotOutlineContextService.extractChapterPlotContext(story, chapterNumber);
     
     const request: StructuredGenerateChapterRequest = {
       systemPrompts: {
@@ -305,7 +311,15 @@ export class GenerationService {
       },
       worldbuilding: { content: story.general.worldbuilding },
       storySummary: { summary: story.story.summary },
-      plotContext: { plotPoint: plotPoint },
+      plotContext: { 
+        plotPoint: plotPoint,
+        plotOutline: story.plotOutline?.content,
+        relatedOutlineItems: plotOutlineContext.plotElements.map((element, index) => ({
+          title: element.type,
+          description: element.content,
+          order: index
+        }))
+      },
       feedbackContext: { incorporatedFeedback: [] },
       previousChapters: story.story.chapters.map(ch => ({
         number: ch.number,
@@ -332,6 +346,8 @@ export class GenerationService {
 
     return this.apiService.generateChapter(request);
   }
+
+
 
   // Continue Writing Chapter
   continueChapter(
