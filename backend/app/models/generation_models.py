@@ -65,9 +65,162 @@ The `context_processing_config` field allows fine-tuned control over how context
 }
 ```
 """
-from typing import Dict, List, Optional, Any, Literal
+from typing import Dict, List, Optional, Any, Literal, Union
 from pydantic import BaseModel, Field, field_validator, model_validator
-from datetime import datetime
+from datetime import datetime, timezone
+from enum import Enum
+
+
+# Essential Enums from context_models for backward compatibility
+
+class ContextType(str, Enum):
+    """Hierarchical taxonomy of context element types."""
+    # System-level contexts
+    SYSTEM_PROMPT = "system_prompt"
+    SYSTEM_INSTRUCTION = "system_instruction"
+    SYSTEM_PREFERENCE = "system_preference"
+    
+    # Story-level contexts
+    WORLD_BUILDING = "world_building"
+    STORY_THEME = "story_theme"
+    NARRATIVE_STATE = "narrative_state"
+    STORY_SUMMARY = "story_summary"
+    PLOT_OUTLINE = "plot_outline"
+    
+    # Character-level contexts
+    CHARACTER_PROFILE = "character_profile"
+    CHARACTER_RELATIONSHIP = "character_relationship"
+    CHARACTER_MEMORY = "character_memory"
+    CHARACTER_STATE = "character_state"
+    
+    # User-level contexts
+    USER_PREFERENCE = "user_preference"
+    USER_FEEDBACK = "user_feedback"
+    USER_REQUEST = "user_request"
+    USER_INSTRUCTION = "user_instruction"
+    
+    # Phase-level contexts
+    PHASE_INSTRUCTION = "phase_instruction"
+    PHASE_OUTPUT = "phase_output"
+    PHASE_GUIDANCE = "phase_guidance"
+    
+    # Conversation contexts
+    CONVERSATION_HISTORY = "conversation_history"
+    CONVERSATION_CONTEXT = "conversation_context"
+
+
+class SummarizationRule(str, Enum):
+    """Rules for how context elements should be summarized when token limits are approached."""
+    PRESERVE_FULL = "preserve_full"  # Never summarize, always include in full
+    ALLOW_COMPRESSION = "allow_compression"  # Can be compressed but key info preserved
+    EXTRACT_KEY_POINTS = "extract_key_points"  # Extract only the most important points
+    OMIT_IF_NEEDED = "omit_if_needed"  # Can be completely omitted if necessary
+
+
+class AgentType(str, Enum):
+    """Types of agents that can consume context."""
+    WRITER = "writer"
+    CHARACTER = "character"
+    RATER = "rater"
+    EDITOR = "editor"
+    WORLDBUILDING = "worldbuilding"
+
+
+class ComposePhase(str, Enum):
+    """Three-phase compose system phases."""
+    PLOT_OUTLINE = "plot_outline"
+    CHAPTER_DETAIL = "chapter_detail"
+    FINAL_EDIT = "final_edit"
+
+
+# Enhanced Metadata Models
+
+class EnhancedContextMetadata(BaseModel):
+    """Enhanced metadata for context elements supporting prioritization and summarization."""
+    
+    priority: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Priority weight for token budget management (0.0-1.0)"
+    )
+    
+    summarization_rule: SummarizationRule = Field(
+        default=SummarizationRule.ALLOW_COMPRESSION,
+        description="How this context should be handled when summarization is needed"
+    )
+    
+    target_agents: List[AgentType] = Field(
+        default_factory=lambda: [AgentType.WRITER],
+        description="Which agent types should receive this context"
+    )
+    
+    relevant_phases: List[ComposePhase] = Field(
+        default_factory=lambda: [ComposePhase.PLOT_OUTLINE, ComposePhase.CHAPTER_DETAIL, ComposePhase.FINAL_EDIT],
+        description="Which compose phases this context is relevant for"
+    )
+    
+    estimated_tokens: Optional[int] = Field(
+        default=None,
+        description="Estimated token count for budget planning"
+    )
+    
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(tz=timezone.utc),
+        description="When this context element was created"
+    )
+    
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(tz=timezone.utc),
+        description="When this context element was last updated"
+    )
+    
+    expires_at: Optional[datetime] = Field(
+        default=None,
+        description="When this context element expires (optional)"
+    )
+    
+    tags: List[str] = Field(
+        default_factory=list,
+        description="Tags for categorization and filtering"
+    )
+
+
+class ContextProcessingConfig(BaseModel):
+    """Configuration for how context should be processed and filtered."""
+    
+    target_agent: AgentType = Field(
+        description="Target agent type for context processing"
+    )
+    
+    current_phase: ComposePhase = Field(
+        description="Current compose phase"
+    )
+    
+    max_tokens: Optional[int] = Field(
+        default=None,
+        description="Maximum tokens allowed for context"
+    )
+    
+    prioritize_recent: bool = Field(
+        default=True,
+        description="Whether to prioritize more recently updated elements"
+    )
+    
+    include_relationships: bool = Field(
+        default=True,
+        description="Whether to include related context elements"
+    )
+    
+    summarization_threshold: float = Field(
+        default=0.8,
+        description="Token usage threshold at which summarization begins"
+    )
+    
+    custom_filters: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Custom filtering criteria"
+    )
 
 
 # System Prompts Configuration
@@ -108,7 +261,7 @@ class FeedbackItem(BaseModel):
 
 
 # Phase-specific models for three-phase compose system
-ComposePhase = Literal['plot_outline', 'chapter_detail', 'final_edit']
+# ComposePhase is now defined as an Enum above for enhanced functionality
 
 
 class ConversationMessage(BaseModel):
@@ -126,7 +279,7 @@ class PhaseContext(BaseModel):
 
 # Structured Context Models
 class PlotElement(BaseModel):
-    """Individual plot element with metadata."""
+    """Individual plot element with enhanced metadata."""
     id: Optional[str] = Field(
         None, description="Unique identifier for the plot element")
     type: Literal["scene", "conflict", "resolution", "twist", "setup", "payoff", "transition"] = Field(
@@ -141,14 +294,20 @@ class PlotElement(BaseModel):
         default_factory=list,
         description="Tags for categorization and filtering"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: Optional[EnhancedContextMetadata] = Field(
+        default=None,
+        description="Enhanced metadata for context processing"
+    )
+    
+    # Legacy metadata field for backward compatibility
+    legacy_metadata: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Additional metadata for the plot element"
+        description="Additional legacy metadata for the plot element"
     )
 
 
 class CharacterContext(BaseModel):
-    """Character-specific context information."""
+    """Character-specific context information with enhanced metadata."""
     character_id: str = Field(
         description="Unique identifier for the character")
     character_name: str = Field(description="Character name")
@@ -176,10 +335,14 @@ class CharacterContext(BaseModel):
         default_factory=list,
         description="Active personality traits relevant to current context"
     )
+    metadata: Optional[EnhancedContextMetadata] = Field(
+        default=None,
+        description="Enhanced metadata for context processing"
+    )
 
 
 class UserRequest(BaseModel):
-    """User-provided request or instruction."""
+    """User-provided request or instruction with enhanced metadata."""
     id: Optional[str] = Field(
         None, description="Unique identifier for the request")
     type: Literal["modification", "addition", "removal", "style_change", "tone_adjustment", "general"] = Field(
@@ -202,10 +365,14 @@ class UserRequest(BaseModel):
         None,
         description="When the request was made"
     )
+    metadata: Optional[EnhancedContextMetadata] = Field(
+        default=None,
+        description="Enhanced metadata for context processing"
+    )
 
 
 class SystemInstruction(BaseModel):
-    """System-level instruction for AI behavior."""
+    """System-level instruction for AI behavior with enhanced metadata."""
     id: Optional[str] = Field(
         None, description="Unique identifier for the instruction")
     type: Literal["behavior", "style", "constraint", "preference", "rule"] = Field(
@@ -224,9 +391,15 @@ class SystemInstruction(BaseModel):
         None,
         description="Conditions under which this instruction applies"
     )
-    metadata: Optional[Dict[str, Any]] = Field(
+    metadata: Optional[EnhancedContextMetadata] = Field(
+        default=None,
+        description="Enhanced metadata for context processing"
+    )
+    
+    # Legacy metadata field for backward compatibility
+    legacy_metadata: Optional[Dict[str, Any]] = Field(
         None,
-        description="Additional metadata for the instruction"
+        description="Additional legacy metadata for the instruction"
     )
 
 
@@ -287,6 +460,147 @@ class StructuredContextContainer(BaseModel):
         None,
         description="Metadata about the context container"
     )
+    
+    def get_elements_for_agent(self, agent_type: AgentType) -> List[Union[PlotElement, CharacterContext, UserRequest, SystemInstruction]]:
+        """Get all context elements relevant for a specific agent type."""
+        relevant_elements = []
+        
+        # Check plot elements
+        for element in self.plot_elements:
+            if element.metadata and agent_type in element.metadata.target_agents:
+                relevant_elements.append(element)
+            elif not element.metadata:  # Default to WRITER if no metadata
+                if agent_type == AgentType.WRITER:
+                    relevant_elements.append(element)
+        
+        # Check character contexts
+        for element in self.character_contexts:
+            if element.metadata and agent_type in element.metadata.target_agents:
+                relevant_elements.append(element)
+            elif not element.metadata:  # Default to CHARACTER and WRITER
+                if agent_type in [AgentType.CHARACTER, AgentType.WRITER]:
+                    relevant_elements.append(element)
+        
+        # Check user requests
+        for element in self.user_requests:
+            if element.metadata and agent_type in element.metadata.target_agents:
+                relevant_elements.append(element)
+            elif not element.metadata:  # Default to WRITER
+                if agent_type == AgentType.WRITER:
+                    relevant_elements.append(element)
+        
+        # Check system instructions
+        for element in self.system_instructions:
+            if element.metadata and agent_type in element.metadata.target_agents:
+                relevant_elements.append(element)
+            elif not element.metadata:  # Default to WRITER
+                if agent_type == AgentType.WRITER:
+                    relevant_elements.append(element)
+        
+        return relevant_elements
+    
+    def get_elements_for_phase(self, phase: ComposePhase) -> List[Union[PlotElement, CharacterContext, UserRequest, SystemInstruction]]:
+        """Get all context elements relevant for a specific compose phase."""
+        relevant_elements = []
+        
+        # Check plot elements
+        for element in self.plot_elements:
+            if element.metadata and phase in element.metadata.relevant_phases:
+                relevant_elements.append(element)
+            elif not element.metadata:  # Default to all phases
+                relevant_elements.append(element)
+        
+        # Check character contexts
+        for element in self.character_contexts:
+            if element.metadata and phase in element.metadata.relevant_phases:
+                relevant_elements.append(element)
+            elif not element.metadata:  # Default to all phases
+                relevant_elements.append(element)
+        
+        # Check user requests
+        for element in self.user_requests:
+            if element.metadata and phase in element.metadata.relevant_phases:
+                relevant_elements.append(element)
+            elif not element.metadata:  # Default to all phases
+                relevant_elements.append(element)
+        
+        # Check system instructions
+        for element in self.system_instructions:
+            if element.metadata and phase in element.metadata.relevant_phases:
+                relevant_elements.append(element)
+            elif not element.metadata:  # Default to all phases
+                relevant_elements.append(element)
+        
+        return relevant_elements
+    
+    def get_high_priority_elements(self, threshold: float = 0.7) -> List[Union[PlotElement, CharacterContext, UserRequest, SystemInstruction]]:
+        """Get context elements with priority above the threshold."""
+        high_priority_elements = []
+        
+        # Check plot elements
+        for element in self.plot_elements:
+            if element.metadata and element.metadata.priority >= threshold:
+                high_priority_elements.append(element)
+            elif not element.metadata and element.priority == "high":
+                high_priority_elements.append(element)
+        
+        # Check character contexts
+        for element in self.character_contexts:
+            if element.metadata and element.metadata.priority >= threshold:
+                high_priority_elements.append(element)
+        
+        # Check user requests
+        for element in self.user_requests:
+            if element.metadata and element.metadata.priority >= threshold:
+                high_priority_elements.append(element)
+            elif not element.metadata and element.priority == "high":
+                high_priority_elements.append(element)
+        
+        # Check system instructions
+        for element in self.system_instructions:
+            if element.metadata and element.metadata.priority >= threshold:
+                high_priority_elements.append(element)
+            elif not element.metadata and element.priority == "high":
+                high_priority_elements.append(element)
+        
+        return high_priority_elements
+    
+    def calculate_total_tokens(self) -> int:
+        """Calculate total estimated tokens for all elements."""
+        total = 0
+        
+        # Calculate tokens for plot elements
+        for element in self.plot_elements:
+            if element.metadata and element.metadata.estimated_tokens:
+                total += element.metadata.estimated_tokens
+            else:
+                # Rough estimate: 4 characters per token
+                total += len(element.content) // 4
+        
+        # Calculate tokens for character contexts
+        for element in self.character_contexts:
+            if element.metadata and element.metadata.estimated_tokens:
+                total += element.metadata.estimated_tokens
+            else:
+                # Estimate based on all character context fields
+                content_length = len(str(element.current_state)) + len(' '.join(element.goals)) + len(' '.join(element.memories))
+                total += content_length // 4
+        
+        # Calculate tokens for user requests
+        for element in self.user_requests:
+            if element.metadata and element.metadata.estimated_tokens:
+                total += element.metadata.estimated_tokens
+            else:
+                total += len(element.content) // 4
+        
+        # Calculate tokens for system instructions
+        for element in self.system_instructions:
+            if element.metadata and element.metadata.estimated_tokens:
+                total += element.metadata.estimated_tokens
+            else:
+                total += len(element.content) // 4
+        
+        return total
 
     @model_validator(mode='after')
     def validate_context_consistency(self):

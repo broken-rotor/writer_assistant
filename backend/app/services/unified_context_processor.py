@@ -21,18 +21,6 @@ import json
 
 from app.services.context_manager import ContextManager
 from app.core.config import settings
-from app.models.context_models import (
-    StructuredContextContainer as LegacyStructuredContextContainer,
-    ContextProcessingConfig,
-    AgentType,
-    ComposePhase,
-    StoryContextElement,
-    CharacterContextElement,
-    UserContextElement,
-    SystemContextElement,
-    ContextType,
-    ContextMetadata as LegacyContextMetadata
-)
 from app.models.generation_models import (
     StructuredContextContainer,
     SystemPrompts,
@@ -40,102 +28,22 @@ from app.models.generation_models import (
     ChapterInfo,
     FeedbackItem,
     PhaseContext,
-    ContextMetadata
+    ContextMetadata,
+    ContextProcessingConfig,
+    AgentType,
+    ComposePhase,
+    ContextType,
+    EnhancedContextMetadata
+)
+from app.utils.context_conversion import (
+    convert_new_to_legacy_context,
+    convert_legacy_to_new_processing_config
 )
 
 logger = logging.getLogger(__name__)
 
 
-def convert_api_to_legacy_context(
-        api_context: StructuredContextContainer) -> LegacyStructuredContextContainer:
-    """Convert StructuredContextContainer from generation_models.py to context_models.py format."""
-    elements = []
-
-    # Convert plot elements to story context elements
-    for plot_element in api_context.plot_elements:
-        element = StoryContextElement(
-            id=plot_element.id or f"plot_{len(elements)}",
-            type=ContextType.PLOT_OUTLINE,
-            content=plot_element.content,
-            metadata=LegacyContextMetadata(
-                priority=(settings.CONTEXT_PRIORITY_PLOT_HIGH if plot_element.priority == "high"
-                          else settings.CONTEXT_PRIORITY_PLOT_MEDIUM if plot_element.priority == "medium"
-                          else settings.CONTEXT_PRIORITY_PLOT_LOW),
-                target_agents=[AgentType.WRITER],
-                tags=plot_element.tags
-            )
-        )
-        elements.append(element)
-
-    # Convert character contexts to story context elements
-    for character_context in api_context.character_contexts:
-        # Create content from character context
-        content = f"Character: {character_context.character_name}\n"
-        if character_context.current_state:
-            content += f"Current State: {character_context.current_state}\n"
-        if character_context.goals:
-            content += f"Goals: {', '.join(character_context.goals)}\n"
-        if character_context.personality_traits:
-            content += f"Personality: {
-                ', '.join(
-                    character_context.personality_traits)}"
-
-        element = CharacterContextElement(
-            id=character_context.character_id or f"char_{len(elements)}",
-            type=ContextType.CHARACTER_PROFILE,
-            content=content,
-            character_id=character_context.character_id or f"char_{
-                len(elements)}",
-            character_name=character_context.character_name,
-            metadata=LegacyContextMetadata(
-                priority=settings.CONTEXT_PRIORITY_CHARACTER,
-                target_agents=[AgentType.CHARACTER, AgentType.WRITER],
-                tags=["character"]
-            )
-        )
-        elements.append(element)
-
-    # Convert user requests to user context elements
-    for user_request in api_context.user_requests:
-        element = UserContextElement(
-            id=user_request.id or f"user_{len(elements)}",
-            type=ContextType.USER_REQUEST,
-            content=user_request.content,
-            metadata=LegacyContextMetadata(
-                priority=(settings.CONTEXT_PRIORITY_USER_HIGH if user_request.priority == "high"
-                          else settings.CONTEXT_PRIORITY_USER_MEDIUM if user_request.priority == "medium"
-                          else settings.CONTEXT_PRIORITY_USER_LOW),
-                target_agents=[AgentType.WRITER],
-                tags=[]
-            )
-        )
-        elements.append(element)
-
-    # Convert system instructions to system context elements
-    for sys_instruction in api_context.system_instructions:
-        element = SystemContextElement(
-            id=sys_instruction.id or f"sys_{len(elements)}",
-            type=ContextType.SYSTEM_INSTRUCTION,
-            content=sys_instruction.content,
-            metadata=LegacyContextMetadata(
-                priority=(settings.CONTEXT_PRIORITY_SYSTEM_HIGH if sys_instruction.priority == "high"
-                          else settings.CONTEXT_PRIORITY_SYSTEM_MEDIUM if sys_instruction.priority == "medium"
-                          else settings.CONTEXT_PRIORITY_SYSTEM_LOW),
-                target_agents=[AgentType.WRITER],
-                tags=[]
-            )
-        )
-        elements.append(element)
-
-    # Create legacy container
-    return LegacyStructuredContextContainer(
-        elements=elements,
-        global_metadata={
-            "total_elements": len(elements),
-            "converted_from_api": True,
-            "original_total_elements": api_context.metadata.total_elements if api_context.metadata else len(elements)
-        }
-    )
+# Legacy conversion function removed - now using native generation_models format
 
 
 @dataclass
@@ -541,11 +449,8 @@ class UnifiedContextProcessor:
         context_processing_config: Optional[Dict[str, Any]],
         endpoint_strategy: str
     ) -> UnifiedContextResult:
-        """Process structured context using ContextManager."""
+        """Process structured context natively using enhanced generation_models."""
         try:
-            # Convert API structured context to legacy format for processing
-            legacy_context = convert_api_to_legacy_context(structured_context)
-
             # Create processing configuration
             processing_config = ContextProcessingConfig(
                 target_agent=agent_type,
@@ -553,32 +458,31 @@ class UnifiedContextProcessor:
                 max_tokens=context_processing_config.get(
                     "max_context_length", 8000) if context_processing_config else 8000,
                 summarization_threshold=context_processing_config.get(
-                    "summarization_threshold", 6000) if context_processing_config else 6000,
+                    "summarization_threshold", 0.8) if context_processing_config else 0.8,
                 prioritize_recent=context_processing_config.get(
                     "prioritize_recent", True) if context_processing_config else True,
                 include_relationships=context_processing_config.get(
                     "include_relationships", True) if context_processing_config else True
             )
 
-            # Process context with ContextManager
-            formatted_context, metadata = self.context_manager.process_context_for_agent(
-                legacy_context, processing_config
+            # Process context natively with the enhanced structured context
+            formatted_context, metadata = self._process_native_structured_context(
+                structured_context, processing_config, endpoint_strategy
             )
 
-            # Parse the formatted context to extract system prompt and user
-            # message
+            # Parse the formatted context to extract system prompt and user message
             system_prompt, user_message = self._parse_formatted_context(
                 formatted_context, agent_type, endpoint_strategy
             )
 
             # Create context metadata
             context_metadata = ContextMetadata(
-                total_elements=metadata.get("original_element_count", 0),
+                total_elements=len(structured_context.plot_elements) + len(structured_context.character_contexts) + 
+                              len(structured_context.user_requests) + len(structured_context.system_instructions),
                 processing_applied=metadata.get("was_summarized", False),
                 processing_mode="structured",
-                optimization_level="moderate" if metadata.get(
-                    "was_summarized", False) else "none",
-                compression_ratio=metadata.get("reduction_ratio"),
+                optimization_level="moderate" if metadata.get("was_summarized", False) else "none",
+                compression_ratio=metadata.get("reduction_ratio", 1.0),
                 processing_time_ms=metadata.get("processing_time_ms", 0),
                 created_at=datetime.now(timezone.utc).isoformat()
             )
@@ -597,6 +501,176 @@ class UnifiedContextProcessor:
         except Exception as e:
             logger.error(f"Error processing structured context: {str(e)}")
             raise
+
+    def _process_native_structured_context(
+        self,
+        structured_context: StructuredContextContainer,
+        processing_config: ContextProcessingConfig,
+        endpoint_strategy: str
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Process structured context natively without converting to legacy format.
+        
+        This method implements the core context processing logic directly on the
+        enhanced generation_models format.
+        """
+        start_time = datetime.now(timezone.utc)
+        
+        # Step 1: Filter elements for target agent and phase
+        relevant_elements = structured_context.get_elements_for_agent(processing_config.target_agent)
+        phase_elements = [elem for elem in relevant_elements if self._is_element_relevant_for_phase(elem, processing_config.current_phase)]
+        
+        # Step 2: Apply priority filtering if needed
+        if processing_config.max_tokens:
+            estimated_tokens = self._estimate_total_tokens(phase_elements)
+            if estimated_tokens > processing_config.max_tokens:
+                # Apply token budget management
+                phase_elements, was_summarized = self._apply_token_budget_native(
+                    phase_elements, processing_config.max_tokens, processing_config.summarization_threshold
+                )
+            else:
+                was_summarized = False
+        else:
+            was_summarized = False
+        
+        # Step 3: Format elements for the target agent
+        formatted_context = self._format_elements_for_agent(
+            phase_elements, processing_config.target_agent, processing_config.current_phase, endpoint_strategy
+        )
+        
+        # Step 4: Generate processing metadata
+        end_time = datetime.now(timezone.utc)
+        processing_time_ms = (end_time - start_time).total_seconds() * 1000
+        
+        metadata = {
+            "original_element_count": len(structured_context.plot_elements) + len(structured_context.character_contexts) + 
+                                    len(structured_context.user_requests) + len(structured_context.system_instructions),
+            "filtered_element_count": len(phase_elements),
+            "was_summarized": was_summarized,
+            "processing_time_ms": processing_time_ms,
+            "reduction_ratio": len(phase_elements) / max(1, len(relevant_elements)) if relevant_elements else 1.0
+        }
+        
+        return formatted_context, metadata
+
+    def _is_element_relevant_for_phase(self, element, phase: ComposePhase) -> bool:
+        """Check if an element is relevant for the given phase."""
+        if hasattr(element, 'metadata') and element.metadata and element.metadata.relevant_phases:
+            return phase in element.metadata.relevant_phases
+        # Default to relevant for all phases if no metadata
+        return True
+
+    def _estimate_total_tokens(self, elements) -> int:
+        """Estimate total tokens for a list of elements."""
+        total = 0
+        for element in elements:
+            if hasattr(element, 'metadata') and element.metadata and element.metadata.estimated_tokens:
+                total += element.metadata.estimated_tokens
+            elif hasattr(element, 'content'):
+                # Rough estimate: 4 characters per token
+                total += len(element.content) // 4
+            else:
+                # For character contexts, estimate based on all fields
+                if hasattr(element, 'current_state'):
+                    content_length = len(str(element.current_state)) + len(' '.join(element.goals or [])) + len(' '.join(element.memories or []))
+                    total += content_length // 4
+        return total
+
+    def _apply_token_budget_native(self, elements, max_tokens: int, threshold: float) -> Tuple[List, bool]:
+        """Apply token budget management to elements."""
+        estimated_tokens = self._estimate_total_tokens(elements)
+        
+        if estimated_tokens <= max_tokens:
+            return elements, False
+        
+        # Sort by priority (high priority elements first)
+        sorted_elements = sorted(elements, key=lambda x: self._get_element_priority(x), reverse=True)
+        
+        # Keep elements until we hit the token limit
+        selected_elements = []
+        current_tokens = 0
+        
+        for element in sorted_elements:
+            element_tokens = self._estimate_element_tokens(element)
+            if current_tokens + element_tokens <= max_tokens:
+                selected_elements.append(element)
+                current_tokens += element_tokens
+            else:
+                break
+        
+        return selected_elements, True
+
+    def _get_element_priority(self, element) -> float:
+        """Get priority value for an element."""
+        if hasattr(element, 'metadata') and element.metadata and hasattr(element.metadata, 'priority'):
+            return element.metadata.priority
+        elif hasattr(element, 'priority'):
+            # Convert literal priority to float
+            if element.priority == "high":
+                return 0.8
+            elif element.priority == "medium":
+                return 0.5
+            else:
+                return 0.2
+        return 0.5  # Default priority
+
+    def _estimate_element_tokens(self, element) -> int:
+        """Estimate tokens for a single element."""
+        if hasattr(element, 'metadata') and element.metadata and element.metadata.estimated_tokens:
+            return element.metadata.estimated_tokens
+        elif hasattr(element, 'content'):
+            return len(element.content) // 4
+        else:
+            # For character contexts
+            if hasattr(element, 'current_state'):
+                content_length = len(str(element.current_state)) + len(' '.join(element.goals or [])) + len(' '.join(element.memories or []))
+                return content_length // 4
+        return 50  # Default estimate
+
+    def _format_elements_for_agent(self, elements, agent_type: AgentType, phase: ComposePhase, strategy: str) -> str:
+        """Format elements for the specific agent type and phase."""
+        sections = []
+        
+        # Group elements by type
+        plot_elements = [e for e in elements if hasattr(e, 'type') and hasattr(e, 'content')]
+        character_elements = [e for e in elements if hasattr(e, 'character_name')]
+        user_elements = [e for e in elements if hasattr(e, 'content') and not hasattr(e, 'character_name') and not hasattr(e, 'type')]
+        system_elements = [e for e in elements if hasattr(e, 'scope')]
+        
+        # Format system instructions
+        if system_elements:
+            sections.append("=== SYSTEM INSTRUCTIONS ===")
+            for element in system_elements:
+                sections.append(f"- {element.content}")
+        
+        # Format plot elements
+        if plot_elements:
+            sections.append("=== PLOT CONTEXT ===")
+            for element in plot_elements:
+                sections.append(f"[{element.type.upper()}] {element.content}")
+        
+        # Format character contexts
+        if character_elements:
+            sections.append("=== CHARACTER CONTEXT ===")
+            for element in character_elements:
+                char_info = f"**{element.character_name}**\n"
+                if element.current_state:
+                    char_info += f"Current State: {element.current_state}\n"
+                if element.goals:
+                    char_info += f"Goals: {', '.join(element.goals)}\n"
+                if element.personality_traits:
+                    char_info += f"Personality: {', '.join(element.personality_traits)}\n"
+                if element.memories:
+                    char_info += f"Memories: {'; '.join(element.memories)}"
+                sections.append(char_info)
+        
+        # Format user requests
+        if user_elements:
+            sections.append("=== USER REQUESTS ===")
+            for element in user_elements:
+                sections.append(f"- {element.content}")
+        
+        return "\n\n".join(sections)
 
     def _parse_formatted_context(
         self,
