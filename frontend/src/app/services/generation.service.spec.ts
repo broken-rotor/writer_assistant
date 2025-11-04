@@ -26,7 +26,7 @@ describe('GenerationService', () => {
   beforeEach(() => {
     const spy = jasmine.createSpyObj('ApiService', [
       'requestCharacterFeedback',
-      'requestRaterFeedback',
+      'streamRaterFeedback',
       'generateChapter',
       'modifyChapter',
       'requestEditorReview',
@@ -261,11 +261,14 @@ describe('GenerationService', () => {
         fromCache: false
       });
 
-      apiServiceSpy.requestRaterFeedback.and.returnValue(of(mockResponse));
+      // Mock streaming response
+      apiServiceSpy.streamRaterFeedback.and.returnValue(of(
+        { type: 'result', data: mockResponse }
+      ));
 
       service.requestRaterFeedback(mockStory, mockRater, 'Enter dungeon').subscribe(response => {
         expect(response).toEqual(mockResponse);
-        expect(apiServiceSpy.requestRaterFeedback).toHaveBeenCalledWith(
+        expect(apiServiceSpy.streamRaterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
             plotContext: jasmine.objectContaining({
               plotPoint: 'Enter dungeon'
