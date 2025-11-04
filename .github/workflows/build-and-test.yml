@@ -92,7 +92,7 @@ jobs:
       working-directory: frontend
       
     - name: Run tests
-      run: npm run test -- --watch=false --code-coverage --browsers=ChromeHeadless
+      run: npm run test -- --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox
       working-directory: frontend
       
     - name: Build production
