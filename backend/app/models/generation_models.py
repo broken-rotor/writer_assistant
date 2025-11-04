@@ -403,7 +403,7 @@ class SystemInstruction(BaseModel):
     )
 
 
-class ContextMetadata(BaseModel):
+class ContextProcessingMetadata(BaseModel):
     """Metadata about context processing and optimization."""
     total_elements: int = Field(description="Total number of context elements")
     processing_applied: bool = Field(
@@ -438,8 +438,12 @@ class ContextMetadata(BaseModel):
     )
 
 
-class StructuredContextContainer(BaseModel):
-    """Container for all structured context elements."""
+# Alias for backward compatibility with tests and legacy context elements
+ContextMetadata = EnhancedContextMetadata
+
+
+class EnhancedStructuredContextContainer(BaseModel):
+    """Enhanced container for all structured context elements with specialized types."""
     plot_elements: List[PlotElement] = Field(
         default_factory=list,
         description="Plot-related context elements"
@@ -460,6 +464,16 @@ class StructuredContextContainer(BaseModel):
         None,
         description="Metadata about the context container"
     )
+    
+    @property
+    def elements(self) -> List[Union[PlotElement, CharacterContext, UserRequest, SystemInstruction]]:
+        """Get all elements as a flat list for backward compatibility."""
+        all_elements = []
+        all_elements.extend(self.plot_elements)
+        all_elements.extend(self.character_contexts)
+        all_elements.extend(self.user_requests)
+        all_elements.extend(self.system_instructions)
+        return all_elements
     
     def get_elements_for_agent(self, agent_type: AgentType) -> List[Union[PlotElement, CharacterContext, UserRequest, SystemInstruction]]:
         """Get all context elements relevant for a specific agent type."""
@@ -624,6 +638,10 @@ class StructuredContextContainer(BaseModel):
         return self
 
 
+# Alias for backward compatibility during migration
+StructuredContextContainer = EnhancedStructuredContextContainer
+
+
 # Character Feedback Request/Response
 class CharacterFeedbackRequest(BaseModel):
     # Core request fields
@@ -663,7 +681,7 @@ class CharacterFeedback(BaseModel):
 class CharacterFeedbackResponse(BaseModel):
     characterName: str
     feedback: CharacterFeedback
-    context_metadata: Optional[ContextMetadata] = Field(
+    context_metadata: Optional[ContextProcessingMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
     )
@@ -705,7 +723,7 @@ class RaterFeedback(BaseModel):
 class RaterFeedbackResponse(BaseModel):
     raterName: str
     feedback: RaterFeedback
-    context_metadata: Optional[ContextMetadata] = Field(
+    context_metadata: Optional[ContextProcessingMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
     )
@@ -742,7 +760,7 @@ class GenerateChapterResponse(BaseModel):
     chapterText: str
     wordCount: int
     metadata: Dict[str, Any]
-    context_metadata: Optional[ContextMetadata] = Field(
+    context_metadata: Optional[ContextProcessingMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
     )
@@ -780,7 +798,7 @@ class ModifyChapterResponse(BaseModel):
     modifiedChapter: str
     wordCount: int
     changesSummary: str
-    context_metadata: Optional[ContextMetadata] = Field(
+    context_metadata: Optional[ContextProcessingMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
     )
@@ -821,7 +839,7 @@ class EditorSuggestion(BaseModel):
 
 class EditorReviewResponse(BaseModel):
     suggestions: List[EditorSuggestion]
-    context_metadata: Optional[ContextMetadata] = Field(
+    context_metadata: Optional[ContextProcessingMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
     )
@@ -861,7 +879,7 @@ class FleshOutResponse(BaseModel):
     fleshedOutText: str
     originalText: str
     metadata: Dict[str, Any]
-    context_metadata: Optional[ContextMetadata] = Field(
+    context_metadata: Optional[ContextProcessingMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
     )
@@ -911,7 +929,7 @@ class GenerateCharacterDetailsResponse(BaseModel):
     motivations: str
     fears: str
     relationships: str
-    context_metadata: Optional[ContextMetadata] = Field(
+    context_metadata: Optional[ContextProcessingMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
     )
@@ -953,7 +971,7 @@ class RegenerateBioRequest(BaseModel):
 class RegenerateBioResponse(BaseModel):
     basicBio: str = Field(
         description="Generated bio summary from character details")
-    context_metadata: Optional[ContextMetadata] = Field(
+    context_metadata: Optional[ContextProcessingMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
     )

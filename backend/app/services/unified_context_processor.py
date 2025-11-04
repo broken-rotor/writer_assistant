@@ -28,7 +28,7 @@ from app.models.generation_models import (
     ChapterInfo,
     FeedbackItem,
     PhaseContext,
-    ContextMetadata,
+    ContextProcessingMetadata,
     ContextProcessingConfig,
     AgentType,
     ComposePhase,
@@ -476,7 +476,7 @@ class UnifiedContextProcessor:
             )
 
             # Create context metadata
-            context_metadata = ContextMetadata(
+            context_metadata = ContextProcessingMetadata(
                 total_elements=len(structured_context.plot_elements) + len(structured_context.character_contexts) + 
                               len(structured_context.user_requests) + len(structured_context.system_instructions),
                 processing_applied=metadata.get("was_summarized", False),

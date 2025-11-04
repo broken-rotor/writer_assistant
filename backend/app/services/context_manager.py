@@ -10,7 +10,7 @@ This service handles:
 - Context validation and consistency checking
 """
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any, Union
 from datetime import datetime, timezone
 import logging
 from collections import defaultdict
@@ -29,9 +29,28 @@ from app.models.generation_models import (
     CharacterContextElement,
     UserContextElement,
     PhaseContextElement,
-    ConversationContextElement
+    ConversationContextElement,
+    PlotElement,
+    CharacterContext,
+    UserRequest,
+    SystemInstruction
 )
 from app.services.token_management.layers import LayerType
+
+# Type alias for all context element types (legacy and new)
+ContextElement = Union[
+    BaseContextElement,
+    SystemContextElement,
+    StoryContextElement,
+    CharacterContextElement,
+    UserContextElement,
+    PhaseContextElement,
+    ConversationContextElement,
+    PlotElement,
+    CharacterContext,
+    UserRequest,
+    SystemInstruction
+]
 
 logger = logging.getLogger(__name__)
 
@@ -217,11 +236,18 @@ class ContextManager:
         container: StructuredContextContainer,
         agent_type: AgentType,
         phase: ComposePhase
-    ) -> List[BaseContextElement]:
+    ) -> List[ContextElement]:
         """Filter context elements for specific agent and phase."""
         filtered_elements = []
 
         for element in container.elements:
+            # Skip elements without metadata (they should have default behavior)
+            if not element.metadata:
+                # Default behavior: include for WRITER agent in all phases
+                if agent_type == AgentType.WRITER:
+                    filtered_elements.append(element)
+                continue
+
             # Check if element is relevant for this agent
             if agent_type not in element.metadata.target_agents:
                 continue
@@ -240,9 +266,9 @@ class ContextManager:
 
     def _apply_custom_filters(
         self,
-        elements: List[BaseContextElement],
+        elements: List[ContextElement],
         custom_filters: Dict[str, Any]
-    ) -> List[BaseContextElement]:
+    ) -> List[ContextElement]:
         """Apply custom filtering criteria."""
         filtered_elements = []
 
@@ -283,11 +309,11 @@ class ContextManager:
 
     def _sort_elements_by_priority(
         self,
-        elements: List[BaseContextElement],
+        elements: List[ContextElement],
         prioritize_recent: bool = True
-    ) -> List[BaseContextElement]:
+    ) -> List[ContextElement]:
         """Sort elements by priority and optionally by recency."""
-        def sort_key(element: BaseContextElement) -> Tuple[float, datetime]:
+        def sort_key(element: ContextElement) -> Tuple[float, datetime]:
             priority = element.metadata.priority
 
             # If prioritizing recent, use updated_at as secondary sort
@@ -303,9 +329,9 @@ class ContextManager:
 
     def _include_related_elements(
         self,
-        elements: List[BaseContextElement],
+        elements: List[ContextElement],
         relationships: List[Any]
-    ) -> List[BaseContextElement]:
+    ) -> List[ContextElement]:
         """Include related context elements based on relationships."""
         # For now, return elements as-is
         # TODO: Implement relationship-based inclusion logic
@@ -313,10 +339,10 @@ class ContextManager:
 
     def _apply_token_budget(
         self,
-        elements: List[BaseContextElement],
+        elements: List[ContextElement],
         max_tokens: Optional[int],
         summarization_threshold: float
-    ) -> Tuple[List[BaseContextElement], bool]:
+    ) -> Tuple[List[ContextElement], bool]:
         """Apply token budget constraints with intelligent summarization."""
         if not max_tokens:
             return elements, False
@@ -342,9 +368,9 @@ class ContextManager:
 
     def _trim_by_priority(
         self,
-        elements: List[BaseContextElement],
+        elements: List[ContextElement],
         max_tokens: int
-    ) -> List[BaseContextElement]:
+    ) -> List[ContextElement]:
         """Trim elements by removing lowest priority ones."""
         result = []
         current_tokens = 0
@@ -373,9 +399,9 @@ class ContextManager:
 
     def _summarize_elements(
         self,
-        elements: List[BaseContextElement],
+        elements: List[ContextElement],
         max_tokens: int
-    ) -> List[BaseContextElement]:
+    ) -> List[ContextElement]:
         """Summarize elements to fit within token budget."""
         # Group elements by summarization rule
         preserve_full = []
@@ -452,9 +478,9 @@ class ContextSummarizer:
 
     def compress_element(
         self,
-        element: BaseContextElement,
+        element: ContextElement,
         target_tokens: int
-    ) -> Optional[BaseContextElement]:
+    ) -> Optional[ContextElement]:
         """Compress a context element to fit within target tokens."""
         if element.metadata.summarization_rule == SummarizationRule.PRESERVE_FULL:
             return element
@@ -481,9 +507,9 @@ class ContextSummarizer:
 
     def extract_key_points(
         self,
-        element: BaseContextElement,
+        element: ContextElement,
         target_tokens: int
-    ) -> Optional[BaseContextElement]:
+    ) -> Optional[ContextElement]:
         """Extract key points from a context element."""
         # Simple key point extraction: take first and last sentences
         sentences = element.content.split('. ')
@@ -507,7 +533,7 @@ class ContextFormatter:
 
     def format_for_agent(
         self,
-        elements: List[BaseContextElement],
+        elements: List[ContextElement],
         agent_type: AgentType,
         phase: ComposePhase
     ) -> str:
@@ -525,7 +551,7 @@ class ContextFormatter:
         else:
             return self._format_generic(elements, phase)
 
-    def _format_for_writer(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+    def _format_for_writer(self, elements: List[ContextElement], phase: ComposePhase) -> str:
         """Format context for the Writer agent."""
         sections = []
 
@@ -577,7 +603,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_for_character(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+    def _format_for_character(self, elements: List[ContextElement], phase: ComposePhase) -> str:
         """Format context for Character agents."""
         sections = []
 
@@ -600,7 +626,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_for_rater(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+    def _format_for_rater(self, elements: List[ContextElement], phase: ComposePhase) -> str:
         """Format context for Rater agents."""
         sections = []
 
@@ -620,7 +646,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_for_editor(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+    def _format_for_editor(self, elements: List[ContextElement], phase: ComposePhase) -> str:
         """Format context for Editor agent."""
         sections = []
 
@@ -640,7 +666,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_for_worldbuilding(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+    def _format_for_worldbuilding(self, elements: List[ContextElement], phase: ComposePhase) -> str:
         """Format context for Worldbuilding agent."""
         sections = []
 
@@ -660,7 +686,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_generic(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
+    def _format_generic(self, elements: List[ContextElement], phase: ComposePhase) -> str:
         """Generic formatting for unknown agent types."""
         sections = []
 
