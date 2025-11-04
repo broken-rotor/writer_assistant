@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { 
   Story, 
-  PlotOutline, 
   OutlineItem,
   PlotElement,
   UserRequest
@@ -21,7 +20,9 @@ interface DraftOutlineItem {
 })
 export class PlotOutlineContextService {
 
-  constructor() { }
+  constructor() { 
+    // Service initialization - no dependencies required
+  }
 
   /**
    * Extract plot outline context relevant to a specific chapter
@@ -73,8 +74,9 @@ export class PlotOutlineContextService {
 
     try {
       // Check if story has chapter compose state with plot outline phase
-      if (story.chapterCompose?.phases?.plotOutline?.outline?.items) {
-        const outlineItems = story.chapterCompose.phases.plotOutline.outline.items;
+      const plotOutlinePhase = story.chapterCompose?.phases?.plotOutline;
+      if (plotOutlinePhase?.outline?.items) {
+        const outlineItems = plotOutlinePhase.outline.items;
         
         // Convert Map to array if needed
         if (outlineItems instanceof Map) {
@@ -89,7 +91,8 @@ export class PlotOutlineContextService {
           });
         } else if (Array.isArray(outlineItems)) {
           // Handle if it's already an array
-          items.push(...outlineItems.map(item => ({
+          const arrayItems = outlineItems as OutlineItem[];
+          items.push(...arrayItems.map((item: OutlineItem) => ({
             id: item.id,
             title: item.title,
             description: item.description,
@@ -403,13 +406,14 @@ export class PlotOutlineContextService {
    * Check if story has plot outline data available
    */
   hasPlotOutlineData(story: Story): boolean {
+    const plotOutlinePhase = story.chapterCompose?.phases?.plotOutline;
     return !!(
       story.plotOutline?.content ||
-      (story.chapterCompose?.phases?.plotOutline?.outline?.items &&
-       (story.chapterCompose.phases.plotOutline.outline.items instanceof Map ? 
-        story.chapterCompose.phases.plotOutline.outline.items.size > 0 :
-        Array.isArray(story.chapterCompose.phases.plotOutline.outline.items) && 
-        story.chapterCompose.phases.plotOutline.outline.items.length > 0))
+      (plotOutlinePhase?.outline?.items &&
+       (plotOutlinePhase.outline.items instanceof Map ? 
+        plotOutlinePhase.outline.items.size > 0 :
+        Array.isArray(plotOutlinePhase.outline.items) && 
+        (plotOutlinePhase.outline.items as any[]).length > 0))
     );
   }
 
