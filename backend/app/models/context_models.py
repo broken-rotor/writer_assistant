@@ -1,7 +1,34 @@
 """
 Structured Context Data Models for Writer Assistant API.
 
-This module defines the new structured context schema to replace monolithic text fields
+DEPRECATION NOTICE:
+===================
+The StructuredContextContainer and related element types in this module are DEPRECATED
+as of January 2025 and will be removed in a future version.
+
+Please use the new typed collections model from app.models.generation_models instead:
+- app.models.generation_models.StructuredContextContainer (new model)
+- app.models.generation_models.PlotElement (replaces StoryContextElement)
+- app.models.generation_models.CharacterContext (replaces CharacterContextElement)
+- app.models.generation_models.UserRequest (replaces UserContextElement)
+- app.models.generation_models.SystemInstruction (replaces SystemContextElement)
+
+Migration Guide: backend/STRUCTURED_CONTEXT_MIGRATION_GUIDE.md
+Reference: backend/STRUCTURED_CONTEXT_REFERENCE.md
+
+DEPRECATED CLASSES IN THIS MODULE:
+- StructuredContextContainer (use generation_models.StructuredContextContainer)
+- BaseContextElement (no direct replacement - use typed collections)
+- SystemContextElement (use SystemInstruction)
+- StoryContextElement (use PlotElement)
+- CharacterContextElement (use CharacterContext)
+- UserContextElement (use UserRequest)
+- PhaseContextElement (use SystemInstruction or PlotElement)
+- ConversationContextElement (use SystemInstruction or PlotElement)
+- ContextMetadata (use generation_models element fields)
+- ContextRelationship (use CharacterContext.relationships)
+
+This module defines the old structured context schema to replace monolithic text fields
 (systemPrompts, worldbuilding, storySummary) with granular, manageable context elements.
 
 The schema supports:
@@ -12,10 +39,20 @@ The schema supports:
 - Backward compatibility with existing PhaseContext system
 """
 
+import warnings
 from typing import Dict, List, Optional, Any, Literal, Union
 from pydantic import BaseModel, Field, field_validator
 from datetime import datetime, timezone
 from enum import Enum
+
+# Deprecation warning for the entire module
+warnings.warn(
+    "app.models.context_models.StructuredContextContainer and related classes are deprecated. "
+    "Use app.models.generation_models.StructuredContextContainer with typed collections instead. "
+    "See backend/STRUCTURED_CONTEXT_MIGRATION_GUIDE.md for migration instructions.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 
 # Context Element Types Taxonomy
@@ -82,7 +119,13 @@ class ComposePhase(str, Enum):
 
 # Base Context Element
 class ContextMetadata(BaseModel):
-    """Metadata for context elements supporting prioritization and summarization."""
+    """
+    Metadata for context elements supporting prioritization and summarization.
+
+    DEPRECATED: This class is deprecated. Use the priority and metadata fields
+    directly on the new model element types (PlotElement, CharacterContext, etc.)
+    from app.models.generation_models instead.
+    """
 
     priority: float = Field(
         default=0.5,
@@ -133,7 +176,13 @@ class ContextMetadata(BaseModel):
 
 
 class BaseContextElement(BaseModel):
-    """Base class for all context elements."""
+    """
+    Base class for all context elements.
+
+    DEPRECATED: This class is deprecated. Use typed collections from
+    app.models.generation_models instead (PlotElement, CharacterContext,
+    UserRequest, SystemInstruction).
+    """
 
     id: str = Field(
         description="Unique identifier for this context element"
@@ -165,7 +214,11 @@ class BaseContextElement(BaseModel):
 
 # Specialized Context Elements
 class SystemContextElement(BaseContextElement):
-    """Context elements for system-level prompts and instructions."""
+    """
+    Context elements for system-level prompts and instructions.
+
+    DEPRECATED: Use app.models.generation_models.SystemInstruction instead.
+    """
 
     type: Literal[
         ContextType.SYSTEM_PROMPT,
@@ -185,7 +238,11 @@ class SystemContextElement(BaseContextElement):
 
 
 class StoryContextElement(BaseContextElement):
-    """Context elements for story-level information."""
+    """
+    Context elements for story-level information.
+
+    DEPRECATED: Use app.models.generation_models.PlotElement instead.
+    """
 
     type: Literal[
         ContextType.WORLD_BUILDING,
@@ -207,7 +264,11 @@ class StoryContextElement(BaseContextElement):
 
 
 class CharacterContextElement(BaseContextElement):
-    """Context elements for character-specific information."""
+    """
+    Context elements for character-specific information.
+
+    DEPRECATED: Use app.models.generation_models.CharacterContext instead.
+    """
 
     type: Literal[
         ContextType.CHARACTER_PROFILE,
@@ -236,7 +297,11 @@ class CharacterContextElement(BaseContextElement):
 
 
 class UserContextElement(BaseContextElement):
-    """Context elements for user preferences, feedback, and requests."""
+    """
+    Context elements for user preferences, feedback, and requests.
+
+    DEPRECATED: Use app.models.generation_models.UserRequest instead.
+    """
 
     type: Literal[
         ContextType.USER_PREFERENCE,
@@ -262,7 +327,11 @@ class UserContextElement(BaseContextElement):
 
 
 class PhaseContextElement(BaseContextElement):
-    """Context elements for phase-specific instructions and outputs."""
+    """
+    Context elements for phase-specific instructions and outputs.
+
+    DEPRECATED: Use app.models.generation_models.SystemInstruction or PlotElement instead.
+    """
 
     type: Literal[
         ContextType.PHASE_INSTRUCTION,
@@ -281,7 +350,11 @@ class PhaseContextElement(BaseContextElement):
 
 
 class ConversationContextElement(BaseContextElement):
-    """Context elements for conversation history and context."""
+    """
+    Context elements for conversation history and context.
+
+    DEPRECATED: Use app.models.generation_models.SystemInstruction or PlotElement instead.
+    """
 
     type: Literal[
         ContextType.CONVERSATION_HISTORY,
@@ -306,7 +379,12 @@ class ConversationContextElement(BaseContextElement):
 
 # Context Relationships
 class ContextRelationship(BaseModel):
-    """Defines relationships between context elements."""
+    """
+    Defines relationships between context elements.
+
+    DEPRECATED: Use CharacterContext.relationships (Dict[str, str]) instead
+    for character relationships.
+    """
 
     source_id: str = Field(description="ID of the source context element")
     target_id: str = Field(description="ID of the target context element")
@@ -317,7 +395,29 @@ class ContextRelationship(BaseModel):
 
 # Main Structured Context Container
 class StructuredContextContainer(BaseModel):
-    """Main container for all structured context elements."""
+    """
+    Main container for all structured context elements.
+
+    DEPRECATED: This class is deprecated as of January 2025.
+
+    Use app.models.generation_models.StructuredContextContainer instead, which uses
+    typed collections (plot_elements, character_contexts, user_requests, system_instructions)
+    instead of a generic elements list.
+
+    Migration Guide: backend/STRUCTURED_CONTEXT_MIGRATION_GUIDE.md
+
+    Old Model (DEPRECATED):
+        container = StructuredContextContainer(elements=[...])
+
+    New Model (USE THIS):
+        from app.models.generation_models import StructuredContextContainer
+        container = StructuredContextContainer(
+            plot_elements=[...],
+            character_contexts=[...],
+            user_requests=[...],
+            system_instructions=[...]
+        )
+    """
 
     elements: List[Union[
         SystemContextElement,
