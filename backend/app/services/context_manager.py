@@ -17,19 +17,21 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from app.models.context_models import (
-    StructuredContextContainer,
-    BaseContextElement,
-    ContextType,
     AgentType,
     ComposePhase,
-    SummarizationRule,
-    ContextProcessingConfig,
-    SystemContextElement,
-    StoryContextElement,
-    CharacterContextElement,
-    UserContextElement,
-    PhaseContextElement,
-    ConversationContextElement
+    ContextProcessingConfig
+)
+from app.models.generation_models import (
+    StructuredContextContainer,
+    PlotElement,
+    CharacterContext,
+    UserRequest,
+    SystemInstruction
+)
+from app.services.token_management.token_counter import (
+    TokenCounter,
+    ContentType,
+    CountingStrategy
 )
 from app.services.token_management.layers import LayerType
 
@@ -40,8 +42,8 @@ logger = logging.getLogger(__name__)
 class ContextItem:
     """Simple context item for backward compatibility."""
     content: str
-    context_type: ContextType
-    priority: int
+    element_type: str  # Changed from ContextType to str
+    priority: str  # Changed from int to str (high/medium/low)
     layer_type: LayerType
     metadata: Dict[str, Any]
 
@@ -50,8 +52,8 @@ class ContextItem:
 class ContextAnalysis:
     """Analysis results for context processing."""
     total_tokens: int
-    items_by_type: Dict[ContextType, List[ContextItem]]
-    priority_distribution: Dict[int, int]
+    items_by_type: Dict[str, List[ContextItem]]  # Changed key from ContextType to str
+    priority_distribution: Dict[str, int]  # Changed key from int to str
     layer_distribution: Dict[LayerType, int]
     optimization_suggestions: List[str]
 
@@ -61,8 +63,8 @@ class ContextManager:
 
     def __init__(self, enable_session_persistence: bool = True):
         """Initialize the context manager."""
-        self.summarizer = ContextSummarizer()
         self.formatter = ContextFormatter()
+        self.token_counter = TokenCounter()  # Use TokenCounter for accurate token counting
         self.enable_session_persistence = enable_session_persistence
 
         # Import here to avoid circular imports
@@ -84,41 +86,48 @@ class ContextManager:
             Tuple of (formatted_context_string, processing_metadata)
         """
         try:
-            # Step 1: Filter elements for target agent and phase
-            relevant_elements = self._filter_elements_for_agent_and_phase(
+            # Step 1: Filter collections for target agent and phase
+            relevant_collections = self._filter_elements_for_agent_and_phase(
                 context_container, config.target_agent, config.current_phase
             )
 
             # Step 2: Apply custom filters if provided
             if config.custom_filters:
-                relevant_elements = self._apply_custom_filters(relevant_elements, config.custom_filters)
+                relevant_collections = self._apply_custom_filters(relevant_collections, config.custom_filters)
 
-            # Step 3: Sort by priority and recency
-            sorted_elements = self._sort_elements_by_priority(
-                relevant_elements, config.prioritize_recent
+            # Step 3: Sort by priority
+            sorted_collections = self._sort_elements_by_priority(
+                relevant_collections, config.prioritize_recent
             )
 
-            # Step 4: Include related elements if requested
+            # Step 4: Include related elements if requested (no-op for new model)
             if config.include_relationships:
-                sorted_elements = self._include_related_elements(
-                    sorted_elements, context_container.relationships
-                )
+                sorted_collections = self._include_related_elements(sorted_collections)
 
             # Step 5: Apply token budget management
-            final_elements, was_summarized = self._apply_token_budget(
-                sorted_elements, config.max_tokens, config.summarization_threshold
+            final_collections, was_summarized = self._apply_token_budget(
+                sorted_collections, config.max_tokens, config.summarization_threshold
             )
 
             # Step 6: Format for the target agent
             formatted_context = self.formatter.format_for_agent(
-                final_elements, config.target_agent, config.current_phase
+                final_collections, config.target_agent, config.current_phase
             )
 
             # Step 7: Generate processing metadata
+            original_count = (
+                len(context_container.plot_elements) +
+                len(context_container.character_contexts) +
+                len(context_container.user_requests) +
+                len(context_container.system_instructions)
+            )
+            filtered_count = sum(len(v) for v in relevant_collections.values())
+            final_count = sum(len(v) for v in final_collections.values())
+
             metadata = self._generate_processing_metadata(
-                original_count=len(context_container.elements),
-                filtered_count=len(relevant_elements),
-                final_count=len(final_elements),
+                original_count=original_count,
+                filtered_count=filtered_count,
+                final_count=final_count,
                 was_summarized=was_summarized,
                 target_agent=config.target_agent,
                 current_phase=config.current_phase
@@ -217,211 +226,411 @@ class ContextManager:
         container: StructuredContextContainer,
         agent_type: AgentType,
         phase: ComposePhase
-    ) -> List[BaseContextElement]:
-        """Filter context elements for specific agent and phase."""
-        filtered_elements = []
+    ) -> Dict[str, List]:
+        """
+        Filter context elements for specific agent and phase.
 
-        for element in container.elements:
-            # Check if element is relevant for this agent
-            if agent_type not in element.metadata.target_agents:
-                continue
+        Returns dict with keys: plot_elements, character_contexts, user_requests, system_instructions
+        """
+        filtered = {
+            "plot_elements": [],
+            "character_contexts": [],
+            "user_requests": [],
+            "system_instructions": []
+        }
 
-            # Check if element is relevant for this phase
-            if phase not in element.metadata.relevant_phases:
-                continue
+        # Plot elements - relevant for WRITER, RATER, EDITOR agents
+        if agent_type in [AgentType.WRITER, AgentType.RATER, AgentType.EDITOR]:
+            # Filter by phase-relevant tags if available
+            for element in container.plot_elements:
+                if self._is_plot_element_relevant(element, agent_type, phase):
+                    filtered["plot_elements"].append(element)
 
-            # Check if element has expired
-            if element.metadata.expires_at and element.metadata.expires_at < datetime.now(timezone.utc):
-                continue
+        # Character contexts - relevant for CHARACTER and WRITER agents
+        if agent_type in [AgentType.CHARACTER, AgentType.WRITER]:
+            filtered["character_contexts"] = container.character_contexts
 
-            filtered_elements.append(element)
+        # User requests - relevant for all agents (high priority user instructions)
+        filtered["user_requests"] = [
+            req for req in container.user_requests
+            if self._is_user_request_relevant(req, agent_type, phase)
+        ]
 
-        return filtered_elements
+        # System instructions - relevant for all agents
+        filtered["system_instructions"] = [
+            inst for inst in container.system_instructions
+            if self._is_system_instruction_relevant(inst, agent_type, phase)
+        ]
+
+        return filtered
+
+    def _is_plot_element_relevant(self, element: PlotElement, agent_type: AgentType, phase: ComposePhase) -> bool:
+        """Check if plot element is relevant for agent and phase."""
+        # High priority elements always included
+        if element.priority == "high":
+            return True
+
+        # Phase-specific filtering via tags
+        phase_tag_map = {
+            ComposePhase.PLOT_OUTLINE: ["plot_outline", "outline"],
+            ComposePhase.CHAPTER_DETAIL: ["chapter", "scene", "current_scene"],
+            ComposePhase.FINAL_EDIT: ["revision", "edit"]
+        }
+
+        phase_tags = phase_tag_map.get(phase, [])
+        if phase_tags and any(tag in element.tags for tag in phase_tags):
+            return True
+
+        # Medium priority included by default
+        if element.priority == "medium":
+            return True
+
+        # Low priority only for WRITER in CHAPTER_DETAIL
+        if element.priority == "low" and agent_type == AgentType.WRITER and phase == ComposePhase.CHAPTER_DETAIL:
+            return True
+
+        return False
+
+    def _is_user_request_relevant(self, request: UserRequest, agent_type: AgentType, phase: ComposePhase) -> bool:
+        """Check if user request is relevant for agent and phase."""
+        # High priority requests always included
+        if request.priority == "high":
+            return True
+
+        # Medium priority for WRITER and EDITOR
+        if request.priority == "medium" and agent_type in [AgentType.WRITER, AgentType.EDITOR]:
+            return True
+
+        return False
+
+    def _is_system_instruction_relevant(self, instruction: SystemInstruction, agent_type: AgentType, phase: ComposePhase) -> bool:
+        """Check if system instruction is relevant for agent and phase."""
+        # Global scope always included
+        if instruction.scope == "global":
+            return True
+
+        # Agent-specific scope filtering
+        scope_agent_map = {
+            "character": [AgentType.CHARACTER, AgentType.WRITER],
+            "scene": [AgentType.WRITER],
+            "chapter": [AgentType.WRITER, AgentType.EDITOR],
+            "story": [AgentType.WRITER, AgentType.RATER, AgentType.EDITOR]
+        }
+
+        relevant_agents = scope_agent_map.get(instruction.scope, [])
+        if agent_type in relevant_agents:
+            return True
+
+        return False
 
     def _apply_custom_filters(
         self,
-        elements: List[BaseContextElement],
+        collections: Dict[str, List],
         custom_filters: Dict[str, Any]
-    ) -> List[BaseContextElement]:
-        """Apply custom filtering criteria."""
-        filtered_elements = []
+    ) -> Dict[str, List]:
+        """Apply custom filtering criteria to collections."""
+        filtered = {
+            "plot_elements": [],
+            "character_contexts": [],
+            "user_requests": [],
+            "system_instructions": []
+        }
 
-        for element in elements:
-            include_element = True
+        # Filter plot elements
+        for element in collections.get("plot_elements", []):
+            if self._passes_custom_filter_plot(element, custom_filters):
+                filtered["plot_elements"].append(element)
 
-            # Filter by tags if specified
-            if 'required_tags' in custom_filters:
-                required_tags = custom_filters['required_tags']
-                if not any(tag in element.metadata.tags for tag in required_tags):
-                    include_element = False
+        # Filter character contexts
+        for char in collections.get("character_contexts", []):
+            if self._passes_custom_filter_character(char, custom_filters):
+                filtered["character_contexts"].append(char)
 
-            # Filter by excluded tags if specified
-            if 'excluded_tags' in custom_filters:
-                excluded_tags = custom_filters['excluded_tags']
-                if any(tag in element.metadata.tags for tag in excluded_tags):
-                    include_element = False
+        # Filter user requests
+        for req in collections.get("user_requests", []):
+            if self._passes_custom_filter_request(req, custom_filters):
+                filtered["user_requests"].append(req)
 
-            # Filter by minimum priority if specified
-            if 'min_priority' in custom_filters:
-                if element.metadata.priority < custom_filters['min_priority']:
-                    include_element = False
+        # Filter system instructions
+        for inst in collections.get("system_instructions", []):
+            if self._passes_custom_filter_instruction(inst, custom_filters):
+                filtered["system_instructions"].append(inst)
 
-            # Filter by context type if specified
-            if 'allowed_types' in custom_filters:
-                if element.type not in custom_filters['allowed_types']:
-                    include_element = False
+        return filtered
 
-            # Filter by character if specified (for character contexts)
-            if 'character_ids' in custom_filters and isinstance(element, CharacterContextElement):
-                if element.character_id not in custom_filters['character_ids']:
-                    include_element = False
+    def _passes_custom_filter_plot(self, element: PlotElement, filters: Dict[str, Any]) -> bool:
+        """Check if plot element passes custom filters."""
+        # Filter by tags
+        if 'required_tags' in filters:
+            if not any(tag in element.tags for tag in filters['required_tags']):
+                return False
 
-            if include_element:
-                filtered_elements.append(element)
+        if 'excluded_tags' in filters:
+            if any(tag in element.tags for tag in filters['excluded_tags']):
+                return False
 
-        return filtered_elements
+        # Filter by minimum priority
+        if 'min_priority' in filters:
+            priority_order = {"high": 3, "medium": 2, "low": 1}
+            if priority_order.get(element.priority, 0) < priority_order.get(filters['min_priority'], 0):
+                return False
+
+        # Filter by type
+        if 'allowed_types' in filters:
+            if element.type not in filters['allowed_types']:
+                return False
+
+        return True
+
+    def _passes_custom_filter_character(self, char: CharacterContext, filters: Dict[str, Any]) -> bool:
+        """Check if character context passes custom filters."""
+        # Filter by character IDs
+        if 'character_ids' in filters:
+            if char.character_id not in filters['character_ids']:
+                return False
+
+        return True
+
+    def _passes_custom_filter_request(self, req: UserRequest, filters: Dict[str, Any]) -> bool:
+        """Check if user request passes custom filters."""
+        # Filter by minimum priority
+        if 'min_priority' in filters:
+            priority_order = {"high": 3, "medium": 2, "low": 1}
+            if priority_order.get(req.priority, 0) < priority_order.get(filters['min_priority'], 0):
+                return False
+
+        return True
+
+    def _passes_custom_filter_instruction(self, inst: SystemInstruction, filters: Dict[str, Any]) -> bool:
+        """Check if system instruction passes custom filters."""
+        # Filter by minimum priority
+        if 'min_priority' in filters:
+            priority_order = {"high": 3, "medium": 2, "low": 1}
+            if priority_order.get(inst.priority, 0) < priority_order.get(filters['min_priority'], 0):
+                return False
+
+        return True
 
     def _sort_elements_by_priority(
         self,
-        elements: List[BaseContextElement],
+        collections: Dict[str, List],
         prioritize_recent: bool = True
-    ) -> List[BaseContextElement]:
-        """Sort elements by priority and optionally by recency."""
-        def sort_key(element: BaseContextElement) -> Tuple[float, datetime]:
-            priority = element.metadata.priority
+    ) -> Dict[str, List]:
+        """Sort elements within each collection by priority."""
+        sorted_collections = {
+            "plot_elements": [],
+            "character_contexts": [],
+            "user_requests": [],
+            "system_instructions": []
+        }
 
-            # If prioritizing recent, use updated_at as secondary sort
-            if prioritize_recent:
-                recency = element.metadata.updated_at
-            else:
-                recency = element.metadata.created_at
+        # Priority mapping for sorting
+        priority_order = {"high": 3, "medium": 2, "low": 1}
 
-            # Return negative priority for descending sort, positive datetime for ascending
-            return (-priority, -recency.timestamp())
+        # Sort plot elements by priority (high first)
+        sorted_collections["plot_elements"] = sorted(
+            collections.get("plot_elements", []),
+            key=lambda x: -priority_order.get(x.priority, 0)
+        )
 
-        return sorted(elements, key=sort_key)
+        # Character contexts - keep original order (no priority field)
+        sorted_collections["character_contexts"] = collections.get("character_contexts", [])
+
+        # Sort user requests by priority
+        sorted_collections["user_requests"] = sorted(
+            collections.get("user_requests", []),
+            key=lambda x: -priority_order.get(x.priority, 0)
+        )
+
+        # Sort system instructions by priority
+        sorted_collections["system_instructions"] = sorted(
+            collections.get("system_instructions", []),
+            key=lambda x: -priority_order.get(x.priority, 0)
+        )
+
+        return sorted_collections
 
     def _include_related_elements(
         self,
-        elements: List[BaseContextElement],
-        relationships: List[Any]
-    ) -> List[BaseContextElement]:
-        """Include related context elements based on relationships."""
-        # For now, return elements as-is
-        # TODO: Implement relationship-based inclusion logic
-        return elements
+        collections: Dict[str, List]
+    ) -> Dict[str, List]:
+        """
+        Include related context elements based on relationships.
+
+        Note: In the new model, character relationships are embedded in
+        CharacterContext.relationships (Dict[str, str]), so no additional
+        relationship processing is needed.
+        """
+        # Character relationships are already embedded in CharacterContext objects
+        # No additional processing needed
+        return collections
 
     def _apply_token_budget(
         self,
-        elements: List[BaseContextElement],
+        collections: Dict[str, List],
         max_tokens: Optional[int],
-        summarization_threshold: float
-    ) -> Tuple[List[BaseContextElement], bool]:
-        """Apply token budget constraints with intelligent summarization."""
+        summarization_threshold: int
+    ) -> Tuple[Dict[str, List], bool]:
+        """Apply token budget constraints using TokenCounter."""
         if not max_tokens:
-            return elements, False
+            return collections, False
 
-        # Calculate current token usage
-        current_tokens = sum(
-            element.metadata.estimated_tokens or len(element.content) // 4
-            for element in elements
-        )
+        # Calculate current token usage using TokenCounter
+        current_tokens = self._count_collection_tokens(collections)
 
         if current_tokens <= max_tokens:
-            return elements, False
+            return collections, False
 
         # Need to reduce token usage
-        threshold_tokens = int(max_tokens * summarization_threshold)
-
-        if current_tokens <= threshold_tokens:
+        if current_tokens <= summarization_threshold:
             # Just trim lowest priority elements
-            return self._trim_by_priority(elements, max_tokens), False
+            return self._trim_collections_by_priority(collections, max_tokens), False
 
-        # Need summarization
-        return self._summarize_elements(elements, max_tokens), True
+        # Need summarization (simplified: trim more aggressively)
+        return self._trim_collections_by_priority(collections, max_tokens), True
 
-    def _trim_by_priority(
+    def _count_collection_tokens(self, collections: Dict[str, List]) -> int:
+        """Count tokens across all collections using TokenCounter."""
+        total = 0
+
+        # Count plot elements
+        for element in collections.get("plot_elements", []):
+            result = self.token_counter.count_tokens(
+                element.content,
+                content_type=ContentType.NARRATIVE,
+                strategy=CountingStrategy.EXACT
+            )
+            total += result.token_count
+
+        # Count character contexts
+        for char in collections.get("character_contexts", []):
+            char_text = self._format_character_for_counting(char)
+            result = self.token_counter.count_tokens(
+                char_text,
+                content_type=ContentType.CHARACTER_DESCRIPTION,
+                strategy=CountingStrategy.EXACT
+            )
+            total += result.token_count
+
+        # Count user requests
+        for req in collections.get("user_requests", []):
+            result = self.token_counter.count_tokens(
+                req.content,
+                content_type=ContentType.METADATA,
+                strategy=CountingStrategy.EXACT
+            )
+            total += result.token_count
+
+        # Count system instructions
+        for inst in collections.get("system_instructions", []):
+            result = self.token_counter.count_tokens(
+                inst.content,
+                content_type=ContentType.SYSTEM_PROMPT,
+                strategy=CountingStrategy.EXACT
+            )
+            total += result.token_count
+
+        return total
+
+    def _format_character_for_counting(self, char: CharacterContext) -> str:
+        """Format character context for token counting."""
+        parts = [f"Character: {char.character_name}"]
+        if char.current_state:
+            parts.append(f"State: {char.current_state}")
+        if char.goals:
+            parts.append(f"Goals: {', '.join(char.goals)}")
+        if char.recent_actions:
+            parts.append(f"Actions: {', '.join(char.recent_actions)}")
+        if char.memories:
+            parts.append(f"Memories: {', '.join(char.memories)}")
+        if char.personality_traits:
+            parts.append(f"Traits: {', '.join(char.personality_traits)}")
+        if char.relationships:
+            parts.append(f"Relationships: {char.relationships}")
+        return "; ".join(parts)
+
+    def _trim_collections_by_priority(
         self,
-        elements: List[BaseContextElement],
+        collections: Dict[str, List],
         max_tokens: int
-    ) -> List[BaseContextElement]:
-        """Trim elements by removing lowest priority ones."""
-        result = []
+    ) -> Dict[str, List]:
+        """Trim collections to fit within token budget, removing lowest priority items first."""
+        result = {
+            "plot_elements": [],
+            "character_contexts": [],
+            "user_requests": [],
+            "system_instructions": []
+        }
+
         current_tokens = 0
 
-        for element in elements:  # Already sorted by priority
-            element_tokens = element.metadata.estimated_tokens or len(element.content) // 4
+        # Priority: high-priority system instructions first
+        for inst in collections.get("system_instructions", []):
+            if inst.priority == "high":
+                tokens = self.token_counter.count_tokens(
+                    inst.content, ContentType.SYSTEM_PROMPT, CountingStrategy.EXACT
+                ).token_count
+                if current_tokens + tokens <= max_tokens:
+                    result["system_instructions"].append(inst)
+                    current_tokens += tokens
 
-            if current_tokens + element_tokens <= max_tokens:
-                result.append(element)
-                current_tokens += element_tokens
-            else:
-                # Check if we can include this element by removing some lower priority ones
-                if element.metadata.summarization_rule == SummarizationRule.PRESERVE_FULL:
-                    # Try to make room for this high-priority element
-                    while result and current_tokens + element_tokens > max_tokens:
-                        removed = result.pop()
-                        removed_tokens = removed.metadata.estimated_tokens or len(removed.content) // 4
-                        current_tokens -= removed_tokens
+        # Then high-priority plot elements
+        for element in collections.get("plot_elements", []):
+            if element.priority == "high":
+                tokens = self.token_counter.count_tokens(
+                    element.content, ContentType.NARRATIVE, CountingStrategy.EXACT
+                ).token_count
+                if current_tokens + tokens <= max_tokens:
+                    result["plot_elements"].append(element)
+                    current_tokens += tokens
 
-                    if current_tokens + element_tokens <= max_tokens:
-                        result.append(element)
-                        current_tokens += element_tokens
-                break
+        # Then character contexts (always include if possible)
+        for char in collections.get("character_contexts", []):
+            char_text = self._format_character_for_counting(char)
+            tokens = self.token_counter.count_tokens(
+                char_text, ContentType.CHARACTER_DESCRIPTION, CountingStrategy.EXACT
+            ).token_count
+            if current_tokens + tokens <= max_tokens:
+                result["character_contexts"].append(char)
+                current_tokens += tokens
 
-        return result
+        # Then high-priority user requests
+        for req in collections.get("user_requests", []):
+            if req.priority == "high":
+                tokens = self.token_counter.count_tokens(
+                    req.content, ContentType.METADATA, CountingStrategy.EXACT
+                ).token_count
+                if current_tokens + tokens <= max_tokens:
+                    result["user_requests"].append(req)
+                    current_tokens += tokens
 
-    def _summarize_elements(
-        self,
-        elements: List[BaseContextElement],
-        max_tokens: int
-    ) -> List[BaseContextElement]:
-        """Summarize elements to fit within token budget."""
-        # Group elements by summarization rule
-        preserve_full = []
-        allow_compression = []
-        extract_key_points = []
-        omit_if_needed = []
+        # Then medium priority items if there's room
+        for inst in collections.get("system_instructions", []):
+            if inst.priority == "medium":
+                tokens = self.token_counter.count_tokens(
+                    inst.content, ContentType.SYSTEM_PROMPT, CountingStrategy.EXACT
+                ).token_count
+                if current_tokens + tokens <= max_tokens:
+                    result["system_instructions"].append(inst)
+                    current_tokens += tokens
 
-        for element in elements:
-            if element.metadata.summarization_rule == SummarizationRule.PRESERVE_FULL:
-                preserve_full.append(element)
-            elif element.metadata.summarization_rule == SummarizationRule.ALLOW_COMPRESSION:
-                allow_compression.append(element)
-            elif element.metadata.summarization_rule == SummarizationRule.EXTRACT_KEY_POINTS:
-                extract_key_points.append(element)
-            else:  # OMIT_IF_NEEDED
-                omit_if_needed.append(element)
+        for element in collections.get("plot_elements", []):
+            if element.priority == "medium":
+                tokens = self.token_counter.count_tokens(
+                    element.content, ContentType.NARRATIVE, CountingStrategy.EXACT
+                ).token_count
+                if current_tokens + tokens <= max_tokens:
+                    result["plot_elements"].append(element)
+                    current_tokens += tokens
 
-        # Start with preserve_full elements
-        result = preserve_full[:]
-        current_tokens = sum(
-            element.metadata.estimated_tokens or len(element.content) // 4
-            for element in result
-        )
-
-        remaining_tokens = max_tokens - current_tokens
-
-        if remaining_tokens <= 0:
-            logger.warning("PRESERVE_FULL elements exceed token budget")
-            return preserve_full
-
-        # Add compressed elements
-        for element in allow_compression:
-            compressed = self.summarizer.compress_element(element, remaining_tokens // 2)
-            if compressed:
-                result.append(compressed)
-                compressed_tokens = compressed.metadata.estimated_tokens or len(compressed.content) // 4
-                remaining_tokens -= compressed_tokens
-
-        # Add key points from remaining elements
-        for element in extract_key_points:
-            if remaining_tokens > 50:  # Minimum tokens for key points
-                key_points = self.summarizer.extract_key_points(element, min(remaining_tokens // 3, 100))
-                if key_points:
-                    result.append(key_points)
-                    key_points_tokens = key_points.metadata.estimated_tokens or len(key_points.content) // 4
-                    remaining_tokens -= key_points_tokens
+        for req in collections.get("user_requests", []):
+            if req.priority == "medium":
+                tokens = self.token_counter.count_tokens(
+                    req.content, ContentType.METADATA, CountingStrategy.EXACT
+                ).token_count
+                if current_tokens + tokens <= max_tokens:
+                    result["user_requests"].append(req)
+                    current_tokens += tokens
 
         return result
 
@@ -447,229 +656,151 @@ class ContextManager:
         }
 
 
-class ContextSummarizer:
-    """Service for summarizing context elements."""
-
-    def compress_element(
-        self,
-        element: BaseContextElement,
-        target_tokens: int
-    ) -> Optional[BaseContextElement]:
-        """Compress a context element to fit within target tokens."""
-        if element.metadata.summarization_rule == SummarizationRule.PRESERVE_FULL:
-            return element
-
-        current_tokens = element.metadata.estimated_tokens or len(element.content) // 4
-
-        if current_tokens <= target_tokens:
-            return element
-
-        # Simple compression: truncate to target length
-        target_chars = target_tokens * 4
-        if len(element.content) > target_chars:
-            compressed_content = element.content[:target_chars - 3] + "..."
-
-            # Create compressed copy
-            compressed_element = element.model_copy(deep=True)
-            compressed_element.content = compressed_content
-            compressed_element.metadata.estimated_tokens = target_tokens
-            compressed_element.metadata.tags.append("compressed")
-
-            return compressed_element
-
-        return element
-
-    def extract_key_points(
-        self,
-        element: BaseContextElement,
-        target_tokens: int
-    ) -> Optional[BaseContextElement]:
-        """Extract key points from a context element."""
-        # Simple key point extraction: take first and last sentences
-        sentences = element.content.split('. ')
-
-        if len(sentences) <= 2:
-            return self.compress_element(element, target_tokens)
-
-        key_points = f"{sentences[0]}. ... {sentences[-1]}"
-
-        # Create key points copy
-        key_points_element = element.model_copy(deep=True)
-        key_points_element.content = key_points
-        key_points_element.metadata.estimated_tokens = len(key_points) // 4
-        key_points_element.metadata.tags.append("key_points")
-
-        return key_points_element
-
-
 class ContextFormatter:
     """Service for formatting context elements for different agents."""
 
     def format_for_agent(
         self,
-        elements: List[BaseContextElement],
+        collections: Dict[str, List],
         agent_type: AgentType,
         phase: ComposePhase
     ) -> str:
-        """Format context elements for a specific agent type."""
+        """Format typed collections for a specific agent type."""
         if agent_type == AgentType.WRITER:
-            return self._format_for_writer(elements, phase)
+            return self._format_for_writer(collections, phase)
         elif agent_type == AgentType.CHARACTER:
-            return self._format_for_character(elements, phase)
+            return self._format_for_character(collections, phase)
         elif agent_type == AgentType.RATER:
-            return self._format_for_rater(elements, phase)
+            return self._format_for_rater(collections, phase)
         elif agent_type == AgentType.EDITOR:
-            return self._format_for_editor(elements, phase)
+            return self._format_for_editor(collections, phase)
         elif agent_type == AgentType.WORLDBUILDING:
-            return self._format_for_worldbuilding(elements, phase)
+            return self._format_for_worldbuilding(collections, phase)
         else:
-            return self._format_generic(elements, phase)
+            return self._format_generic(collections, phase)
 
-    def _format_for_writer(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
-        """Format context for the Writer agent."""
+    def _format_for_writer(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+        """Format context for the Writer agent using new model."""
         sections = []
 
-        # Group elements by type
-        by_type = defaultdict(list)
-        for element in elements:
-            by_type[element.type].append(element)
-
-        # System prompts first
-        if by_type[ContextType.SYSTEM_PROMPT]:
+        # System instructions
+        if collections.get("system_instructions"):
             sections.append("=== SYSTEM INSTRUCTIONS ===")
-            for element in by_type[ContextType.SYSTEM_PROMPT]:
-                sections.append(element.content)
+            for inst in collections["system_instructions"]:
+                sections.append(inst.content)
 
-        # Story context
-        story_types = [ContextType.WORLD_BUILDING, ContextType.STORY_SUMMARY, ContextType.PLOT_OUTLINE]
-        story_elements = []
-        for story_type in story_types:
-            story_elements.extend(by_type[story_type])
+        # Plot elements
+        if collections.get("plot_elements"):
+            sections.append("\n=== PLOT CONTEXT ===")
+            for element in collections["plot_elements"]:
+                sections.append(f"- [{element.type}] {element.content}")
 
-        if story_elements:
-            sections.append("\n=== STORY CONTEXT ===")
-            for element in story_elements:
-                sections.append(f"- {element.type.value.replace('_', ' ').title()}: {element.content}")
-
-        # Character information
-        if by_type[ContextType.CHARACTER_PROFILE]:
+        # Character contexts
+        if collections.get("character_contexts"):
             sections.append("\n=== CHARACTERS ===")
-            for element in by_type[ContextType.CHARACTER_PROFILE]:
-                if isinstance(element, CharacterContextElement):
-                    sections.append(f"- {element.character_name}: {element.content}")
+            for char in collections["character_contexts"]:
+                char_info = self._format_character_context(char)
+                sections.append(f"- {char.character_name}: {char_info}")
 
-        # User instructions and feedback
-        user_types = [ContextType.USER_INSTRUCTION, ContextType.USER_FEEDBACK, ContextType.USER_REQUEST]
-        user_elements = []
-        for user_type in user_types:
-            user_elements.extend(by_type[user_type])
-
-        if user_elements:
+        # User requests
+        if collections.get("user_requests"):
             sections.append("\n=== USER GUIDANCE ===")
-            for element in user_elements:
-                sections.append(f"- {element.content}")
-
-        # Phase-specific context
-        if by_type[ContextType.PHASE_INSTRUCTION]:
-            sections.append(f"\n=== {phase.value.upper()} PHASE INSTRUCTIONS ===")
-            for element in by_type[ContextType.PHASE_INSTRUCTION]:
-                sections.append(element.content)
+            for req in collections["user_requests"]:
+                sections.append(f"- [{req.type}] {req.content}")
 
         return "\n".join(sections)
 
-    def _format_for_character(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
-        """Format context for Character agents."""
+    def _format_character_context(self, char: CharacterContext) -> str:
+        """Format a character context into a readable string."""
+        parts = []
+        if char.current_state:
+            parts.append(f"State: {char.current_state}")
+        if char.goals:
+            parts.append(f"Goals: {', '.join(char.goals)}")
+        if char.personality_traits:
+            parts.append(f"Traits: {', '.join(char.personality_traits)}")
+        if char.relationships:
+            parts.append(f"Relationships: {char.relationships}")
+        return "; ".join(parts)
+
+    def _format_for_character(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+        """Format context for Character agents using new model."""
         sections = []
 
         # Character-specific elements first
-        character_elements = [e for e in elements if isinstance(e, CharacterContextElement)]
-        if character_elements:
+        if collections.get("character_contexts"):
             sections.append("=== CHARACTER CONTEXT ===")
-            for element in character_elements:
-                char_info = f"{element.type.value.replace('_', ' ').title()}: {element.content}"
-                if hasattr(element, 'character_name') and element.character_name:
-                    char_info += f" (Character: {element.character_name})"
-                sections.append(char_info)
+            for char in collections["character_contexts"]:
+                char_info = self._format_character_context(char)
+                sections.append(f"{char.character_name}: {char_info}")
 
-        # Story context relevant to character
-        story_elements = [e for e in elements if e.type in [ContextType.WORLD_BUILDING, ContextType.STORY_SUMMARY]]
-        if story_elements:
+        # Plot context relevant to character
+        if collections.get("plot_elements"):
             sections.append("\n=== STORY BACKGROUND ===")
-            for element in story_elements:
+            for element in collections["plot_elements"]:
                 sections.append(element.content)
 
         return "\n".join(sections)
 
-    def _format_for_rater(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
-        """Format context for Rater agents."""
+    def _format_for_rater(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+        """Format context for Rater agents using new model."""
         sections = []
 
-        # Evaluation criteria from system prompts
-        system_elements = [e for e in elements if e.type == ContextType.SYSTEM_PROMPT]
-        if system_elements:
+        # Evaluation criteria from system instructions
+        if collections.get("system_instructions"):
             sections.append("=== EVALUATION CRITERIA ===")
-            for element in system_elements:
-                sections.append(element.content)
+            for inst in collections["system_instructions"]:
+                sections.append(inst.content)
 
         # Story context for evaluation
-        story_elements = [e for e in elements if e.type in [ContextType.STORY_SUMMARY, ContextType.PLOT_OUTLINE]]
-        if story_elements:
+        if collections.get("plot_elements"):
             sections.append("\n=== STORY CONTEXT FOR EVALUATION ===")
-            for element in story_elements:
+            for element in collections["plot_elements"]:
                 sections.append(element.content)
 
         return "\n".join(sections)
 
-    def _format_for_editor(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
-        """Format context for Editor agent."""
+    def _format_for_editor(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+        """Format context for Editor agent using new model."""
         sections = []
 
         # Editorial guidelines
-        system_elements = [e for e in elements if e.type in [ContextType.SYSTEM_PROMPT, ContextType.SYSTEM_INSTRUCTION]]
-        if system_elements:
+        if collections.get("system_instructions"):
             sections.append("=== EDITORIAL GUIDELINES ===")
-            for element in system_elements:
-                sections.append(element.content)
+            for inst in collections["system_instructions"]:
+                sections.append(inst.content)
 
         # Story consistency context
-        story_elements = [e for e in elements if e.type in [ContextType.STORY_SUMMARY, ContextType.CHARACTER_PROFILE]]
-        if story_elements:
+        if collections.get("character_contexts"):
             sections.append("\n=== CONSISTENCY CONTEXT ===")
-            for element in story_elements:
-                sections.append(element.content)
+            for char in collections["character_contexts"]:
+                sections.append(f"{char.character_name}: {self._format_character_context(char)}")
 
         return "\n".join(sections)
 
-    def _format_for_worldbuilding(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
-        """Format context for Worldbuilding agent."""
+    def _format_for_worldbuilding(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+        """Format context for Worldbuilding agent using new model."""
         sections = []
 
-        # Worldbuilding elements
-        wb_elements = [e for e in elements if e.type == ContextType.WORLD_BUILDING]
-        if wb_elements:
+        # Plot elements (may contain worldbuilding)
+        if collections.get("plot_elements"):
             sections.append("=== CURRENT WORLDBUILDING ===")
-            for element in wb_elements:
-                sections.append(element.content)
-
-        # Story context for worldbuilding
-        story_elements = [e for e in elements if e.type == ContextType.STORY_SUMMARY]
-        if story_elements:
-            sections.append("\n=== STORY CONTEXT ===")
-            for element in story_elements:
+            for element in collections["plot_elements"]:
                 sections.append(element.content)
 
         return "\n".join(sections)
 
-    def _format_generic(self, elements: List[BaseContextElement], phase: ComposePhase) -> str:
-        """Generic formatting for unknown agent types."""
+    def _format_generic(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+        """Generic formatting for unknown agent types using new model."""
         sections = []
 
-        for element in elements:
-            sections.append(f"=== {element.type.value.upper().replace('_', ' ')} ===")
-            content = element.content
-            # Include character name for character elements
-            if isinstance(element, CharacterContextElement) and hasattr(element, 'character_name') and element.character_name:
-                content += f" (Character: {element.character_name})"
-            sections.append(content)
+        for collection_name, items in collections.items():
+            if items:
+                sections.append(f"=== {collection_name.upper().replace('_', ' ')} ===")
+                for item in items:
+                    if hasattr(item, 'content'):
+                        sections.append(item.content)
+                    else:
+                        sections.append(str(item))
 
         return "\n".join(sections)

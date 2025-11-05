@@ -44,10 +44,6 @@ def extract_editor_review_result_from_streaming_response(response):
 
 from app.main import app
 from app.models.context_models import (
-    BaseContextElement,
-    StoryContextElement,
-    UserContextElement,
-    SystemContextElement,
     ContextType,
     AgentType,
     ComposePhase

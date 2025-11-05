@@ -16,12 +16,11 @@ import base64
 import gzip
 
 from app.models.context_models import (
-    StructuredContextContainer,
-    BaseContextElement,
     ContextProcessingConfig,
     AgentType,
     ComposePhase
 )
+from app.models.generation_models import StructuredContextContainer
 
 logger = logging.getLogger(__name__)
 

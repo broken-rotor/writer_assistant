@@ -23,16 +23,9 @@ from app.services.context_manager import ContextManager
 from app.services.plot_outline_extractor import get_plot_outline_extractor
 from app.core.config import settings
 from app.models.context_models import (
-    StructuredContextContainer as LegacyStructuredContextContainer,
     ContextProcessingConfig,
     AgentType,
-    ComposePhase,
-    StoryContextElement,
-    CharacterContextElement,
-    UserContextElement,
-    SystemContextElement,
-    ContextType,
-    ContextMetadata as LegacyContextMetadata
+    ComposePhase
 )
 from app.models.generation_models import (
     StructuredContextContainer,
@@ -45,98 +38,6 @@ from app.models.generation_models import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def convert_api_to_legacy_context(
-        api_context: StructuredContextContainer) -> LegacyStructuredContextContainer:
-    """Convert StructuredContextContainer from generation_models.py to context_models.py format."""
-    elements = []
-
-    # Convert plot elements to story context elements
-    for plot_element in api_context.plot_elements:
-        element = StoryContextElement(
-            id=plot_element.id or f"plot_{len(elements)}",
-            type=ContextType.PLOT_OUTLINE,
-            content=plot_element.content,
-            metadata=LegacyContextMetadata(
-                priority=(settings.CONTEXT_PRIORITY_PLOT_HIGH if plot_element.priority == "high"
-                          else settings.CONTEXT_PRIORITY_PLOT_MEDIUM if plot_element.priority == "medium"
-                          else settings.CONTEXT_PRIORITY_PLOT_LOW),
-                target_agents=[AgentType.WRITER],
-                tags=plot_element.tags
-            )
-        )
-        elements.append(element)
-
-    # Convert character contexts to story context elements
-    for character_context in api_context.character_contexts:
-        # Create content from character context
-        content = f"Character: {character_context.character_name}\n"
-        if character_context.current_state:
-            content += f"Current State: {character_context.current_state}\n"
-        if character_context.goals:
-            content += f"Goals: {', '.join(character_context.goals)}\n"
-        if character_context.personality_traits:
-            content += f"Personality: {
-                ', '.join(
-                    character_context.personality_traits)}"
-
-        element = CharacterContextElement(
-            id=character_context.character_id or f"char_{len(elements)}",
-            type=ContextType.CHARACTER_PROFILE,
-            content=content,
-            character_id=character_context.character_id or f"char_{
-                len(elements)}",
-            character_name=character_context.character_name,
-            metadata=LegacyContextMetadata(
-                priority=settings.CONTEXT_PRIORITY_CHARACTER,
-                target_agents=[AgentType.CHARACTER, AgentType.WRITER],
-                tags=["character"]
-            )
-        )
-        elements.append(element)
-
-    # Convert user requests to user context elements
-    for user_request in api_context.user_requests:
-        element = UserContextElement(
-            id=user_request.id or f"user_{len(elements)}",
-            type=ContextType.USER_REQUEST,
-            content=user_request.content,
-            metadata=LegacyContextMetadata(
-                priority=(settings.CONTEXT_PRIORITY_USER_HIGH if user_request.priority == "high"
-                          else settings.CONTEXT_PRIORITY_USER_MEDIUM if user_request.priority == "medium"
-                          else settings.CONTEXT_PRIORITY_USER_LOW),
-                target_agents=[AgentType.WRITER],
-                tags=[]
-            )
-        )
-        elements.append(element)
-
-    # Convert system instructions to system context elements
-    for sys_instruction in api_context.system_instructions:
-        element = SystemContextElement(
-            id=sys_instruction.id or f"sys_{len(elements)}",
-            type=ContextType.SYSTEM_INSTRUCTION,
-            content=sys_instruction.content,
-            metadata=LegacyContextMetadata(
-                priority=(settings.CONTEXT_PRIORITY_SYSTEM_HIGH if sys_instruction.priority == "high"
-                          else settings.CONTEXT_PRIORITY_SYSTEM_MEDIUM if sys_instruction.priority == "medium"
-                          else settings.CONTEXT_PRIORITY_SYSTEM_LOW),
-                target_agents=[AgentType.WRITER],
-                tags=[]
-            )
-        )
-        elements.append(element)
-
-    # Create legacy container
-    return LegacyStructuredContextContainer(
-        elements=elements,
-        global_metadata={
-            "total_elements": len(elements),
-            "converted_from_api": True,
-            "original_total_elements": api_context.metadata.total_elements if api_context.metadata else len(elements)
-        }
-    )
 
 
 @dataclass
@@ -219,9 +120,7 @@ class UnifiedContextProcessor:
             return result
 
         except Exception as e:
-            logger.error(
-                f"Error in process_generate_chapter_context: {
-                    str(e)}")
+            logger.error(f"Error in process_generate_chapter_context: {str(e)}")
             # Fallback to legacy processing
             raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
@@ -533,9 +432,7 @@ class UnifiedContextProcessor:
             return result
 
         except Exception as e:
-            logger.error(
-                f"Error in process_character_generation_context: {
-                    str(e)}")
+            logger.error(f"Error in process_character_generation_context: {str(e)}")
             # Fallback to legacy processing
             raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
 
@@ -549,9 +446,6 @@ class UnifiedContextProcessor:
     ) -> UnifiedContextResult:
         """Process structured context using ContextManager."""
         try:
-            # Convert API structured context to legacy format for processing
-            legacy_context = convert_api_to_legacy_context(structured_context)
-
             # Create processing configuration
             processing_config = ContextProcessingConfig(
                 target_agent=agent_type,
@@ -566,9 +460,9 @@ class UnifiedContextProcessor:
                     "include_relationships", True) if context_processing_config else True
             )
 
-            # Process context with ContextManager
+            # Process context with ContextManager (now using new model natively)
             formatted_context, metadata = self.context_manager.process_context_for_agent(
-                legacy_context, processing_config
+                structured_context, processing_config
             )
 
             # Parse the formatted context to extract system prompt and user

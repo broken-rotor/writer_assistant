@@ -602,3 +602,222 @@ db_path = settings.ARCHIVE_DB_PATH
 collection_name = settings.ARCHIVE_COLLECTION_NAME
 model_path = settings.MODEL_PATH
 ```
+
+## Structured Context System
+
+### Overview
+
+The Writer Assistant uses a `StructuredContextContainer` model for passing context to AI agents. This system was recently migrated to use typed collections for better type safety and developer experience.
+
+### Quick Example
+
+```python
+from app.models.generation_models import (
+    StructuredContextContainer,
+    PlotElement,
+    CharacterContext,
+    UserRequest,
+    SystemInstruction
+)
+
+# Create structured context
+context = StructuredContextContainer(
+    plot_elements=[
+        PlotElement(
+            type="scene",
+            content="Hero enters dark forest",
+            priority="high",
+            tags=["current_scene"]
+        )
+    ],
+    character_contexts=[
+        CharacterContext(
+            character_id="hero",
+            character_name="Aria",
+            current_state="determined",
+            goals=["Find artifact"]
+        )
+    ],
+    user_requests=[
+        UserRequest(
+            type="instruction",
+            content="Add sensory details",
+            priority="high"
+        )
+    ],
+    system_instructions=[
+        SystemInstruction(
+            type="behavior",
+            content="Maintain character consistency",
+            scope="global",
+            priority="high"
+        )
+    ]
+)
+```
+
+### Key Features
+
+1. **Typed Collections**: Separate collections for different content types
+   - `plot_elements`: Story/plot information
+   - `character_contexts`: Character state and information
+   - `user_requests`: User instructions and feedback
+   - `system_instructions`: System-level guidelines
+
+2. **String Priorities**: Simple "high", "medium", "low" priority system
+
+3. **Query Methods**: Built-in methods for filtering and searching
+   - `get_plot_elements_by_type()`
+   - `get_plot_elements_by_priority()`
+   - `get_character_context_by_id()`
+   - `get_high_priority_elements()`
+
+4. **Token Counting**: Integrated token counting with TokenCounter
+   - `calculate_total_tokens()`
+   - `get_token_breakdown()`
+
+### Processing Context
+
+```python
+from app.services.context_manager import ContextManager
+from app.models.context_models import (
+    ContextProcessingConfig,
+    AgentType,
+    ComposePhase
+)
+
+# Create manager
+manager = ContextManager()
+
+# Configure processing
+config = ContextProcessingConfig(
+    target_agent=AgentType.WRITER,
+    current_phase=ComposePhase.CHAPTER_DETAIL,
+    max_tokens=8000,
+    prioritize_recent=True
+)
+
+# Process context
+formatted_context, metadata = manager.process_context_for_agent(
+    context, config
+)
+```
+
+### Token Budget Management
+
+The system automatically manages token budgets through priority-based trimming:
+
+1. **High-priority system instructions** (kept first)
+2. **High-priority plot elements**
+3. **Character contexts** (always included if possible)
+4. **High-priority user requests**
+5. **Medium-priority items** (if room remains)
+6. **Low-priority items** (discarded during trimming)
+
+### Documentation
+
+For detailed information about the structured context system:
+
+- **[Migration Guide](STRUCTURED_CONTEXT_MIGRATION_GUIDE.md)**: Guide for migrating from old model
+- **[Reference Documentation](STRUCTURED_CONTEXT_REFERENCE.md)**: Complete API reference
+- **Phase Documentation**: See `PHASE1_COMPLETE.md` through `PHASE6_COMPLETION.md`
+
+### Configuration Settings
+
+Context management is controlled by these settings (see Context Management Configuration section above):
+
+- `CONTEXT_MAX_TOKENS`: Maximum context window size (default: 32000)
+- `CONTEXT_BUFFER_TOKENS`: Reserved tokens for generation (default: 2000)
+- `CONTEXT_SUMMARIZATION_THRESHOLD`: Token threshold for summarization (default: 25000)
+- Priority settings for different content types
+
+### Best Practices
+
+1. **Use Appropriate Priorities**
+   - `"high"`: Critical information that must be included
+   - `"medium"`: Important but can be trimmed if needed
+   - `"low"`: Background information, first to be trimmed
+
+2. **Add Descriptive Tags**
+   - Use tags for filtering: `["current_scene", "conflict"]`
+   - Makes context easier to query and manage
+
+3. **Set Correct Scopes**
+   - `"global"`: Applies to all scenarios
+   - `"scene"`: Scene-specific instructions
+   - `"chapter"`: Chapter-level guidelines
+
+4. **Check Token Counts**
+   - Use `calculate_total_tokens()` before processing
+   - Ensure context fits within token budget
+
+### Common Patterns
+
+#### Building Context from API Request
+
+```python
+# Extract from API request
+container = StructuredContextContainer(
+    plot_elements=[
+        PlotElement(**elem) for elem in request.plot_elements
+    ],
+    character_contexts=[
+        CharacterContext(**char) for char in request.characters
+    ],
+    user_requests=[
+        UserRequest(**req) for req in request.user_feedback
+    ]
+)
+```
+
+#### Filtering by Priority
+
+```python
+# Get only high-priority elements
+high_priority = container.get_high_priority_elements()
+
+# Create filtered container
+filtered = StructuredContextContainer(
+    plot_elements=high_priority.get("plot_elements", []),
+    character_contexts=high_priority.get("character_contexts", []),
+    user_requests=high_priority.get("user_requests", []),
+    system_instructions=high_priority.get("system_instructions", [])
+)
+```
+
+#### Token Budget Checking
+
+```python
+from app.services.token_management.token_counter import TokenCounter
+
+token_counter = TokenCounter()
+total_tokens = container.calculate_total_tokens(token_counter)
+
+if total_tokens > config.max_tokens:
+    # Handle overflow - trim low priority items
+    container.plot_elements = [
+        p for p in container.plot_elements
+        if p.priority != "low"
+    ]
+```
+
+### Migration from Old Model
+
+If you're working with code that uses the old `StructuredContextContainer` from `context_models.py`:
+
+**Old Model**:
+```python
+from app.models.context_models import StructuredContextContainer
+container = StructuredContextContainer(elements=[...])  # Generic list
+```
+
+**New Model**:
+```python
+from app.models.generation_models import StructuredContextContainer
+container = StructuredContextContainer(
+    plot_elements=[...],      # Typed collections
+    character_contexts=[...]
+)
+```
+
+See the [Migration Guide](STRUCTURED_CONTEXT_MIGRATION_GUIDE.md) for detailed migration instructions.
