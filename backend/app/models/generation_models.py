@@ -309,6 +309,198 @@ class StructuredContextContainer(BaseModel):
 
         return self
 
+    # Query methods for easier filtering
+    def get_plot_elements_by_type(self, element_type: str) -> List[PlotElement]:
+        """Get plot elements filtered by type."""
+        return [el for el in self.plot_elements if el.type == element_type]
+
+    def get_plot_elements_by_priority(self, priority: Literal["high", "medium", "low"]) -> List[PlotElement]:
+        """Get plot elements with specified priority."""
+        return [el for el in self.plot_elements if el.priority == priority]
+
+    def get_plot_elements_by_tag(self, tag: str) -> List[PlotElement]:
+        """Get plot elements that have the specified tag."""
+        return [el for el in self.plot_elements if tag in el.tags]
+
+    def get_character_context_by_id(self, character_id: str) -> Optional[CharacterContext]:
+        """Get character context by ID."""
+        return next((c for c in self.character_contexts if c.character_id == character_id), None)
+
+    def get_character_context_by_name(self, character_name: str) -> Optional[CharacterContext]:
+        """Get character context by name (case-insensitive)."""
+        name_lower = character_name.lower()
+        return next((c for c in self.character_contexts
+                    if c.character_name.lower() == name_lower), None)
+
+    def get_high_priority_elements(self) -> Dict[str, List]:
+        """Get all high-priority elements across collections."""
+        return {
+            "plot_elements": [el for el in self.plot_elements if el.priority == "high"],
+            "user_requests": [req for req in self.user_requests if req.priority == "high"],
+            "system_instructions": [inst for inst in self.system_instructions if inst.priority == "high"]
+        }
+
+    def get_user_requests_by_type(self, request_type: str) -> List[UserRequest]:
+        """Get user requests filtered by type."""
+        return [req for req in self.user_requests if req.type == request_type]
+
+    def get_system_instructions_by_scope(self, scope: str) -> List[SystemInstruction]:
+        """Get system instructions filtered by scope."""
+        return [inst for inst in self.system_instructions if inst.scope == scope]
+
+    # Token counting methods (using TokenCounter from token_management)
+    def calculate_total_tokens(
+        self,
+        token_counter: Optional[Any] = None,
+        use_estimation: bool = False
+    ) -> int:
+        """
+        Calculate total estimated tokens for all elements using llama.cpp tokenization.
+
+        Args:
+            token_counter: TokenCounter instance. If None, will create one.
+            use_estimation: If True, use ESTIMATED strategy (10% overhead) for speed.
+                          If False, use EXACT strategy for accuracy.
+
+        Returns:
+            Total token count across all context elements
+        """
+        # Lazy import to avoid circular dependency
+        if token_counter is None:
+            from app.services.token_management.token_counter import TokenCounter
+            token_counter = TokenCounter()
+
+        from app.services.token_management.token_counter import (
+            ContentType,
+            CountingStrategy
+        )
+
+        strategy = CountingStrategy.ESTIMATED if use_estimation else CountingStrategy.EXACT
+        total = 0
+
+        # Count plot elements
+        for element in self.plot_elements:
+            result = token_counter.count_tokens(
+                element.content,
+                content_type=ContentType.NARRATIVE,
+                strategy=strategy
+            )
+            total += result.token_count
+
+        # Count character contexts (combine all fields)
+        for char in self.character_contexts:
+            char_text = self._format_character_for_counting(char)
+            result = token_counter.count_tokens(
+                char_text,
+                content_type=ContentType.CHARACTER_DESCRIPTION,
+                strategy=strategy
+            )
+            total += result.token_count
+
+        # Count user requests
+        for req in self.user_requests:
+            result = token_counter.count_tokens(
+                req.content,
+                content_type=ContentType.METADATA,
+                strategy=strategy
+            )
+            total += result.token_count
+
+        # Count system instructions
+        for inst in self.system_instructions:
+            result = token_counter.count_tokens(
+                inst.content,
+                content_type=ContentType.SYSTEM_PROMPT,
+                strategy=strategy
+            )
+            total += result.token_count
+
+        return total
+
+    def get_token_breakdown(
+        self,
+        token_counter: Optional[Any] = None
+    ) -> Dict[str, int]:
+        """
+        Get detailed token breakdown by element type.
+
+        Returns:
+            Dict with keys: plot_elements, character_contexts, user_requests,
+            system_instructions, total
+        """
+        if token_counter is None:
+            from app.services.token_management.token_counter import TokenCounter
+            token_counter = TokenCounter()
+
+        from app.services.token_management.token_counter import (
+            ContentType,
+            CountingStrategy
+        )
+
+        breakdown = {
+            "plot_elements": 0,
+            "character_contexts": 0,
+            "user_requests": 0,
+            "system_instructions": 0
+        }
+
+        # Count each collection
+        for element in self.plot_elements:
+            result = token_counter.count_tokens(
+                element.content,
+                ContentType.NARRATIVE,
+                CountingStrategy.EXACT
+            )
+            breakdown["plot_elements"] += result.token_count
+
+        for char in self.character_contexts:
+            char_text = self._format_character_for_counting(char)
+            result = token_counter.count_tokens(
+                char_text,
+                ContentType.CHARACTER_DESCRIPTION,
+                CountingStrategy.EXACT
+            )
+            breakdown["character_contexts"] += result.token_count
+
+        for req in self.user_requests:
+            result = token_counter.count_tokens(
+                req.content,
+                ContentType.METADATA,
+                CountingStrategy.EXACT
+            )
+            breakdown["user_requests"] += result.token_count
+
+        for inst in self.system_instructions:
+            result = token_counter.count_tokens(
+                inst.content,
+                ContentType.SYSTEM_PROMPT,
+                CountingStrategy.EXACT
+            )
+            breakdown["system_instructions"] += result.token_count
+
+        breakdown["total"] = sum(breakdown.values())
+
+        return breakdown
+
+    def _format_character_for_counting(self, char: CharacterContext) -> str:
+        """Format character context into text for token counting."""
+        parts = [f"Character: {char.character_name}"]
+
+        if char.current_state:
+            parts.append(f"State: {char.current_state}")
+        if char.goals:
+            parts.append(f"Goals: {', '.join(char.goals)}")
+        if char.recent_actions:
+            parts.append(f"Actions: {', '.join(char.recent_actions)}")
+        if char.memories:
+            parts.append(f"Memories: {', '.join(char.memories)}")
+        if char.personality_traits:
+            parts.append(f"Traits: {', '.join(char.personality_traits)}")
+        if char.relationships:
+            parts.append(f"Relationships: {char.relationships}")
+
+        return "; ".join(parts)
+
 
 # Character Feedback Request/Response
 class CharacterFeedbackRequest(BaseModel):
