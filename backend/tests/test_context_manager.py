@@ -1,6 +1,17 @@
 """
 Tests for context manager service.
+
+DEPRECATED: This test file uses the old StructuredContextContainer model
+and tests ContextSummarizer which was removed in Phase 3 of the migration.
+
+These tests are now obsolete. Please use test_context_manager_newmodel.py
+for testing the new StructuredContextContainer with typed collections.
+
+This file is kept for historical reference only.
 """
+
+import pytest
+pytest.skip("Deprecated: Tests for old model - use test_context_manager_newmodel.py", allow_module_level=True)
 
 import pytest
 from datetime import datetime, timedelta, timezone
