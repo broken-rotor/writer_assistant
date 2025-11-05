@@ -9,7 +9,8 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from typing import List, Dict, Any
 
-from app.services.context_manager import ContextManager, ContextItem, ContextType, ContextAnalysis
+from app.services.context_manager import ContextManager, ContextItem, ContextAnalysis
+from app.models.context_models import ContextType
 from app.services.token_management import LayerType
 from app.core.config import Settings
 from tests.utils.test_data_generators import ContextDataGenerator, StoryComplexity
@@ -33,11 +34,11 @@ class TestContextManager:
     def test_context_manager_initialization_with_config(self, mock_get_llm):
         """Test ContextManager initialization with configuration settings."""
         mock_get_llm.return_value = Mock()
-        
+
         context_manager = ContextManager()
-        
+
         # Verify the context manager initializes properly
-        assert context_manager.summarizer is not None
+        assert context_manager.token_counter is not None
         assert context_manager.formatter is not None
     
     def test_context_item_creation_and_validation(self):
@@ -45,78 +46,81 @@ class TestContextManager:
         # Test valid context item
         context_item = ContextItem(
             content="This is test content for the story.",
-            context_type=ContextType.STORY_SUMMARY,
-            priority=8,
+            element_type=ContextType.STORY_SUMMARY.value,
+            priority="high",
             layer_type=LayerType.EPISODIC_MEMORY,
             metadata={"chapter": 1, "scene": "opening"}
         )
-        
+
         assert context_item.content == "This is test content for the story."
-        assert context_item.context_type == ContextType.STORY_SUMMARY
-        assert context_item.priority == 8
+        assert context_item.element_type == ContextType.STORY_SUMMARY.value
+        assert context_item.priority == "high"
         assert context_item.layer_type == LayerType.EPISODIC_MEMORY
         assert context_item.metadata["chapter"] == 1
     
     def _create_context_container_from_scenario(self, scenario):
         """Helper method to convert test scenario to StructuredContextContainer."""
-        from app.models.context_models import (
-            StructuredContextContainer, SystemContextElement, StoryContextElement, 
-            CharacterContextElement, UserContextElement, PhaseContextElement, 
-            ConversationContextElement, ComposePhase
+        from app.models.generation_models import (
+            StructuredContextContainer, PlotElement, CharacterContext,
+            UserRequest, SystemInstruction
         )
-        
-        elements = []
+
+        plot_elements = []
+        character_contexts = []
+        user_requests = []
+        system_instructions = []
+
         for i, item in enumerate(scenario.context_items):
-            # Convert ContextItem to BaseContextElement based on context type
-            if item.context_type in [ContextType.SYSTEM_PROMPT, ContextType.SYSTEM_INSTRUCTION, ContextType.SYSTEM_PREFERENCE]:
-                element = SystemContextElement(
+            # Convert ContextItem to new model based on element type
+            if item.element_type in [ContextType.SYSTEM_PROMPT.value, ContextType.SYSTEM_INSTRUCTION.value, ContextType.SYSTEM_PREFERENCE.value]:
+                system_instructions.append(SystemInstruction(
                     id=f"system_{i}",
-                    type=item.context_type,
-                    content=item.content
-                )
-            elif item.context_type in [ContextType.STORY_SUMMARY, ContextType.WORLD_BUILDING, ContextType.STORY_THEME, ContextType.NARRATIVE_STATE, ContextType.PLOT_OUTLINE]:
-                element = StoryContextElement(
-                    id=f"story_{i}",
-                    type=item.context_type,
-                    content=item.content
-                )
-            elif item.context_type in [ContextType.CHARACTER_PROFILE, ContextType.CHARACTER_RELATIONSHIP, ContextType.CHARACTER_MEMORY, ContextType.CHARACTER_STATE]:
-                element = CharacterContextElement(
-                    id=f"character_{i}",
-                    type=item.context_type,
+                    type="behavior",
                     content=item.content,
-                    character_id="test_char",
-                    character_name="Test Character"
-                )
-            elif item.context_type in [ContextType.USER_PREFERENCE, ContextType.USER_FEEDBACK, ContextType.USER_REQUEST, ContextType.USER_INSTRUCTION]:
-                element = UserContextElement(
+                    priority=item.priority,
+                    scope="global"
+                ))
+            elif item.element_type in [ContextType.STORY_SUMMARY.value, ContextType.WORLD_BUILDING.value, ContextType.STORY_THEME.value, ContextType.NARRATIVE_STATE.value, ContextType.PLOT_OUTLINE.value]:
+                plot_elements.append(PlotElement(
+                    id=f"plot_{i}",
+                    type="scene",
+                    content=item.content,
+                    priority=item.priority,
+                    tags=[]
+                ))
+            elif item.element_type in [ContextType.CHARACTER_PROFILE.value, ContextType.CHARACTER_RELATIONSHIP.value, ContextType.CHARACTER_MEMORY.value, ContextType.CHARACTER_STATE.value]:
+                character_contexts.append(CharacterContext(
+                    character_id=f"test_char_{i}",
+                    character_name=f"Test Character {i}",
+                    current_state={"emotional": "neutral"},
+                    goals=[],
+                    recent_actions=[],
+                    memories=[item.content],
+                    personality_traits=[]
+                ))
+            elif item.element_type in [ContextType.USER_PREFERENCE.value, ContextType.USER_FEEDBACK.value, ContextType.USER_REQUEST.value, ContextType.USER_INSTRUCTION.value]:
+                user_requests.append(UserRequest(
                     id=f"user_{i}",
-                    type=item.context_type,
-                    content=item.content
-                )
-            elif item.context_type in [ContextType.PHASE_INSTRUCTION, ContextType.PHASE_OUTPUT, ContextType.PHASE_GUIDANCE]:
-                element = PhaseContextElement(
-                    id=f"phase_{i}",
-                    type=item.context_type,
+                    type="general",
                     content=item.content,
-                    phase=ComposePhase.CHAPTER_DETAIL
-                )
-            elif item.context_type in [ContextType.CONVERSATION_HISTORY, ContextType.CONVERSATION_CONTEXT]:
-                element = ConversationContextElement(
-                    id=f"conversation_{i}",
-                    type=item.context_type,
-                    content=item.content
-                )
+                    priority=item.priority
+                ))
             else:
-                # Default to UserContextElement for unknown types
-                element = UserContextElement(
-                    id=f"user_{i}",
-                    type=ContextType.USER_REQUEST,  # Use a valid type
-                    content=item.content
-                )
-            elements.append(element)
-        
-        return StructuredContextContainer(elements=elements)
+                # Default to PlotElement for unknown types
+                plot_elements.append(PlotElement(
+                    id=f"plot_{i}",
+                    type="scene",
+                    content=item.content,
+                    priority=item.priority,
+                    tags=[]
+                ))
+
+        return StructuredContextContainer(
+            plot_elements=plot_elements,
+            character_contexts=character_contexts,
+            user_requests=user_requests,
+            system_instructions=system_instructions
+        )
 
     def test_context_analysis_functionality(self):
         """Test context processing functionality with various scenarios."""
@@ -187,40 +191,52 @@ class TestContextManager:
     
     def test_priority_based_context_filtering(self):
         """Test context filtering based on priority thresholds."""
-        from app.models.context_models import (
-            ContextProcessingConfig, AgentType, ComposePhase, StructuredContextContainer,
-            SystemContextElement, StoryContextElement, CharacterContextElement, ContextMetadata
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import (
+            StructuredContextContainer, PlotElement, CharacterContext, SystemInstruction
         )
-        
-        # Create context elements with different priorities (0.0-1.0 range)
-        elements = [
-            SystemContextElement(
-                id="high_priority_system",
-                type=ContextType.SYSTEM_PROMPT,
-                content="High priority system",
-                metadata=ContextMetadata(priority=1.0)  # Highest priority
-            ),
-            StoryContextElement(
+
+        # Create context elements with different priorities
+        plot_elements = [
+            PlotElement(
                 id="medium_priority_story",
-                type=ContextType.STORY_SUMMARY,
+                type="scene",
                 content="Medium priority story",
-                metadata=ContextMetadata(priority=0.7)  # Medium-high priority
+                priority="medium",
+                tags=[]
             ),
-            StoryContextElement(
+            PlotElement(
                 id="low_priority_background",
-                type=ContextType.WORLD_BUILDING,
+                type="scene",
                 content="Low priority background",
-                metadata=ContextMetadata(priority=0.3)  # Low priority
-            ),
-            CharacterContextElement(
-                id="very_low_priority_detail",
-                type=ContextType.CHARACTER_MEMORY,
-                content="Very low priority detail",
-                character_id="test_char",
-                character_name="Test Character",
-                metadata=ContextMetadata(priority=0.1)  # Very low priority
+                priority="low",
+                tags=[]
             )
         ]
+
+        character_contexts = [
+            CharacterContext(
+                character_id="test_char",
+                character_name="Test Character",
+                current_state={"emotional": "neutral"},
+                goals=[],
+                recent_actions=[],
+                memories=["Very low priority detail"],
+                personality_traits=[]
+            )
+        ]
+
+        system_instructions = [
+            SystemInstruction(
+                id="high_priority_system",
+                type="behavior",
+                content="High priority system",
+                priority="high",
+                scope="global"
+            )
+        ]
+
+        elements = None  # Not used in new model
         
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
@@ -235,7 +251,12 @@ class TestContextManager:
                 prioritize_recent=True
             )
             
-            container = StructuredContextContainer(elements=elements)
+            container = StructuredContextContainer(
+                plot_elements=plot_elements,
+                character_contexts=character_contexts,
+                user_requests=[],
+                system_instructions=system_instructions
+            )
             
             # Process context using the new API
             formatted_context, metadata = context_manager.process_context_for_agent(container, config)
@@ -273,26 +294,62 @@ class TestContextManager:
     def test_context_type_categorization(self):
         """Test proper categorization of different context types."""
         context_items = [
-            ContextItem("System instruction", ContextType.SYSTEM_PROMPT, 10, LayerType.WORKING_MEMORY, {}),
-            ContextItem("Story content", ContextType.STORY_SUMMARY, 8, LayerType.EPISODIC_MEMORY, {}),
-            ContextItem("Character description", ContextType.CHARACTER_PROFILE, 7, LayerType.SEMANTIC_MEMORY, {}),
-            ContextItem("World building", ContextType.WORLD_BUILDING, 6, LayerType.SEMANTIC_MEMORY, {}),
-            ContextItem("Feedback note", ContextType.USER_FEEDBACK, 5, LayerType.WORKING_MEMORY, {}),
-            ContextItem("Memory fragment", ContextType.CHARACTER_MEMORY, 4, LayerType.LONG_TERM_MEMORY, {})
+            ContextItem(
+                content="System instruction",
+                element_type=ContextType.SYSTEM_PROMPT.value,
+                priority="high",
+                layer_type=LayerType.WORKING_MEMORY,
+                metadata={}
+            ),
+            ContextItem(
+                content="Story content",
+                element_type=ContextType.STORY_SUMMARY.value,
+                priority="high",
+                layer_type=LayerType.EPISODIC_MEMORY,
+                metadata={}
+            ),
+            ContextItem(
+                content="Character description",
+                element_type=ContextType.CHARACTER_PROFILE.value,
+                priority="medium",
+                layer_type=LayerType.SEMANTIC_MEMORY,
+                metadata={}
+            ),
+            ContextItem(
+                content="World building",
+                element_type=ContextType.WORLD_BUILDING.value,
+                priority="medium",
+                layer_type=LayerType.SEMANTIC_MEMORY,
+                metadata={}
+            ),
+            ContextItem(
+                content="Feedback note",
+                element_type=ContextType.USER_FEEDBACK.value,
+                priority="medium",
+                layer_type=LayerType.WORKING_MEMORY,
+                metadata={}
+            ),
+            ContextItem(
+                content="Memory fragment",
+                element_type=ContextType.CHARACTER_MEMORY.value,
+                priority="low",
+                layer_type=LayerType.LONG_TERM_MEMORY,
+                metadata={}
+            )
         ]
-        
+
         # Test categorization
         type_counts = {}
         for item in context_items:
-            if item.context_type not in type_counts:
-                type_counts[item.context_type] = 0
-            type_counts[item.context_type] += 1
+            if item.element_type not in type_counts:
+                type_counts[item.element_type] = 0
+            type_counts[item.element_type] += 1
         
         # Verify all context types are represented
         assert len(type_counts) == 6
-        assert type_counts[ContextType.SYSTEM_PROMPT] == 1
-        assert type_counts[ContextType.STORY_SUMMARY] == 1
-        assert type_counts[ContextType.CHARACTER_PROFILE] == 1
+        assert type_counts[ContextType.SYSTEM_PROMPT.value] == 1
+        assert type_counts[ContextType.STORY_SUMMARY.value] == 1
+        assert type_counts[ContextType.CHARACTER_PROFILE.value] == 1
     
     def test_token_budget_enforcement(self):
         """Test enforcement of token budgets and limits."""
@@ -418,33 +475,43 @@ class TestContextManager:
     
     def test_error_handling_and_recovery(self):
         """Test error handling and recovery mechanisms."""
-        from app.models.context_models import (
-            ContextProcessingConfig, AgentType, ComposePhase, StructuredContextContainer,
-            SystemContextElement, StoryContextElement, ContextMetadata
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import (
+            StructuredContextContainer, PlotElement, SystemInstruction
         )
-        
+
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
-            
+
             context_manager = ContextManager()
-            
+
             # Test with potentially problematic context elements
-            elements = [
-                SystemContextElement(
-                    id="empty_content",
-                    type=ContextType.SYSTEM_PROMPT,
-                    content="",  # Empty content
-                    metadata=ContextMetadata(priority=1.0)
-                ),
-                StoryContextElement(
+            plot_elements = [
+                PlotElement(
                     id="valid_content",
-                    type=ContextType.STORY_SUMMARY,
+                    type="scene",
                     content="Valid content",
-                    metadata=ContextMetadata(priority=0.0)  # Minimum priority
+                    priority="low",  # Minimum priority
+                    tags=[]
                 )
             ]
-            
-            container = StructuredContextContainer(elements=elements)
+
+            system_instructions = [
+                SystemInstruction(
+                    id="empty_content",
+                    type="behavior",
+                    content="",  # Empty content
+                    priority="high",
+                    scope="global"
+                )
+            ]
+
+            container = StructuredContextContainer(
+                plot_elements=plot_elements,
+                character_contexts=[],
+                user_requests=[],
+                system_instructions=system_instructions
+            )
             
             # Create a processing configuration
             config = ContextProcessingConfig(

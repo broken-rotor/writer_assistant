@@ -10,7 +10,8 @@ import time
 from unittest.mock import Mock, patch
 from typing import List, Dict, Any
 
-from app.services.context_manager import ContextManager, ContextItem, ContextType
+from app.services.context_manager import ContextManager, ContextItem
+from app.models.context_models import ContextType
 from app.services.token_management import TokenAllocator, LayerType, AllocationMode, OverflowStrategy, ContentType as TokenContentType
 from app.core.config import Settings
 from tests.utils.test_data_generators import ContextDataGenerator, StoryComplexity
@@ -26,48 +27,62 @@ class TestFullContextPipeline:
     
     def _create_context_container_from_scenario(self, scenario):
         """Helper method to convert scenario context items to structured container."""
-        from app.models.context_models import (
-            StructuredContextContainer, SystemContextElement, StoryContextElement, 
-            CharacterContextElement, ContextMetadata
+        from app.models.generation_models import (
+            StructuredContextContainer, PlotElement, CharacterContext,
+            UserRequest, SystemInstruction
         )
-        
-        elements = []
-        for item in scenario.context_items:
-            # Create appropriate metadata
-            metadata = ContextMetadata(
-                priority=min(max(item.priority / 10.0, 0.0), 1.0),  # Normalize to 0.0-1.0 range
-                estimated_tokens=len(item.content) // 4  # Rough estimate
-            )
-            
-            # Create appropriate element type based on context type
-            if item.context_type == ContextType.SYSTEM_PROMPT:
-                element = SystemContextElement(
-                    id=f"system_{len(elements)}",
-                    type=item.context_type,
+
+        plot_elements = []
+        character_contexts = []
+        user_requests = []
+        system_instructions = []
+
+        for i, item in enumerate(scenario.context_items):
+            # Priority is already a string (high/medium/low) in ContextItem
+            priority_str = item.priority
+
+            # Create appropriate element type based on element type
+            if item.element_type in [ContextType.SYSTEM_PROMPT.value, ContextType.SYSTEM_INSTRUCTION.value]:
+                system_instructions.append(SystemInstruction(
+                    id=f"system_{i}",
+                    type="behavior",
                     content=item.content,
-                    metadata=metadata
-                )
-            elif item.context_type in [ContextType.CHARACTER_PROFILE, ContextType.CHARACTER_MEMORY]:
-                element = CharacterContextElement(
-                    id=f"character_{len(elements)}",
-                    type=item.context_type,
+                    priority=priority_str,
+                    scope="global"
+                ))
+            elif item.element_type in [ContextType.CHARACTER_PROFILE.value, ContextType.CHARACTER_MEMORY.value, ContextType.CHARACTER_STATE.value]:
+                character_contexts.append(CharacterContext(
+                    character_id=f"test_character_{i}",
+                    character_name=f"Test Character {i}",
+                    current_state={"emotional": "neutral", "physical": "healthy"},
+                    goals=[],
+                    recent_actions=[],
+                    memories=[item.content],
+                    personality_traits=[]
+                ))
+            elif item.element_type in [ContextType.USER_REQUEST.value, ContextType.USER_FEEDBACK.value, ContextType.USER_INSTRUCTION.value]:
+                user_requests.append(UserRequest(
+                    id=f"user_{i}",
+                    type="general",
                     content=item.content,
-                    character_id="test_character",
-                    character_name="Test Character",
-                    metadata=metadata
-                )
+                    priority=priority_str
+                ))
             else:
-                # Default to StoryContextElement for all other types
-                element = StoryContextElement(
-                    id=f"story_{len(elements)}",
-                    type=item.context_type,
+                # Default to PlotElement for story-level contexts
+                plot_elements.append(PlotElement(
+                    id=f"plot_{i}",
+                    type="scene",
                     content=item.content,
-                    metadata=metadata
-                )
-            
-            elements.append(element)
-        
-        return StructuredContextContainer(elements=elements)
+                    priority=priority_str,
+                    tags=[]
+                ))
+
+        return StructuredContextContainer(
+            plot_elements=plot_elements,
+            character_contexts=character_contexts,
+            user_requests=user_requests,
+            system_instructions=system_instructions
+        )
     
     @patch('app.services.llm_inference.get_llm')
     def test_end_to_end_context_processing(self, mock_get_llm):
@@ -259,63 +274,80 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_priority_and_layer_interaction(self, mock_get_llm):
         """Test interaction between priority-based filtering and layer allocation."""
-        from app.models.context_models import (
-            ContextProcessingConfig, AgentType, ComposePhase,
-            StructuredContextContainer, SystemContextElement, StoryContextElement, 
-            CharacterContextElement, ContextMetadata
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import (
+            StructuredContextContainer, PlotElement, CharacterContext,
+            SystemInstruction
         )
-        
+
         mock_get_llm.return_value = Mock()
-        
+
         # Create elements with varying priorities across different types
-        elements = [
-            SystemContextElement(
-                id="system_1",
-                type=ContextType.SYSTEM_PROMPT,
-                content="Critical system",
-                metadata=ContextMetadata(priority=1.0, estimated_tokens=50)  # Highest priority
-            ),
-            StoryContextElement(
-                id="story_1", 
-                type=ContextType.STORY_SUMMARY,
+        plot_elements = [
+            PlotElement(
+                id="story_1",
+                type="scene",
                 content="Important story",
-                metadata=ContextMetadata(priority=0.9, estimated_tokens=60)
+                priority="high",  # 0.9 -> high
+                tags=[]
             ),
-            CharacterContextElement(
-                id="char_1",
-                type=ContextType.CHARACTER_PROFILE,
-                content="Key character",
-                character_id="char1",
-                character_name="Main Character",
-                metadata=ContextMetadata(priority=0.8, estimated_tokens=70)
-            ),
-            StoryContextElement(
+            PlotElement(
                 id="world_1",
-                type=ContextType.WORLD_BUILDING,
+                type="setup",
                 content="Useful world info",
-                metadata=ContextMetadata(priority=0.6, estimated_tokens=40)
-            ),
-            CharacterContextElement(
-                id="char_2",
-                type=ContextType.CHARACTER_MEMORY,
-                content="Background detail",
-                character_id="char2", 
-                character_name="Side Character",
-                metadata=ContextMetadata(priority=0.4, estimated_tokens=30)
-            ),
-            CharacterContextElement(
-                id="char_3",
-                type=ContextType.CHARACTER_MEMORY,
-                content="Minor detail",
-                character_id="char3",
-                character_name="Minor Character", 
-                metadata=ContextMetadata(priority=0.2, estimated_tokens=20)  # Lowest priority
+                priority="medium",  # 0.6 -> medium
+                tags=[]
             )
         ]
-        
-        container = StructuredContextContainer(elements=elements)
+
+        character_contexts = [
+            CharacterContext(
+                character_id="char1",
+                character_name="Main Character",
+                current_state={"emotional": "determined"},
+                goals=["achieve goal"],
+                recent_actions=[],
+                memories=["Key character"],
+                personality_traits=["brave"]
+            ),
+            CharacterContext(
+                character_id="char2",
+                character_name="Side Character",
+                current_state={"emotional": "neutral"},
+                goals=[],
+                recent_actions=[],
+                memories=["Background detail"],
+                personality_traits=[]
+            ),
+            CharacterContext(
+                character_id="char3",
+                character_name="Minor Character",
+                current_state={},
+                goals=[],
+                recent_actions=[],
+                memories=["Minor detail"],
+                personality_traits=[]
+            )
+        ]
+
+        system_instructions = [
+            SystemInstruction(
+                id="system_1",
+                type="behavior",
+                content="Critical system",
+                priority="high",  # 1.0 -> high
+                scope="global"
+            )
+        ]
+
+        container = StructuredContextContainer(
+            plot_elements=plot_elements,
+            character_contexts=character_contexts,
+            user_requests=[],
+            system_instructions=system_instructions
+        )
         context_manager = ContextManager()
-        
+
         # Create processing configuration with limited tokens to force prioritization
         processing_config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
@@ -323,10 +355,10 @@ class TestFullContextPipeline:
             max_tokens=200,  # Small limit to force filtering
             prioritize_recent=True
         )
-        
+
         # Process context using the new unified API
         formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
-        
+
         # Verify priority-based filtering worked
         assert isinstance(formatted_context, str)
         assert len(formatted_context) > 0
@@ -385,41 +417,52 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_error_recovery_integration(self, mock_get_llm):
         """Test error recovery across the integrated pipeline."""
-        from app.models.context_models import (
-            ContextProcessingConfig, AgentType, ComposePhase,
-            StructuredContextContainer, StoryContextElement, CharacterContextElement, ContextMetadata
+        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.generation_models import (
+            StructuredContextContainer, PlotElement, CharacterContext
         )
-        
+
         mock_get_llm.return_value = Mock()
-        
+
         context_manager = ContextManager()
-        
+
         # Test error recovery by simulating problematic content
         # Create elements with potentially problematic content
-        elements = [
-            StoryContextElement(
+        plot_elements = [
+            PlotElement(
                 id="empty_1",
-                type=ContextType.STORY_SUMMARY,
+                type="scene",
                 content="",  # Empty content
-                metadata=ContextMetadata(priority=0.5, estimated_tokens=0)
+                priority="medium",
+                tags=[]
             ),
-            CharacterContextElement(
-                id="valid_1",
-                type=ContextType.CHARACTER_PROFILE,
-                content="Valid content here",
-                character_id="char1",
-                character_name="Valid Character",
-                metadata=ContextMetadata(priority=0.8, estimated_tokens=50)
-            ),
-            StoryContextElement(
+            PlotElement(
                 id="valid_2",
-                type=ContextType.WORLD_BUILDING,
+                type="setup",
                 content="More valid content",
-                metadata=ContextMetadata(priority=0.7, estimated_tokens=60)
+                priority="medium",
+                tags=[]
             )
         ]
-        
-        container = StructuredContextContainer(elements=elements)
+
+        character_contexts = [
+            CharacterContext(
+                character_id="char1",
+                character_name="Valid Character",
+                current_state={"emotional": "neutral"},
+                goals=[],
+                recent_actions=[],
+                memories=["Valid content here"],
+                personality_traits=[]
+            )
+        ]
+
+        container = StructuredContextContainer(
+            plot_elements=plot_elements,
+            character_contexts=character_contexts,
+            user_requests=[],
+            system_instructions=[]
+        )
         
         # Test that the system handles problematic content gracefully
         try:

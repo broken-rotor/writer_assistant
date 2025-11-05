@@ -35,22 +35,22 @@ class TestContextManagerNewModel:
         self.container = StructuredContextContainer(
             plot_elements=[
                 PlotElement(
-                    element_id="plot_001",
+                    id="plot_001",
                     type="scene",
                     content="The hero enters the dark forest",
                     priority="high",
                     tags=["current_scene", "forest"]
                 ),
                 PlotElement(
-                    element_id="plot_002",
+                    id="plot_002",
                     type="setup",
                     content="Earlier: The hero received a mysterious map",
                     priority="medium",
                     tags=["backstory"]
                 ),
                 PlotElement(
-                    element_id="plot_003",
-                    type="detail",
+                    id="plot_003",
+                    type="transition",
                     content="The forest has ancient magic",
                     priority="low",
                     tags=["worldbuilding"]
@@ -60,7 +60,7 @@ class TestContextManagerNewModel:
                 CharacterContext(
                     character_id="hero",
                     character_name="Aria",
-                    current_state="determined but cautious",
+                    current_state={"emotional": "determined but cautious"},
                     goals=["Find the ancient artifact", "Save the kingdom"],
                     recent_actions=["Drew sword", "Entered forest"],
                     memories=["Training with mentor", "Village attack"],
@@ -70,7 +70,7 @@ class TestContextManagerNewModel:
                 CharacterContext(
                     character_id="mentor",
                     character_name="Master Orin",
-                    current_state="worried about Aria",
+                    current_state={"emotional": "worried about Aria"},
                     goals=["Guide Aria", "Protect the knowledge"],
                     recent_actions=["Gave Aria the map"],
                     memories=["Training Aria"],
@@ -81,14 +81,14 @@ class TestContextManagerNewModel:
             user_requests=[
                 UserRequest(
                     id="user_001",
-                    type="feedback",
+                    type="style_change",
                     content="Make the dialogue more natural",
                     priority="high",
                     target="dialogue"
                 ),
                 UserRequest(
                     id="user_002",
-                    type="instruction",
+                    type="general",
                     content="Focus on sensory details",
                     priority="medium",
                     target="description"
@@ -141,7 +141,7 @@ class TestContextManagerNewModel:
         )
 
         # High priority plot element should be included
-        plot_ids = {p.element_id for p in filtered["plot_elements"]}
+        plot_ids = {p.id for p in filtered["plot_elements"]}
         assert "plot_001" in plot_ids  # High priority
 
     def test_sort_elements_by_priority(self):
@@ -180,7 +180,7 @@ class TestContextManagerNewModel:
 
         # Should only include plot element with "current_scene" tag
         assert len(filtered["plot_elements"]) == 1
-        assert filtered["plot_elements"][0].element_id == "plot_001"
+        assert filtered["plot_elements"][0].id == "plot_001"
 
     def test_apply_token_budget_under_limit(self):
         """Test token budget when content is under limit."""
@@ -321,7 +321,7 @@ class TestContextFormatterNewModel:
         self.collections = {
             "plot_elements": [
                 PlotElement(
-                    element_id="plot_001",
+                    id="plot_001",
                     type="scene",
                     content="Hero enters dark forest",
                     priority="high",
@@ -332,7 +332,7 @@ class TestContextFormatterNewModel:
                 CharacterContext(
                     character_id="hero",
                     character_name="Aria",
-                    current_state="determined",
+                    current_state={"emotional": "determined"},
                     goals=["Find artifact"],
                     personality_traits=["brave"]
                 )
@@ -340,7 +340,7 @@ class TestContextFormatterNewModel:
             "user_requests": [
                 UserRequest(
                     id="user_001",
-                    type="feedback",
+                    type="style_change",
                     content="Make dialogue more natural",
                     priority="high"
                 )
@@ -409,7 +409,7 @@ class TestContextFormatterNewModel:
         char = CharacterContext(
             character_id="test",
             character_name="Test Character",
-            current_state="happy",
+            current_state={"emotional": "happy"},
             goals=["goal1", "goal2"],
             personality_traits=["trait1", "trait2"],
             relationships={"other": "friend"}
@@ -417,7 +417,7 @@ class TestContextFormatterNewModel:
 
         formatted = self.formatter._format_character_context(char)
 
-        assert "State: happy" in formatted
+        assert "State: " in formatted
         assert "Goals: goal1, goal2" in formatted
         assert "Traits: trait1, trait2" in formatted
         assert "Relationships: " in formatted

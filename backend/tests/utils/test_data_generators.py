@@ -12,7 +12,8 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
-from app.services.context_manager import ContextItem, ContextType
+from app.services.context_manager import ContextItem
+from app.models.context_models import ContextType
 from app.services.token_management import LayerType
 
 
@@ -291,46 +292,54 @@ class ContextDataGenerator:
         """Generate a complete context management test scenario."""
         story_gen = StoryDataGenerator(seed=42)  # Use fixed seed for consistency
         story_data = story_gen.generate_story(complexity)
-        
+
         context_items = []
-        
+
         # Generate system context
         system_context = ContextItem(
             content="You are a creative writing assistant helping to craft an engaging story.",
-            context_type=ContextType.SYSTEM_PROMPT,
-            priority=10,
+            element_type=ContextType.SYSTEM_PROMPT.value,
+            priority="high",
             layer_type=LayerType.WORKING_MEMORY,
             metadata={"source": "system", "immutable": True}
         )
         context_items.append(system_context)
-        
+
         # Generate story context items
         for i, chapter in enumerate(story_data.chapters[:3]):  # Use first 3 chapters
+            # Map numeric priority (8-i where i is 0,1,2 -> 8,7,6) to string
+            priority_val = 8 - i
+            priority_str = "high" if priority_val >= 8 else "medium"
+
             chapter_context = ContextItem(
                 content=chapter,
-                context_type=ContextType.STORY_SUMMARY,
-                priority=8 - i,  # Recent chapters have higher priority
+                element_type=ContextType.STORY_SUMMARY.value,
+                priority=priority_str,
                 layer_type=LayerType.EPISODIC_MEMORY,
                 metadata={"chapter": i + 1, "type": "chapter"}
             )
             context_items.append(chapter_context)
-        
+
         # Generate character context items
         for char in story_data.characters[:5]:  # Use first 5 characters
+            # Map random priority (5-8) to string
+            priority_val = random.randint(5, 8)
+            priority_str = "high" if priority_val >= 8 else "medium"
+
             char_context = ContextItem(
                 content=f"Character: {char['name']}, Age: {char['age']}, Traits: {', '.join(char['traits'])}, Background: {char['background']}",
-                context_type=ContextType.CHARACTER_PROFILE,
-                priority=random.randint(5, 8),
+                element_type=ContextType.CHARACTER_PROFILE.value,
+                priority=priority_str,
                 layer_type=LayerType.SEMANTIC_MEMORY,
                 metadata={"character_name": char['name'], "type": "character"}
             )
             context_items.append(char_context)
-        
+
         # Generate world building context
         world_context = ContextItem(
             content=story_data.world_building,
-            context_type=ContextType.WORLD_BUILDING,
-            priority=6,
+            element_type=ContextType.WORLD_BUILDING.value,
+            priority="medium",
             layer_type=LayerType.SEMANTIC_MEMORY,
             metadata={"type": "world_building"}
         )
@@ -377,24 +386,33 @@ class TokenTestDataGenerator:
         """Generate context items that target a specific token count."""
         items = []
         current_tokens = 0
-        
+
         while current_tokens < target_tokens:
             remaining = target_tokens - current_tokens
             item_size = min(remaining, random.randint(100, 2000))
-            
+
             content = self._generate_content(item_size * 4)  # 4 chars ≈ 1 token
-            
+
+            # Map numeric priority to string
+            priority_val = random.randint(1, 10)
+            if priority_val >= 8:
+                priority_str = "high"
+            elif priority_val >= 4:
+                priority_str = "medium"
+            else:
+                priority_str = "low"
+
             item = ContextItem(
                 content=content,
-                context_type=random.choice(list(ContextType)),
-                priority=random.randint(1, 10),
+                element_type=random.choice(list(ContextType)).value,
+                priority=priority_str,
                 layer_type=random.choice(list(LayerType)),
                 metadata={"generated": True, "target_tokens": item_size}
             )
-            
+
             items.append(item)
             current_tokens += item_size
-        
+
         return items
     
     def _generate_content(self, target_length: int) -> str:
