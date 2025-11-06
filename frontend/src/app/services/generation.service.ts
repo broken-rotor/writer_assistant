@@ -36,7 +36,10 @@ import {
   RaterFeedbackRequest,
   RaterFeedbackResponse,
   EditorReviewRequest,
-  EditorReviewResponse
+  EditorReviewResponse,
+  // Chapter Outline Generation interfaces
+  ChapterOutlineGenerationRequest,
+  ChapterOutlineGenerationResponse
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
@@ -1534,6 +1537,45 @@ ${story.plotOutline.content}`;
       return this.apiService.requestEditorReview(structuredRequest);
     } catch (error) {
       throw new Error(`Failed to request structured editor review: ${error}`);
+    }
+  }
+
+  // ============================================================================
+  // CHAPTER OUTLINE GENERATION (WRI-129)
+  // ============================================================================
+
+  /**
+   * Generate chapter outline from story outline
+   */
+  generateChapterOutlineFromStoryOutline(
+    story: Story,
+    storyOutline: string
+  ): Observable<ChapterOutlineGenerationResponse> {
+    try {
+      // Validate input
+      if (!storyOutline || !storyOutline.trim()) {
+        throw new Error('Story outline is required for chapter outline generation');
+      }
+
+      // Prepare the request
+      const request: ChapterOutlineGenerationRequest = {
+        story_outline: storyOutline,
+        story_context: {
+          title: story.general.title,
+          worldbuilding: story.general.worldbuilding,
+          characters: Array.from(story.characters.values()).map(char => ({
+            name: char.name,
+            basicBio: char.basicBio
+          }))
+        },
+        generation_preferences: {
+          // Add any generation preferences here
+        }
+      };
+
+      return this.apiService.generateChapterOutline(request);
+    } catch (error) {
+      throw new Error(`Failed to generate chapter outline: ${error}`);
     }
   }
 }

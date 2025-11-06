@@ -33,6 +33,15 @@
           <span *ngIf="isResearching">⏳ Researching...</span>
         </button>
         
+        <button 
+          class="primary-button" 
+          (click)="generateChapterOutline()" 
+          [disabled]="isGeneratingChapterOutline || disabled || !story.plotOutline.content?.trim()"
+          title="Generate chapter outline from story outline">
+          <span *ngIf="!isGeneratingChapterOutline">📖 Generate Chapter Outline</span>
+          <span *ngIf="isGeneratingChapterOutline">⏳ Generating Chapters...</span>
+        </button>
+        
         <button class="secondary-button" (click)="saveOutline()" [disabled]="disabled">💾 Save</button>
         <button class="secondary-button" (click)="resetOutline()" [disabled]="disabled">🔄 Reset</button>
       </div>

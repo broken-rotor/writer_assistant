@@ -28,6 +28,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   chatInput = '';
   isGeneratingAI = false;
   isResearching = false;
+  isGeneratingChapterOutline = false;
 
   // Chat state
   isChatGenerating = false;
@@ -104,6 +105,186 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       this.story.plotOutline.status = 'draft';
       this.story.plotOutline.metadata.lastModified = new Date();
       this.outlineUpdated.emit(this.story.plotOutline.content);
+    }
+  }
+
+  async generateChapterOutline(): Promise<void> {
+    if (!this.story?.plotOutline?.content?.trim()) {
+      this.toastService.showError('Please write a story outline first before generating chapter outline');
+      return;
+    }
+
+    this.isGeneratingChapterOutline = true;
+    
+    try {
+      console.log('Generating chapter outline from story outline...');
+      
+      const response = await firstValueFrom(
+        this.generationService.generateChapterOutlineFromStoryOutline(
+          this.story,
+          this.story.plotOutline.content
+        )
+      );
+
+      // Store the generated outline items in the story's chapter compose state
+      if (response.outline_items && response.outline_items.length > 0) {
+        // Initialize chapter compose state if it doesn't exist
+        if (!this.story.chapterCompose) {
+          this.story.chapterCompose = {
+            phases: {
+              plotOutline: {
+                conversation: { 
+                  id: 'plot-outline-conversation',
+                  messages: [], 
+                  currentBranchId: 'main',
+                  branches: new Map([['main', { id: 'main', name: 'Main', parentMessageId: '', messageIds: [], isActive: true, metadata: { created: new Date() } }]]),
+                  metadata: { created: new Date(), lastModified: new Date(), phase: 'plot_outline' } 
+                },
+                outline: {
+                  items: new Map(),
+                  structure: []
+                },
+                draftSummary: '',
+                status: 'active',
+                progress: {
+                  completedItems: 0,
+                  totalItems: 0,
+                  lastActivity: new Date()
+                }
+              },
+              chapterDetailer: {
+                conversation: { 
+                  id: 'chapter-detail-conversation',
+                  messages: [], 
+                  currentBranchId: 'main',
+                  branches: new Map([['main', { id: 'main', name: 'Main', parentMessageId: '', messageIds: [], isActive: true, metadata: { created: new Date() } }]]),
+                  metadata: { created: new Date(), lastModified: new Date(), phase: 'chapter_detail' } 
+                },
+                chapterDraft: {
+                  content: '',
+                  title: '',
+                  plotPoint: '',
+                  wordCount: 0,
+                  status: 'drafting'
+                },
+                feedbackIntegration: {
+                  pendingFeedback: [],
+                  incorporatedFeedback: [],
+                  feedbackRequests: new Map()
+                },
+                status: 'active',
+                progress: {
+                  feedbackIncorporated: 0,
+                  totalFeedbackItems: 0,
+                  lastActivity: new Date()
+                }
+              },
+              finalEdit: {
+                conversation: { 
+                  id: 'final-edit-conversation',
+                  messages: [], 
+                  currentBranchId: 'main',
+                  branches: new Map([['main', { id: 'main', name: 'Main', parentMessageId: '', messageIds: [], isActive: true, metadata: { created: new Date() } }]]),
+                  metadata: { created: new Date(), lastModified: new Date(), phase: 'final_edit' } 
+                },
+                finalChapter: {
+                  content: '',
+                  title: '',
+                  wordCount: 0,
+                  version: 1
+                },
+                reviewSelection: {
+                  availableReviews: [],
+                  selectedReviews: [],
+                  appliedReviews: []
+                },
+                status: 'active',
+                progress: {
+                  reviewsApplied: 0,
+                  totalReviews: 0,
+                  lastActivity: new Date()
+                }
+              }
+            },
+            currentPhase: 'plot_outline',
+            sharedContext: {
+              chapterNumber: 1,
+              targetWordCount: 2000,
+              genre: '',
+              tone: '',
+              pov: ''
+            },
+            navigation: {
+              phaseHistory: ['plot_outline'],
+              canGoBack: false,
+              canGoForward: false,
+              branchNavigation: {
+                currentBranchId: 'main',
+                availableBranches: ['main'],
+                branchHistory: [],
+                canNavigateBack: false,
+                canNavigateForward: false
+              }
+            },
+            overallProgress: {
+              currentStep: 1,
+              totalSteps: 3,
+              phaseCompletionStatus: {
+                'plot_outline': false,
+                'chapter_detail': false,
+                'final_edit': false
+              }
+            },
+            metadata: {
+              created: new Date(),
+              lastModified: new Date(),
+              version: '1.0.0'
+            }
+          };
+        }
+
+        // Clear existing outline items and add new ones
+        this.story.chapterCompose!.phases.plotOutline.outline.items.clear();
+        this.story.chapterCompose!.phases.plotOutline.outline.structure = [];
+
+        response.outline_items.forEach(item => {
+          // Convert the response item to match the OutlineItem interface
+          const outlineItem = {
+            id: item.id,
+            type: item.type as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
+            title: item.title,
+            description: item.description,
+            order: item.order,
+            status: item.status as 'draft' | 'reviewed' | 'approved',
+            metadata: {
+              created: new Date(item.metadata.created || new Date()),
+              lastModified: new Date(item.metadata.lastModified || new Date()),
+              wordCountEstimate: item.metadata.wordCountEstimate
+            }
+          };
+
+          this.story.chapterCompose!.phases.plotOutline.outline.items.set(item.id, outlineItem);
+          this.story.chapterCompose!.phases.plotOutline.outline.structure.push(item.id);
+        });
+
+        // Update progress
+        this.story.chapterCompose!.phases.plotOutline.progress.totalItems = response.outline_items.length;
+        this.story.chapterCompose!.phases.plotOutline.progress.completedItems = response.outline_items.length;
+        this.story.chapterCompose!.phases.plotOutline.progress.lastActivity = new Date();
+        this.story.chapterCompose!.phases.plotOutline.status = 'completed';
+
+        this.toastService.showSuccess(`Successfully generated ${response.outline_items.length} chapters! You can now proceed to the Chapter Development phase.`);
+        
+        console.log('Chapter outline generated successfully:', response);
+      } else {
+        this.toastService.showError('No chapters were generated. Please try again with a more detailed story outline.');
+      }
+
+    } catch (error) {
+      console.error('Error generating chapter outline:', error);
+      this.toastService.showError('Failed to generate chapter outline. Please try again.');
+    } finally {
+      this.isGeneratingChapterOutline = false;
     }
   }
 
