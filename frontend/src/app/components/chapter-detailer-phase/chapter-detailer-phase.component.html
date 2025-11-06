@@ -16,10 +16,10 @@
     <!-- Left Panel: Chapter Development -->
     <div class="chapter-panel">
       
-      <!-- Plot Outline Reference (Read-Only) -->
-      <div class="section plot-outline-reference">
+      <!-- Chapter Outline Reference (Read-Only) -->
+      <div class="section chapter-outline-reference">
         <div class="section-header" (click)="toggleOutlineDetails()" (keyup.enter)="toggleOutlineDetails()" (keyup.space)="toggleOutlineDetails()" tabindex="0">
-          <h3>📋 Plot Outline Reference</h3>
+          <h3>📋 Chapter Outline Reference</h3>
           <span class="toggle-icon">{{ showOutlineDetails ? '▼' : '▶' }}</span>
           <span class="item-count">({{ getOutlineItemsCount() }} items)</span>
         </div>
@@ -39,7 +39,7 @@
             </div>
           </div>
           <div class="empty-outline" *ngIf="plotOutlineItems.length === 0">
-            <p>No plot outline items available from Phase 1.</p>
+            <p>No chapter outline items available from Story Outline.</p>
           </div>
         </div>
       </div>
@@ -91,7 +91,7 @@
         <div class="no-versions" *ngIf="draftVersions.length === 0">
           <div class="empty-icon">📄</div>
           <h4>No chapter drafts yet</h4>
-          <p>Generate your initial chapter from the plot outline or start writing in the chat.</p>
+          <p>Generate your initial chapter from the chapter outline or start writing in the chat.</p>
           <button 
             class="primary-button" 
             (click)="generateInitialChapter()" 
@@ -246,4 +246,3 @@
     </button>
   </div>
 </div>
-

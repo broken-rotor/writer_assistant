@@ -5,7 +5,7 @@
     
     <!-- Left Panel: Outline Editor -->
     <div class="outline-panel">
-      <h3>Overall Story Plot Outline</h3>
+      <h3>Overall Story Outline</h3>
       <textarea 
         [(ngModel)]="story.plotOutline.content"
         (ngModelChange)="onOutlineChange()"
@@ -64,7 +64,7 @@
         </div>
         
         <div *ngIf="story.plotOutline.chatHistory.length === 0 && !isChatGenerating" class="empty-chat">
-          Start a conversation about your plot outline...
+          Start a conversation about your story outline...
         </div>
       </div>
       
@@ -234,7 +234,7 @@
       </div>
 
       <div *ngIf="getEnabledRaters().length === 0" class="no-raters">
-        <p>No enabled raters found. Please enable raters in the <strong>Raters</strong> tab to get feedback on your plot outline.</p>
+        <p>No enabled raters found. Please enable raters in the <strong>Raters</strong> tab to get feedback on your story outline.</p>
       </div>
     </div>
 
@@ -247,7 +247,7 @@
         (click)="approveOutline()" 
         [disabled]="!canApproveOutline() || disabled"
         [class.ready]="canApproveOutline()">
-        <span *ngIf="canApproveOutline()">✅ Approve Plot Outline</span>
+        <span *ngIf="canApproveOutline()">✅ Approve Story Outline</span>
         <span *ngIf="!canApproveOutline()">⏳ Waiting for feedback...</span>
       </button>
     </div>
