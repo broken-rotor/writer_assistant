@@ -106,7 +106,8 @@ Provide feedback in JSON format:
             for chunk in llm.chat_completion_stream(
                 messages,
                 max_tokens=settings.ENDPOINT_RATER_FEEDBACK_MAX_TOKENS,
-                temperature=settings.ENDPOINT_RATER_FEEDBACK_TEMPERATURE
+                temperature=settings.ENDPOINT_RATER_FEEDBACK_TEMPERATURE,
+                json_schema_class=RaterFeedback
             ):
                 response_text += chunk
                 # Small delay to prevent overwhelming the client

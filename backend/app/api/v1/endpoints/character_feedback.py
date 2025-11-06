@@ -95,7 +95,8 @@ Respond in JSON format with exactly these keys:
             response_text = llm.chat_completion(
                 messages,
                 max_tokens=settings.ENDPOINT_CHARACTER_FEEDBACK_MAX_TOKENS,
-                temperature=settings.ENDPOINT_CHARACTER_FEEDBACK_TEMPERATURE
+                temperature=settings.ENDPOINT_CHARACTER_FEEDBACK_TEMPERATURE,
+                json_schema_class=CharacterFeedback
             )
 
             # Phase 3: Parsing
