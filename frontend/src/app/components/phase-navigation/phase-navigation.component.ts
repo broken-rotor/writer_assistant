@@ -28,7 +28,7 @@ export class PhaseNavigationComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   readonly phases: { key: PhaseType; label: string; description: string }[] = [
-    { key: 'plot_outline', label: 'Draft', description: 'Create plot outline' },
+    { key: 'plot_outline', label: 'Draft', description: 'Create chapter outline' },
     { key: 'chapter_detail', label: 'Refined', description: 'Develop chapter content' },
     { key: 'final_edit', label: 'Approved', description: 'Final review and edit' }
   ];

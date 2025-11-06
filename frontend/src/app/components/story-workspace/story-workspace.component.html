@@ -57,7 +57,7 @@
     <button class="tab-button" [class.active]="activeTab === 'worldbuilding'" (click)="selectTab('worldbuilding')">Worldbuilding</button>
     <button class="tab-button" [class.active]="activeTab === 'characters'" (click)="selectTab('characters')">Characters</button>
     <button class="tab-button" [class.active]="activeTab === 'raters'" (click)="selectTab('raters')">Raters</button>
-    <button class="tab-button" [class.active]="activeTab === 'plot-outline'" (click)="selectTab('plot-outline')">Plot Outline</button>
+    <button class="tab-button" [class.active]="activeTab === 'plot-outline'" (click)="selectTab('plot-outline')">Story Outline</button>
     <button class="tab-button" [class.active]="activeTab === 'story'" (click)="selectTab('story')">Story</button>
     <button class="tab-button" [class.active]="activeTab === 'chapter-creation'" (click)="selectTab('chapter-creation')">Chapter Creation</button>
   </nav>
@@ -402,20 +402,20 @@
         </div>
       </div>
 
-      <!-- Plot Outline Status Indicator -->
+      <!-- Story Outline Status Indicator -->
       <div class="plot-outline-status-section">
         <div *ngIf="story.plotOutline" class="plot-outline-status">
-          <span class="status-label">Plot Outline:</span>
+          <span class="status-label">Story Outline:</span>
           <span class="status-badge" [class]="'status-' + story.plotOutline.status">
             {{ getPlotOutlineStatusDisplay() }}
           </span>
-          <button class="link-button" (click)="selectTab('plot-outline')" title="Go to Plot Outline tab">
+          <button class="link-button" (click)="selectTab('plot-outline')" title="Go to Story Outline tab">
             📝 Edit Outline
           </button>
         </div>
         <div *ngIf="!story.plotOutline" class="plot-outline-warning">
-          <span class="warning-text">⚠️ No plot outline available</span>
-          <button class="link-button" (click)="selectTab('plot-outline')" title="Create plot outline">
+          <span class="warning-text">⚠️ No story outline available</span>
+          <button class="link-button" (click)="selectTab('plot-outline')" title="Create story outline">
             📝 Create Outline
           </button>
         </div>

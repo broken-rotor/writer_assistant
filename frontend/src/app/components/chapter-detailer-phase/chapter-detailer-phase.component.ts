@@ -55,7 +55,7 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
   @Output() phaseCompleted = new EventEmitter<void>();
   @Output() chapterUpdated = new EventEmitter<ChapterDraftVersion>();
 
-  // Plot outline data from Phase 1 (read-only)
+  // Chapter outline data from Story Outline (read-only)
   plotOutlineItems: OutlineItem[] = [];
   plotOutlineSummary = '';
   showOutlineDetails = false;
@@ -156,7 +156,7 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
   }
 
   private loadPlotOutlineData(): void {
-    // Load plot outline data from Phase 1 via PhaseStateService
+    // Load chapter outline data from Story Outline via PhaseStateService
     this.phaseStateService.chapterComposeState$
       .pipe(takeUntil(this.destroy$))
       .subscribe(state => {
@@ -197,11 +197,11 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
   }
 
   private prepareInitialGeneration(): void {
-    // Set up for initial chapter generation from plot outline
+    // Set up for initial chapter generation from chapter outline
     this.completionCriteria.hasInitialDraft = false;
   }
 
-  // Plot outline display methods
+  // Chapter outline display methods
   toggleOutlineDetails(): void {
     this.showOutlineDetails = !this.showOutlineDetails;
   }

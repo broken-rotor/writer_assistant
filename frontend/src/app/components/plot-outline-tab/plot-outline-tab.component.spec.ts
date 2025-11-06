@@ -323,7 +323,7 @@ describe('PlotOutlineTabComponent', () => {
 
   it('should display empty chat message when no chat history', () => {
     const emptyChat = fixture.nativeElement.querySelector('.empty-chat');
-    expect(emptyChat.textContent.trim()).toBe('Start a conversation about your plot outline...');
+    expect(emptyChat.textContent.trim()).toBe('Start a conversation about your story outline...');
   });
 
   it('should display chat messages', () => {
