@@ -300,51 +300,107 @@ export class GenerationService {
   ): Observable<StructuredGenerateChapterResponse> {
     const plotPoint = outlineItems.map(item => `${item.title}: ${item.description}`).join('\n\n');
     
-    // Extract plot outline context for enhanced chapter generation
-    const plotOutlineContext = this.plotOutlineContextService.extractChapterPlotContext(story, chapterNumber);
-    
-    const request: StructuredGenerateChapterRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix,
-        assistantPrompt: story.general.systemPrompts.assistantPrompt
-      },
-      worldbuilding: { content: story.general.worldbuilding },
-      storySummary: { summary: story.story.summary },
-      plotContext: { 
-        plotPoint: plotPoint,
-        plotOutline: story.plotOutline?.content,
-        relatedOutlineItems: plotOutlineContext.plotElements.map((element, index) => ({
-          title: element.type,
-          description: element.content,
-          order: index
-        }))
-      },
-      feedbackContext: { incorporatedFeedback: [] },
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      characters: Array.from(story.characters.values())
+    // Convert to backend-compatible format
+    const backendRequest = this.convertToBackendGenerateChapterRequest(
+      story, 
+      plotPoint, 
+      outlineItems, 
+      chapterNumber
+    );
+
+    return this.apiService.generateChapter(backendRequest);
+  }
+
+  private convertToBackendGenerateChapterRequest(
+    story: Story,
+    plotPoint: string,
+    outlineItems: {title: string, description: string}[],
+    chapterNumber: number
+  ): any {
+    // Create structured context container
+    const structuredContext = {
+      plot_elements: [],
+      character_contexts: Array.from(story.characters.values())
         .filter(c => !c.isHidden)
         .map(c => ({
-          name: c.name,
-          basicBio: c.basicBio,
-          sex: c.sex,
-          gender: c.gender,
-          sexualPreference: c.sexualPreference,
-          age: c.age,
-          physicalAppearance: c.physicalAppearance,
-          usualClothing: c.usualClothing,
-          personality: c.personality,
+          character_id: c.id || c.name.toLowerCase().replace(/\s+/g, '_'),
+          character_name: c.name,
+          basic_bio: c.basicBio,
+          personality_traits: c.personality,
           motivations: c.motivations,
           fears: c.fears,
-          relationships: c.relationships
-        }))
+          relationships: c.relationships,
+          physical_description: c.physicalAppearance,
+          usual_clothing: c.usualClothing,
+          sex: c.sex,
+          gender: c.gender,
+          sexual_preference: c.sexualPreference,
+          age: c.age
+        })),
+      user_requests: [],
+      system_instructions: [
+        {
+          instruction_id: 'main_prefix',
+          instruction_type: 'system_prompt',
+          content: story.general.systemPrompts.mainPrefix,
+          priority: 1
+        },
+        {
+          instruction_id: 'main_suffix',
+          instruction_type: 'system_prompt',
+          content: story.general.systemPrompts.mainSuffix,
+          priority: 2
+        }
+      ],
+      metadata: {
+        story_title: story.general.title,
+        worldbuilding_summary: story.general.worldbuilding,
+        story_summary: story.story.summary,
+        chapter_number: chapterNumber,
+        total_chapters: story.story.chapters.length
+      }
     };
 
-    return this.apiService.generateChapter(request);
+    // Add assistant prompt if available
+    if (story.general.systemPrompts.assistantPrompt) {
+      structuredContext.system_instructions.push({
+        instruction_id: 'assistant_prompt',
+        instruction_type: 'assistant_prompt',
+        content: story.general.systemPrompts.assistantPrompt,
+        priority: 3
+      });
+    }
+
+    // Create context processing config with plot outline data
+    const contextProcessingConfig = {
+      plot_outline_content: story.plotOutline?.content,
+      draft_outline_items: outlineItems.map((item, index) => ({
+        id: `outline_item_${index}`,
+        title: item.title,
+        description: item.description,
+        order: index,
+        type: 'chapter_outline'
+      })),
+      chapter_number: chapterNumber,
+      story_context: {
+        title: story.general.title,
+        worldbuilding: story.general.worldbuilding,
+        summary: story.story.summary,
+        previous_chapters: story.story.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content
+        }))
+      }
+    };
+
+    // Create backend-compatible request
+    return {
+      plotPoint: plotPoint,
+      compose_phase: 'chapter_detail',
+      structured_context: structuredContext,
+      context_processing_config: contextProcessingConfig
+    };
   }
 
 
