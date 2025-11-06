@@ -690,8 +690,9 @@ export interface FleshOutResponse {
   fleshedOutText: string;
 }
 
-export interface GenerateCharacterDetailsResponse {
+export interface CharacterInfo {
   name: string;
+  basicBio: string;
   sex: string;
   gender: string;
   sexualPreference: string;
@@ -702,6 +703,10 @@ export interface GenerateCharacterDetailsResponse {
   motivations: string;
   fears: string;
   relationships: string;
+}
+
+export interface GenerateCharacterDetailsResponse {
+  character_info: CharacterInfo;
   context_metadata?: ContextMetadata;
 }
 

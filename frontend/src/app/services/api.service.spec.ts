@@ -402,17 +402,20 @@ describe('ApiService', () => {
       };
 
       const mockResponse = {
-        name: 'Sir Galahad',
-        sex: 'Male',
-        gender: 'Male',
-        sexualPreference: 'Heterosexual',
-        age: 35,
-        physicalAppearance: 'Tall and muscular',
-        usualClothing: 'Plate armor',
-        personality: 'Brave and honorable',
-        motivations: 'Protect the weak',
-        fears: 'Dishonor',
-        relationships: 'Loyal to the king'
+        character_info: {
+          name: 'Sir Galahad',
+          basicBio: 'A noble knight',
+          sex: 'Male',
+          gender: 'Male',
+          sexualPreference: 'Heterosexual',
+          age: 35,
+          physicalAppearance: 'Tall and muscular',
+          usualClothing: 'Plate armor',
+          personality: 'Brave and honorable',
+          motivations: 'Protect the weak',
+          fears: 'Dishonor',
+          relationships: 'Loyal to the king'
+        }
       };
 
       // Mock the SSE streaming service
