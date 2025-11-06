@@ -35,10 +35,12 @@ class TestGenerateCharacterDetailsEndpoint:
         final_data, status_updates = parse_streaming_response(response)
         
         assert final_data is not None
-        assert "name" in final_data
-        assert "sex" in final_data
-        assert "gender" in final_data
-        assert "age" in final_data
+        assert "character_info" in final_data
+        character_info = final_data["character_info"]
+        assert "name" in character_info
+        assert "sex" in character_info
+        assert "gender" in character_info
+        assert "age" in character_info
         
         # Verify we received status updates
         assert len(status_updates) > 0
@@ -54,14 +56,20 @@ class TestGenerateCharacterDetailsEndpoint:
         
         final_data, _ = parse_streaming_response(response)
 
+        # Check top-level structure
+        assert "character_info" in final_data
+        assert "context_metadata" in final_data
+
+        # Check character_info fields
+        character_info = final_data["character_info"]
         required_fields = [
-            "name", "sex", "gender", "sexualPreference", "age",
+            "name", "basicBio", "sex", "gender", "sexualPreference", "age",
             "physicalAppearance", "usualClothing", "personality",
             "motivations", "fears", "relationships"
         ]
 
         for field in required_fields:
-            assert field in final_data
+            assert field in character_info
 
     def test_generate_character_details_field_types(self, client, sample_generate_character_request):
         """Test character details field types are correct"""
@@ -69,18 +77,20 @@ class TestGenerateCharacterDetailsEndpoint:
         assert response.status_code == 200
         
         final_data, _ = parse_streaming_response(response)
+        character_info = final_data["character_info"]
 
-        assert isinstance(final_data["name"], str)
-        assert isinstance(final_data["sex"], str)
-        assert isinstance(final_data["gender"], str)
-        assert isinstance(final_data["sexualPreference"], str)
-        assert isinstance(final_data["age"], int)
-        assert isinstance(final_data["physicalAppearance"], str)
-        assert isinstance(final_data["usualClothing"], str)
-        assert isinstance(final_data["personality"], str)
-        assert isinstance(final_data["motivations"], str)
-        assert isinstance(final_data["fears"], str)
-        assert isinstance(final_data["relationships"], str)
+        assert isinstance(character_info["name"], str)
+        assert isinstance(character_info["basicBio"], str)
+        assert isinstance(character_info["sex"], str)
+        assert isinstance(character_info["gender"], str)
+        assert isinstance(character_info["sexualPreference"], str)
+        assert isinstance(character_info["age"], int)
+        assert isinstance(character_info["physicalAppearance"], str)
+        assert isinstance(character_info["usualClothing"], str)
+        assert isinstance(character_info["personality"], str)
+        assert isinstance(character_info["motivations"], str)
+        assert isinstance(character_info["fears"], str)
+        assert isinstance(character_info["relationships"], str)
 
     def test_generate_character_details_age_is_positive(self, client, sample_generate_character_request):
         """Test generated character age is positive"""
@@ -88,7 +98,7 @@ class TestGenerateCharacterDetailsEndpoint:
         assert response.status_code == 200
         
         final_data, _ = parse_streaming_response(response)
-        age = final_data["age"]
+        age = final_data["character_info"]["age"]
         assert age > 0
 
     def test_generate_character_details_with_existing_characters(self, client, sample_generate_character_request):
@@ -101,7 +111,7 @@ class TestGenerateCharacterDetailsEndpoint:
         assert response.status_code == 200
         
         final_data, _ = parse_streaming_response(response)
-        relationships = final_data["relationships"]
+        relationships = final_data["character_info"]["relationships"]
         # Should reference existing characters
         assert len(relationships) > 0
 
@@ -120,13 +130,14 @@ class TestGenerateCharacterDetailsEndpoint:
         assert response.status_code == 200
         
         final_data, _ = parse_streaming_response(response)
+        character_info = final_data["character_info"]
 
         # These fields should have meaningful content
-        assert len(final_data["name"]) > 0
-        assert len(final_data["physicalAppearance"]) > 10
-        assert len(final_data["personality"]) > 10
-        assert len(final_data["motivations"]) > 10
-        assert len(final_data["fears"]) > 10
+        assert len(character_info["name"]) > 0
+        assert len(character_info["physicalAppearance"]) > 10
+        assert len(character_info["personality"]) > 10
+        assert len(character_info["motivations"]) > 10
+        assert len(character_info["fears"]) > 10
 
     def test_generate_character_details_missing_basic_bio(self, client):
         """Test character generation fails without basic bio"""

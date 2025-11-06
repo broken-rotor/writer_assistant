@@ -656,17 +656,20 @@ describe('GenerationService', () => {
       };
 
       const mockResponse = {
-        name: 'New Character',
-        sex: 'Female',
-        gender: 'Female',
-        sexualPreference: 'Heterosexual',
-        age: 25,
-        physicalAppearance: 'Petite',
-        usualClothing: 'Dress',
-        personality: 'Smart',
-        motivations: 'Knowledge',
-        fears: 'Ignorance',
-        relationships: 'Friend of Existing Character'
+        character_info: {
+          name: 'New Character',
+          basicBio: 'A smart mage',
+          sex: 'Female',
+          gender: 'Female',
+          sexualPreference: 'Heterosexual',
+          age: 25,
+          physicalAppearance: 'Petite',
+          usualClothing: 'Dress',
+          personality: 'Smart',
+          motivations: 'Knowledge',
+          fears: 'Ignorance',
+          relationships: 'Friend of Existing Character'
+        }
       };
 
       apiServiceSpy.generateCharacterDetails.and.returnValue(of(mockResponse));

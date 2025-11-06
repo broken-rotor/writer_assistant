@@ -5,7 +5,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from app.models.generation_models import (
     GenerateCharacterDetailsRequest,
-    GenerateCharacterDetailsResponse
+    GenerateCharacterDetailsResponse,
+    CharacterInfo
 )
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
@@ -101,8 +102,9 @@ Generate complete character details in JSON format:
             parsed = parse_json_response(response_text)
 
             if parsed and 'name' in parsed:
-                result = GenerateCharacterDetailsResponse(
+                character_info = CharacterInfo(
                     name=parsed.get('name', 'Character'),
+                    basicBio=request.basicBio,
                     sex=parsed.get('sex', ''),
                     gender=parsed.get('gender', ''),
                     sexualPreference=parsed.get('sexualPreference', ''),
@@ -118,7 +120,10 @@ Generate complete character details in JSON format:
                     personality=parsed.get('personality', ''),
                     motivations=parsed.get('motivations', ''),
                     fears=parsed.get('fears', ''),
-                    relationships=parsed.get('relationships', ''),
+                    relationships=parsed.get('relationships', '')
+                )
+                result = GenerateCharacterDetailsResponse(
+                    character_info=character_info,
                     context_metadata=context_result.context_metadata
                 )
             else:
@@ -129,8 +134,9 @@ Generate complete character details in JSON format:
                     r'([A-Z][a-z]+ [A-Z][a-z]+)', request.basicBio)
                 name = name_match.group(1) if name_match else "Alex Morgan"
 
-                result = GenerateCharacterDetailsResponse(
+                character_info = CharacterInfo(
                     name=name,
+                    basicBio=request.basicBio,
                     sex="",
                     gender="",
                     sexualPreference="",
@@ -142,7 +148,10 @@ Generate complete character details in JSON format:
                     personality=request.basicBio,
                     motivations="To achieve their goals",
                     fears="Failure and loss",
-                    relationships="Building connections with others",
+                    relationships="Building connections with others"
+                )
+                result = GenerateCharacterDetailsResponse(
+                    character_info=character_info,
                     context_metadata=context_result.context_metadata
                 )
 

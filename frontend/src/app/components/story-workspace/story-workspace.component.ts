@@ -399,17 +399,18 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     ).subscribe({
         next: (response) => {
           // Populate the editing character with generated details
-          this.editingCharacter.name = response.name;
-          this.editingCharacter.sex = response.sex;
-          this.editingCharacter.gender = response.gender;
-          this.editingCharacter.sexualPreference = response.sexualPreference;
-          this.editingCharacter.age = response.age;
-          this.editingCharacter.physicalAppearance = response.physicalAppearance;
-          this.editingCharacter.usualClothing = response.usualClothing;
-          this.editingCharacter.personality = response.personality;
-          this.editingCharacter.motivations = response.motivations;
-          this.editingCharacter.fears = response.fears;
-          this.editingCharacter.relationships = response.relationships;
+          const characterInfo = response.character_info;
+          this.editingCharacter.name = characterInfo.name;
+          this.editingCharacter.sex = characterInfo.sex;
+          this.editingCharacter.gender = characterInfo.gender;
+          this.editingCharacter.sexualPreference = characterInfo.sexualPreference;
+          this.editingCharacter.age = characterInfo.age;
+          this.editingCharacter.physicalAppearance = characterInfo.physicalAppearance;
+          this.editingCharacter.usualClothing = characterInfo.usualClothing;
+          this.editingCharacter.personality = characterInfo.personality;
+          this.editingCharacter.motivations = characterInfo.motivations;
+          this.editingCharacter.fears = characterInfo.fears;
+          this.editingCharacter.relationships = characterInfo.relationships;
         },
         error: (err) => {
           console.error('Error generating character details:', err);
@@ -491,7 +492,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         next: (response) => {
           // Only update the relationships field
           if (this.editingCharacter) {
-            this.editingCharacter.relationships = response.relationships;
+            this.editingCharacter.relationships = response.character_info.relationships;
           }
         },
         error: (err) => {

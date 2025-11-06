@@ -778,17 +778,7 @@ class GenerateCharacterDetailsRequest(BaseModel):
 
 
 class GenerateCharacterDetailsResponse(BaseModel):
-    name: str
-    sex: str
-    gender: str
-    sexualPreference: str
-    age: int
-    physicalAppearance: str
-    usualClothing: str
-    personality: str
-    motivations: str
-    fears: str
-    relationships: str
+    character_info: CharacterInfo
     context_metadata: Optional[ContextMetadata] = Field(
         None,
         description="Metadata about how context was processed for this response"
