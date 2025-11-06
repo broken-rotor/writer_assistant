@@ -97,7 +97,8 @@ Provide 4-6 suggestions in JSON format:
             for token in llm.chat_completion_stream(
                 messages,
                 max_tokens=settings.ENDPOINT_EDITOR_REVIEW_MAX_TOKENS,
-                temperature=settings.ENDPOINT_EDITOR_REVIEW_TEMPERATURE
+                temperature=settings.ENDPOINT_EDITOR_REVIEW_TEMPERATURE,
+                json_schema_class=EditorSuggestion
             ):
                 response_text += token
                 # Optional: yield partial content updates (uncomment if desired)
