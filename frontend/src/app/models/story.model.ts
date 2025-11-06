@@ -864,3 +864,25 @@ export interface PhaseTransitionResponse {
   recommendations: string[];
   metadata: Record<string, any>;
 }
+
+// ============================================================================
+// CHAPTER OUTLINE GENERATION API MODELS (WRI-129)
+// ============================================================================
+
+/**
+ * Request model for chapter outline generation
+ */
+export interface ChapterOutlineGenerationRequest {
+  story_outline: string;
+  story_context?: Record<string, any>;
+  generation_preferences?: Record<string, any>;
+}
+
+/**
+ * Response model for chapter outline generation
+ */
+export interface ChapterOutlineGenerationResponse {
+  outline_items: OutlineItem[];
+  summary: string;
+  context_metadata?: Record<string, any>;
+}

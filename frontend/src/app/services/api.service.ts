@@ -17,7 +17,10 @@ import {
   LLMChatStreamMessage,
   // New Phase Validation interfaces
   PhaseTransitionRequest,
-  PhaseTransitionResponse
+  PhaseTransitionResponse,
+  // Chapter Outline Generation interfaces
+  ChapterOutlineGenerationRequest,
+  ChapterOutlineGenerationResponse
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
@@ -356,5 +359,10 @@ export class ApiService {
       `${this.baseUrl}/editor-review`,
       request
     );
+  }
+
+  // Chapter Outline Generation (WRI-129)
+  generateChapterOutline(request: ChapterOutlineGenerationRequest): Observable<ChapterOutlineGenerationResponse> {
+    return this.http.post<ChapterOutlineGenerationResponse>(`${this.baseUrl}/generate-chapter-outline`, request);
   }
 }
