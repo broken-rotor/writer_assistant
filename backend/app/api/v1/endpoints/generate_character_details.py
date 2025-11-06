@@ -93,7 +93,8 @@ Generate complete character details in JSON format:
             for token in llm.chat_completion_stream(
                     messages,
                     max_tokens=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_MAX_TOKENS,
-                    temperature=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_TEMPERATURE):
+                    temperature=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_TEMPERATURE,
+                    json_schema_class=CharacterInfo):
                 response_text += token
 
             # Phase 4: Parsing
