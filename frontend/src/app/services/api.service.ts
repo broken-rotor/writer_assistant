@@ -22,7 +22,6 @@ import {
 import {
   StructuredCharacterFeedbackRequest,
   StructuredRaterFeedbackRequest,
-  StructuredGenerateChapterRequest,
   StructuredEditorReviewRequest,
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackResponse,
@@ -347,8 +346,8 @@ export class ApiService {
   }
 
   // Chapter Generation
-  generateChapter(request: StructuredGenerateChapterRequest): Observable<StructuredGenerateChapterResponse> {
-    return this.http.post<StructuredGenerateChapterResponse>(`${this.baseUrl}/generate-chapter/structured`, request);
+  generateChapter(request: any): Observable<StructuredGenerateChapterResponse> {
+    return this.http.post<StructuredGenerateChapterResponse>(`${this.baseUrl}/generate-chapter`, request);
   }
 
   // Editor Review
