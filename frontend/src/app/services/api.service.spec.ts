@@ -143,7 +143,7 @@ describe('ApiService', () => {
   });
 
   describe('generateChapter', () => {
-    it('should send POST request to generate-chapter/structured endpoint', () => {
+    it('should send POST request to generate-chapter endpoint', () => {
       const request: StructuredGenerateChapterRequest = {
         systemPrompts: {
           mainPrefix: '',
@@ -174,7 +174,7 @@ describe('ApiService', () => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/generate-chapter/structured`);
+      const req = httpMock.expectOne(`${baseUrl}/generate-chapter`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(request);
       req.flush(mockResponse);
