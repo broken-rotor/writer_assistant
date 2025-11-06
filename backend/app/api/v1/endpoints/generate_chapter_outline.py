@@ -10,8 +10,7 @@ from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
 
-from app.services.llm_inference import LLMService
-from app.models.generation_models import StructuredContext
+from app.services.llm_inference import get_llm
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,11 @@ async def generate_chapter_outline(request: ChapterOutlineRequest):
             raise HTTPException(status_code=400, detail="Story outline cannot be empty")
         
         # Initialize LLM service
-        llm_service = LLMService()
+        llm = get_llm()
+        if not llm:
+            raise HTTPException(
+                status_code=503,
+                detail="LLM not initialized. Start server with --model-path")
         
         # Prepare the generation prompt
         system_prompt = """You are an expert story structure analyst and chapter outline generator. Your task is to analyze a story outline and create a detailed chapter-by-chapter breakdown.
@@ -80,9 +83,13 @@ STORY OUTLINE:
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc."""
 
         # Generate the chapter outline
-        response = await llm_service.generate_text(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
+        messages = [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_prompt.strip()}
+        ]
+        
+        response = llm.chat_completion(
+            messages=messages,
             max_tokens=2000,
             temperature=0.7
         )
