@@ -5,6 +5,7 @@ Provides a simple interface for generating text with local models.
 import logging
 from typing import Optional, Dict, Any, List
 from pathlib import Path
+from pydantic import BaseModel
 
 try:
     from llama_cpp import Llama
@@ -152,7 +153,8 @@ class LLMInference:
         top_k: Optional[int] = None,
         repeat_penalty: Optional[float] = None,
         stop: Optional[List[str]] = None,
-        stream: bool = False
+        stream: bool = False,
+        json_schema_object: Optional[BaseModel] = None
     ) -> str:
         """
         Generate text from a prompt.
@@ -185,6 +187,12 @@ class LLMInference:
             "repeat_penalty": repeat_penalty if repeat_penalty is not None else self.config.repeat_penalty,
             "stop": stop or [],
         }
+
+        if json_schema_object is not None:
+            generation_params["response_format"] = {
+                "type": "json_object",
+                "schema": json_schema_object.model_json_schema()
+            }
 
         logger.debug(f"Generating with params: {generation_params}")
 
@@ -224,7 +232,8 @@ class LLMInference:
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         repeat_penalty: Optional[float] = None,
-        stop: Optional[List[str]] = None
+        stop: Optional[List[str]] = None,
+        json_schema_object: Optional[BaseModel] = None
     ) -> str:
         """
         Generate a chat completion from a list of messages.
@@ -253,6 +262,12 @@ class LLMInference:
             "repeat_penalty": repeat_penalty if repeat_penalty is not None else self.config.repeat_penalty,
             "stop": stop or [],
         }
+
+        if json_schema_object is not None:
+            generation_params["response_format"] = {
+                "type": "json_object",
+                "schema": json_schema_object.model_json_schema()
+            }
 
         # Log messages if verbose generation is enabled
         if self.config.verbose_generation:
@@ -294,7 +309,8 @@ class LLMInference:
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         repeat_penalty: Optional[float] = None,
-        stop: Optional[List[str]] = None
+        stop: Optional[List[str]] = None,
+        json_schema_object: Optional[BaseModel] = None
     ):
         """
         Generate a streaming chat completion from a list of messages.
@@ -323,6 +339,12 @@ class LLMInference:
             "stop": stop or [],
             "stream": True
         }
+
+        if json_schema_object is not None:
+            generation_params["response_format"] = {
+                "type": "json_object",
+                "schema": json_schema_object.model_json_schema()
+            }
 
         # Log messages if verbose generation is enabled
         if self.config.verbose_generation:
