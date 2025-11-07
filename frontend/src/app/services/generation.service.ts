@@ -39,7 +39,8 @@ import {
   EditorReviewResponse,
   // Chapter Outline Generation interfaces
   ChapterOutlineGenerationRequest,
-  ChapterOutlineGenerationResponse
+  ChapterOutlineGenerationResponse,
+  CharacterContext
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
@@ -1568,6 +1569,7 @@ ${story.plotOutline.content}`;
             basicBio: char.basicBio
           }))
         },
+        character_contexts: this.convertCharactersToCharacterContexts(story.characters),
         generation_preferences: {
           // Add any generation preferences here
         }
@@ -1577,5 +1579,84 @@ ${story.plotOutline.content}`;
     } catch (error) {
       throw new Error(`Failed to generate chapter outline: ${error}`);
     }
+  }
+
+  /**
+   * Convert Character objects to CharacterContext objects for enhanced AI processing
+   */
+  private convertCharactersToCharacterContexts(characters: Map<string, Character>): CharacterContext[] {
+    return Array.from(characters.values())
+      .filter(char => !char.isHidden) // Only include visible characters
+      .map(char => ({
+        character_id: char.id,
+        character_name: char.name,
+        current_state: {
+          // Extract current state from character properties
+          physicalAppearance: char.physicalAppearance,
+          age: char.age,
+          sex: char.sex,
+          gender: char.gender
+        },
+        recent_actions: [], // Could be populated from story events in the future
+        relationships: this.parseRelationshipsFromText(char.relationships),
+        goals: this.parseGoalsFromText(char.motivations),
+        memories: [], // Could be populated from story events in the future
+        personality_traits: this.parsePersonalityTraits(char.personality)
+      }));
+  }
+
+  /**
+   * Parse relationships text into structured format
+   */
+  private parseRelationshipsFromText(relationshipsText: string): Record<string, string> {
+    if (!relationshipsText || !relationshipsText.trim()) {
+      return {};
+    }
+    
+    // Simple parsing - could be enhanced with more sophisticated NLP
+    const relationships: Record<string, string> = {};
+    const lines = relationshipsText.split('\n').filter(line => line.trim());
+    
+    lines.forEach(line => {
+      // Look for patterns like "Character Name: relationship description"
+      const match = line.match(/^([^:]+):\s*(.+)$/);
+      if (match) {
+        relationships[match[1].trim()] = match[2].trim();
+      }
+    });
+    
+    return relationships;
+  }
+
+  /**
+   * Parse goals/motivations text into array format
+   */
+  private parseGoalsFromText(motivationsText: string): string[] {
+    if (!motivationsText || !motivationsText.trim()) {
+      return [];
+    }
+    
+    // Split by common delimiters and clean up
+    return motivationsText
+      .split(/[,;.\n]/)
+      .map(goal => goal.trim())
+      .filter(goal => goal.length > 0)
+      .slice(0, 5); // Limit to top 5 goals
+  }
+
+  /**
+   * Parse personality text into traits array
+   */
+  private parsePersonalityTraits(personalityText: string): string[] {
+    if (!personalityText || !personalityText.trim()) {
+      return [];
+    }
+    
+    // Split by common delimiters and clean up
+    return personalityText
+      .split(/[,;.\n]/)
+      .map(trait => trait.trim())
+      .filter(trait => trait.length > 0)
+      .slice(0, 8); // Limit to top 8 traits
   }
 }

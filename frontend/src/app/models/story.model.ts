@@ -876,6 +876,7 @@ export interface PhaseTransitionResponse {
 export interface ChapterOutlineGenerationRequest {
   story_outline: string;
   story_context?: Record<string, any>;
+  character_contexts?: CharacterContext[];
   generation_preferences?: Record<string, any>;
 }
 
