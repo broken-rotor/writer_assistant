@@ -26,11 +26,12 @@ async def generate_chapter_outline(request: ChapterOutlineRequest):
     This endpoint analyzes the provided story outline and generates a detailed
     chapter-by-chapter breakdown that can be used in the chapter development phase.
     """
+    logger.info("Starting chapter outline generation")
+    
+    if not request.story_outline.strip():
+        raise HTTPException(status_code=400, detail="Story outline cannot be empty")
+    
     try:
-        logger.info("Starting chapter outline generation")
-        
-        if not request.story_outline.strip():
-            raise HTTPException(status_code=400, detail="Story outline cannot be empty")
         
         # Initialize LLM service
         llm = get_llm()
@@ -177,7 +178,7 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
                     type="chapter",
                     title=chapter_data.get("title", f"Chapter {i+1}"),
                     description=chapter_data.get("description", ""),
-                    order=i,
+                    order=i+1,
                     status="draft",
                     involved_characters=chapter_data.get("involved_characters", []),
                     metadata={
