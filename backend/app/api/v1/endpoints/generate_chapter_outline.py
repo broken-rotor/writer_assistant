@@ -5,38 +5,18 @@ This endpoint generates a structured chapter outline from a story outline using 
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
 
 from app.services.llm_inference import get_llm
+from app.models.chapter_models import ChapterOutlineRequest, OutlineItem, ChapterOutlineResponse
+from app.models.generation_models import CharacterContext
+from app.api.v1.endpoints.shared_utils import parse_json_array_response
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-class ChapterOutlineRequest(BaseModel):
-    """Request model for chapter outline generation"""
-    story_outline: str = Field(..., description="The story outline content")
-    story_context: Dict[str, Any] = Field(default_factory=dict, description="Additional story context")
-    generation_preferences: Dict[str, Any] = Field(default_factory=dict, description="Generation preferences")
-
-class OutlineItem(BaseModel):
-    """Generated outline item"""
-    id: str
-    type: str = "chapter"
-    title: str
-    description: str
-    order: int
-    status: str = "draft"
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-
-class ChapterOutlineResponse(BaseModel):
-    """Response model for chapter outline generation"""
-    outline_items: List[OutlineItem]
-    summary: str
-    context_metadata: Dict[str, Any] = Field(default_factory=dict)
 
 @router.post("/generate-chapter-outline", response_model=ChapterOutlineResponse)
 async def generate_chapter_outline(request: ChapterOutlineRequest):
@@ -46,11 +26,12 @@ async def generate_chapter_outline(request: ChapterOutlineRequest):
     This endpoint analyzes the provided story outline and generates a detailed
     chapter-by-chapter breakdown that can be used in the chapter development phase.
     """
+    logger.info("Starting chapter outline generation")
+    
+    if not request.story_outline.strip():
+        raise HTTPException(status_code=400, detail="Story outline cannot be empty")
+    
     try:
-        logger.info("Starting chapter outline generation")
-        
-        if not request.story_outline.strip():
-            raise HTTPException(status_code=400, detail="Story outline cannot be empty")
         
         # Initialize LLM service
         llm = get_llm()
@@ -59,8 +40,8 @@ async def generate_chapter_outline(request: ChapterOutlineRequest):
                 status_code=503,
                 detail="LLM not initialized. Start server with --model-path")
         
-        # Prepare the generation prompt
-        system_prompt = """You are an expert story structure analyst and chapter outline generator. Your task is to analyze a story outline and create a detailed chapter-by-chapter breakdown.
+        # Prepare the base system prompt
+        base_system_prompt = """You are an expert story structure analyst and chapter outline generator. Your task is to analyze a story outline and create a detailed chapter-by-chapter breakdown.
 
 Guidelines:
 1. Create 8-15 chapters based on the story outline complexity
@@ -69,18 +50,79 @@ Guidelines:
 4. Include key plot points, character development, and conflicts
 5. Each chapter title should be engaging and descriptive
 6. Each chapter description should be 2-3 sentences explaining what happens
+7. Identify which characters are involved in each chapter
 
-Format your response as a structured list where each chapter includes:
-- A compelling chapter title
-- A detailed description of what happens in the chapter
-- The chapter's role in the overall story arc"""
+IMPORTANT: Format your response as a JSON array where each chapter is an object with these exact fields:
+{
+  "title": "Chapter title (without 'Chapter X:' prefix)",
+  "description": "2-3 sentence description of what happens",
+  "involved_characters": ["character1", "character2", ...]
+}
+
+Example format:
+[
+  {
+    "title": "The Mysterious Arrival",
+    "description": "The protagonist discovers a strange letter that changes everything. They must decide whether to follow its cryptic instructions or ignore the warning.",
+    "involved_characters": ["John", "Mary"]
+  },
+  {
+    "title": "Secrets Revealed",
+    "description": "Hidden truths about the family come to light. The protagonist confronts their past and makes a difficult choice.",
+    "involved_characters": ["John", "Sarah", "Detective Smith"]
+  }
+]
+
+Respond ONLY with the JSON array, no additional text."""
+
+        # Apply custom system prompts if provided
+        system_prompt = base_system_prompt
+        if request.system_prompts:
+            if request.system_prompts.mainPrefix:
+                system_prompt = f"{request.system_prompts.mainPrefix}\n\n{system_prompt}"
+            if request.system_prompts.mainSuffix:
+                system_prompt = f"{system_prompt}\n\n{request.system_prompts.mainSuffix}"
+
+        # Extract character information - prefer CharacterContext, fallback to story_context
+        characters_info = ""
+        if request.character_contexts:
+            # Use CharacterContext objects (preferred approach)
+            characters_list = []
+            for char_context in request.character_contexts:
+                char_info = f"- {char_context.character_name}"
+                if char_context.personality_traits:
+                    char_info += f": {', '.join(char_context.personality_traits)}"
+                if char_context.goals:
+                    char_info += f" (Goals: {', '.join(char_context.goals)})"
+                characters_list.append(char_info)
+            characters_info = f"""
+
+CHARACTERS:
+{chr(10).join(characters_list)}"""
+        elif request.story_context.get('characters'):
+            # Fallback to legacy format for backward compatibility
+            characters_list = []
+            for char in request.story_context['characters']:
+                char_info = f"- {char.get('name', 'Unknown')}: {char.get('basicBio', 'No description')}"
+                characters_list.append(char_info)
+            characters_info = f"""
+
+CHARACTERS:
+{chr(10).join(characters_list)}"""
+
+        # Extract additional story context
+        story_context_info = ""
+        if request.story_context.get('title'):
+            story_context_info += f"\nSTORY TITLE: {request.story_context['title']}"
+        if request.story_context.get('worldbuilding'):
+            story_context_info += f"\nWORLDBUILDING: {request.story_context['worldbuilding']}"
 
         user_prompt = f"""Please analyze this story outline and create a detailed chapter breakdown:
 
 STORY OUTLINE:
-{request.story_outline}
+{request.story_outline}{story_context_info}{characters_info}
 
-Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc."""
+Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 
         # Generate the chapter outline
         messages = [
@@ -118,10 +160,52 @@ Create a chapter-by-chapter outline that breaks down this story into well-struct
 
 def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
     """
-    Parse the LLM response into structured outline items.
+    Parse the LLM response into structured outline items using shared utilities.
     
-    This function attempts to extract chapter information from the AI response
-    and structure it into OutlineItem objects.
+    This function uses the existing JSON parsing utilities and falls back to
+    text parsing if needed.
+    """
+    outline_items = []
+    
+    # Try to parse as JSON array using shared utility
+    chapters_data = parse_json_array_response(response)
+    
+    if chapters_data and isinstance(chapters_data, list):
+        for i, chapter_data in enumerate(chapters_data):
+            if isinstance(chapter_data, dict):
+                outline_item = OutlineItem(
+                    id=f"chapter-{i+1}",
+                    type="chapter",
+                    title=chapter_data.get("title", f"Chapter {i+1}"),
+                    description=chapter_data.get("description", ""),
+                    order=i+1,
+                    status="draft",
+                    involved_characters=chapter_data.get("involved_characters", []),
+                    metadata={
+                        "created": datetime.utcnow().isoformat(),
+                        "lastModified": datetime.utcnow().isoformat()
+                    }
+                )
+                outline_items.append(outline_item)
+        
+        if outline_items:
+            logger.info(f"Successfully parsed {len(outline_items)} chapters from JSON response")
+            return outline_items
+    
+    logger.warning("Failed to parse JSON response. Falling back to text parsing.")
+    
+    # Fallback to text parsing logic
+    outline_items = _parse_text_response(response)
+    
+    # If still no chapters were parsed, create a fallback structure
+    if not outline_items:
+        outline_items = _create_fallback_chapters(response)
+    
+    return outline_items
+
+def _parse_text_response(response: str) -> List[OutlineItem]:
+    """
+    Fallback text parsing for non-JSON responses.
     """
     outline_items = []
     
@@ -159,6 +243,7 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
                 description="",
                 order=chapter_counter - 1,
                 status="draft",
+                involved_characters=[],  # Empty for text parsing
                 metadata={
                     "created": datetime.utcnow().isoformat(),
                     "lastModified": datetime.utcnow().isoformat()
@@ -176,11 +261,6 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
     # Don't forget the last chapter
     if current_chapter:
         outline_items.append(current_chapter)
-    
-    # If no chapters were parsed, create a fallback structure
-    if not outline_items:
-        # Create basic chapters from the outline
-        outline_items = _create_fallback_chapters(response)
     
     return outline_items
 
@@ -204,6 +284,7 @@ def _create_fallback_chapters(content: str) -> List[OutlineItem]:
             description=description,
             order=i,
             status="draft",
+            involved_characters=[],  # Empty for fallback chapters
             metadata={
                 "created": datetime.utcnow().isoformat(),
                 "lastModified": datetime.utcnow().isoformat()

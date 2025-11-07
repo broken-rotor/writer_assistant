@@ -73,6 +73,26 @@ def mock_llm():
                 "relationships": "Struggles with trust but loyal to those who earn it"
             })
 
+        # Chapter outline generation - return JSON array
+        elif "chapter outline" in prompt.lower() or ("story structure analyst" in prompt.lower() and "chapter-by-chapter" in prompt.lower()):
+            return json.dumps([
+                {
+                    "title": "The Discovery",
+                    "description": "Detective Chen arrives at the crime scene and discovers the first crucial clue. The evidence points to something much larger than a simple murder.",
+                    "involved_characters": ["Detective Chen", "Officer Martinez"]
+                },
+                {
+                    "title": "Following Leads",
+                    "description": "The investigation deepens as Chen follows the trail of evidence. New suspects emerge and the case becomes more complex.",
+                    "involved_characters": ["Detective Chen", "Suspect Williams", "Witness Johnson"]
+                },
+                {
+                    "title": "The Revelation",
+                    "description": "A shocking truth is revealed that changes everything Chen thought she knew about the case. The real perpetrator is finally exposed.",
+                    "involved_characters": ["Detective Chen", "The Real Killer", "Captain Rodriguez"]
+                }
+            ])
+
         # Chapter generation or modification
         elif "chapter" in prompt.lower() or "write" in prompt.lower():
             # Check if this is a modification request (contains "Current chapter:")
@@ -147,7 +167,8 @@ What had seemed simple moments ago now revealed layers of complexity. The charac
                         with patch('app.api.v1.endpoints.editor_review.get_llm', return_value=mock_llm_instance):
                             with patch('app.api.v1.endpoints.flesh_out.get_llm', return_value=mock_llm_instance):
                                 with patch('app.api.v1.endpoints.generate_character_details.get_llm', return_value=mock_llm_instance):
-                                    yield mock_llm_instance
+                                    with patch('app.api.v1.endpoints.generate_chapter_outline.get_llm', return_value=mock_llm_instance):
+                                        yield mock_llm_instance
 
 
 @pytest.fixture
@@ -630,4 +651,102 @@ def sample_legacy_context_request():
             "relationships": "Works alone, trusts few people"
         },
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
+    }
+
+
+@pytest.fixture
+def sample_chapter_outline_request():
+    """Sample chapter outline generation request"""
+    return {
+        "story_outline": "A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
+        "story_context": {
+            "title": "Shadows of the Past",
+            "worldbuilding": "1940s Los Angeles - a city of dreams and nightmares, where corruption runs deep and everyone has secrets.",
+            "characters": [
+                {
+                    "name": "Detective Sarah Chen",
+                    "basicBio": "A hardboiled detective with a troubled past and a reputation for getting results"
+                },
+                {
+                    "name": "Captain Rodriguez",
+                    "basicBio": "Sarah's boss, a veteran cop trying to keep his department clean"
+                }
+            ]
+        },
+        "character_contexts": [
+            {
+                "character_id": "detective_sarah_chen",
+                "character_name": "Detective Sarah Chen",
+                "current_state": {
+                    "emotion": "determined",
+                    "location": "police_station",
+                    "mental_state": "focused"
+                },
+                "recent_actions": ["Received new case", "Reviewing evidence"],
+                "relationships": {"captain": "professional_respect", "partner": "lost_previous_partner"},
+                "goals": ["Solve the murder case", "Find justice for victims", "Prove herself"],
+                "memories": ["Previous cases", "Lost partner", "Personal trauma"],
+                "personality_traits": ["cynical", "determined", "observant", "haunted"]
+            },
+            {
+                "character_id": "captain_rodriguez",
+                "character_name": "Captain Rodriguez",
+                "current_state": {
+                    "emotion": "concerned",
+                    "location": "police_station",
+                    "mental_state": "worried"
+                },
+                "recent_actions": ["Assigned case to Sarah", "Dealing with department politics"],
+                "relationships": {"sarah": "protective_mentor"},
+                "goals": ["Keep department clean", "Support his detectives", "Maintain order"],
+                "memories": ["Years of service", "Department corruption scandals"],
+                "personality_traits": ["experienced", "protective", "principled", "weary"]
+            }
+        ],
+        "generation_preferences": {
+            "chapter_count_preference": "8-12",
+            "pacing": "steady",
+            "focus": "character_development"
+        }
+    }
+
+
+@pytest.fixture
+def sample_chapter_outline_request_with_system_prompts():
+    """Sample chapter outline generation request with system prompts"""
+    return {
+        "story_outline": "A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit.",
+        "story_context": {
+            "title": "Shadows of the Past",
+            "worldbuilding": "1940s Los Angeles - a city of dreams and nightmares.",
+            "characters": [
+                {
+                    "name": "Detective Sarah Chen",
+                    "basicBio": "A hardboiled detective with a troubled past"
+                }
+            ]
+        },
+        "character_contexts": [
+            {
+                "character_id": "detective_sarah_chen",
+                "character_name": "Detective Sarah Chen",
+                "current_state": {
+                    "emotion": "determined",
+                    "location": "police_station",
+                    "mental_state": "focused"
+                },
+                "recent_actions": ["Received new case"],
+                "relationships": {"captain": "professional_respect"},
+                "goals": ["Solve the murder case"],
+                "memories": ["Previous cases"],
+                "personality_traits": ["cynical", "determined"]
+            }
+        ],
+        "generation_preferences": {},
+        "system_prompts": {
+            "mainPrefix": "Always maintain character consistency and emotional coherence throughout the story.",
+            "mainSuffix": "Ensure each chapter ends with a compelling hook for the next chapter.",
+            "assistantPrompt": "You are a noir fiction specialist.",
+            "editorPrompt": "Focus on atmospheric descriptions."
+        }
     }
