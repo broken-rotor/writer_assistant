@@ -5,39 +5,18 @@ This endpoint generates a structured chapter outline from a story outline using 
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
 
 from app.services.llm_inference import get_llm
+from app.models.chapter_models import ChapterOutlineRequest, OutlineItem, ChapterOutlineResponse
+from app.models.generation_models import CharacterContext
+from app.api.v1.endpoints.shared_utils import parse_json_array_response
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-class ChapterOutlineRequest(BaseModel):
-    """Request model for chapter outline generation"""
-    story_outline: str = Field(..., description="The story outline content")
-    story_context: Dict[str, Any] = Field(default_factory=dict, description="Additional story context")
-    generation_preferences: Dict[str, Any] = Field(default_factory=dict, description="Generation preferences")
-
-class OutlineItem(BaseModel):
-    """Generated outline item"""
-    id: str
-    type: str = "chapter"
-    title: str
-    description: str
-    order: int
-    status: str = "draft"
-    involved_characters: List[str] = Field(default_factory=list, description="List of character names involved in this chapter")
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-
-class ChapterOutlineResponse(BaseModel):
-    """Response model for chapter outline generation"""
-    outline_items: List[OutlineItem]
-    summary: str
-    context_metadata: Dict[str, Any] = Field(default_factory=dict)
 
 @router.post("/generate-chapter-outline", response_model=ChapterOutlineResponse)
 async def generate_chapter_outline(request: ChapterOutlineRequest):
@@ -95,9 +74,24 @@ Example format:
 
 Respond ONLY with the JSON array, no additional text."""
 
-        # Extract character information from story context
+        # Extract character information - prefer CharacterContext, fallback to story_context
         characters_info = ""
-        if request.story_context.get('characters'):
+        if request.character_contexts:
+            # Use CharacterContext objects (preferred approach)
+            characters_list = []
+            for char_context in request.character_contexts:
+                char_info = f"- {char_context.character_name}"
+                if char_context.personality_traits:
+                    char_info += f": {', '.join(char_context.personality_traits)}"
+                if char_context.goals:
+                    char_info += f" (Goals: {', '.join(char_context.goals)})"
+                characters_list.append(char_info)
+            characters_info = f"""
+
+CHARACTERS:
+{chr(10).join(characters_list)}"""
+        elif request.story_context.get('characters'):
+            # Fallback to legacy format for backward compatibility
             characters_list = []
             for char in request.story_context['characters']:
                 char_info = f"- {char.get('name', 'Unknown')}: {char.get('basicBio', 'No description')}"
@@ -157,54 +151,41 @@ Create a chapter-by-chapter outline that breaks down this story into well-struct
 
 def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
     """
-    Parse the LLM response into structured outline items.
+    Parse the LLM response into structured outline items using shared utilities.
     
-    This function attempts to extract chapter information from the AI response
-    and structure it into OutlineItem objects. It first tries to parse JSON,
-    then falls back to text parsing if needed.
+    This function uses the existing JSON parsing utilities and falls back to
+    text parsing if needed.
     """
-    import json
-    import re
-    
     outline_items = []
     
-    try:
-        # First, try to parse as JSON
-        # Clean the response to extract JSON if it's wrapped in other text
-        response_clean = response.strip()
+    # Try to parse as JSON array using shared utility
+    chapters_data = parse_json_array_response(response)
+    
+    if chapters_data and isinstance(chapters_data, list):
+        for i, chapter_data in enumerate(chapters_data):
+            if isinstance(chapter_data, dict):
+                outline_item = OutlineItem(
+                    id=f"chapter-{i+1}",
+                    type="chapter",
+                    title=chapter_data.get("title", f"Chapter {i+1}"),
+                    description=chapter_data.get("description", ""),
+                    order=i,
+                    status="draft",
+                    involved_characters=chapter_data.get("involved_characters", []),
+                    metadata={
+                        "created": datetime.utcnow().isoformat(),
+                        "lastModified": datetime.utcnow().isoformat()
+                    }
+                )
+                outline_items.append(outline_item)
         
-        # Look for JSON array in the response
-        json_match = re.search(r'\[.*\]', response_clean, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(0)
-            chapters_data = json.loads(json_str)
-            
-            if isinstance(chapters_data, list):
-                for i, chapter_data in enumerate(chapters_data):
-                    if isinstance(chapter_data, dict):
-                        outline_item = OutlineItem(
-                            id=f"chapter-{i+1}",
-                            type="chapter",
-                            title=chapter_data.get("title", f"Chapter {i+1}"),
-                            description=chapter_data.get("description", ""),
-                            order=i,
-                            status="draft",
-                            involved_characters=chapter_data.get("involved_characters", []),
-                            metadata={
-                                "created": datetime.utcnow().isoformat(),
-                                "lastModified": datetime.utcnow().isoformat()
-                            }
-                        )
-                        outline_items.append(outline_item)
-                
-                if outline_items:
-                    logger.info(f"Successfully parsed {len(outline_items)} chapters from JSON response")
-                    return outline_items
+        if outline_items:
+            logger.info(f"Successfully parsed {len(outline_items)} chapters from JSON response")
+            return outline_items
     
-    except (json.JSONDecodeError, AttributeError, KeyError) as e:
-        logger.warning(f"Failed to parse JSON response: {e}. Falling back to text parsing.")
+    logger.warning("Failed to parse JSON response. Falling back to text parsing.")
     
-    # Fallback to original text parsing logic
+    # Fallback to text parsing logic
     outline_items = _parse_text_response(response)
     
     # If still no chapters were parsed, create a fallback structure
