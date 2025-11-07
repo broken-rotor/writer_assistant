@@ -188,6 +188,7 @@ export interface OutlineItem {
   parentId?: string; // For hierarchical structure
   children?: string[]; // Child outline item IDs
   status: 'draft' | 'reviewed' | 'approved';
+  involved_characters?: string[]; // List of character names involved in this chapter
   metadata: {
     created: Date;
     lastModified: Date;

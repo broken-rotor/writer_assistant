@@ -36,6 +36,10 @@
                 <span class="item-type">{{ item.type }}</span>
               </div>
               <p class="item-description">{{ item.description }}</p>
+              <div class="item-characters" *ngIf="item.involved_characters && item.involved_characters.length > 0">
+                <span class="characters-label">👥 Characters:</span>
+                <span class="character-tag" *ngFor="let character of item.involved_characters">{{ character }}</span>
+              </div>
             </div>
           </div>
           <div class="empty-outline" *ngIf="plotOutlineItems.length === 0">

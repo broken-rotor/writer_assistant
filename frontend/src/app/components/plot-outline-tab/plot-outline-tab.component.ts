@@ -256,6 +256,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
             description: item.description,
             order: item.order,
             status: item.status as 'draft' | 'reviewed' | 'approved',
+            involved_characters: (item as any).involved_characters || [],
             metadata: {
               created: new Date(item.metadata.created || new Date()),
               lastModified: new Date(item.metadata.lastModified || new Date()),
