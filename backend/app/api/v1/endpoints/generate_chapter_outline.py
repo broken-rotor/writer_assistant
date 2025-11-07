@@ -39,8 +39,8 @@ async def generate_chapter_outline(request: ChapterOutlineRequest):
                 status_code=503,
                 detail="LLM not initialized. Start server with --model-path")
         
-        # Prepare the generation prompt
-        system_prompt = """You are an expert story structure analyst and chapter outline generator. Your task is to analyze a story outline and create a detailed chapter-by-chapter breakdown.
+        # Prepare the base system prompt
+        base_system_prompt = """You are an expert story structure analyst and chapter outline generator. Your task is to analyze a story outline and create a detailed chapter-by-chapter breakdown.
 
 Guidelines:
 1. Create 8-15 chapters based on the story outline complexity
@@ -73,6 +73,14 @@ Example format:
 ]
 
 Respond ONLY with the JSON array, no additional text."""
+
+        # Apply custom system prompts if provided
+        system_prompt = base_system_prompt
+        if request.system_prompts:
+            if request.system_prompts.mainPrefix:
+                system_prompt = f"{request.system_prompts.mainPrefix}\n\n{system_prompt}"
+            if request.system_prompts.mainSuffix:
+                system_prompt = f"{system_prompt}\n\n{request.system_prompts.mainSuffix}"
 
         # Extract character information - prefer CharacterContext, fallback to story_context
         characters_info = ""

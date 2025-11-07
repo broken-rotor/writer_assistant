@@ -5,8 +5,8 @@ This module defines the data models used for chapter outline generation.
 """
 
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
-from app.models.generation_models import CharacterContext
+from typing import List, Dict, Any, Optional
+from app.models.generation_models import CharacterContext, SystemPrompts
 
 
 class ChapterOutlineRequest(BaseModel):
@@ -15,6 +15,7 @@ class ChapterOutlineRequest(BaseModel):
     story_context: Dict[str, Any] = Field(default_factory=dict, description="Additional story context")
     character_contexts: List[CharacterContext] = Field(default_factory=list, description="Character context information (preferred)")
     generation_preferences: Dict[str, Any] = Field(default_factory=dict, description="Generation preferences")
+    system_prompts: Optional[SystemPrompts] = Field(None, description="Custom system prompt prefix and suffix")
 
 
 class OutlineItem(BaseModel):

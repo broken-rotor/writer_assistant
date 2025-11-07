@@ -1572,7 +1572,8 @@ ${story.plotOutline.content}`;
         character_contexts: this.convertCharactersToCharacterContexts(story.characters),
         generation_preferences: {
           // Add any generation preferences here
-        }
+        },
+        system_prompts: story.general.systemPrompts
       };
 
       return this.apiService.generateChapterOutline(request);

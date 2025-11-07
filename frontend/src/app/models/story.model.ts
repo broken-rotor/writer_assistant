@@ -878,6 +878,7 @@ export interface ChapterOutlineGenerationRequest {
   story_context?: Record<string, any>;
   character_contexts?: CharacterContext[];
   generation_preferences?: Record<string, any>;
+  system_prompts?: SystemPrompts;
 }
 
 /**
