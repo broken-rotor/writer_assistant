@@ -166,7 +166,14 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(state => {
         if (state?.phases.plotOutline) {
-          this.plotOutlineItems = Array.from(state.phases.plotOutline.outline.items.values());
+          const allOutlineItems = Array.from(state.phases.plotOutline.outline.items.values());
+
+          // Filter outline items to only show those for the current chapter
+          // Outline items have titles like "Chapter 1: The Beginning - Plot Point 1"
+          this.plotOutlineItems = allOutlineItems.filter(item =>
+            item.title.toLowerCase().includes(`chapter ${this.chapterNumber}`)
+          );
+
           this.plotOutlineSummary = state.phases.plotOutline.draftSummary;
         }
       });
