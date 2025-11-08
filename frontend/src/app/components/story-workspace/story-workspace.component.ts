@@ -982,6 +982,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           title: finalTitle,
           content: this.story.chapterCreation.generatedChapter.text,
           plotPoint: this.story.chapterCreation.plotPoint,
+          keyPlotItems: existingChapter.keyPlotItems || [], // Preserve existing keyPlotItems
           incorporatedFeedback: [...this.story.chapterCreation.incorporatedFeedback],
           metadata: {
             ...existingChapter.metadata,
@@ -998,6 +999,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         title: finalTitle,
         content: this.story.chapterCreation.generatedChapter.text,
         plotPoint: this.story.chapterCreation.plotPoint,
+        keyPlotItems: [], // Will be populated from plot outline if available
         incorporatedFeedback: [...this.story.chapterCreation.incorporatedFeedback],
         metadata: {
           created: new Date(),
@@ -1530,16 +1532,40 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     console.log('Chapter finalized:', chapterData);
     // Update the story with the finalized chapter
     if (this.story) {
+      const chapterNumber = this.getCurrentChapterNumber();
+
+      // Try to get existing chapter to preserve keyPlotItems
+      const existingIndex = this.story.story.chapters.findIndex((ch: any) => ch.number === chapterNumber);
+      const existingChapter = existingIndex >= 0 ? this.story.story.chapters[existingIndex] : null;
+
+      // Get keyPlotItems from plot outline if available
+      let keyPlotItems: string[] = [];
+      if (existingChapter && existingChapter.keyPlotItems) {
+        // Preserve existing keyPlotItems from the chapter
+        keyPlotItems = existingChapter.keyPlotItems;
+      } else if (this.story.chapterCompose?.phases?.plotOutline?.outline?.items) {
+        // Try to extract from plot outline items for this chapter
+        const outlineItems = Array.from(this.story.chapterCompose.phases.plotOutline.outline.items.values());
+        // Filter outline items that belong to this chapter (by matching title or order)
+        const chapterOutlineItems = outlineItems.filter(item =>
+          item.title.toLowerCase().includes(`chapter ${chapterNumber}`)
+        );
+        if (chapterOutlineItems.length > 0) {
+          keyPlotItems = chapterOutlineItems.map(item => item.description);
+        }
+      }
+
       // Add the finalized chapter to the story's chapters array
       const newChapter = {
-        id: `chapter-${this.getCurrentChapterNumber()}`,
-        number: this.getCurrentChapterNumber(),
+        id: existingChapter?.id || `chapter-${chapterNumber}`,
+        number: chapterNumber,
         title: chapterData.title,
         content: chapterData.content,
-        plotPoint: '',
-        incorporatedFeedback: [],
+        plotPoint: existingChapter?.plotPoint || '',
+        keyPlotItems: keyPlotItems,
+        incorporatedFeedback: existingChapter?.incorporatedFeedback || [],
         metadata: {
-          created: new Date(),
+          created: existingChapter?.metadata?.created || new Date(),
           lastModified: new Date(),
           wordCount: chapterData.content.split(/\s+/).length
         }
@@ -1550,7 +1576,6 @@ Provide actionable insights and creative suggestions to enhance this plot point.
       }
 
       // Replace existing chapter or add new one
-      const existingIndex = this.story.story.chapters.findIndex((ch: any) => ch.number === newChapter.number);
       if (existingIndex >= 0) {
         this.story.story.chapters[existingIndex] = newChapter;
       } else {
