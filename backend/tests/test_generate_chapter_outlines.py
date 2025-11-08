@@ -9,9 +9,9 @@ from fastapi.testclient import TestClient
 class TestGenerateChapterOutlineEndpoint:
     """Test chapter outline generation endpoint"""
 
-    def test_generate_chapter_outline_success(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_success(self, client, sample_chapter_outline_request):
         """Test successful chapter outline generation"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request)
         
         assert response.status_code == 200
         data = response.json()
@@ -35,9 +35,9 @@ class TestGenerateChapterOutlineEndpoint:
         assert first_item["type"] == "chapter"
         assert first_item["status"] == "draft"
 
-    def test_generate_chapter_outline_response_structure(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_response_structure(self, client, sample_chapter_outline_request):
         """Test chapter outline generation response structure"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request)
         
         assert response.status_code == 200
         data = response.json()
@@ -63,9 +63,9 @@ class TestGenerateChapterOutlineEndpoint:
         assert "source_outline_length" in metadata
         assert "generated_chapters" in metadata
 
-    def test_generate_chapter_outline_with_character_contexts(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_with_character_contexts(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with character contexts"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request)
         
         assert response.status_code == 200
         data = response.json()
@@ -81,13 +81,13 @@ class TestGenerateChapterOutlineEndpoint:
         # Should have some character involvement
         assert len(all_involved_characters) > 0
 
-    def test_generate_chapter_outline_with_legacy_characters(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_with_legacy_characters(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with legacy character format"""
         # Remove character_contexts to test legacy fallback
         request = sample_chapter_outline_request.copy()
         request["character_contexts"] = []
         
-        response = client.post("/api/v1/generate-chapter-outline", json=request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
         assert response.status_code == 200
         data = response.json()
@@ -102,9 +102,9 @@ class TestGenerateChapterOutlineEndpoint:
         
         assert len(all_involved_characters) > 0
 
-    def test_generate_chapter_outline_with_system_prompts(self, client, sample_chapter_outline_request_with_system_prompts):
+    def test_generate_chapter_outlines_with_system_prompts(self, client, sample_chapter_outline_request_with_system_prompts):
         """Test chapter outline generation with system prompts"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request_with_system_prompts)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request_with_system_prompts)
         
         assert response.status_code == 200
         data = response.json()
@@ -114,14 +114,14 @@ class TestGenerateChapterOutlineEndpoint:
         assert isinstance(data["summary"], str)
         assert len(data["summary"]) > 0
 
-    def test_generate_chapter_outline_without_system_prompts(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_without_system_prompts(self, client, sample_chapter_outline_request):
         """Test chapter outline generation without system prompts (backward compatibility)"""
         # Ensure no system_prompts field
         request = sample_chapter_outline_request.copy()
         if "system_prompts" in request:
             del request["system_prompts"]
         
-        response = client.post("/api/v1/generate-chapter-outline", json=request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
         assert response.status_code == 200
         data = response.json()
@@ -129,7 +129,7 @@ class TestGenerateChapterOutlineEndpoint:
         # Should still work without system prompts
         assert len(data["outline_items"]) > 0
 
-    def test_generate_chapter_outline_with_empty_system_prompts(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_with_empty_system_prompts(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with empty system prompts"""
         request = sample_chapter_outline_request.copy()
         request["system_prompts"] = {
@@ -139,7 +139,7 @@ class TestGenerateChapterOutlineEndpoint:
             "editorPrompt": ""
         }
         
-        response = client.post("/api/v1/generate-chapter-outline", json=request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
         assert response.status_code == 200
         data = response.json()
@@ -147,7 +147,7 @@ class TestGenerateChapterOutlineEndpoint:
         # Should work with empty system prompts
         assert len(data["outline_items"]) > 0
 
-    def test_generate_chapter_outline_with_partial_system_prompts(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_with_partial_system_prompts(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with partial system prompts"""
         request = sample_chapter_outline_request.copy()
         request["system_prompts"] = {
@@ -157,7 +157,7 @@ class TestGenerateChapterOutlineEndpoint:
             "editorPrompt": ""  # Empty editor prompt
         }
         
-        response = client.post("/api/v1/generate-chapter-outline", json=request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
         assert response.status_code == 200
         data = response.json()
@@ -165,40 +165,40 @@ class TestGenerateChapterOutlineEndpoint:
         # Should work with partial system prompts
         assert len(data["outline_items"]) > 0
 
-    def test_generate_chapter_outline_empty_story_outline(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_empty_story_outline(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with empty story outline"""
         request = sample_chapter_outline_request.copy()
         request["story_outline"] = ""
         
-        response = client.post("/api/v1/generate-chapter-outline", json=request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
         assert response.status_code == 400
         assert "Story outline cannot be empty" in response.json()["detail"]
 
-    def test_generate_chapter_outline_whitespace_only_story_outline(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_whitespace_only_story_outline(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with whitespace-only story outline"""
         request = sample_chapter_outline_request.copy()
         request["story_outline"] = "   \n\t   "
         
-        response = client.post("/api/v1/generate-chapter-outline", json=request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
         assert response.status_code == 400
         assert "Story outline cannot be empty" in response.json()["detail"]
 
-    def test_generate_chapter_outline_missing_required_fields(self, client):
+    def test_generate_chapter_outlines_missing_required_fields(self, client):
         """Test chapter outline generation with missing required fields"""
         # Missing story_outline
-        response = client.post("/api/v1/generate-chapter-outline", json={})
+        response = client.post("/api/v1/generate-chapter-outlines", json={})
         
         assert response.status_code == 422  # Validation error
 
-    def test_generate_chapter_outline_minimal_request(self, client):
+    def test_generate_chapter_outlines_minimal_request(self, client):
         """Test chapter outline generation with minimal request"""
         minimal_request = {
             "story_outline": "A simple detective story about solving a murder case."
         }
         
-        response = client.post("/api/v1/generate-chapter-outline", json=minimal_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=minimal_request)
         
         assert response.status_code == 200
         data = response.json()
@@ -207,7 +207,7 @@ class TestGenerateChapterOutlineEndpoint:
         assert len(data["outline_items"]) > 0
         assert isinstance(data["summary"], str)
 
-    def test_generate_chapter_outline_with_story_context_only(self, client):
+    def test_generate_chapter_outlines_with_story_context_only(self, client):
         """Test chapter outline generation with story context but no character contexts"""
         request = {
             "story_outline": "A detective investigates a murder in 1940s Los Angeles.",
@@ -223,7 +223,7 @@ class TestGenerateChapterOutlineEndpoint:
             }
         }
         
-        response = client.post("/api/v1/generate-chapter-outline", json=request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
         assert response.status_code == 200
         data = response.json()
@@ -231,7 +231,7 @@ class TestGenerateChapterOutlineEndpoint:
         # Should work with story context only
         assert len(data["outline_items"]) > 0
 
-    def test_generate_chapter_outline_with_generation_preferences(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_with_generation_preferences(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with generation preferences"""
         request = sample_chapter_outline_request.copy()
         request["generation_preferences"] = {
@@ -240,7 +240,7 @@ class TestGenerateChapterOutlineEndpoint:
             "focus": "action"
         }
         
-        response = client.post("/api/v1/generate-chapter-outline", json=request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
         assert response.status_code == 200
         data = response.json()
@@ -248,9 +248,9 @@ class TestGenerateChapterOutlineEndpoint:
         # Should work with generation preferences
         assert len(data["outline_items"]) > 0
 
-    def test_generate_chapter_outline_order_sequence(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_order_sequence(self, client, sample_chapter_outline_request):
         """Test that chapter outline items have correct order sequence"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request)
         
         assert response.status_code == 200
         data = response.json()
@@ -261,9 +261,9 @@ class TestGenerateChapterOutlineEndpoint:
         
         assert orders == list(range(1, len(orders) + 1))
 
-    def test_generate_chapter_outline_unique_ids(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_unique_ids(self, client, sample_chapter_outline_request):
         """Test that chapter outline items have unique IDs"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request)
         
         assert response.status_code == 200
         data = response.json()
@@ -272,9 +272,9 @@ class TestGenerateChapterOutlineEndpoint:
         ids = [item["id"] for item in data["outline_items"]]
         assert len(ids) == len(set(ids))
 
-    def test_generate_chapter_outline_metadata_content(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_metadata_content(self, client, sample_chapter_outline_request):
         """Test chapter outline generation metadata content"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request)
         
         assert response.status_code == 200
         data = response.json()
@@ -289,9 +289,9 @@ class TestGenerateChapterOutlineEndpoint:
         assert metadata["generated_chapters"] > 0
         assert metadata["generated_chapters"] == len(data["outline_items"])
 
-    def test_generate_chapter_outline_character_involvement_tracking(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_character_involvement_tracking(self, client, sample_chapter_outline_request):
         """Test that character involvement is properly tracked"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request)
         
         assert response.status_code == 200
         data = response.json()
@@ -305,9 +305,9 @@ class TestGenerateChapterOutlineEndpoint:
         # Most chapters should have character involvement
         assert len(non_empty_character_lists) > 0
 
-    def test_generate_chapter_outline_title_description_quality(self, client, sample_chapter_outline_request):
+    def test_generate_chapter_outlines_title_description_quality(self, client, sample_chapter_outline_request):
         """Test that generated titles and descriptions meet quality standards"""
-        response = client.post("/api/v1/generate-chapter-outline", json=sample_chapter_outline_request)
+        response = client.post("/api/v1/generate-chapter-outlines", json=sample_chapter_outline_request)
         
         assert response.status_code == 200
         data = response.json()

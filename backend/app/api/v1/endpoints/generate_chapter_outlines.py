@@ -7,7 +7,7 @@ This endpoint generates a structured chapter outline from a story outline using 
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional, Dict, Any
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.services.llm_inference import get_llm
 from app.models.chapter_models import ChapterOutlineRequest, OutlineItem, ChapterOutlineResponse
@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.post("/generate-chapter-outline", response_model=ChapterOutlineResponse)
-async def generate_chapter_outline(request: ChapterOutlineRequest):
+@router.post("/generate-chapter-outlines", response_model=ChapterOutlineResponse)
+async def generate_chapter_outlines(request: ChapterOutlineRequest):
     """
     Generate a structured chapter outline from a story outline.
     
@@ -148,7 +148,7 @@ Create a chapter-by-chapter outline that breaks down this story into well-struct
             outline_items=outline_items,
             summary=summary,
             context_metadata={
-                "generation_timestamp": datetime.utcnow().isoformat(),
+                "generation_timestamp": datetime.now(UTC).isoformat(),
                 "source_outline_length": len(request.story_outline),
                 "generated_chapters": len(outline_items)
             }
@@ -182,8 +182,8 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
                     status="draft",
                     involved_characters=chapter_data.get("involved_characters", []),
                     metadata={
-                        "created": datetime.utcnow().isoformat(),
-                        "lastModified": datetime.utcnow().isoformat()
+                        "created": datetime.now(UTC).isoformat(),
+                        "lastModified": datetime.now(UTC).isoformat()
                     }
                 )
                 outline_items.append(outline_item)

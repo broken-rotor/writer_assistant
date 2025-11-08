@@ -108,7 +108,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  async generateChapterOutline(): Promise<void> {
+  async generateChapterOutlines(): Promise<void> {
     if (!this.story?.plotOutline?.content?.trim()) {
       this.toastService.showError('Please write a story outline first before generating chapter outline');
       return;
@@ -120,7 +120,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       console.log('Generating chapter outline from story outline...');
       
       const response = await firstValueFrom(
-        this.generationService.generateChapterOutlineFromStoryOutline(
+        this.generationService.generateChapterOutlinesFromStoryOutline(
           this.story,
           this.story.plotOutline.content
         )
@@ -276,14 +276,14 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
 
         this.toastService.showSuccess(`Successfully generated ${response.outline_items.length} chapters! You can now proceed to the Chapter Development phase.`);
         
-        console.log('Chapter outline generated successfully:', response);
+        console.log('Chapter outlines generated successfully:', response);
       } else {
         this.toastService.showError('No chapters were generated. Please try again with a more detailed story outline.');
       }
 
     } catch (error) {
       console.error('Error generating chapter outline:', error);
-      this.toastService.showError('Failed to generate chapter outline. Please try again.');
+      this.toastService.showError('Failed to generate chapter outlines. Please try again.');
     } finally {
       this.isGeneratingChapterOutline = false;
     }

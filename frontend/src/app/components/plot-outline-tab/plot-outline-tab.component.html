@@ -35,8 +35,8 @@
         
         <button 
           class="primary-button" 
-          (click)="generateChapterOutline()" 
-          [disabled]="isGeneratingChapterOutline || disabled || !story.plotOutline.content?.trim()"
+          (click)="generateChapterOutlines()" 
+          [disabled]="isGeneratingChapterOutline || disabled || !story.plotOutline.content.trim()"
           title="Generate chapter outline from story outline">
           <span *ngIf="!isGeneratingChapterOutline">📖 Generate Chapter Outline</span>
           <span *ngIf="isGeneratingChapterOutline">⏳ Generating Chapters...</span>

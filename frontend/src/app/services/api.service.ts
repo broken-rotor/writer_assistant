@@ -362,7 +362,7 @@ export class ApiService {
   }
 
   // Chapter Outline Generation (WRI-129)
-  generateChapterOutline(request: ChapterOutlineGenerationRequest): Observable<ChapterOutlineGenerationResponse> {
-    return this.http.post<ChapterOutlineGenerationResponse>(`${this.baseUrl}/generate-chapter-outline`, request);
+  generateChapterOutlines(request: ChapterOutlineGenerationRequest): Observable<ChapterOutlineGenerationResponse> {
+    return this.http.post<ChapterOutlineGenerationResponse>(`${this.baseUrl}/generate-chapter-outlines`, request);
   }
 }
