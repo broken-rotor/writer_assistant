@@ -51,6 +51,54 @@
           {{ getStatusDisplay() }}
         </span>
       </div>
+
+      <!-- Generated Chapters Display Section -->
+      <div class="generated-chapters-section" *ngIf="hasGeneratedChapters()">
+        <h3>📚 Generated Chapters ({{ getGeneratedChaptersCount() }})</h3>
+        <p class="section-description">
+          Your story outline has been broken down into the following chapters:
+        </p>
+        
+        <div class="chapters-list">
+          <div *ngFor="let chapter of getGeneratedChapters(); let i = index" 
+               class="chapter-card">
+            <div class="chapter-header">
+              <div class="chapter-number">Chapter {{ i + 1 }}</div>
+              <h4 class="chapter-title">{{ chapter.title }}</h4>
+            </div>
+            <p class="chapter-description">{{ chapter.description }}</p>
+            <div class="chapter-meta" *ngIf="chapter.involved_characters && chapter.involved_characters.length > 0">
+              <div class="involved-characters">
+                <span class="meta-label">Characters:</span>
+                <span class="character-list">{{ chapter.involved_characters.join(', ') }}</span>
+              </div>
+            </div>
+            <div class="chapter-actions">
+              <button class="icon-button" (click)="editChapter(chapter)" title="Edit chapter">
+                ✏️ Edit
+              </button>
+              <button class="icon-button" (click)="viewChapterDetails(chapter)" title="View details">
+                👁️ Details
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chapters-actions">
+          <button class="secondary-button" (click)="regenerateChapters()" 
+                  [disabled]="isGeneratingChapterOutline">
+            🔄 Regenerate Chapters
+          </button>
+          <button class="secondary-button" (click)="clearGeneratedChapters()" 
+                  title="Clear generated chapters">
+            🗑️ Clear Chapters
+          </button>
+          <button class="primary-button" (click)="proceedToChapterDevelopment()" 
+                  title="Proceed to develop these chapters">
+            ➡️ Proceed to Chapter Development
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Right Panel: AI Chat Assistant -->
