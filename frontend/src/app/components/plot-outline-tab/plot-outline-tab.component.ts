@@ -269,33 +269,61 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
         });
 
         // Also store in chapterCompose for backward compatibility and workflow continuity
+        // Create outline items for key plot items instead of chapter descriptions
+        let outlineItemOrder = 0;
         response.outline_items.forEach(item => {
-          const outlineItem = {
-            id: item.id,
-            type: item.type as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
-            title: item.title,
-            description: item.description,
-            order: item.order,
-            status: item.status as 'draft' | 'reviewed' | 'approved',
-            involved_characters: (item as any).involved_characters || [],
-            metadata: {
-              created: new Date(item.metadata.created || new Date()),
-              lastModified: new Date(item.metadata.lastModified || new Date()),
-              wordCountEstimate: item.metadata.wordCountEstimate
-            }
-          };
+          // If the chapter has key plot items, create separate outline items for each
+          if (item.key_plot_items && item.key_plot_items.length > 0) {
+            item.key_plot_items.forEach((plotItem, plotIndex) => {
+              const plotItemId = `${item.id}-plot-${plotIndex}`;
+              const outlineItem = {
+                id: plotItemId,
+                type: 'plot-point' as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
+                title: `${item.title} - Plot Point ${plotIndex + 1}`,
+                description: plotItem,
+                order: outlineItemOrder++,
+                status: item.status as 'draft' | 'reviewed' | 'approved',
+                involved_characters: (item as any).involved_characters || [],
+                metadata: {
+                  created: new Date(item.metadata.created || new Date()),
+                  lastModified: new Date(item.metadata.lastModified || new Date()),
+                  wordCountEstimate: Math.floor((item.metadata.wordCountEstimate || 0) / item.key_plot_items!.length)
+                }
+              };
 
-          this.story.chapterCompose!.phases.plotOutline.outline.items.set(item.id, outlineItem);
-          this.story.chapterCompose!.phases.plotOutline.outline.structure.push(item.id);
+              this.story.chapterCompose!.phases.plotOutline.outline.items.set(plotItemId, outlineItem);
+              this.story.chapterCompose!.phases.plotOutline.outline.structure.push(plotItemId);
+            });
+          } else {
+            // Fallback: if no key plot items, use the chapter description
+            const outlineItem = {
+              id: item.id,
+              type: item.type as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
+              title: item.title,
+              description: item.description,
+              order: outlineItemOrder++,
+              status: item.status as 'draft' | 'reviewed' | 'approved',
+              involved_characters: (item as any).involved_characters || [],
+              metadata: {
+                created: new Date(item.metadata.created || new Date()),
+                lastModified: new Date(item.metadata.lastModified || new Date()),
+                wordCountEstimate: item.metadata.wordCountEstimate
+              }
+            };
+
+            this.story.chapterCompose!.phases.plotOutline.outline.items.set(item.id, outlineItem);
+            this.story.chapterCompose!.phases.plotOutline.outline.structure.push(item.id);
+          }
         });
 
-        // Update progress
-        this.story.chapterCompose!.phases.plotOutline.progress.totalItems = response.outline_items.length;
-        this.story.chapterCompose!.phases.plotOutline.progress.completedItems = response.outline_items.length;
+        // Update progress - count actual outline items created (not just chapters)
+        const totalOutlineItems = this.story.chapterCompose!.phases.plotOutline.outline.items.size;
+        this.story.chapterCompose!.phases.plotOutline.progress.totalItems = totalOutlineItems;
+        this.story.chapterCompose!.phases.plotOutline.progress.completedItems = totalOutlineItems;
         this.story.chapterCompose!.phases.plotOutline.progress.lastActivity = new Date();
         this.story.chapterCompose!.phases.plotOutline.status = 'completed';
 
-        this.toastService.showSuccess(`Successfully generated ${response.outline_items.length} chapters! Check the "Generated Chapters" section below to see your chapter breakdown.`);
+        this.toastService.showSuccess(`Successfully generated ${response.outline_items.length} chapters with ${totalOutlineItems} plot items! Check the "Generated Chapters" section below to see your chapter breakdown.`);
         
         console.log('Chapter outlines generated successfully:', response);
       } else {
