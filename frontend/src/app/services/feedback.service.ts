@@ -479,10 +479,7 @@ export class FeedbackService {
     // Try to get from existing chapters
     const chapter = story.story.chapters.find(ch => ch.number === chapterNumber);
     if (chapter) {
-      // Use key plot items if available, otherwise fall back to plotPoint
-      if (chapter.keyPlotItems && chapter.keyPlotItems.length > 0) {
-        return chapter.keyPlotItems.join('; ');
-      }
+      // Return the overall chapter plot/theme
       return chapter.plotPoint || '';
     }
 

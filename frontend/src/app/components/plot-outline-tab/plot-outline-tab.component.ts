@@ -254,8 +254,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
             number: index + 1, // Chapter numbers start from 1
             title: item.title,
             content: '', // Empty content initially - will be filled during chapter development
-            plotPoint: item.description, // Keep for backward compatibility
-            keyPlotItems: item.key_plot_items || [item.description], // Use key plot items or fallback to description
+            plotPoint: item.description, // Overall chapter plot/theme
+            keyPlotItems: item.key_plot_items || [], // Detailed story beats within the chapter
             incorporatedFeedback: [],
             metadata: {
               created: new Date(item.metadata.created || new Date()),
@@ -772,19 +772,11 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     // For now, just show a simple prompt to edit the title and plot point
     const newTitle = prompt('Edit chapter title:', chapter.title);
     if (newTitle !== null && newTitle.trim()) {
-      // Get current plot information (prefer key plot items, fallback to plotPoint)
-      const currentPlotInfo = chapter.keyPlotItems && chapter.keyPlotItems.length > 0 
-        ? chapter.keyPlotItems.join('; ') 
-        : (chapter.plotPoint || '');
-      
-      const newPlotPoint = prompt('Edit chapter plot point:', currentPlotInfo);
+      const newPlotPoint = prompt('Edit chapter plot point (overall theme):', chapter.plotPoint || '');
       if (newPlotPoint !== null && newPlotPoint.trim()) {
         // Update the chapter in the story data
         chapter.title = newTitle.trim();
-        
-        // Update both fields for compatibility
-        chapter.plotPoint = newPlotPoint.trim();
-        chapter.keyPlotItems = [newPlotPoint.trim()]; // Convert single input to array
+        chapter.plotPoint = newPlotPoint.trim(); // Overall chapter plot/theme
         
         chapter.metadata.lastModified = new Date();
         this.toastService.showSuccess('Chapter updated successfully!');

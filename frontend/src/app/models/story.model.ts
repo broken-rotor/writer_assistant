@@ -51,8 +51,8 @@ export interface Chapter {
   number: number;
   title: string;
   content: string;
-  plotPoint?: string; // Deprecated: kept for backward compatibility
-  keyPlotItems?: string[]; // New: key plot items for this chapter
+  plotPoint?: string; // Overall plot/theme of the chapter
+  keyPlotItems?: string[]; // Detailed story beats within the chapter
   incorporatedFeedback: FeedbackItem[];
   metadata: {
     created: Date;
