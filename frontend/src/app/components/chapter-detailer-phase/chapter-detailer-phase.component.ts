@@ -105,6 +105,11 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
     hasReviewedContent: false
   };
 
+  // Get the current chapter being worked on
+  get currentChapter() {
+    return this.story?.story?.chapters?.[this.chapterNumber - 1];
+  }
+
   private destroy$ = new Subject<void>();
   private generationService = inject(GenerationService);
   private conversationService = inject(ConversationService);

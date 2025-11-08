@@ -152,6 +152,38 @@
       .outline-details {
         padding: 1rem 1.25rem;
 
+        .current-chapter-details {
+          margin-bottom: 1.5rem;
+          padding: 1rem;
+          background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);
+          border: 2px solid #4a90e2;
+          border-radius: 8px;
+          
+          .chapter-info {
+            .item-header {
+              margin-bottom: 0.75rem;
+              
+              .item-title {
+                color: #2c3e50;
+                font-weight: 600;
+                font-size: 1.1rem;
+              }
+              
+              .item-type {
+                background: #4a90e2;
+                color: white;
+                font-weight: 500;
+              }
+            }
+            
+            .item-description {
+              color: #34495e;
+              font-style: italic;
+              margin-bottom: 0.75rem;
+            }
+          }
+        }
+
         .outline-items {
           .outline-item {
             padding: 0.75rem;
@@ -191,6 +223,71 @@
               margin: 0;
               color: #6c757d;
               line-height: 1.5;
+            }
+
+            .item-characters {
+              margin-top: 0.75rem;
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 0.5rem;
+
+              .characters-label {
+                font-size: 0.75rem;
+                color: #6c757d;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+
+              .character-tag {
+                background: #e3f2fd;
+                color: #1976d2;
+                padding: 0.25rem 0.5rem;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: 500;
+              }
+            }
+
+            .item-key-plot-items {
+              margin-top: 0.75rem;
+
+              .key-plot-items-label {
+                font-size: 0.75rem;
+                color: #6c757d;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                display: block;
+                margin-bottom: 0.5rem;
+              }
+
+              .key-plot-items-list {
+                margin: 0;
+                padding-left: 1.25rem;
+                list-style-type: none;
+
+                .key-plot-item {
+                  position: relative;
+                  margin-bottom: 0.25rem;
+                  color: #495057;
+                  font-size: 0.875rem;
+                  line-height: 1.4;
+
+                  &:before {
+                    content: '•';
+                    color: #28a745;
+                    font-weight: bold;
+                    position: absolute;
+                    left: -1rem;
+                  }
+
+                  &:last-child {
+                    margin-bottom: 0;
+                  }
+                }
+              }
             }
           }
         }

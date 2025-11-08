@@ -334,6 +334,8 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     return title.length > 50 ? title.substring(0, 47) + '...' : title;
   }
 
+
+
   startEditingItem(item: DraftOutlineItem): void {
     this.editingItemId = item.id;
     this.editingTitle = item.title;
@@ -485,6 +487,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
         type: 'plot-point',
         title: item.title,
         description: item.description,
+        key_plot_items: [], // Key plot items will be populated when chapters are created
         order: item.order,
         status: 'draft',
         metadata: {
