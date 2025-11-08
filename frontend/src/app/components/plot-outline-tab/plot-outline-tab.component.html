@@ -60,17 +60,21 @@
         </p>
         
         <div class="chapters-list">
-          <div *ngFor="let chapter of getGeneratedChapters(); let i = index" 
+          <div *ngFor="let chapter of getGeneratedChapters()" 
                class="chapter-card">
             <div class="chapter-header">
-              <div class="chapter-number">Chapter {{ i + 1 }}</div>
+              <div class="chapter-number">Chapter {{ chapter.number }}</div>
               <h4 class="chapter-title">{{ chapter.title }}</h4>
             </div>
-            <p class="chapter-description">{{ chapter.description }}</p>
-            <div class="chapter-meta" *ngIf="chapter.involved_characters && chapter.involved_characters.length > 0">
-              <div class="involved-characters">
-                <span class="meta-label">Characters:</span>
-                <span class="character-list">{{ chapter.involved_characters.join(', ') }}</span>
+            <p class="chapter-description">{{ chapter.plotPoint }}</p>
+            <div class="chapter-meta">
+              <div class="chapter-status">
+                <span class="meta-label">Status:</span>
+                <span class="status-badge">{{ chapter.content ? 'Draft' : 'Outline Only' }}</span>
+              </div>
+              <div class="chapter-word-count" *ngIf="chapter.metadata.wordCount > 0">
+                <span class="meta-label">Words:</span>
+                <span class="word-count">{{ chapter.metadata.wordCount }}</span>
               </div>
             </div>
             <div class="chapter-actions">

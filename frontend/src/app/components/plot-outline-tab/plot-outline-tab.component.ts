@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { Story, ChatMessage, Rater, PlotOutlineFeedback } from '../../models/story.model';
+import { Story, ChatMessage, Rater, PlotOutlineFeedback, Chapter } from '../../models/story.model';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
 import { ToastService } from '../../services/toast.service';
@@ -247,8 +247,28 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
         this.story.chapterCompose!.phases.plotOutline.outline.items.clear();
         this.story.chapterCompose!.phases.plotOutline.outline.structure = [];
 
+        // Create actual Chapter entries in story.story.chapters
+        response.outline_items.forEach((item, index) => {
+          const chapter: Chapter = {
+            id: item.id,
+            number: index + 1, // Chapter numbers start from 1
+            title: item.title,
+            content: '', // Empty content initially - will be filled during chapter development
+            plotPoint: item.description, // Use the description as the plot point
+            incorporatedFeedback: [],
+            metadata: {
+              created: new Date(item.metadata.created || new Date()),
+              lastModified: new Date(item.metadata.lastModified || new Date()),
+              wordCount: 0 // No content yet
+            }
+          };
+
+          // Add the chapter to the story's chapters array
+          this.story.story.chapters.push(chapter);
+        });
+
+        // Also store in chapterCompose for backward compatibility and workflow continuity
         response.outline_items.forEach(item => {
-          // Convert the response item to match the OutlineItem interface
           const outlineItem = {
             id: item.id,
             type: item.type as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
@@ -722,48 +742,42 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
    * Check if there are generated chapters to display
    */
   hasGeneratedChapters(): boolean {
-    return (this.story?.chapterCompose?.phases?.plotOutline?.outline?.items?.size ?? 0) > 0;
+    return (this.story?.story?.chapters?.length ?? 0) > 0;
   }
 
   /**
    * Get the count of generated chapters
    */
   getGeneratedChaptersCount(): number {
-    return this.story?.chapterCompose?.phases?.plotOutline?.outline?.items?.size ?? 0;
+    return this.story?.story?.chapters?.length ?? 0;
   }
 
   /**
    * Get the generated chapters as an array for display
    */
-  getGeneratedChapters(): any[] {
-    if (!this.story?.chapterCompose?.phases?.plotOutline?.outline?.items) {
+  getGeneratedChapters(): Chapter[] {
+    if (!this.story?.story?.chapters) {
       return [];
     }
     
-    const chapters = Array.from(this.story.chapterCompose.phases.plotOutline.outline.items.values());
-    // Sort by order to ensure proper chapter sequence
-    return chapters.sort((a, b) => a.order - b.order);
+    // Sort by chapter number to ensure proper sequence
+    return this.story.story.chapters.sort((a, b) => a.number - b.number);
   }
 
   /**
    * Edit a specific chapter
    */
-  editChapter(chapter: any): void {
-    // For now, just show a simple prompt to edit the title and description
+  editChapter(chapter: Chapter): void {
+    // For now, just show a simple prompt to edit the title and plot point
     const newTitle = prompt('Edit chapter title:', chapter.title);
     if (newTitle !== null && newTitle.trim()) {
-      const newDescription = prompt('Edit chapter description:', chapter.description);
-      if (newDescription !== null && newDescription.trim()) {
+      const newPlotPoint = prompt('Edit chapter plot point:', chapter.plotPoint);
+      if (newPlotPoint !== null && newPlotPoint.trim()) {
         // Update the chapter in the story data
-        if (this.story?.chapterCompose?.phases?.plotOutline?.outline?.items) {
-          const chapterItem = this.story.chapterCompose.phases.plotOutline.outline.items.get(chapter.id);
-          if (chapterItem) {
-            chapterItem.title = newTitle.trim();
-            chapterItem.description = newDescription.trim();
-            chapterItem.metadata.lastModified = new Date();
-            this.toastService.showSuccess('Chapter updated successfully!');
-          }
-        }
+        chapter.title = newTitle.trim();
+        chapter.plotPoint = newPlotPoint.trim();
+        chapter.metadata.lastModified = new Date();
+        this.toastService.showSuccess('Chapter updated successfully!');
       }
     }
   }
@@ -771,9 +785,9 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   /**
    * View chapter details (placeholder for future enhancement)
    */
-  viewChapterDetails(chapter: any): void {
+  viewChapterDetails(chapter: Chapter): void {
     // For now, show an alert with chapter details
-    const details = `Chapter: ${chapter.title}\n\nDescription: ${chapter.description}\n\nCharacters: ${chapter.involved_characters?.join(', ') || 'None specified'}\n\nOrder: ${chapter.order}\nStatus: ${chapter.status}`;
+    const details = `Chapter ${chapter.number}: ${chapter.title}\n\nPlot Point: ${chapter.plotPoint}\n\nWord Count: ${chapter.metadata.wordCount}\nCreated: ${chapter.metadata.created.toLocaleDateString()}\nLast Modified: ${chapter.metadata.lastModified.toLocaleDateString()}\n\nContent: ${chapter.content ? 'Has content' : 'Outline only'}`;
     alert(details);
   }
 
@@ -791,12 +805,19 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
    */
   clearGeneratedChapters(): void {
     if (confirm('Are you sure you want to clear all generated chapters? This action cannot be undone.')) {
-      if (this.story?.chapterCompose?.phases?.plotOutline?.outline?.items) {
-        this.story.chapterCompose.phases.plotOutline.outline.items.clear();
-        this.story.chapterCompose.phases.plotOutline.outline.structure = [];
-        this.story.chapterCompose.phases.plotOutline.progress.totalItems = 0;
-        this.story.chapterCompose.phases.plotOutline.progress.completedItems = 0;
-        this.story.chapterCompose.phases.plotOutline.status = 'active';
+      if (this.story?.story?.chapters) {
+        // Clear the chapters array
+        this.story.story.chapters.length = 0;
+        
+        // Also clear the chapterCompose data for consistency
+        if (this.story?.chapterCompose?.phases?.plotOutline?.outline?.items) {
+          this.story.chapterCompose.phases.plotOutline.outline.items.clear();
+          this.story.chapterCompose.phases.plotOutline.outline.structure = [];
+          this.story.chapterCompose.phases.plotOutline.progress.totalItems = 0;
+          this.story.chapterCompose.phases.plotOutline.progress.completedItems = 0;
+          this.story.chapterCompose.phases.plotOutline.status = 'active';
+        }
+        
         this.toastService.showSuccess('Generated chapters cleared successfully!');
       }
     }

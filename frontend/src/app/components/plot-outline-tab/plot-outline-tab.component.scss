@@ -636,12 +636,14 @@
 
 .chapter-meta {
   margin-bottom: 0.75rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
   
-  .involved-characters {
+  .chapter-status, .chapter-word-count {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    flex-wrap: wrap;
     
     .meta-label {
       font-weight: 600;
@@ -649,12 +651,22 @@
       font-size: 0.85rem;
     }
     
-    .character-list {
+    .status-badge {
       color: #007bff;
       font-size: 0.85rem;
       background: #e3f2fd;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
+      font-weight: 500;
+    }
+    
+    .word-count {
+      color: #28a745;
+      font-size: 0.85rem;
+      background: #d4edda;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 500;
     }
   }
 }
