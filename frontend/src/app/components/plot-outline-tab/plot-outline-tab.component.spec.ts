@@ -348,4 +348,124 @@ describe('PlotOutlineTabComponent', () => {
     expect(messages[0].classList.contains('user-message')).toBe(true);
     expect(messages[1].classList.contains('ai-message')).toBe(true);
   });
+
+  it('should create outline items from key plot items instead of chapter descriptions', async () => {
+    // Mock the generation service to return chapters with key plot items
+    const mockResponse = {
+      summary: 'Generated chapter outlines with key plot items',
+      outline_items: [
+        {
+          id: 'chapter-1',
+          title: 'Chapter 1: The Beginning',
+          description: 'This is the chapter description that should NOT appear in draft outline',
+          key_plot_items: [
+            'Hero discovers the magical artifact',
+            'Villain attacks the village',
+            'Hero meets the mentor'
+          ],
+          type: 'chapter' as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
+          order: 0,
+          status: 'draft' as 'draft' | 'reviewed' | 'approved',
+          metadata: {
+            created: new Date(),
+            lastModified: new Date(),
+            wordCountEstimate: 2000
+          }
+        },
+        {
+          id: 'chapter-2',
+          title: 'Chapter 2: The Journey',
+          description: 'Another chapter description that should NOT appear',
+          key_plot_items: [
+            'Hero begins the quest',
+            'First obstacle encountered'
+          ],
+          type: 'chapter' as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
+          order: 1,
+          status: 'draft' as 'draft' | 'reviewed' | 'approved',
+          metadata: {
+            created: new Date(),
+            lastModified: new Date(),
+            wordCountEstimate: 1800
+          }
+        }
+      ]
+    };
+
+    const generationService = TestBed.inject(GenerationService);
+    spyOn(generationService, 'generateChapterOutlinesFromStoryOutline').and.returnValue(of(mockResponse));
+
+    component.story = mockStory;
+    await component.generateChapterOutlines();
+
+    // Verify that outline items were created for key plot items, not chapter descriptions
+    const outlineItems = component.story.chapterCompose!.phases.plotOutline.outline.items;
+    
+    // Should have 5 outline items total (3 from chapter 1 + 2 from chapter 2)
+    expect(outlineItems.size).toBe(5);
+    
+    // Check that the outline items contain key plot items, not chapter descriptions
+    const itemsArray = Array.from(outlineItems.values());
+    expect(itemsArray[0].description).toBe('Hero discovers the magical artifact');
+    expect(itemsArray[1].description).toBe('Villain attacks the village');
+    expect(itemsArray[2].description).toBe('Hero meets the mentor');
+    expect(itemsArray[3].description).toBe('Hero begins the quest');
+    expect(itemsArray[4].description).toBe('First obstacle encountered');
+    
+    // Verify that chapter descriptions are NOT in the outline items
+    const descriptions = itemsArray.map(item => item.description);
+    expect(descriptions).not.toContain('This is the chapter description that should NOT appear in draft outline');
+    expect(descriptions).not.toContain('Another chapter description that should NOT appear');
+    
+    // Verify that titles are properly formatted
+    expect(itemsArray[0].title).toBe('Chapter 1: The Beginning - Plot Point 1');
+    expect(itemsArray[1].title).toBe('Chapter 1: The Beginning - Plot Point 2');
+    expect(itemsArray[2].title).toBe('Chapter 1: The Beginning - Plot Point 3');
+    expect(itemsArray[3].title).toBe('Chapter 2: The Journey - Plot Point 1');
+    expect(itemsArray[4].title).toBe('Chapter 2: The Journey - Plot Point 2');
+    
+    // Verify that all items are marked as plot-point type
+    itemsArray.forEach(item => {
+      expect(item.type).toBe('plot-point');
+    });
+  });
+
+  it('should fallback to chapter description when no key plot items exist', async () => {
+    // Mock the generation service to return chapters without key plot items
+    const mockResponse = {
+      summary: 'Generated chapter outlines without key plot items',
+      outline_items: [
+        {
+          id: 'chapter-1',
+          title: 'Chapter 1: The Beginning',
+          description: 'This chapter description should appear as fallback',
+          key_plot_items: [], // Empty array
+          type: 'chapter' as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
+          order: 0,
+          status: 'draft' as 'draft' | 'reviewed' | 'approved',
+          metadata: {
+            created: new Date(),
+            lastModified: new Date(),
+            wordCountEstimate: 2000
+          }
+        }
+      ]
+    };
+
+    const generationService = TestBed.inject(GenerationService);
+    spyOn(generationService, 'generateChapterOutlinesFromStoryOutline').and.returnValue(of(mockResponse));
+
+    component.story = mockStory;
+    await component.generateChapterOutlines();
+
+    // Verify that outline item was created using chapter description as fallback
+    const outlineItems = component.story.chapterCompose!.phases.plotOutline.outline.items;
+    
+    expect(outlineItems.size).toBe(1);
+    
+    const item = Array.from(outlineItems.values())[0];
+    expect(item.description).toBe('This chapter description should appear as fallback');
+    expect(item.title).toBe('Chapter 1: The Beginning');
+    expect(item.type).toBe('chapter');
+  });
 });
