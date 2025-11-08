@@ -40,6 +40,12 @@
                 <span class="characters-label">👥 Characters:</span>
                 <span class="character-tag" *ngFor="let character of item.involved_characters">{{ character }}</span>
               </div>
+              <div class="item-key-plot-items" *ngIf="item.key_plot_items && item.key_plot_items.length > 0">
+                <span class="key-plot-items-label">🎯 Key Plot Items:</span>
+                <ul class="key-plot-items-list">
+                  <li class="key-plot-item" *ngFor="let plotItem of item.key_plot_items">{{ plotItem }}</li>
+                </ul>
+              </div>
             </div>
           </div>
           <div class="empty-outline" *ngIf="plotOutlineItems.length === 0">

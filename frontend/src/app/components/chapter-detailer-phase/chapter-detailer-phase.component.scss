@@ -192,6 +192,71 @@
               color: #6c757d;
               line-height: 1.5;
             }
+
+            .item-characters {
+              margin-top: 0.75rem;
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 0.5rem;
+
+              .characters-label {
+                font-size: 0.75rem;
+                color: #6c757d;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+
+              .character-tag {
+                background: #e3f2fd;
+                color: #1976d2;
+                padding: 0.25rem 0.5rem;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: 500;
+              }
+            }
+
+            .item-key-plot-items {
+              margin-top: 0.75rem;
+
+              .key-plot-items-label {
+                font-size: 0.75rem;
+                color: #6c757d;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                display: block;
+                margin-bottom: 0.5rem;
+              }
+
+              .key-plot-items-list {
+                margin: 0;
+                padding-left: 1.25rem;
+                list-style-type: none;
+
+                .key-plot-item {
+                  position: relative;
+                  margin-bottom: 0.25rem;
+                  color: #495057;
+                  font-size: 0.875rem;
+                  line-height: 1.4;
+
+                  &:before {
+                    content: '•';
+                    color: #28a745;
+                    font-weight: bold;
+                    position: absolute;
+                    left: -1rem;
+                  }
+
+                  &:last-child {
+                    margin-bottom: 0;
+                  }
+                }
+              }
+            }
           }
         }
 
