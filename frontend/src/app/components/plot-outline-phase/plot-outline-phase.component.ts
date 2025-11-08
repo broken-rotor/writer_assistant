@@ -334,43 +334,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
     return title.length > 50 ? title.substring(0, 47) + '...' : title;
   }
 
-  private extractKeyPlotItems(description: string): string[] {
-    // Extract key plot items from the description
-    // Look for bullet points, numbered lists, or sentences that describe specific plot events
-    const keyPlotItems: string[] = [];
-    
-    // Split by lines and look for bullet points or numbered items
-    const lines = description.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    
-    for (const line of lines) {
-      // Check for bullet points (-, *, •) or numbered lists (1., 2., etc.)
-      if (/^[-*•]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
-        // Remove the bullet/number prefix and add to key plot items
-        const cleanedItem = line.replace(/^[-*•]\s+/, '').replace(/^\d+\.\s+/, '').trim();
-        if (cleanedItem.length > 10) { // Only include substantial items
-          keyPlotItems.push(cleanedItem);
-        }
-      } else if (lines.length === 1) {
-        // If there's only one line (no bullet points), treat the whole description as a single plot item
-        keyPlotItems.push(description.trim());
-      } else if (line.length > 20 && !keyPlotItems.length) {
-        // If no bullet points found but we have substantial content, use the first substantial line
-        keyPlotItems.push(line);
-      }
-    }
-    
-    // If no key plot items were extracted, use the first sentence or the whole description
-    if (keyPlotItems.length === 0) {
-      const firstSentence = description.split('.')[0].trim();
-      if (firstSentence.length > 10) {
-        keyPlotItems.push(firstSentence);
-      } else if (description.trim().length > 0) {
-        keyPlotItems.push(description.trim());
-      }
-    }
-    
-    return keyPlotItems;
-  }
+
 
   startEditingItem(item: DraftOutlineItem): void {
     this.editingItemId = item.id;
@@ -523,7 +487,7 @@ export class PlotOutlinePhaseComponent implements OnInit, OnDestroy {
         type: 'plot-point',
         title: item.title,
         description: item.description,
-        key_plot_items: this.extractKeyPlotItems(item.description),
+        key_plot_items: [], // Key plot items will be populated when chapters are created
         order: item.order,
         status: 'draft',
         metadata: {

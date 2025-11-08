@@ -29,6 +29,24 @@
         </div>
         
         <div class="outline-details" *ngIf="showOutlineDetails">
+          <!-- Current Chapter Details -->
+          <div class="current-chapter-details" *ngIf="currentChapter">
+            <div class="chapter-info">
+              <div class="item-header">
+                <h4 class="item-title">{{ currentChapter.title }}</h4>
+                <span class="item-type">Chapter {{ currentChapter.number }}</span>
+              </div>
+              <p class="item-description" *ngIf="currentChapter.plotPoint">{{ currentChapter.plotPoint }}</p>
+              <div class="item-key-plot-items" *ngIf="currentChapter.keyPlotItems && currentChapter.keyPlotItems.length > 0">
+                <span class="key-plot-items-label">🎯 Key Plot Items:</span>
+                <ul class="key-plot-items-list">
+                  <li class="key-plot-item" *ngFor="let plotItem of currentChapter.keyPlotItems">{{ plotItem }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Outline Items for Reference -->
           <div class="outline-items" *ngIf="plotOutlineItems.length > 0">
             <div class="outline-item" *ngFor="let item of plotOutlineItems">
               <div class="item-header">
@@ -39,12 +57,6 @@
               <div class="item-characters" *ngIf="item.involved_characters && item.involved_characters.length > 0">
                 <span class="characters-label">👥 Characters:</span>
                 <span class="character-tag" *ngFor="let character of item.involved_characters">{{ character }}</span>
-              </div>
-              <div class="item-key-plot-items" *ngIf="item.key_plot_items && item.key_plot_items.length > 0">
-                <span class="key-plot-items-label">🎯 Key Plot Items:</span>
-                <ul class="key-plot-items-list">
-                  <li class="key-plot-item" *ngFor="let plotItem of item.key_plot_items">{{ plotItem }}</li>
-                </ul>
               </div>
             </div>
           </div>
