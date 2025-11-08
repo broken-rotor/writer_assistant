@@ -49,13 +49,15 @@ Guidelines:
 3. Maintain proper story pacing and structure
 4. Include key plot points, character development, and conflicts
 5. Each chapter title should be engaging and descriptive
-6. Each chapter description should be 2-3 sentences explaining what happens
-7. Identify which characters are involved in each chapter
+6. Generate 3-5 specific key plot items for each chapter that advance the story
+7. Each plot item should be a concrete action, event, or revelation
+8. Identify which characters are involved in each chapter
 
 IMPORTANT: Format your response as a JSON array where each chapter is an object with these exact fields:
 {
   "title": "Chapter title (without 'Chapter X:' prefix)",
-  "description": "2-3 sentence description of what happens",
+  "description": "Brief 1-2 sentence summary of the chapter",
+  "key_plot_items": ["Specific plot item 1", "Specific plot item 2", "Specific plot item 3"],
   "involved_characters": ["character1", "character2", ...]
 }
 
@@ -63,12 +65,24 @@ Example format:
 [
   {
     "title": "The Mysterious Arrival",
-    "description": "The protagonist discovers a strange letter that changes everything. They must decide whether to follow its cryptic instructions or ignore the warning.",
+    "description": "A strange letter arrives that changes the protagonist's life forever.",
+    "key_plot_items": [
+      "Protagonist receives an anonymous letter with cryptic instructions",
+      "Letter mentions a family secret that was thought buried",
+      "Protagonist discovers the letter is written in their deceased father's handwriting",
+      "A decision must be made whether to follow the letter's directions"
+    ],
     "involved_characters": ["John", "Mary"]
   },
   {
     "title": "Secrets Revealed",
-    "description": "Hidden truths about the family come to light. The protagonist confronts their past and makes a difficult choice.",
+    "description": "Hidden family truths come to light as the protagonist investigates.",
+    "key_plot_items": [
+      "Protagonist confronts their mother about the letter",
+      "Mother reveals the family has been hiding from dangerous people",
+      "Old family photographs reveal a connection to a missing person case",
+      "Detective Smith arrives asking questions about the father's past"
+    ],
     "involved_characters": ["John", "Sarah", "Detective Smith"]
   }
 ]
@@ -173,11 +187,20 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
     if chapters_data and isinstance(chapters_data, list):
         for i, chapter_data in enumerate(chapters_data):
             if isinstance(chapter_data, dict):
+                # Extract key plot items, fallback to description if not provided
+                key_plot_items = chapter_data.get("key_plot_items", [])
+                description = chapter_data.get("description", "")
+                
+                # If no key plot items provided, try to create them from description
+                if not key_plot_items and description:
+                    key_plot_items = [description]
+                
                 outline_item = OutlineItem(
                     id=f"chapter-{i+1}",
                     type="chapter",
                     title=chapter_data.get("title", f"Chapter {i+1}"),
-                    description=chapter_data.get("description", ""),
+                    description=description,
+                    key_plot_items=key_plot_items,
                     order=i+1,
                     status="draft",
                     involved_characters=chapter_data.get("involved_characters", []),
@@ -241,6 +264,7 @@ def _parse_text_response(response: str) -> List[OutlineItem]:
                 type="chapter",
                 title=title or f"Chapter {chapter_counter}",
                 description="",
+                key_plot_items=[],  # Empty for text parsing, will be populated from description
                 order=chapter_counter - 1,
                 status="draft",
                 involved_characters=[],  # Empty for text parsing
@@ -257,6 +281,10 @@ def _parse_text_response(response: str) -> List[OutlineItem]:
                 current_chapter.description += " " + line
             else:
                 current_chapter.description = line
+            
+            # Also add to key_plot_items for fallback compatibility
+            if line not in current_chapter.key_plot_items:
+                current_chapter.key_plot_items.append(line)
     
     # Don't forget the last chapter
     if current_chapter:
@@ -282,6 +310,7 @@ def _create_fallback_chapters(content: str) -> List[OutlineItem]:
             type="chapter",
             title=title,
             description=description,
+            key_plot_items=[description],  # Use description as single plot item for fallback
             order=i,
             status="draft",
             involved_characters=[],  # Empty for fallback chapters

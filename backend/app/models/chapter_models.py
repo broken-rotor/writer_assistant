@@ -24,6 +24,7 @@ class OutlineItem(BaseModel):
     type: str = "chapter"
     title: str
     description: str
+    key_plot_items: List[str] = Field(default_factory=list, description="Key plot items that occur in this chapter")
     order: int
     status: str = "draft"
     involved_characters: List[str] = Field(default_factory=list, description="List of character names involved in this chapter")

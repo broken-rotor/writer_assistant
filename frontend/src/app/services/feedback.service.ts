@@ -479,7 +479,8 @@ export class FeedbackService {
     // Try to get from existing chapters
     const chapter = story.story.chapters.find(ch => ch.number === chapterNumber);
     if (chapter) {
-      return chapter.plotPoint;
+      // Return the overall chapter plot/theme
+      return chapter.plotPoint || '';
     }
 
     // Default fallback

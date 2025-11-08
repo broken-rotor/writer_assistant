@@ -300,7 +300,11 @@ export class ChapterDetailerPhaseComponent implements OnInit, OnDestroy {
       // Use the outline-based chapter generation method
       const response = await firstValueFrom(this.generationService.generateChapterFromOutline(
         this.story,
-        this.plotOutlineItems.map(item => ({ title: item.title, description: item.description })),
+        this.plotOutlineItems.map(item => ({ 
+          title: item.title, 
+          description: item.description,
+          key_plot_items: item.key_plot_items 
+        })),
         this.chapterNumber
       ));
       

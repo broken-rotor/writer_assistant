@@ -254,7 +254,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
             number: index + 1, // Chapter numbers start from 1
             title: item.title,
             content: '', // Empty content initially - will be filled during chapter development
-            plotPoint: item.description, // Use the description as the plot point
+            plotPoint: item.description, // Overall chapter plot/theme
+            keyPlotItems: item.key_plot_items || [], // Detailed story beats within the chapter
             incorporatedFeedback: [],
             metadata: {
               created: new Date(item.metadata.created || new Date()),
@@ -771,11 +772,12 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     // For now, just show a simple prompt to edit the title and plot point
     const newTitle = prompt('Edit chapter title:', chapter.title);
     if (newTitle !== null && newTitle.trim()) {
-      const newPlotPoint = prompt('Edit chapter plot point:', chapter.plotPoint);
+      const newPlotPoint = prompt('Edit chapter plot point (overall theme):', chapter.plotPoint || '');
       if (newPlotPoint !== null && newPlotPoint.trim()) {
         // Update the chapter in the story data
         chapter.title = newTitle.trim();
-        chapter.plotPoint = newPlotPoint.trim();
+        chapter.plotPoint = newPlotPoint.trim(); // Overall chapter plot/theme
+        
         chapter.metadata.lastModified = new Date();
         this.toastService.showSuccess('Chapter updated successfully!');
       }
@@ -787,7 +789,11 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
    */
   viewChapterDetails(chapter: Chapter): void {
     // For now, show an alert with chapter details
-    const details = `Chapter ${chapter.number}: ${chapter.title}\n\nPlot Point: ${chapter.plotPoint}\n\nWord Count: ${chapter.metadata.wordCount}\nCreated: ${chapter.metadata.created.toLocaleDateString()}\nLast Modified: ${chapter.metadata.lastModified.toLocaleDateString()}\n\nContent: ${chapter.content ? 'Has content' : 'Outline only'}`;
+    const plotInfo = chapter.keyPlotItems && chapter.keyPlotItems.length > 0 
+      ? `Key Plot Items:\n${chapter.keyPlotItems.map(item => `- ${item}`).join('\n')}`
+      : `Plot Point: ${chapter.plotPoint || 'None'}`;
+    
+    const details = `Chapter ${chapter.number}: ${chapter.title}\n\n${plotInfo}\n\nWord Count: ${chapter.metadata.wordCount}\nCreated: ${chapter.metadata.created.toLocaleDateString()}\nLast Modified: ${chapter.metadata.lastModified.toLocaleDateString()}\n\nContent: ${chapter.content ? 'Has content' : 'Outline only'}`;
     alert(details);
   }
 
