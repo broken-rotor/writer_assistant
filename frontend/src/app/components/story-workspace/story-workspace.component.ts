@@ -579,7 +579,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
     // Load chapter data into chapter creation state
     this.story.chapterCreation = {
-      plotPoint: chapter.plotPoint || '',
+      plotPoint: chapter.keyPlotItems && chapter.keyPlotItems.length > 0 
+        ? chapter.keyPlotItems.join('; ') 
+        : (chapter.plotPoint || ''),
       incorporatedFeedback: chapter.incorporatedFeedback || [],
       feedbackRequests: new Map(),
       generatedChapter: {

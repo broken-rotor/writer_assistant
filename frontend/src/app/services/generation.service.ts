@@ -299,10 +299,17 @@ export class GenerationService {
   // Generate Chapter from Plot Outline
   generateChapterFromOutline(
     story: Story,
-    outlineItems: {title: string, description: string}[],
+    outlineItems: {title: string, description: string, key_plot_items?: string[]}[],
     chapterNumber = 1
   ): Observable<StructuredGenerateChapterResponse> {
-    const plotPoint = outlineItems.map(item => `${item.title}: ${item.description}`).join('\n\n');
+    // Use key plot items if available, otherwise fall back to description
+    const plotPoint = outlineItems.map(item => {
+      if (item.key_plot_items && item.key_plot_items.length > 0) {
+        return `${item.title}:\n${item.key_plot_items.map(plotItem => `- ${plotItem}`).join('\n')}`;
+      } else {
+        return `${item.title}: ${item.description}`;
+      }
+    }).join('\n\n');
     
     // Convert to backend-compatible format
     const backendRequest = this.convertToBackendGenerateChapterRequest(
@@ -318,7 +325,7 @@ export class GenerationService {
   private convertToBackendGenerateChapterRequest(
     story: Story,
     plotPoint: string,
-    outlineItems: {title: string, description: string}[],
+    outlineItems: {title: string, description: string, key_plot_items?: string[]}[],
     chapterNumber: number
   ): any {
     // Create structured context container

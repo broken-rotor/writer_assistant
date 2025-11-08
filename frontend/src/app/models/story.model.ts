@@ -51,7 +51,8 @@ export interface Chapter {
   number: number;
   title: string;
   content: string;
-  plotPoint: string;
+  plotPoint?: string; // Deprecated: kept for backward compatibility
+  keyPlotItems?: string[]; // New: key plot items for this chapter
   incorporatedFeedback: FeedbackItem[];
   metadata: {
     created: Date;
@@ -184,6 +185,7 @@ export interface OutlineItem {
   type: 'chapter' | 'scene' | 'plot-point' | 'character-arc';
   title: string;
   description: string;
+  key_plot_items?: string[]; // Key plot items that occur in this chapter
   order: number;
   parentId?: string; // For hierarchical structure
   children?: string[]; // Child outline item IDs
