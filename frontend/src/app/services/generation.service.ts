@@ -1548,7 +1548,7 @@ ${story.plotOutline.content}`;
   /**
    * Generate chapter outline from story outline
    */
-  generateChapterOutlineFromStoryOutline(
+  generateChapterOutlinesFromStoryOutline(
     story: Story,
     storyOutline: string
   ): Observable<ChapterOutlineGenerationResponse> {
@@ -1576,7 +1576,7 @@ ${story.plotOutline.content}`;
         system_prompts: story.general.systemPrompts
       };
 
-      return this.apiService.generateChapterOutline(request);
+      return this.apiService.generateChapterOutlines(request);
     } catch (error) {
       throw new Error(`Failed to generate chapter outline: ${error}`);
     }

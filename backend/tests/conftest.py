@@ -167,7 +167,7 @@ What had seemed simple moments ago now revealed layers of complexity. The charac
                         with patch('app.api.v1.endpoints.editor_review.get_llm', return_value=mock_llm_instance):
                             with patch('app.api.v1.endpoints.flesh_out.get_llm', return_value=mock_llm_instance):
                                 with patch('app.api.v1.endpoints.generate_character_details.get_llm', return_value=mock_llm_instance):
-                                    with patch('app.api.v1.endpoints.generate_chapter_outline.get_llm', return_value=mock_llm_instance):
+                                    with patch('app.api.v1.endpoints.generate_chapter_outlines.get_llm', return_value=mock_llm_instance):
                                         yield mock_llm_instance
 
 
