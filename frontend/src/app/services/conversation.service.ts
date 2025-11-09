@@ -1,16 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import {
   ChatMessage,
   ConversationThread,
   ConversationBranch,
-  BranchNavigation,
-  LLMChatRequest,
-  LLMChatResponse,
-  LLMChatComposeContext,
-  Story
+  BranchNavigation
 } from '../models/story.model';
 import { LocalStorageService } from './local-storage.service';
 import { ApiService } from './api.service';
@@ -375,7 +369,7 @@ export class ConversationService {
 
   // Private helper methods
 
-  private createNewThread(config: ConversationConfig): ConversationThread {
+  private createNewThread(_config: ConversationConfig): ConversationThread {
     const now = new Date();
     const threadId = this.generateThreadId();
 

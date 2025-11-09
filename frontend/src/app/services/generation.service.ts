@@ -10,7 +10,6 @@ import {
   Story,
   Character,
   Rater,
-  GenerateChapterRequest,
   GenerateChapterResponse,
   ModifyChapterRequest,
   ModifyChapterResponse,
@@ -22,15 +21,7 @@ import {
   RegenerateBioResponse,
   PlotOutline,
   PlotOutlineFeedback,
-  ConversationThread,
   FeedbackItem,
-  // Legacy request/response types still needed
-  CharacterFeedbackRequest,
-  CharacterFeedbackResponse,
-  RaterFeedbackRequest,
-  RaterFeedbackResponse,
-  EditorReviewRequest,
-  EditorReviewResponse,
   // Chapter Outline Generation interfaces
   ChapterOutlineGenerationRequest,
   ChapterOutlineGenerationResponse,
@@ -38,11 +29,9 @@ import {
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
-  StructuredRaterFeedbackRequest,
   StructuredGenerateChapterRequest,
   StructuredEditorReviewRequest,
   StructuredCharacterFeedbackResponse,
-  StructuredRaterFeedbackResponse,
   StructuredGenerateChapterResponse,
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';

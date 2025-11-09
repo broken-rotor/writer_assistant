@@ -4,8 +4,7 @@ import { BehaviorSubject, Observable, Subject, forkJoin, map, catchError, of } f
 import {
   ReviewItem,
   Story,
-  EditorSuggestion,
-  ConversationThread
+  EditorSuggestion
 } from '../models/story.model';
 import { GenerationService } from './generation.service';
 import { FeedbackService } from './feedback.service';

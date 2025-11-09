@@ -8,8 +8,7 @@ import {
   Character,
   Rater,
   Story,
-  FeedbackItem,
-  ConversationThread
+  FeedbackItem
 } from '../models/story.model';
 import { GenerationService } from './generation.service';
 import { ConversationService } from './conversation.service';

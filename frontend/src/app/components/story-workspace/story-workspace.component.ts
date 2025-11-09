@@ -23,7 +23,7 @@ import {
   RecoveryAction
 } from '../../constants/token-limits.constants';
 import { PlotOutlineTabComponent } from '../plot-outline-tab/plot-outline-tab.component';
-import { FeedbackSidebarComponent, FeedbackSidebarConfig, FeedbackSelectionEvent, FeedbackRequestEvent, AddToChatEvent } from '../feedback-sidebar/feedback-sidebar.component';
+import { FeedbackSidebarComponent, FeedbackSidebarConfig } from '../feedback-sidebar/feedback-sidebar.component';
 import { FeedbackService } from '../../services/feedback.service';
 import { ContextBuilderService } from '../../services/context-builder.service';
 import { WorldbuildingTabComponent } from '../worldbuilding-tab/worldbuilding-tab.component';

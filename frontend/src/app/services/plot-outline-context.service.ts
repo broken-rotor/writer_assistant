@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { 
-  Story, 
-  OutlineItem,
+import {
+  Story,
   PlotElement,
   UserRequest
 } from '../models/story.model';
@@ -69,7 +68,7 @@ export class PlotOutlineContextService {
   /**
    * Extract draft outline items from story's chapter compose state
    */
-  private extractDraftOutlineItems(story: Story): DraftOutlineItem[] {
+  private extractDraftOutlineItems(_story: Story): DraftOutlineItem[] {
     // Chapter compose has been removed, return empty array
     return [];
   }
