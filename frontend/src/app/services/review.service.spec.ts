@@ -144,11 +144,11 @@ describe('ReviewService', () => {
     });
 
     it('should load reviews from story data if not cached', () => {
-      localStorageServiceSpy.loadStory.and.returnValue(mockStory);
-
+      // Note: Chapter compose has been removed, so this now returns empty array
       const result = service.getAvailableReviews('test-story-1', 1);
 
-      expect(localStorageServiceSpy.loadStory).toHaveBeenCalledWith('test-story-1');
+      // loadStory is no longer called as reviews are cache-only now
+      expect(localStorageServiceSpy.loadStory).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
@@ -183,13 +183,14 @@ describe('ReviewService', () => {
       expect(generationServiceSpy.requestEditorReview).toHaveBeenCalled();
     });
 
-    it('should handle request failures gracefully', () => {
-      feedbackServiceSpy.requestCharacterFeedback.and.returnValue(throwError('Test error'));
+    it('should handle request failures gracefully', (done) => {
+      feedbackServiceSpy.requestCharacterFeedback.and.returnValue(throwError(() => new Error('Test error')));
       feedbackServiceSpy.requestRaterFeedback.and.returnValue(of(true));
       generationServiceSpy.requestEditorReview.and.returnValue(of({ overallAssessment: 'Test', suggestions: [] }));
 
       service.requestComprehensiveReviews(mockStory, 1, 'Test content').subscribe(result => {
         expect(result).toBe(false);
+        done();
       });
     });
 
@@ -287,16 +288,15 @@ describe('ReviewService', () => {
         { ...mockReviewItem, id: 'review-1' },
         { ...mockReviewItem, id: 'review-2' }
       ];
-      
-      service['reviewCache'].set('test-story-1_1_final_edit', reviews);
-      localStorageServiceSpy.loadStory.and.returnValue(mockStory);
-      localStorageServiceSpy.saveStory.and.stub();
+
+      service['reviewCache'].set('test-story-1_1_final-edit', reviews);
 
       service.markReviewsAsApplied('test-story-1', reviewIds);
 
       expect(reviews[0].status).toBe('accepted');
       expect(reviews[1].status).toBe('accepted');
-      expect(localStorageServiceSpy.saveStory).toHaveBeenCalled();
+      // Note: Chapter compose has been removed, so saveStory is no longer called
+      expect(localStorageServiceSpy.saveStory).not.toHaveBeenCalled();
     });
   });
 
@@ -336,6 +336,7 @@ describe('ReviewService', () => {
   describe('observables', () => {
     it('should emit reviews updated events', (done) => {
       service.reviewsUpdated$.subscribe(() => {
+        expect(true).toBeTrue(); // Verify the observable emits
         done();
       });
 

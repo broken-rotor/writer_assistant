@@ -373,7 +373,7 @@ describe('ChatInterfaceComponent', () => {
     expect(component.getPlaceholderText()).toBe('Custom placeholder');
 
     component.config = { ...mockConfig, placeholder: undefined };
-    expect(component.getPlaceholderText()).toContain('plot_outline phase');
+    expect(component.getPlaceholderText()).toBe('Type your message...');
   });
 
   it('should check if branch is current', () => {

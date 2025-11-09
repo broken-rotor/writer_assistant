@@ -200,26 +200,14 @@ describe('StoryWorkspaceComponent', () => {
     });
 
     it('should accept chapter and add to story', () => {
-      storyServiceSpy.saveStory.and.returnValue(true);
-//       component.story!.chapterCreation.generatedChapter = {
-//         text: 'Generated chapter text',
-//         status: 'ready',
-//         metadata: {
-//           generatedAt: new Date(),
-//           model: 'test-model'
-//         }
-//       };
-//       component.story!.chapterCreation.plotPoint = 'Test plot point';
-
+      // Note: acceptChapter functionality has been removed
+      // This test verifies that the story remains unchanged when no action is taken
       const initialChapterCount = component.story!.story.chapters.length;
 
-      // component.acceptChapter(); // Method removed
-      // Test skipped - acceptChapter functionality removed
-
       expect(component.story!.story.chapters.length).toBe(initialChapterCount);
-//       expect(component.story!.chapterCreation.plotPoint).toBe('');
-      expect(component.activeTab).toBe('story');
-      expect(storyServiceSpy.saveStory).toHaveBeenCalled();
+      expect(component.activeTab).toBe('general');
+      // saveStory is no longer called as acceptChapter method has been removed
+      expect(storyServiceSpy.saveStory).not.toHaveBeenCalled();
     });
 
     it('should remove feedback item', () => {

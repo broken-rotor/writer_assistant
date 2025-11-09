@@ -183,6 +183,37 @@ describe('FeedbackService', () => {
     });
 
     it('should load feedback from story if not cached', () => {
+      // Add a chapter with incorporated feedback to mockStory
+      const storyWithFeedback = {
+        ...mockStory,
+        story: {
+          ...mockStory.story,
+          chapters: [
+            {
+              id: 'ch1',
+              number: 1,
+              title: 'Chapter 1',
+              content: 'Content',
+              plotPoint: 'Chapter plot point',
+              incorporatedFeedback: [
+                {
+                  source: 'John Doe',
+                  type: 'action' as const,
+                  content: 'Test feedback',
+                  incorporated: false
+                }
+              ],
+              metadata: {
+                created: new Date(),
+                lastModified: new Date(),
+                wordCount: 100
+              }
+            }
+          ]
+        }
+      };
+      mockLocalStorageService.loadStory.and.returnValue(storyWithFeedback);
+
       const result = service.getAvailableFeedback('test-story-id', 1);
 
       expect(mockLocalStorageService.loadStory).toHaveBeenCalledWith('test-story-id');
@@ -307,11 +338,12 @@ describe('FeedbackService', () => {
       service.addFeedbackToChat(
         'test-story-id',
         1,
-        mockFeedback
+        mockFeedback,
+        'User comment'
       ).subscribe(() => {
         const callArgs = mockConversationService.sendMessage.calls.mostRecent().args;
         const messageContent = callArgs[0];
-        
+
         expect(messageContent).toContain('User comment');
         expect(messageContent).toContain('John Doe');
         expect(messageContent).toContain('Test feedback');
@@ -502,7 +534,15 @@ describe('FeedbackService', () => {
 
     it('should return default plot point if none found', () => {
       const storyWithoutPlotPoint = {
-        ...mockStory
+        ...mockStory,
+        plotOutline: {
+          ...mockStory.plotOutline,
+          content: ''
+        },
+        story: {
+          ...mockStory.story,
+          summary: ''
+        }
       };
 
       const plotPoint = service['getPlotPointForChapter'](storyWithoutPlotPoint, 1);
