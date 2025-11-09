@@ -1,33 +1,117 @@
 # Writer Assistant
 
-A multi-agent AI system for collaborative storytelling that uses specialized AI agents to create cohesive, well-crafted stories through a two-phase development process.
+A multi-agent AI storytelling system that enables collaborative, user-driven narrative creation through specialized AI agents with sophisticated context management.
 
-## Project Overview
+## Overview
 
-Writer Assistant employs a sophisticated multi-agent architecture where specialized AI agents collaborate to help users create compelling stories:
+Writer Assistant is a full-stack application that combines local LLM inference with a multi-agent architecture to help users create stories interactively. The system features multiple specialized AI agents (Writer, Editor, Character, Rater) that work together to generate, review, and refine narrative content based on user input and story context.
 
-- **Writer Agent**: Main orchestrator that synthesizes inputs and generates content
-- **Character Sub-Agents**: Maintain individual character perspectives and memories
-- **Rater Agents**: Multiple critics providing feedback from different perspectives
-- **Editor Agent**: Final reviewer ensuring consistency, tone, and coherence
+### Key Features
 
-## Technology Stack
+- **Multi-Agent System**: Specialized AI agents for different aspects of storytelling
+  - Writer Agent: Generates narrative content
+  - Editor Agent: Reviews and suggests improvements
+  - Character Agent: Provides character-specific feedback
+  - Rater Agent: Evaluates story quality and engagement
 
-- **Backend**: Python + FastAPI + LangChain + LangGraph
-- **Frontend**: Angular 17+ with Material Design
-- **LLM Integration**: llama.cpp (local LLM)
-- **Storage**: JSON files (MVP) → PostgreSQL (future)
-- **Development**: Docker containerized environment
+- **Sophisticated Context Management**
+  - Structured context with typed collections
+  - Priority-based token budgeting
+  - Layered context allocation (System, Story, Characters, Plot)
+  - Automatic summarization when approaching token limits
+
+- **Local LLM Inference**
+  - Run entirely offline with local GGUF models
+  - GPU acceleration support via llama-cpp-python
+  - Configurable model parameters per endpoint
+
+- **Interactive Story Development**
+  - Conversational worldbuilding interface
+  - Plot outline management
+  - Chapter-by-chapter generation and editing
+  - Real-time feedback from multiple agent perspectives
+
+- **Archive System** (Optional)
+  - ChromaDB-based semantic search
+  - Store and retrieve past story content
+  - RAG-enhanced context retrieval
+
+## Architecture
+
+### Technology Stack
+
+**Backend**
+- FastAPI (Python 3.x)
+- llama-cpp-python for local LLM inference
+- LangChain/LangGraph for agent orchestration
+- ChromaDB for vector storage (optional)
+- Pydantic for data validation and settings
+
+**Frontend**
+- Angular 17 (TypeScript)
+- Angular Material for UI components
+- RxJS for reactive state management
+- SCSS for styling
+- Local storage for persistence
+
+### System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Frontend (Angular)                       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │  Dashboard   │  │   Workspace  │  │   Archive    │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│         │                  │                  │                  │
+│         └──────────────────┴──────────────────┘                  │
+│                          │                                       │
+│                  Context Builder                                 │
+│                          │                                       │
+└──────────────────────────┼───────────────────────────────────────┘
+                           │ REST API / SSE
+┌──────────────────────────┼───────────────────────────────────────┐
+│                          │                                       │
+│                   FastAPI Backend                                │
+│  ┌───────────────────────┴────────────────────────┐             │
+│  │           API Endpoints Layer                  │             │
+│  │  (generation, chat, archive, tokens)           │             │
+│  └───────────────────┬────────────────────────────┘             │
+│                      │                                           │
+│  ┌───────────────────┴────────────────────────────┐             │
+│  │         Context Management Layer               │             │
+│  │  • StructuredContextContainer                  │             │
+│  │  • Token Budget Management                     │             │
+│  │  • Priority-based Trimming                     │             │
+│  │  • Context Distillation                        │             │
+│  └───────────────────┬────────────────────────────┘             │
+│                      │                                           │
+│  ┌───────────────────┴────────────────────────────┐             │
+│  │              Agent Layer                       │             │
+│  │  Writer │ Editor │ Character │ Rater           │             │
+│  └───────────────────┬────────────────────────────┘             │
+│                      │                                           │
+│  ┌───────────────────┴────────────────────────────┐             │
+│  │          LLM Inference Service                 │             │
+│  │         (llama-cpp-python)                     │             │
+│  └────────────────────────────────────────────────┘             │
+│                                                                  │
+│  ┌────────────────────────────────────────────────┐             │
+│  │        RAG Service (Optional)                  │             │
+│  │          ChromaDB Vector Store                 │             │
+│  └────────────────────────────────────────────────┘             │
+└──────────────────────────────────────────────────────────────────┘
+```
 
 ## Quick Start
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Node.js 18+ (for local Angular development)
-- Python 3.11+ (for local backend development)
+- Python 3.10+ with pip
+- Node.js 20+ with npm
+- Git Bash (for Windows) or standard bash shell
+- A GGUF format LLM model file
 
-### Development Setup
+### Installation
 
 1. **Clone the repository**
    ```bash
@@ -35,203 +119,215 @@ Writer Assistant employs a sophisticated multi-agent architecture where speciali
    cd writer_assistant
    ```
 
-2. **Start with Docker (Recommended)**
-   ```bash
-   # Start all services
-   docker-compose up -d
-
-   # Backend will be available at http://localhost:8000
-   # Frontend will be available at http://localhost:4200
-   # API docs at http://localhost:8000/docs
-   ```
-
-3. **Or run services individually**
-
-   **Backend:**
+2. **Backend Setup**
    ```bash
    cd backend
+   python -m venv venv
+   source venv/Scripts/activate  # Windows Git Bash
+   # source venv/bin/activate     # Linux/Mac
    pip install -r requirements.txt
-   cp .env.example .env
-   uvicorn app.main:app --reload
    ```
 
-   **Frontend:**
+3. **Configure the Backend**
    ```bash
-   cd frontend/writer-assistant-ui
-   npm install
-   ng serve
+   # Create .env file
+   cp .env.example .env  # If .env.example exists
+
+   # Or create .env manually with:
+   echo "MODEL_PATH=/path/to/your/model.gguf" > .env
    ```
 
-### API Documentation
+4. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-Once the backend is running, visit http://localhost:8000/docs for interactive API documentation.
+### Running the Application
 
-## Testing and Building
+**Development Mode (Recommended)**
 
-### Automated Test and Build Scripts
-
-The project includes cross-platform scripts for testing and building:
-
-**Quick Start:**
 ```bash
-# Windows PowerShell (Recommended)
-.\test-and-build.ps1
-
-# Windows Command Prompt
-test-and-build.bat
-
-# Git Bash / WSL / Linux / Mac
-./test-and-build.sh
-
-# Quick development tests (fast feedback)
-./quick-test.sh
+# From project root - starts both frontend and backend
+./start-dev.sh
 ```
 
-**What gets tested:**
-- ✅ Backend: Python unit tests with pytest + coverage
-- ✅ Frontend: ESLint linting + Karma/Jasmine tests
-- ✅ Frontend: Production build compilation
+Access the application:
+- Frontend: http://localhost:4200
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
 
-**Output locations:**
-- Backend coverage: `backend/htmlcov/index.html`
-- Frontend build: `frontend/dist/`
-- Logs: `frontend/frontend-*.log`
+**Manual Start**
 
-For detailed documentation, see `TEST_BUILD_README.md` and `SCRIPTS_SUMMARY.md`.
+Backend:
+```bash
+cd backend
+source venv/Scripts/activate
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-## Development Workflow
+Frontend:
+```bash
+cd frontend
+npm start
+```
 
-### Two-Phase Story Development
+## Development
 
-1. **Phase 1: Outline Development**
-   - User provides story concept and guidance
-   - Writer Agent creates basic story outline
-   - Rater Agents provide feedback on structure and viability
-   - Iterative refinement until approval
-
-2. **Phase 2: Chapter Development**
-   - Writer Agent fleshes out chapters with detailed content
-   - Character Agents contribute individual perspectives
-   - Rater Agents review for authenticity and quality
-   - Editor Agent performs final consistency check
-
-### Agent Architecture
-
-- **Memory Management**: Each agent maintains subjective experiences and perspectives
-- **Workflow Coordination**: LangGraph orchestrates complex multi-agent interactions
-- **Dynamic Routing**: Agents activated based on story needs and context
-- **Error Recovery**: Graceful handling of agent failures and system interruptions
-
-## Project Structure
+### Project Structure
 
 ```
 writer_assistant/
-├── backend/                 # FastAPI backend
+├── backend/              # FastAPI backend
 │   ├── app/
-│   │   ├── api/            # REST API endpoints
-│   │   ├── core/           # Configuration and utilities
-│   │   ├── models/         # Pydantic models
-│   │   ├── services/       # Business logic
-│   │   ├── agents/         # AI agent implementations
-│   │   └── storage/        # Data persistence layer
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/               # Angular frontend
-│   └── writer-assistant-ui/
-│       ├── src/
-│       │   ├── app/
-│       │   │   ├── components/
-│       │   │   ├── services/
-│       │   │   └── models/
-│       │   └── assets/
-│       └── Dockerfile
-├── requirements/           # Detailed project requirements
-├── docker-compose.yml      # Development environment
-└── README.md
+│   │   ├── api/         # API endpoints
+│   │   ├── core/        # Configuration
+│   │   ├── models/      # Pydantic models
+│   │   ├── services/    # Business logic
+│   │   └── main.py      # Application entry point
+│   ├── tests/           # Backend tests
+│   └── requirements.txt
+├── frontend/            # Angular frontend
+│   ├── src/
+│   │   └── app/
+│   │       ├── components/  # UI components
+│   │       ├── services/    # Frontend services
+│   │       ├── models/      # TypeScript models
+│   │       └── app.routes.ts
+│   ├── angular.json
+│   └── package.json
+├── docs/                # Additional documentation
+├── scripts/             # Utility scripts
+├── start-dev.sh         # Development startup script
+├── build-and-test.sh    # CI/test script
+└── CLAUDE.md            # AI assistant guidance
 ```
 
-## Current Implementation Status
+### Running Tests
 
-### ✅ Completed (Phase 1: Foundation)
-- [x] Backend project structure with FastAPI
-- [x] Frontend project structure with Angular
-- [x] Docker development environment
-- [x] Basic API endpoints for story management
-- [x] JSON-based storage system
-- [x] Core data models (Story, Character, Chapter, Outline)
-- [x] Basic routing and navigation
+**Backend**
+```bash
+cd backend
+pytest tests/ -v
+pytest tests/ -v --cov=app --cov-report=html  # With coverage
+```
 
-### 🚧 In Progress (Phase 2: MVP Core)
-- [ ] Basic agent system implementation
-- [ ] Simple UI components (Dashboard, Story Creation, Workspace)
-- [ ] LangChain + LangGraph integration
-- [ ] Mock LLM integration for development
+**Frontend**
+```bash
+cd frontend
+npm test
+npm test -- --watch=false --browsers=ChromeHeadless  # CI mode
+```
 
-### 📋 Planned (Phase 3: Enhanced Features)
-- [ ] Multi-agent coordination
-- [ ] Character management interface
-- [ ] Real-time agent status updates
-- [ ] Advanced feedback system
-- [ ] Local LLM integration (llama.cpp)
+**Full Test Suite**
+```bash
+./build-and-test.sh
+```
 
-## Key Features
+### Code Quality
 
-- **Individual Agent Memory**: Each agent maintains subjective experiences
-- **Memory Subjectivity**: Conflicting character memories are intentional
-- **Configurable Personalities**: JSON-based agent configuration
-- **Story Persistence**: Save/export stories and memory states
-- **Multi-Perspective Feedback**: Evaluation from different critic perspectives
+**Backend**
+```bash
+cd backend
+black app/          # Format code
+isort app/          # Sort imports
+flake8 app/         # Lint
+```
 
-## Contributing
+**Frontend**
+```bash
+cd frontend
+npm run lint        # ESLint
+ng lint             # Alternative
+```
 
-1. Follow the existing code structure and patterns
-2. Write tests for new functionality
-3. Update documentation for significant changes
-4. Use the provided Docker environment for consistency
+## Documentation
 
-## API Endpoints
-
-### Stories
-- `POST /api/v1/stories/` - Create new story
-- `GET /api/v1/stories/` - List all stories
-- `GET /api/v1/stories/{id}` - Get specific story
-- `PUT /api/v1/stories/{id}` - Update story
-- `DELETE /api/v1/stories/{id}` - Delete story
-
-### Future Endpoints (Planned)
-- Character management
-- Chapter operations
-- Agent interactions
-- Workflow management
+- **[CLAUDE.md](CLAUDE.md)**: Guidance for AI assistants working with this codebase
+- **[backend/README.md](backend/README.md)**: Backend architecture and structure
+- **[backend/CONFIGURATION.md](backend/CONFIGURATION.md)**: Comprehensive configuration guide
+- **[backend/STRUCTURED_CONTEXT_REFERENCE.md](backend/STRUCTURED_CONTEXT_REFERENCE.md)**: Context system reference
+- **[frontend/README.md](frontend/README.md)**: Frontend architecture and structure
 
 ## Configuration
 
-### Backend Configuration (.env)
-```
-DEBUG=True
-SECRET_KEY=your-secret-key-here
-DATA_DIR=data
-MAX_CONTEXT_LENGTH=4000
-DEFAULT_TEMPERATURE=0.7
-```
+The backend uses environment variables for configuration. Key settings:
 
-### Frontend Configuration
-Angular environment files handle API endpoints and feature flags.
+- `MODEL_PATH`: Path to GGUF model file (required)
+- `LLM_N_CTX`: Context window size (default: 4096)
+- `LLM_N_GPU_LAYERS`: GPU layers to use (-1 = all, 0 = CPU only)
+- `CONTEXT_MAX_TOKENS`: Maximum context size (default: 32000)
+- `ARCHIVE_DB_PATH`: ChromaDB path (optional, enables archive features)
 
-## Performance Requirements
+See [backend/CONFIGURATION.md](backend/CONFIGURATION.md) for complete configuration documentation.
 
-- Response time: < 30 seconds for chapter generation
-- Memory efficiency: < 4KB context per agent per chapter
-- Consistency scores: > 85% character consistency across story
-- User satisfaction target: > 4.0/5.0 rating on generated content
+## Features in Detail
+
+### Context Management
+
+The system uses a sophisticated layered context management approach:
+
+1. **Layer A**: System instructions (2k tokens)
+2. **Layer B**: Immediate instructions (configurable)
+3. **Layer C**: Recent story segments (13k tokens)
+4. **Layer D**: Character and scene data (5k tokens)
+5. **Layer E**: Plot and world summaries (10k tokens)
+
+Context is automatically trimmed based on priority when token limits are approached.
+
+### Multi-Agent Collaboration
+
+Each agent has specialized capabilities:
+
+- **Writer**: Creative content generation with high temperature
+- **Editor**: Analytical review with lower temperature for consistency
+- **Character**: In-character feedback from story personas
+- **Rater**: Quality assessment and engagement scoring
+
+Agents receive the same base context but format it differently based on their role.
+
+### Archive System
+
+The optional archive system uses ChromaDB for semantic search:
+- Store completed chapters and story segments
+- Semantic search for relevant past content
+- RAG-enhanced context retrieval
+- Improves consistency across long stories
+
+## Troubleshooting
+
+**Backend won't start or LLM not working**
+- Check that `MODEL_PATH` environment variable points to a valid GGUF file
+- Check `/health` endpoint: http://localhost:8000/health
+- Look for errors in backend startup logs
+
+**Frontend build errors**
+- Ensure Node.js 20+ is installed: `node --version`
+- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+- Check for TypeScript errors: `ng build`
+
+**Token overflow errors**
+- Reduce context layer allocations in backend configuration
+- Lower `CONTEXT_MAX_TOKENS` or increase model's `LLM_N_CTX`
+
+**Tests failing**
+- Backend: Ensure virtual environment is activated
+- Frontend: ChromeHeadless may need `--no-sandbox` flag on some systems
+
+## Contributing
+
+When contributing to this project:
+
+1. Read [CLAUDE.md](CLAUDE.md) for architecture overview
+2. Follow existing code style and patterns
+3. Write tests for new features
+4. Update documentation as needed
+5. Run the test suite before submitting changes
 
 ## License
 
-[License information to be added]
+[Your License Here]
 
 ## Support
 
-For questions or issues, please refer to:
-- Project documentation in `requirements/` directory
-- API documentation at http://localhost:8000/docs
-- [Create an issue](link-to-issues) for bug reports or feature requests
+For issues, questions, or contributions, please refer to the project's issue tracker or documentation.
