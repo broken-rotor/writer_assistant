@@ -8,11 +8,7 @@ import {
   CharacterFeedbackRequest,
   RaterFeedbackRequest,
   GenerateChapterRequest,
-  EditorReviewRequest,
-  EnhancedCharacterFeedbackRequest,
-  EnhancedRaterFeedbackRequest,
-  EnhancedGenerateChapterRequest,
-  EnhancedEditorReviewRequest
+  EditorReviewRequest
 } from '../models/story.model';
 
 import {
@@ -38,15 +34,6 @@ function hasTraditionalRequestStructure(obj: any): boolean {
          typeof obj.worldbuilding === 'string' &&
          typeof obj.storySummary === 'string' &&
          Array.isArray(obj.previousChapters);
-}
-
-/**
- * Check if an object has enhanced request features (phase support)
- */
-function hasEnhancedRequestFeatures(obj: any): boolean {
-  return obj &&
-         typeof obj === 'object' &&
-         (obj.compose_phase !== undefined || obj.phase_context !== undefined);
 }
 
 /**
@@ -80,19 +67,6 @@ export function isTraditionalCharacterFeedbackRequest(obj: any): obj is Characte
          typeof obj.character === 'object' &&
          typeof obj.character.name === 'string' &&
          typeof obj.plotPoint === 'string' &&
-         !hasEnhancedRequestFeatures(obj) &&
-         !hasStructuredRequestFeatures(obj);
-}
-
-/**
- * Type guard for enhanced character feedback request
- */
-export function isEnhancedCharacterFeedbackRequest(obj: any): obj is EnhancedCharacterFeedbackRequest {
-  return hasTraditionalRequestStructure(obj) &&
-         obj.character &&
-         typeof obj.character === 'object' &&
-         typeof obj.plotPoint === 'string' &&
-         hasEnhancedRequestFeatures(obj) &&
          !hasStructuredRequestFeatures(obj);
 }
 
@@ -119,18 +93,6 @@ export function isTraditionalRaterFeedbackRequest(obj: any): obj is RaterFeedbac
   return hasTraditionalRequestStructure(obj) &&
          typeof obj.raterPrompt === 'string' &&
          typeof obj.plotPoint === 'string' &&
-         !hasEnhancedRequestFeatures(obj) &&
-         !hasStructuredRequestFeatures(obj);
-}
-
-/**
- * Type guard for enhanced rater feedback request
- */
-export function isEnhancedRaterFeedbackRequest(obj: any): obj is EnhancedRaterFeedbackRequest {
-  return hasTraditionalRequestStructure(obj) &&
-         typeof obj.raterPrompt === 'string' &&
-         typeof obj.plotPoint === 'string' &&
-         hasEnhancedRequestFeatures(obj) &&
          !hasStructuredRequestFeatures(obj);
 }
 
@@ -157,19 +119,6 @@ export function isTraditionalGenerateChapterRequest(obj: any): obj is GenerateCh
          Array.isArray(obj.characters) &&
          typeof obj.plotPoint === 'string' &&
          Array.isArray(obj.incorporatedFeedback) &&
-         !hasEnhancedRequestFeatures(obj) &&
-         !hasStructuredRequestFeatures(obj);
-}
-
-/**
- * Type guard for enhanced chapter generation request
- */
-export function isEnhancedGenerateChapterRequest(obj: any): obj is EnhancedGenerateChapterRequest {
-  return hasTraditionalRequestStructure(obj) &&
-         Array.isArray(obj.characters) &&
-         typeof obj.plotPoint === 'string' &&
-         Array.isArray(obj.incorporatedFeedback) &&
-         hasEnhancedRequestFeatures(obj) &&
          !hasStructuredRequestFeatures(obj);
 }
 
@@ -196,18 +145,6 @@ export function isTraditionalEditorReviewRequest(obj: any): obj is EditorReviewR
   return hasTraditionalRequestStructure(obj) &&
          Array.isArray(obj.characters) &&
          typeof obj.chapterToReview === 'string' &&
-         !hasEnhancedRequestFeatures(obj) &&
-         !hasStructuredRequestFeatures(obj);
-}
-
-/**
- * Type guard for enhanced editor review request
- */
-export function isEnhancedEditorReviewRequest(obj: any): obj is EnhancedEditorReviewRequest {
-  return hasTraditionalRequestStructure(obj) &&
-         Array.isArray(obj.characters) &&
-         typeof obj.chapterToReview === 'string' &&
-         hasEnhancedRequestFeatures(obj) &&
          !hasStructuredRequestFeatures(obj);
 }
 
@@ -248,13 +185,6 @@ export function detectCharacterFeedbackRequestFormat(obj: any): RequestFormatDet
     confidence += 20;
   }
 
-  // Check for enhanced features
-  if (hasEnhancedRequestFeatures(obj)) {
-    detectedFeatures.push('enhanced_features');
-    confidence += 25;
-    format = 'enhanced';
-  }
-
   // Check for structured features
   if (hasStructuredRequestFeatures(obj)) {
     detectedFeatures.push('structured_features');
@@ -278,8 +208,6 @@ export function detectCharacterFeedbackRequestFormat(obj: any): RequestFormatDet
     if (isStructuredCharacterFeedbackRequest(obj)) {
       format = 'structured';
       confidence = Math.min(confidence + 10, 100);
-    } else if (isEnhancedCharacterFeedbackRequest(obj)) {
-      format = 'enhanced';
       confidence = Math.min(confidence + 10, 100);
     } else if (isTraditionalCharacterFeedbackRequest(obj)) {
       format = 'traditional';
@@ -314,12 +242,6 @@ export function detectRequestFormat(obj: any): RequestFormatDetectionResult {
       confidence += 30;
     }
 
-    if (hasEnhancedRequestFeatures(obj)) {
-      detectedFeatures.push('enhanced_features');
-      format = 'enhanced';
-      confidence += 25;
-    }
-
     if (hasStructuredRequestFeatures(obj)) {
       detectedFeatures.push('structured_features');
       format = 'structured';
@@ -350,12 +272,6 @@ export function detectRequestFormat(obj: any): RequestFormatDetectionResult {
       confidence += 30;
     }
 
-    if (hasEnhancedRequestFeatures(obj)) {
-      detectedFeatures.push('enhanced_features');
-      format = 'enhanced';
-      confidence += 25;
-    }
-
     if (hasStructuredRequestFeatures(obj)) {
       detectedFeatures.push('structured_features');
       format = 'structured';
@@ -384,12 +300,6 @@ export function detectRequestFormat(obj: any): RequestFormatDetectionResult {
     detectedFeatures.push('traditional_structure');
     format = 'traditional';
     confidence += 40;
-  }
-
-  if (hasEnhancedRequestFeatures(obj)) {
-    detectedFeatures.push('enhanced_features');
-    format = 'enhanced';
-    confidence += 30;
   }
 
   if (hasStructuredRequestFeatures(obj)) {

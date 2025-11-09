@@ -10,10 +10,8 @@ import {
   Story
 } from '../../models/story.model';
 import { FeedbackService } from '../../services/feedback.service';
-import { PhaseType } from '../../services/phase-state.service';
 
 export interface FeedbackSidebarConfig {
-  phase: PhaseType;
   storyId: string;
   chapterNumber: number;
   showRequestButtons?: boolean;
@@ -106,8 +104,7 @@ export class FeedbackSidebarComponent implements OnInit, OnDestroy {
   private loadAvailableFeedback(): void {
     this.availableFeedback = this.feedbackService.getAvailableFeedback(
       this.story.id,
-      this.config.chapterNumber,
-      this.config.phase
+      this.config.chapterNumber
     );
   }
 

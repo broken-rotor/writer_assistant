@@ -59,16 +59,7 @@
     <button class="tab-button" [class.active]="activeTab === 'raters'" (click)="selectTab('raters')">Raters</button>
     <button class="tab-button" [class.active]="activeTab === 'plot-outline'" (click)="selectTab('plot-outline')">Story Outline</button>
     <button class="tab-button" [class.active]="activeTab === 'story'" (click)="selectTab('story')">Story</button>
-    <button class="tab-button" [class.active]="activeTab === 'chapter-creation'" (click)="selectTab('chapter-creation')">Chapter Creation</button>
   </nav>
-
-  <!-- Phase Navigation (shown only for chapter-creation tab) -->
-  <app-phase-navigation 
-    *ngIf="showPhaseNavigation"
-    [chapterNumber]="getCurrentChapterNumber()"
-    [chapterTitle]="getCurrentChapterTitle()"
-    (phaseChanged)="onPhaseChanged($event)">
-  </app-phase-navigation>
 
   <!-- Tab Content -->
   <div class="tab-content">
@@ -359,7 +350,6 @@
       <div class="chapters-section">
         <div class="section-header">
           <h3>Chapters</h3>
-          <button class="primary-button" (click)="addChapterAtEnd()">+ Add Chapter at End</button>
         </div>
 
         <div class="chapters-list">
@@ -367,8 +357,6 @@
             <div class="chapter-header">
               <h4>Chapter {{ chapter.number }}: {{ chapter.title }}</h4>
               <div class="chapter-actions">
-                <button class="secondary-button" (click)="editChapter(chapter.id)">Edit</button>
-                <button class="secondary-button" (click)="insertChapterAfter()">Insert After</button>
                 <button class="danger-button" (click)="deleteChapter(chapter.id)">Delete</button>
               </div>
             </div>
@@ -385,294 +373,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Chapter Creation Tab -->
-    <div *ngIf="activeTab === 'chapter-creation'" class="tab-pane chapter-creation-tab">
-      <div class="chapter-creation-header">
-        <h2>Chapter Creation</h2>
-        <div class="chapter-creation-actions">
-          <button 
-            class="secondary-button feedback-toggle"
-            (click)="toggleFeedbackSidebar()"
-            [class.active]="showFeedbackSidebar"
-            title="Toggle feedback sidebar">
-            💬 Feedback
-          </button>
-        </div>
-      </div>
-
-      <!-- Story Outline Status Indicator -->
-      <div class="plot-outline-status-section">
-        <div *ngIf="story.plotOutline" class="plot-outline-status">
-          <span class="status-label">Story Outline:</span>
-          <span class="status-badge" [class]="'status-' + story.plotOutline.status">
-            {{ getPlotOutlineStatusDisplay() }}
-          </span>
-          <button class="link-button" (click)="selectTab('plot-outline')" title="Go to Story Outline tab">
-            📝 Edit Outline
-          </button>
-        </div>
-        <div *ngIf="!story.plotOutline" class="plot-outline-warning">
-          <span class="warning-text">⚠️ No story outline available</span>
-          <button class="link-button" (click)="selectTab('plot-outline')" title="Create story outline">
-            📝 Create Outline
-          </button>
-        </div>
-      </div>
-
-      <!-- Three-Phase Chapter Compose Interface -->
-      <div *ngIf="currentPhase === 'plot_outline'" class="phase-content">
-        <app-plot-outline-phase
-          [story]="story"
-          [chapterNumber]="getCurrentChapterNumber()"
-          (phaseCompleted)="onPlotOutlinePhaseCompleted()"
-          (outlineUpdated)="onOutlineUpdated($event)">
-        </app-plot-outline-phase>
-      </div>
-
-      <div *ngIf="currentPhase === 'final_edit'" class="phase-content">
-        <app-final-edit-phase
-          [story]="story"
-          [chapterNumber]="getCurrentChapterNumber()"
-          (phaseCompleted)="onFinalEditPhaseCompleted()"
-          (chapterFinalized)="onChapterFinalized($event)">
-        </app-final-edit-phase>
-      </div>
-
-      <!-- Legacy Chapter Creation Interface (for other phases and backward compatibility) -->
-      <div *ngIf="currentPhase !== 'plot_outline' && currentPhase !== 'final_edit'" class="legacy-chapter-creation">
-        <!-- Plot Point -->
-      <div class="section plot-point-section">
-        <h3>Plot Point</h3>
-        <textarea [(ngModel)]="story.chapterCreation.plotPoint" placeholder="Sarah discovers a hidden letter in the..." rows="4"></textarea>
-        <div class="button-group">
-          <button class="secondary-button" (click)="aiFleshOutPlotPoint()">AI Flesh Out</button>
-          <button class="secondary-button" (click)="researchPlotPoint()" title="Research similar content from story archive">📚 Research Archive</button>
-          <button class="secondary-button">Reset</button>
-        </div>
-      </div>
-
-      <!-- Incorporated Feedback -->
-      <div class="section incorporated-feedback-section">
-        <h3>Incorporated Feedback</h3>
-        <div class="feedback-list">
-          <div *ngFor="let item of story.chapterCreation.incorporatedFeedback; let i = index" class="feedback-item">
-            <div class="feedback-content" *ngIf="editingFeedbackIndex !== i">
-              <strong>{{ item.source }}</strong> ({{ item.type }}): {{ item.content }}
-            </div>
-            <div class="feedback-edit-form" *ngIf="editingFeedbackIndex === i">
-              <div class="feedback-header-edit">
-                <strong>{{ item.source }}</strong> ({{ item.type }})
-              </div>
-              <textarea [(ngModel)]="editingFeedbackContent" rows="3"></textarea>
-              <div class="button-group">
-                <button class="secondary-button" (click)="saveFeedbackEdit()">Save</button>
-                <button class="secondary-button" (click)="cancelFeedbackEdit()">Cancel</button>
-              </div>
-            </div>
-            <div class="item-actions" *ngIf="editingFeedbackIndex !== i">
-              <button class="icon-button" (click)="editFeedbackItem(i)" title="Edit">✏️</button>
-              <button class="icon-button" (click)="removeFeedbackItem(i)" title="Remove">✕</button>
-            </div>
-          </div>
-          <div *ngIf="story.chapterCreation.incorporatedFeedback.length === 0" class="empty-state">
-            No feedback incorporated yet. Request feedback from characters or raters below.
-          </div>
-        </div>
-      </div>
-
-      <!-- Agent Feedback Panel -->
-      <div class="section agent-feedback-section">
-        <div class="split-panel">
-          <!-- Agent List -->
-          <div class="agent-list-panel">
-            <h3>Request Feedback</h3>
-
-            <div class="agent-category">
-              <h4>Characters</h4>
-              <div class="agent-buttons">
-                <button *ngFor="let character of activeCharacters"
-                        class="agent-button"
-                        [class.loading]="generatingFeedback.has(character.id)"
-                        [class.selected]="selectedAgentId === character.id"
-                        (click)="requestCharacterFeedback(character.id)">
-                  {{ character.name }}
-                  <span *ngIf="generatingFeedback.has(character.id)" class="spinner">⏳</span>
-                </button>
-                <div *ngIf="activeCharacters.length === 0" class="empty-state">
-                  No active characters. Add characters in the Characters tab.
-                </div>
-              </div>
-            </div>
-
-            <div class="agent-category">
-              <h4>Raters</h4>
-              <div class="agent-buttons">
-                <button *ngFor="let rater of enabledRaters"
-                        class="agent-button"
-                        [class.loading]="generatingFeedback.has(rater.id)"
-                        [class.selected]="selectedAgentId === rater.id"
-                        (click)="requestRaterFeedback(rater.id)">
-                  {{ rater.name }}
-                  <span *ngIf="generatingFeedback.has(rater.id)" class="spinner">⏳</span>
-                </button>
-                <div *ngIf="enabledRaters.length === 0" class="empty-state">
-                  No enabled raters. Add raters in the Raters tab.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Feedback Display -->
-          <div class="feedback-display-panel">
-            <h3>Agent Feedback</h3>
-
-            <div *ngIf="feedbackRequestsArray.length === 0">
-              <p class="hint">Click an agent to request feedback. Results will appear here.</p>
-            </div>
-
-            <div *ngFor="let feedbackRequest of feedbackRequestsArray" class="feedback-result">
-              <div class="feedback-header">
-                <h4>{{ getFeedbackName(feedbackRequest.feedback) }}</h4>
-              </div>
-
-              <!-- Character Feedback -->
-              <div *ngIf="isCharacterFeedback(feedbackRequest.feedback)" class="character-feedback">
-                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).actions?.length > 0">
-                  <strong>Actions:</strong>
-                  <ul>
-                    <li *ngFor="let action of $any(feedbackRequest.feedback).actions">
-                      {{ action }}
-                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'action', action)">+</button>
-                    </li>
-                  </ul>
-                </div>
-
-                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).dialog?.length > 0">
-                  <strong>Dialog:</strong>
-                  <ul>
-                    <li *ngFor="let line of $any(feedbackRequest.feedback).dialog">
-                      "{{ line }}"
-                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'dialog', line)">+</button>
-                    </li>
-                  </ul>
-                </div>
-
-                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).physicalSensations?.length > 0">
-                  <strong>Physical Sensations:</strong>
-                  <ul>
-                    <li *ngFor="let sensation of $any(feedbackRequest.feedback).physicalSensations">
-                      {{ sensation }}
-                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'sensation', sensation)">+</button>
-                    </li>
-                  </ul>
-                </div>
-
-                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).emotions?.length > 0">
-                  <strong>Emotions:</strong>
-                  <ul>
-                    <li *ngFor="let emotion of $any(feedbackRequest.feedback).emotions">
-                      {{ emotion }}
-                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'emotion', emotion)">+</button>
-                    </li>
-                  </ul>
-                </div>
-
-                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).internalMonologue?.length > 0">
-                  <strong>Internal Monologue:</strong>
-                  <ul>
-                    <li *ngFor="let thought of $any(feedbackRequest.feedback).internalMonologue">
-                      {{ thought }}
-                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'thought', thought)">+</button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <!-- Rater Feedback -->
-              <div *ngIf="isRaterFeedback(feedbackRequest.feedback)" class="rater-feedback">
-                <div class="feedback-section">
-                  <strong>Opinion:</strong>
-                  <p>{{ $any(feedbackRequest.feedback).opinion }}</p>
-                </div>
-
-                <div class="feedback-section" *ngIf="$any(feedbackRequest.feedback).suggestions?.length > 0">
-                  <strong>Suggestions:</strong>
-                  <ul>
-                    <li *ngFor="let suggestion of $any(feedbackRequest.feedback).suggestions">
-                      {{ suggestion.suggestion || suggestion }}
-                      <button class="incorporate-button" (click)="incorporateFeedback(getFeedbackName(feedbackRequest.feedback), 'suggestion', suggestion.suggestion || suggestion)">+</button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chapter Generation -->
-      <div class="section chapter-generation-section">
-        <button class="primary-button large" (click)="generateChapter()" [disabled]="generatingChapter || !story.chapterCreation.plotPoint">
-          <span *ngIf="!generatingChapter">Generate Chapter</span>
-          <span *ngIf="generatingChapter">Generating... ⏳</span>
-        </button>
-      </div>
-
-      <!-- Generated Chapter -->
-      <div class="section generated-chapter-section" *ngIf="story.chapterCreation.generatedChapter">
-        <div class="chapter-title-input">
-          <input type="text" [(ngModel)]="chapterTitle" placeholder="Chapter Title (optional - will auto-generate if empty)">
-        </div>
-        <textarea [(ngModel)]="story.chapterCreation.generatedChapter.text" rows="35"></textarea>
-
-        <div class="prompt-changes-section">
-          <h4>Prompt Writer for Changes</h4>
-          <textarea [(ngModel)]="changeRequest" placeholder="Describe the changes you want (e.g., 'Make the dialogue more tense', 'Add more description of the setting')" rows="3"></textarea>
-          <button class="secondary-button" (click)="promptAssistantForChanges()" [disabled]="!changeRequest || generatingChapter">
-            <span *ngIf="!generatingChapter">Apply Changes</span>
-            <span *ngIf="generatingChapter">Applying... ⏳</span>
-          </button>
-        </div>
-
-        <div class="button-group">
-          <button class="secondary-button" (click)="requestEditorReview()" [disabled]="generatingReview">
-            <span *ngIf="!generatingReview">Request Editor Review</span>
-            <span *ngIf="generatingReview">Reviewing... ⏳</span>
-          </button>
-        </div>
-
-        <!-- Editor Suggestions -->
-        <div class="editor-suggestions" *ngIf="story.chapterCreation.editorReview">
-          <h4>Editor Suggestions</h4>
-          <div class="suggestions-list">
-            <div *ngFor="let suggestion of story.chapterCreation.editorReview.suggestions; let i = index" class="suggestion-item">
-              <label>
-                <input type="checkbox" [(ngModel)]="suggestion.selected">
-                <div class="suggestion-content">
-                  <span class="priority" [class]="suggestion.priority">{{ suggestion.priority }}</span>
-                  <strong>{{ suggestion.issue }}</strong>
-                  <p>{{ suggestion.suggestion }}</p>
-                </div>
-              </label>
-            </div>
-          </div>
-          <div class="button-group">
-            <button class="secondary-button" (click)="applyEditorSuggestions(false)" [disabled]="generatingChapter">
-              <span *ngIf="!generatingChapter">Apply Selected</span>
-              <span *ngIf="generatingChapter">Applying... ⏳</span>
-            </button>
-            <button class="secondary-button" (click)="applyEditorSuggestions(true)" [disabled]="generatingChapter">
-              <span *ngIf="!generatingChapter">Apply All</span>
-              <span *ngIf="generatingChapter">Applying... ⏳</span>
-            </button>
-          </div>
-        </div>
-
-        <button class="primary-button large" (click)="acceptChapter()">Accept Chapter - Add to Story</button>
-      </div>
-      </div> <!-- End legacy-chapter-creation -->
     </div>
   </div>
 
@@ -797,24 +497,6 @@
     </div>
   </div>
 
-  <!-- Feedback Sidebar -->
-  <div class="feedback-sidebar-container" *ngIf="showFeedbackSidebar && story && feedbackSidebarConfig" [class.show]="showFeedbackSidebar">
-    <div class="sidebar-header">
-      <h3>💬 Feedback Manager</h3>
-      <button class="close-button" (click)="closeFeedbackSidebar()" title="Close">✕</button>
-    </div>
-    
-    <div class="sidebar-content">
-      <app-feedback-sidebar
-        [config]="feedbackSidebarConfig"
-        [story]="story"
-        [disabled]="false"
-        (selectionChanged)="onFeedbackSelectionChanged($event)"
-        (feedbackRequested)="onFeedbackRequested($event)"
-        (addToChat)="onAddToChat($event)">
-      </app-feedback-sidebar>
-    </div>
-  </div>
 </div>
 
 <!-- Loading State -->

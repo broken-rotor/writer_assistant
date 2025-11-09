@@ -13,11 +13,7 @@ import {
   CharacterFeedbackRequest,
   RaterFeedbackRequest,
   GenerateChapterRequest,
-  EditorReviewRequest,
-  EnhancedCharacterFeedbackRequest,
-  EnhancedRaterFeedbackRequest,
-  EnhancedGenerateChapterRequest,
-  EnhancedEditorReviewRequest
+  EditorReviewRequest
 } from '../models/story.model';
 
 import {
@@ -41,16 +37,12 @@ import {
 import {
   detectRequestFormat,
   isTraditionalCharacterFeedbackRequest,
-  isEnhancedCharacterFeedbackRequest,
   isStructuredCharacterFeedbackRequest,
   isTraditionalRaterFeedbackRequest,
-  isEnhancedRaterFeedbackRequest,
   isStructuredRaterFeedbackRequest,
   isTraditionalGenerateChapterRequest,
-  isEnhancedGenerateChapterRequest,
   isStructuredGenerateChapterRequest,
   isTraditionalEditorReviewRequest,
-  isEnhancedEditorReviewRequest,
   isStructuredEditorReviewRequest
 } from '../utils/request-type-guards';
 
@@ -82,9 +74,6 @@ export class RequestConverterService {
       switch (detectionResult.format) {
         case 'traditional':
           convertedRequest = this.convertTraditionalToStructured(request, options) as T;
-          break;
-        case 'enhanced':
-          convertedRequest = this.convertEnhancedToStructured(request, options) as T;
           break;
         case 'structured':
           convertedRequest = request as T;
@@ -279,92 +268,6 @@ export class RequestConverterService {
         optimizationHints: options.addOptimizationHints ? ['editor_review'] : undefined
       } : undefined
     };
-  }
-
-  // ============================================================================
-  // PRIVATE CONVERSION METHODS - ENHANCED TO STRUCTURED
-  // ============================================================================
-
-  private convertEnhancedToStructured(request: any, options: RequestConversionOptions): any {
-    if (isEnhancedCharacterFeedbackRequest(request)) {
-      return this.convertEnhancedCharacterFeedbackToStructured(request, options);
-    } else if (isEnhancedRaterFeedbackRequest(request)) {
-      return this.convertEnhancedRaterFeedbackToStructured(request, options);
-    } else if (isEnhancedGenerateChapterRequest(request)) {
-      return this.convertEnhancedGenerateChapterToStructured(request, options);
-    } else if (isEnhancedEditorReviewRequest(request)) {
-      return this.convertEnhancedEditorReviewToStructured(request, options);
-    } else {
-      throw new Error('Unsupported enhanced request type');
-    }
-  }
-
-  private convertEnhancedCharacterFeedbackToStructured(
-    request: EnhancedCharacterFeedbackRequest,
-    options: RequestConversionOptions
-  ): StructuredCharacterFeedbackRequest {
-    const structuredRequest = this.convertTraditionalCharacterFeedbackToStructured(request, options);
-    
-    // Add phase context if available
-    if (request.compose_phase || request.phase_context) {
-      structuredRequest.phaseContext = this.convertToStructuredPhaseContext(
-        request.compose_phase,
-        request.phase_context
-      );
-    }
-
-    return structuredRequest;
-  }
-
-  private convertEnhancedRaterFeedbackToStructured(
-    request: EnhancedRaterFeedbackRequest,
-    options: RequestConversionOptions
-  ): StructuredRaterFeedbackRequest {
-    const structuredRequest = this.convertTraditionalRaterFeedbackToStructured(request, options);
-    
-    // Add phase context if available
-    if (request.compose_phase || request.phase_context) {
-      structuredRequest.phaseContext = this.convertToStructuredPhaseContext(
-        request.compose_phase,
-        request.phase_context
-      );
-    }
-
-    return structuredRequest;
-  }
-
-  private convertEnhancedGenerateChapterToStructured(
-    request: EnhancedGenerateChapterRequest,
-    options: RequestConversionOptions
-  ): StructuredGenerateChapterRequest {
-    const structuredRequest = this.convertTraditionalGenerateChapterToStructured(request, options);
-    
-    // Add phase context if available
-    if (request.compose_phase || request.phase_context) {
-      structuredRequest.phaseContext = this.convertToStructuredPhaseContext(
-        request.compose_phase,
-        request.phase_context
-      );
-    }
-
-    return structuredRequest;
-  }
-
-  private convertEnhancedEditorReviewToStructured(
-    request: EnhancedEditorReviewRequest,
-    options: RequestConversionOptions
-  ): StructuredEditorReviewRequest {
-    const structuredRequest = this.convertTraditionalEditorReviewToStructured(request, options);
-    
-    // Add phase context if available
-    if (request.compose_phase || request.phase_context) {
-      structuredRequest.phaseContext = this.convertToStructuredPhaseContext(
-        request.compose_phase,
-        request.phase_context
-      );
-    }
-
-    return structuredRequest;
   }
 
   // ============================================================================

@@ -15,9 +15,6 @@ import {
   LLMChatRequest,
   LLMChatResponse,
   LLMChatStreamMessage,
-  // New Phase Validation interfaces
-  PhaseTransitionRequest,
-  PhaseTransitionResponse,
   // Chapter Outline Generation interfaces
   ChapterOutlineGenerationRequest,
   ChapterOutlineGenerationResponse
@@ -229,11 +226,6 @@ export class ApiService {
         observer.error(error);
       });
     });
-  }
-
-  // Phase Transition Validation
-  validatePhaseTransition(request: PhaseTransitionRequest): Observable<PhaseTransitionResponse> {
-    return this.http.post<PhaseTransitionResponse>(`${this.baseUrl}/validate/phase-transition`, request);
   }
 
   // ============================================================================

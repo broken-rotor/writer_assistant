@@ -70,46 +70,8 @@ export class PlotOutlineContextService {
    * Extract draft outline items from story's chapter compose state
    */
   private extractDraftOutlineItems(story: Story): DraftOutlineItem[] {
-    const items: DraftOutlineItem[] = [];
-
-    try {
-      // Check if story has chapter compose state with plot outline phase
-      const plotOutlinePhase = story.chapterCompose?.phases?.plotOutline;
-      if (plotOutlinePhase?.outline?.items) {
-        const outlineItems = plotOutlinePhase.outline.items;
-        
-        // Convert Map to array if needed
-        if (outlineItems instanceof Map) {
-          outlineItems.forEach((item: OutlineItem, id: string) => {
-            items.push({
-              id: id,
-              title: item.title,
-              description: item.description,
-              order: item.order,
-              type: item.type
-            });
-          });
-        } else if (Array.isArray(outlineItems)) {
-          // Handle if it's already an array
-          const arrayItems = outlineItems as OutlineItem[];
-          items.push(...arrayItems.map((item: OutlineItem) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            order: item.order,
-            type: item.type
-          })));
-        }
-      }
-
-      // Also check for any outline items stored in other locations
-      // This provides backward compatibility with different data structures
-      
-    } catch (error) {
-      console.warn('Error extracting draft outline items:', error);
-    }
-
-    return items;
+    // Chapter compose has been removed, return empty array
+    return [];
   }
 
   /**
@@ -406,15 +368,7 @@ export class PlotOutlineContextService {
    * Check if story has plot outline data available
    */
   hasPlotOutlineData(story: Story): boolean {
-    const plotOutlinePhase = story.chapterCompose?.phases?.plotOutline;
-    return !!(
-      story.plotOutline?.content ||
-      (plotOutlinePhase?.outline?.items &&
-       (plotOutlinePhase.outline.items instanceof Map ? 
-        plotOutlinePhase.outline.items.size > 0 :
-        Array.isArray(plotOutlinePhase.outline.items) && 
-        (plotOutlinePhase.outline.items as any[]).length > 0))
-    );
+    return !!(story.plotOutline?.content);
   }
 
   /**

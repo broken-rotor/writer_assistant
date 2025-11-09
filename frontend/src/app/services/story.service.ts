@@ -50,11 +50,6 @@ export class StoryService {
           version: 1
         }
       },
-      chapterCreation: {
-        plotPoint: '',
-        incorporatedFeedback: [],
-        feedbackRequests: new Map()
-      },
       metadata: {
         version: '1.0',
         created: new Date(),
@@ -263,28 +258,6 @@ export class StoryService {
     return this.saveStory(story);
   }
 
-  // Chapter Creation State Management
-  updateChapterCreationState(storyId: string, updates: Partial<Story['chapterCreation']>): boolean {
-    const story = this.localStorageService.loadStory(storyId);
-    if (!story) return false;
-
-    story.chapterCreation = {
-      ...story.chapterCreation,
-      ...updates
-    };
-
-    return this.saveStory(story);
-  }
-
-  resetChapterCreationState(storyId: string): boolean {
-    return this.updateChapterCreationState(storyId, {
-      plotPoint: '',
-      incorporatedFeedback: [],
-      feedbackRequests: new Map(),
-      generatedChapter: undefined,
-      editorReview: undefined
-    });
-  }
 
   // General Configuration Updates
   updateGeneralConfig(storyId: string, updates: Partial<Story['general']>): boolean {

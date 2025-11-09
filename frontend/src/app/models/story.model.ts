@@ -114,10 +114,6 @@ export interface PlotOutline {
   };
 }
 
-// ============================================================================
-// THREE-PHASE CHAPTER COMPOSE DATA MODELS
-// ============================================================================
-
 /**
  * Represents a single message in a conversation thread
  */
@@ -129,7 +125,6 @@ export interface ChatMessage {
   author?: string; // For system messages, could be 'character-feedback', 'rater-feedback', etc.
   parentMessageId?: string; // For branching conversations
   metadata?: {
-    phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
     messageIndex: number;
     branchId?: string;
     [key: string]: any;
@@ -147,7 +142,6 @@ export interface ConversationThread {
   metadata: {
     created: Date;
     lastModified: Date;
-    phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
   };
 }
 
@@ -203,24 +197,17 @@ export interface OutlineItem {
  */
 export interface EnhancedFeedbackItem extends FeedbackItem {
   id: string;
-  phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
   priority: 'high' | 'medium' | 'low';
   status: 'pending' | 'incorporated' | 'dismissed';
   conversationThreadId?: string; // Link to related conversation
   metadata: {
     created: Date;
     lastModified: Date;
-    phase_context?: {
-      current_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
-      plot_outline: string;
-      chapter_detail: string;
-      final_edit: string;
-    };
   };
 }
 
 /**
- * Review item for final phase review feedback
+ * Review item for review feedback
  */
 export interface ReviewItem {
   id: string;
@@ -239,169 +226,6 @@ export interface ReviewItem {
   metadata: {
     created: Date;
     reviewer: string; // 'editor' | 'user' | character/rater name
-    phase_context?: {
-      current_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
-      plot_outline: string;
-      chapter_detail: string;
-      final_edit: string;
-    };
-  };
-}
-
-/**
- * Phase 1: Plot Outline Phase State
- */
-export interface PlotOutlinePhase {
-  conversation: ConversationThread;
-  outline: {
-    items: Map<string, OutlineItem>;
-    structure: string[]; // Ordered list of outline item IDs
-    currentFocus?: string; // Currently focused outline item ID
-  };
-  draftSummary: string;
-  status: 'active' | 'completed' | 'paused';
-  progress: {
-    completedItems: number;
-    totalItems: number;
-    lastActivity: Date;
-  };
-}
-
-/**
- * Phase 2: Chapter Detailer Phase State
- */
-export interface ChapterDetailerPhase {
-  conversation: ConversationThread;
-  chapterDraft: {
-    content: string;
-    title: string;
-    plotPoint: string;
-    wordCount: number;
-    status: 'drafting' | 'reviewing' | 'completed';
-  };
-  feedbackIntegration: {
-    pendingFeedback: EnhancedFeedbackItem[];
-    incorporatedFeedback: EnhancedFeedbackItem[];
-    feedbackRequests: Map<string, {
-      status: 'pending' | 'generating' | 'ready';
-      feedback: CharacterFeedback | RaterFeedback;
-    }>;
-  };
-  status: 'active' | 'completed' | 'paused';
-  progress: {
-    feedbackIncorporated: number;
-    totalFeedbackItems: number;
-    lastActivity: Date;
-  };
-}
-
-/**
- * Phase 3: Final Edit Phase State
- */
-export interface FinalEditPhase {
-  conversation: ConversationThread;
-  finalChapter: {
-    content: string;
-    title: string;
-    wordCount: number;
-    version: number;
-  };
-  reviewSelection: {
-    availableReviews: ReviewItem[];
-    selectedReviews: string[]; // IDs of selected review items
-    appliedReviews: string[]; // IDs of reviews that have been applied
-  };
-  editorReview?: {
-    suggestions: EditorSuggestion[];
-    userSelections: boolean[];
-    overallAssessment: string;
-  };
-  status: 'active' | 'completed' | 'paused';
-  progress: {
-    reviewsApplied: number;
-    totalReviews: number;
-    lastActivity: Date;
-  };
-}
-
-/**
- * Phase transition logic and validation
- */
-export interface PhaseTransition {
-  fromPhase: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  toPhase: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  canTransition: boolean;
-  requirements: string[]; // List of requirements that must be met
-  validationErrors: string[]; // Current validation errors preventing transition
-  transitionData?: any; // Data to carry forward to next phase
-}
-
-/**
- * Main Chapter Compose State Container
- * Three-phase chapter composition system
- */
-export interface ChapterComposeState {
-  // Phase Management
-  currentPhase: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  phases: {
-    plotOutline: PlotOutlinePhase;
-    chapterDetailer: ChapterDetailerPhase;
-    finalEdit: FinalEditPhase;
-  };
-  
-  // Shared Context
-  sharedContext: {
-    chapterNumber: number;
-    targetWordCount?: number;
-    genre?: string;
-    tone?: string;
-    pov?: string;
-  };
-  
-  // Navigation and State
-  navigation: {
-    phaseHistory: ('plot_outline' | 'chapter_detail' | 'final_edit')[];
-    canGoBack: boolean;
-    canGoForward: boolean;
-    branchNavigation: BranchNavigation;
-  };
-  
-  // Progress Tracking
-  overallProgress: {
-    currentStep: number;
-    totalSteps: number;
-    phaseCompletionStatus: {
-      'plot_outline': boolean;
-      'chapter_detail': boolean;
-      'final_edit': boolean;
-    };
-    estimatedTimeRemaining?: number;
-  };
-  
-  // Metadata
-  metadata: {
-    created: Date;
-    lastModified: Date;
-    version: string;
-  };
-}
-
-// Legacy interface maintained for backward compatibility
-export interface ChapterCreationState {
-  plotPoint: string;
-  incorporatedFeedback: FeedbackItem[];
-  feedbackRequests: Map<string, {
-    status: 'pending' | 'generating' | 'ready';
-    feedback: CharacterFeedback | RaterFeedback;
-  }>;
-  generatedChapter?: {
-    text: string;
-    status: string;
-    metadata: any;
-  };
-  editorReview?: {
-    suggestions: EditorSuggestion[];
-    userSelections: boolean[];
   };
 }
 
@@ -415,10 +239,6 @@ export interface Story {
     chapters: Chapter[];
   };
   plotOutline: PlotOutline;
-  // Three-phase chapter compose system
-  chapterCompose?: ChapterComposeState;
-  // Legacy chapter creation (maintained for backward compatibility)
-  chapterCreation: ChapterCreationState;
   metadata: {
     version: string;
     created: Date;
@@ -560,8 +380,6 @@ export interface EditorReviewRequest {
 export interface FleshOutRequest {
   textToFleshOut: string;
   context?: string;
-  compose_phase?: any;
-  phase_context?: any;
   structured_context: StructuredContextContainer;
   context_processing_config?: Record<string, any>;
 }
@@ -634,17 +452,6 @@ export interface GenerateCharacterDetailsRequest {
     basicBio: string;
     relationships: string;
   }[];
-  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  phase_context?: {
-    previous_phase_output?: string;
-    phase_specific_instructions?: string;
-    conversation_history?: {
-      role: 'user' | 'assistant';
-      content: string;
-      timestamp?: string;
-    }[];
-    conversation_branch_id?: string;
-  };
   structured_context: StructuredContextContainer;
   context_processing_config?: Record<string, any>;
 }
@@ -725,17 +532,6 @@ export interface RegenerateBioRequest {
   motivations?: string;
   fears?: string;
   relationships?: string;
-  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  phase_context?: {
-    previous_phase_output?: string;
-    phase_specific_instructions?: string;
-    conversation_history?: {
-      role: 'user' | 'assistant';
-      content: string;
-      timestamp?: string;
-    }[];
-    conversation_branch_id?: string;
-  };
   structured_context?: StructuredContextContainer;
   context_processing_config?: Record<string, any>;
 }
@@ -743,47 +539,6 @@ export interface RegenerateBioRequest {
 export interface RegenerateBioResponse {
   basicBio: string;
   context_metadata?: ContextMetadata;
-}
-
-// ============================================================================
-// NEW API MODELS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
-// ============================================================================
-
-/**
- * Phase context for API requests
- */
-export interface ApiPhaseContext {
-  previous_phase_output?: string;
-  phase_specific_instructions?: string;
-  conversation_history?: {
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp?: string;
-  }[];
-  conversation_branch_id?: string;
-}
-
-/**
- * Enhanced API request interfaces with phase support
- */
-export interface EnhancedCharacterFeedbackRequest extends CharacterFeedbackRequest {
-  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  phase_context?: ApiPhaseContext;
-}
-
-export interface EnhancedRaterFeedbackRequest extends RaterFeedbackRequest {
-  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  phase_context?: ApiPhaseContext;
-}
-
-export interface EnhancedGenerateChapterRequest extends GenerateChapterRequest {
-  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  phase_context?: ApiPhaseContext;
-}
-
-export interface EnhancedEditorReviewRequest extends EditorReviewRequest {
-  compose_phase?: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  phase_context?: ApiPhaseContext;
 }
 
 /**
@@ -796,7 +551,6 @@ export interface LLMChatMessage {
 }
 
 export interface LLMChatComposeContext {
-  current_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
   story_context: Record<string, any>;
   chapter_draft?: string;
   conversation_branch_id?: string;
@@ -842,31 +596,6 @@ export interface LLMChatStreamError {
 }
 
 export type LLMChatStreamMessage = LLMChatStreamStatus | LLMChatStreamResult | LLMChatStreamError;
-
-/**
- * Phase Validation API models
- */
-export interface PhaseTransitionRequest {
-  from_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  to_phase: 'plot_outline' | 'chapter_detail' | 'final_edit';
-  phase_output: string;
-  story_context: Record<string, any>;
-}
-
-export interface ValidationResult {
-  criterion: string;
-  passed: boolean;
-  message: string;
-  score?: number;
-}
-
-export interface PhaseTransitionResponse {
-  valid: boolean;
-  overall_score: number;
-  validation_results: ValidationResult[];
-  recommendations: string[];
-  metadata: Record<string, any>;
-}
 
 // ============================================================================
 // CHAPTER OUTLINE GENERATION API MODELS (WRI-129)

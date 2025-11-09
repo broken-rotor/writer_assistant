@@ -73,15 +73,6 @@ export class ContextStorageService {
       encryptionEnabled: false,
       retentionDays: 90
     },
-    [ContextType.PHASE]: {
-      type: ContextType.PHASE,
-      storageType: 'localStorage',
-      maxVersions: 15,
-      maxBranches: 3,
-      compressionEnabled: false,
-      encryptionEnabled: false,
-      retentionDays: 180
-    },
     [ContextType.SERVER]: {
       type: ContextType.SERVER,
       storageType: 'sessionStorage', // Never persisted

@@ -1,20 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, map, catchError, of } from 'rxjs';
 
-import { 
-  EnhancedFeedbackItem, 
-  CharacterFeedback, 
+import {
+  EnhancedFeedbackItem,
+  CharacterFeedback,
   RaterFeedback,
   Character,
   Rater,
   Story,
   FeedbackItem,
-  ChapterComposeState,
   ConversationThread
 } from '../models/story.model';
 import { GenerationService } from './generation.service';
 import { ConversationService } from './conversation.service';
-import { PhaseType } from './phase-state.service';
 import { LocalStorageService } from './local-storage.service';
 
 export interface FeedbackRequestStatus {
@@ -57,11 +55,11 @@ export class FeedbackService {
   };
 
   /**
-   * Get available feedback for a specific story, chapter, and phase
+   * Get available feedback for a specific story and chapter
    */
-  getAvailableFeedback(storyId: string, chapterNumber: number, phase: PhaseType): EnhancedFeedbackItem[] {
-    const cacheKey = `${storyId}_${chapterNumber}_${phase}`;
-    
+  getAvailableFeedback(storyId: string, chapterNumber: number): EnhancedFeedbackItem[] {
+    const cacheKey = `${storyId}_${chapterNumber}`;
+
     if (this.feedbackCache.has(cacheKey)) {
       return this.feedbackCache.get(cacheKey) || [];
     }
@@ -70,9 +68,9 @@ export class FeedbackService {
     const story = this.localStorageService.loadStory(storyId);
     if (!story) return [];
 
-    const feedback = this.extractFeedbackFromStory(story, chapterNumber, phase);
+    const feedback = this.extractFeedbackFromStory(story, chapterNumber);
     this.feedbackCache.set(cacheKey, feedback);
-    
+
     return feedback;
   }
 
@@ -161,10 +159,9 @@ export class FeedbackService {
    * Add selected feedback to chat conversation
    */
   addFeedbackToChat(
-    storyId: string, 
-    chapterNumber: number, 
-    phase: PhaseType,
-    selectedFeedback: EnhancedFeedbackItem[], 
+    storyId: string,
+    chapterNumber: number,
+    selectedFeedback: EnhancedFeedbackItem[],
     userComment?: string
   ): Observable<boolean> {
     try {
@@ -210,34 +207,10 @@ export class FeedbackService {
       }
     });
 
-    // Update story data
+    // Update story data - feedback is stored in cache, can be persisted to chapters later
     const story = this.localStorageService.loadStory(storyId);
     if (story) {
-      // Update incorporated feedback in legacy structure
-      feedbackIds.forEach(feedbackId => {
-        const feedbackItem = this.findFeedbackById(feedbackId);
-        if (feedbackItem) {
-          const legacyItem: FeedbackItem = {
-            source: feedbackItem.source,
-            type: feedbackItem.type,
-            content: feedbackItem.content,
-            incorporated: true
-          };
-          
-          // Add to incorporated feedback if not already present
-          const existingIndex = story.chapterCreation.incorporatedFeedback.findIndex(
-            (item: any) => item.source === legacyItem.source && 
-                   item.content === legacyItem.content
-          );
-          
-          if (existingIndex === -1) {
-            story.chapterCreation.incorporatedFeedback.push(legacyItem);
-          } else {
-            story.chapterCreation.incorporatedFeedback[existingIndex].incorporated = true;
-          }
-        }
-      });
-
+      // Feedback incorporation tracking handled by cache
       this.localStorageService.saveStory(story);
     }
 
@@ -245,11 +218,11 @@ export class FeedbackService {
   }
 
   /**
-   * Clear feedback cache for a specific story/chapter/phase
+   * Clear feedback cache for a specific story/chapter
    */
-  clearFeedbackCache(storyId?: string, chapterNumber?: number, phase?: PhaseType): void {
-    if (storyId && chapterNumber && phase) {
-      const cacheKey = `${storyId}_${chapterNumber}_${phase}`;
+  clearFeedbackCache(storyId?: string, chapterNumber?: number): void {
+    if (storyId && chapterNumber) {
+      const cacheKey = `${storyId}_${chapterNumber}`;
       this.feedbackCache.delete(cacheKey);
     } else if (storyId) {
       // Clear all cache entries for the story
@@ -267,46 +240,27 @@ export class FeedbackService {
 
   // Private helper methods
 
-  private extractFeedbackFromStory(story: Story, chapterNumber: number, phase: PhaseType): EnhancedFeedbackItem[] {
+  private extractFeedbackFromStory(story: Story, chapterNumber: number): EnhancedFeedbackItem[] {
     const feedback: EnhancedFeedbackItem[] = [];
 
-    // Extract from legacy incorporated feedback
-    story.chapterCreation.incorporatedFeedback.forEach((item, index) => {
-      feedback.push({
-        id: `legacy_${index}_${Date.now()}`,
-        source: item.source,
-        type: item.type,
-        content: item.content,
-        incorporated: item.incorporated,
-        phase: phase,
-        priority: 'medium', // Default priority
-        status: item.incorporated ? 'incorporated' : 'pending',
-        metadata: {
-          created: new Date(),
-          lastModified: new Date()
-        }
+    // Extract from chapter's incorporated feedback if it exists
+    const chapter = story.story.chapters.find(ch => ch.number === chapterNumber);
+    if (chapter && chapter.incorporatedFeedback) {
+      chapter.incorporatedFeedback.forEach((item, index) => {
+        feedback.push({
+          id: `chapter_${chapterNumber}_${index}_${Date.now()}`,
+          source: item.source,
+          type: item.type,
+          content: item.content,
+          incorporated: item.incorporated,
+          priority: 'medium', // Default priority
+          status: item.incorporated ? 'incorporated' : 'pending',
+          metadata: {
+            created: new Date(),
+            lastModified: new Date()
+          }
+        });
       });
-    });
-
-    // Extract from feedback requests
-    story.chapterCreation.feedbackRequests.forEach((request, agentId) => {
-      if (request.status === 'ready') {
-        const agentFeedback = this.convertAgentFeedbackToEnhanced(
-          request.feedback, 
-          agentId, 
-          chapterNumber
-        );
-        feedback.push(...agentFeedback);
-      }
-    });
-
-    // Extract from three-phase system if available
-    if (story.chapterCompose) {
-      const phaseData = story.chapterCompose.phases.chapterDetailer;
-      if (phaseData.feedbackIntegration) {
-        feedback.push(...phaseData.feedbackIntegration.pendingFeedback);
-        feedback.push(...phaseData.feedbackIntegration.incorporatedFeedback);
-      }
     }
 
     return feedback;
@@ -338,7 +292,6 @@ export class FeedbackService {
           type: type,
           content: content,
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: {
@@ -368,7 +321,6 @@ export class FeedbackService {
         type: 'suggestion',
         content: response.feedback.opinion,
         incorporated: false,
-        phase: 'chapter_detail',
         priority: 'medium',
         status: 'pending',
         metadata: {
@@ -383,14 +335,13 @@ export class FeedbackService {
     suggestions.forEach((suggestion: any, index: number) => {
       const content = typeof suggestion === 'string' ? suggestion : suggestion.suggestion;
       const priority = suggestion.priority || 'medium';
-      
+
       feedback.push({
         id: `rater_${raterName}_suggestion_${chapterNumber}_${index}_${Date.now()}`,
         source: raterName,
         type: 'suggestion',
         content: content,
         incorporated: false,
-        phase: 'chapter_detail',
         priority: priority,
         status: 'pending',
         metadata: {
@@ -457,25 +408,31 @@ export class FeedbackService {
 
   private storeFeedback(storyId: string, chapterNumber: number, feedback: EnhancedFeedbackItem[]): void {
     // Update cache
-    const cacheKey = `${storyId}_${chapterNumber}_chapter-detailer`;
+    const cacheKey = `${storyId}_${chapterNumber}`;
     const existingFeedback = this.feedbackCache.get(cacheKey) || [];
     this.feedbackCache.set(cacheKey, [...existingFeedback, ...feedback]);
 
-    // Update story data
+    // Update story data - store in chapter if it exists
     const story = this.localStorageService.loadStory(storyId);
-    if (story && story.chapterCompose) {
-      const phaseData = story.chapterCompose.phases.chapterDetailer;
-      phaseData.feedbackIntegration.pendingFeedback.push(...feedback);
+    if (story) {
+      const chapter = story.story.chapters.find(ch => ch.number === chapterNumber);
+      if (chapter) {
+        // Add to chapter's incorporated feedback
+        feedback.forEach(item => {
+          const feedbackItem: FeedbackItem = {
+            source: item.source,
+            type: item.type,
+            content: item.content,
+            incorporated: item.incorporated
+          };
+          chapter.incorporatedFeedback.push(feedbackItem);
+        });
+      }
       this.localStorageService.saveStory(story);
     }
   }
 
   private getPlotPointForChapter(story: Story, chapterNumber: number): string {
-    // Try to get from current chapter creation state
-    if (story.chapterCreation.plotPoint) {
-      return story.chapterCreation.plotPoint;
-    }
-
     // Try to get from existing chapters
     const chapter = story.story.chapters.find(ch => ch.number === chapterNumber);
     if (chapter) {
@@ -483,8 +440,8 @@ export class FeedbackService {
       return chapter.plotPoint || '';
     }
 
-    // Default fallback
-    return `Chapter ${chapterNumber} development`;
+    // Default fallback - use story summary or plot outline
+    return story.plotOutline?.content || story.story.summary || `Chapter ${chapterNumber} development`;
   }
 
   private findFeedbackById(feedbackId: string): EnhancedFeedbackItem | null {
@@ -516,235 +473,4 @@ export class FeedbackService {
     this.feedbackUpdatedSubject.next();
   }
 
-  // ============================================================================
-  // PHASE-AWARE FEEDBACK METHODS FOR THREE-PHASE CHAPTER COMPOSE SYSTEM (WRI-49)
-  // ============================================================================
-
-  /**
-   * Request character feedback with phase context
-   */
-  requestCharacterFeedbackWithPhase(
-    story: Story,
-    character: Character,
-    chapterNumber: number,
-    chapterComposeState?: ChapterComposeState,
-    conversationThread?: ConversationThread,
-    additionalInstructions?: string
-  ): Observable<EnhancedFeedbackItem[]> {
-    const requestId = `character_${character.id}_${Date.now()}`;
-    this.addPendingRequest(requestId);
-
-    const plotPoint = this.getPlotPointForChapter(story, chapterNumber);
-
-    return this.generationService.requestCharacterFeedbackWithPhase(
-      story,
-      character,
-      plotPoint,
-      chapterComposeState,
-      conversationThread,
-      additionalInstructions
-    ).pipe(
-      map(response => {
-        const enhancedFeedback = this.convertCharacterFeedbackToEnhanced(
-          response,
-          character.name,
-          chapterNumber
-        );
-
-        // Store feedback with phase context
-        this.storeFeedbackWithPhase(story.id, chapterNumber, enhancedFeedback, chapterComposeState);
-        this.completeRequest(requestId);
-        this.notifyFeedbackUpdated();
-
-        return enhancedFeedback;
-      }),
-      catchError(error => {
-        console.error('Character feedback request failed:', error);
-        this.failRequest(requestId);
-        return of([]);
-      })
-    );
-  }
-
-  /**
-   * Request rater feedback with phase context
-   */
-  requestRaterFeedbackWithPhase(
-    story: Story,
-    rater: Rater,
-    chapterNumber: number,
-    chapterComposeState?: ChapterComposeState,
-    conversationThread?: ConversationThread,
-    additionalInstructions?: string
-  ): Observable<EnhancedFeedbackItem[]> {
-    const requestId = `rater_${rater.id}_${Date.now()}`;
-    this.addPendingRequest(requestId);
-
-    const plotPoint = this.getPlotPointForChapter(story, chapterNumber);
-
-    return this.generationService.requestRaterFeedbackWithPhase(
-      story,
-      rater,
-      plotPoint,
-      chapterComposeState,
-      conversationThread,
-      additionalInstructions
-    ).pipe(
-      map(response => {
-        const enhancedFeedback = this.convertRaterFeedbackToEnhanced(
-          response,
-          rater.name,
-          chapterNumber
-        );
-
-        // Store feedback with phase context
-        this.storeFeedbackWithPhase(story.id, chapterNumber, enhancedFeedback, chapterComposeState);
-        this.completeRequest(requestId);
-        this.notifyFeedbackUpdated();
-
-        return enhancedFeedback;
-      }),
-      catchError(error => {
-        console.error('Rater feedback request failed:', error);
-        this.failRequest(requestId);
-        return of([]);
-      })
-    );
-  }
-
-  /**
-   * Request feedback from multiple agents with phase context
-   */
-  requestMultipleAgentFeedbackWithPhase(
-    story: Story,
-    agents: { type: 'character' | 'rater'; agent: Character | Rater }[],
-    chapterNumber: number,
-    chapterComposeState?: ChapterComposeState,
-    conversationThread?: ConversationThread,
-    additionalInstructions?: string
-  ): Observable<EnhancedFeedbackItem[]> {
-    const feedbackRequests = agents.map(({ type, agent }) => {
-      if (type === 'character') {
-        return this.requestCharacterFeedbackWithPhase(
-          story,
-          agent as Character,
-          chapterNumber,
-          chapterComposeState,
-          conversationThread,
-          additionalInstructions
-        );
-      } else {
-        return this.requestRaterFeedbackWithPhase(
-          story,
-          agent as Rater,
-          chapterNumber,
-          chapterComposeState,
-          conversationThread,
-          additionalInstructions
-        );
-      }
-    });
-
-    // Combine all feedback requests
-    return new Observable<EnhancedFeedbackItem[]>(observer => {
-      const allFeedback: EnhancedFeedbackItem[] = [];
-      let completedRequests = 0;
-
-      feedbackRequests.forEach(request => {
-        request.subscribe({
-          next: (feedback) => {
-            allFeedback.push(...feedback);
-            completedRequests++;
-
-            if (completedRequests === feedbackRequests.length) {
-              observer.next(allFeedback);
-              observer.complete();
-            }
-          },
-          error: (error) => {
-            console.error('Agent feedback request failed:', error);
-            completedRequests++;
-
-            if (completedRequests === feedbackRequests.length) {
-              observer.next(allFeedback);
-              observer.complete();
-            }
-          }
-        });
-      });
-    });
-  }
-
-  /**
-   * Store feedback with phase context
-   */
-  private storeFeedbackWithPhase(
-    storyId: string,
-    chapterNumber: number,
-    feedback: EnhancedFeedbackItem[],
-    chapterComposeState?: ChapterComposeState
-  ): void {
-    // Add phase context to feedback metadata
-    const enhancedFeedback = feedback.map(item => ({
-      ...item,
-      metadata: {
-        ...item.metadata,
-        phase_context: chapterComposeState ? {
-          current_phase: chapterComposeState.currentPhase,
-          plot_outline: chapterComposeState.phases.plotOutline.status,
-          chapter_detail: chapterComposeState.phases.chapterDetailer.status,
-          final_edit: chapterComposeState.phases.finalEdit.status
-        } : undefined
-      }
-    }));
-
-    // Use existing storage method with enhanced feedback
-    this.storeFeedback(storyId, chapterNumber, enhancedFeedback);
-  }
-
-  /**
-   * Get feedback filtered by phase
-   */
-  getFeedbackByPhase(
-    storyId: string,
-    chapterNumber: number,
-    phase: 'plot_outline' | 'chapter_detail' | 'final_edit'
-  ): EnhancedFeedbackItem[] {
-    const cacheKey = `${storyId}_${chapterNumber}_chapter-detailer`;
-    const allFeedback = this.feedbackCache.get(cacheKey) || [];
-
-    return allFeedback.filter(item => 
-      item.metadata?.phase_context?.current_phase === phase
-    );
-  }
-
-  /**
-   * Get feedback statistics by phase
-   */
-  getFeedbackStatsByPhase(
-    storyId: string,
-    chapterNumber: number
-  ): Record<string, { total: number; incorporated: number; pending: number }> {
-    const cacheKey = `${storyId}_${chapterNumber}_chapter-detailer`;
-    const allFeedback = this.feedbackCache.get(cacheKey) || [];
-
-    const stats: Record<string, { total: number; incorporated: number; pending: number }> = {};
-
-    allFeedback.forEach(item => {
-      const phase = item.metadata?.phase_context?.current_phase || 'unknown';
-      
-      if (!stats[phase]) {
-        stats[phase] = { total: 0, incorporated: 0, pending: 0 };
-      }
-
-      stats[phase].total++;
-      if (item.incorporated) {
-        stats[phase].incorporated++;
-      } else {
-        stats[phase].pending++;
-      }
-    });
-
-    return stats;
-  }
 }

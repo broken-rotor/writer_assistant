@@ -54,7 +54,6 @@ export enum ContextType {
   STORY = 'story',
   CHARACTER = 'character',
   CONVERSATION = 'conversation',
-  PHASE = 'phase',
   SERVER = 'server'
 }
 
@@ -65,7 +64,6 @@ export interface SessionContext extends BaseContext {
   type: ContextType.SESSION;
   sessionId: string;
   storyId?: string;
-  activePhase?: string;
   userPreferences: {
     autoSave: boolean;
     contextRetention: number; // days
@@ -119,7 +117,6 @@ export interface StoryContext extends BaseContext {
     tense: string;
   };
   progress: {
-    currentPhase: string;
     completedChapters: number;
     totalChapters: number;
     wordCount: number;
@@ -207,44 +204,8 @@ export interface ConversationContext extends BaseContext {
   }[];
   context: {
     topic: string;
-    phase?: string;
     relatedCharacters: string[];
     keywords: string[];
-  };
-}
-
-/**
- * Phase Context - Phase-specific context and transitions
- */
-export interface PhaseContext extends BaseContext {
-  type: ContextType.PHASE;
-  phaseId: string;
-  storyId: string;
-  phaseName: string;
-  status: 'not_started' | 'in_progress' | 'completed' | 'paused';
-  requirements: {
-    inputs: string[];
-    outputs: string[];
-    dependencies: string[];
-  };
-  agentStates: Record<string, {
-    agentId: string;
-    status: string;
-    lastActivity: Date;
-    context: any;
-  }>;
-  transitions: {
-    fromPhase: string;
-    toPhase: string;
-    condition: string;
-    timestamp?: Date;
-  }[];
-  metrics: {
-    startTime?: Date;
-    endTime?: Date;
-    duration?: number;
-    iterations: number;
-    qualityScore?: number;
   };
 }
 
@@ -273,7 +234,6 @@ export interface ContextCollection {
   storyContexts: Map<string, StoryContext>;
   characterContexts: Map<string, CharacterContext>;
   conversationContexts: Map<string, ConversationContext>;
-  phaseContexts: Map<string, PhaseContext>;
   serverContext?: ServerContext; // Optional, in-memory only
 }
 

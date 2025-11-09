@@ -126,128 +126,12 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
         )
       );
 
-      // Store the generated outline items in the story's chapter compose state
+      // Store the generated outline items as chapters in the story
       if (response.outline_items && response.outline_items.length > 0) {
-        // Initialize chapter compose state if it doesn't exist
-        if (!this.story.chapterCompose) {
-          this.story.chapterCompose = {
-            phases: {
-              plotOutline: {
-                conversation: { 
-                  id: 'plot-outline-conversation',
-                  messages: [], 
-                  currentBranchId: 'main',
-                  branches: new Map([['main', { id: 'main', name: 'Main', parentMessageId: '', messageIds: [], isActive: true, metadata: { created: new Date() } }]]),
-                  metadata: { created: new Date(), lastModified: new Date(), phase: 'plot_outline' } 
-                },
-                outline: {
-                  items: new Map(),
-                  structure: []
-                },
-                draftSummary: '',
-                status: 'active',
-                progress: {
-                  completedItems: 0,
-                  totalItems: 0,
-                  lastActivity: new Date()
-                }
-              },
-              chapterDetailer: {
-                conversation: { 
-                  id: 'chapter-detail-conversation',
-                  messages: [], 
-                  currentBranchId: 'main',
-                  branches: new Map([['main', { id: 'main', name: 'Main', parentMessageId: '', messageIds: [], isActive: true, metadata: { created: new Date() } }]]),
-                  metadata: { created: new Date(), lastModified: new Date(), phase: 'chapter_detail' } 
-                },
-                chapterDraft: {
-                  content: '',
-                  title: '',
-                  plotPoint: '',
-                  wordCount: 0,
-                  status: 'drafting'
-                },
-                feedbackIntegration: {
-                  pendingFeedback: [],
-                  incorporatedFeedback: [],
-                  feedbackRequests: new Map()
-                },
-                status: 'active',
-                progress: {
-                  feedbackIncorporated: 0,
-                  totalFeedbackItems: 0,
-                  lastActivity: new Date()
-                }
-              },
-              finalEdit: {
-                conversation: { 
-                  id: 'final-edit-conversation',
-                  messages: [], 
-                  currentBranchId: 'main',
-                  branches: new Map([['main', { id: 'main', name: 'Main', parentMessageId: '', messageIds: [], isActive: true, metadata: { created: new Date() } }]]),
-                  metadata: { created: new Date(), lastModified: new Date(), phase: 'final_edit' } 
-                },
-                finalChapter: {
-                  content: '',
-                  title: '',
-                  wordCount: 0,
-                  version: 1
-                },
-                reviewSelection: {
-                  availableReviews: [],
-                  selectedReviews: [],
-                  appliedReviews: []
-                },
-                status: 'active',
-                progress: {
-                  reviewsApplied: 0,
-                  totalReviews: 0,
-                  lastActivity: new Date()
-                }
-              }
-            },
-            currentPhase: 'plot_outline',
-            sharedContext: {
-              chapterNumber: 1,
-              targetWordCount: 2000,
-              genre: '',
-              tone: '',
-              pov: ''
-            },
-            navigation: {
-              phaseHistory: ['plot_outline'],
-              canGoBack: false,
-              canGoForward: false,
-              branchNavigation: {
-                currentBranchId: 'main',
-                availableBranches: ['main'],
-                branchHistory: [],
-                canNavigateBack: false,
-                canNavigateForward: false
-              }
-            },
-            overallProgress: {
-              currentStep: 1,
-              totalSteps: 3,
-              phaseCompletionStatus: {
-                'plot_outline': false,
-                'chapter_detail': false,
-                'final_edit': false
-              }
-            },
-            metadata: {
-              created: new Date(),
-              lastModified: new Date(),
-              version: '1.0.0'
-            }
-          };
-        }
+        // Clear existing chapters
+        this.story.story.chapters = [];
 
-        // Clear existing outline items and add new ones
-        this.story.chapterCompose!.phases.plotOutline.outline.items.clear();
-        this.story.chapterCompose!.phases.plotOutline.outline.structure = [];
-
-        // Create actual Chapter entries in story.story.chapters
+        // Create Chapter entries in story.story.chapters
         response.outline_items.forEach((item, index) => {
           const chapter: Chapter = {
             id: item.id,
@@ -268,63 +152,8 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
           this.story.story.chapters.push(chapter);
         });
 
-        // Also store in chapterCompose for backward compatibility and workflow continuity
-        // Create outline items for key plot items instead of chapter descriptions
-        let outlineItemOrder = 0;
-        response.outline_items.forEach(item => {
-          // If the chapter has key plot items, create separate outline items for each
-          if (item.key_plot_items && item.key_plot_items.length > 0) {
-            item.key_plot_items.forEach((plotItem, plotIndex) => {
-              const plotItemId = `${item.id}-plot-${plotIndex}`;
-              const outlineItem = {
-                id: plotItemId,
-                type: 'plot-point' as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
-                title: `${item.title} - Plot Point ${plotIndex + 1}`,
-                description: plotItem,
-                order: outlineItemOrder++,
-                status: item.status as 'draft' | 'reviewed' | 'approved',
-                involved_characters: (item as any).involved_characters || [],
-                metadata: {
-                  created: new Date(item.metadata.created || new Date()),
-                  lastModified: new Date(item.metadata.lastModified || new Date()),
-                  wordCountEstimate: Math.floor((item.metadata.wordCountEstimate || 0) / item.key_plot_items!.length)
-                }
-              };
+        this.toastService.showSuccess(`Successfully generated ${response.outline_items.length} chapters! Check the "Generated Chapters" section below to see your chapter breakdown.`);
 
-              this.story.chapterCompose!.phases.plotOutline.outline.items.set(plotItemId, outlineItem);
-              this.story.chapterCompose!.phases.plotOutline.outline.structure.push(plotItemId);
-            });
-          } else {
-            // Fallback: if no key plot items, use the chapter description
-            const outlineItem = {
-              id: item.id,
-              type: item.type as 'chapter' | 'scene' | 'plot-point' | 'character-arc',
-              title: item.title,
-              description: item.description,
-              order: outlineItemOrder++,
-              status: item.status as 'draft' | 'reviewed' | 'approved',
-              involved_characters: (item as any).involved_characters || [],
-              metadata: {
-                created: new Date(item.metadata.created || new Date()),
-                lastModified: new Date(item.metadata.lastModified || new Date()),
-                wordCountEstimate: item.metadata.wordCountEstimate
-              }
-            };
-
-            this.story.chapterCompose!.phases.plotOutline.outline.items.set(item.id, outlineItem);
-            this.story.chapterCompose!.phases.plotOutline.outline.structure.push(item.id);
-          }
-        });
-
-        // Update progress - count actual outline items created (not just chapters)
-        const totalOutlineItems = this.story.chapterCompose!.phases.plotOutline.outline.items.size;
-        this.story.chapterCompose!.phases.plotOutline.progress.totalItems = totalOutlineItems;
-        this.story.chapterCompose!.phases.plotOutline.progress.completedItems = totalOutlineItems;
-        this.story.chapterCompose!.phases.plotOutline.progress.lastActivity = new Date();
-        this.story.chapterCompose!.phases.plotOutline.status = 'completed';
-
-        this.toastService.showSuccess(`Successfully generated ${response.outline_items.length} chapters with ${totalOutlineItems} plot items! Check the "Generated Chapters" section below to see your chapter breakdown.`);
-        
         console.log('Chapter outlines generated successfully:', response);
       } else {
         this.toastService.showError('No chapters were generated. Please try again with a more detailed story outline.');
@@ -842,16 +671,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
       if (this.story?.story?.chapters) {
         // Clear the chapters array
         this.story.story.chapters.length = 0;
-        
-        // Also clear the chapterCompose data for consistency
-        if (this.story?.chapterCompose?.phases?.plotOutline?.outline?.items) {
-          this.story.chapterCompose.phases.plotOutline.outline.items.clear();
-          this.story.chapterCompose.phases.plotOutline.outline.structure = [];
-          this.story.chapterCompose.phases.plotOutline.progress.totalItems = 0;
-          this.story.chapterCompose.phases.plotOutline.progress.completedItems = 0;
-          this.story.chapterCompose.phases.plotOutline.status = 'active';
-        }
-        
+
         this.toastService.showSuccess('Generated chapters cleared successfully!');
       }
     }
