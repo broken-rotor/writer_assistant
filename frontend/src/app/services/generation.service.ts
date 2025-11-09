@@ -32,6 +32,7 @@ import {
   StructuredGenerateChapterRequest,
   StructuredEditorReviewRequest,
   StructuredCharacterFeedbackResponse,
+  StructuredRaterFeedbackResponse,
   StructuredGenerateChapterResponse,
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';

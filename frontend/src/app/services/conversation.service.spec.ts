@@ -1,18 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { ConversationService, ConversationConfig } from './conversation.service';
 import { LocalStorageService } from './local-storage.service';
-import { PhaseStateService } from './phase-state.service';
 import { ApiService } from './api.service';
 // ChatMessage and ConversationThread imported but not used in tests
 
 describe('ConversationService', () => {
   let service: ConversationService;
   let localStorageService: jasmine.SpyObj<LocalStorageService>;
-  let phaseStateService: jasmine.SpyObj<PhaseStateService>;
   let apiService: jasmine.SpyObj<ApiService>;
 
   const mockConfig: ConversationConfig = {
-    phase: 'plot_outline',
     storyId: 'test-story-1',
     chapterNumber: 1,
     enableBranching: true,
@@ -21,21 +18,19 @@ describe('ConversationService', () => {
 
   beforeEach(() => {
     const localStorageSpy = jasmine.createSpyObj('LocalStorageService', ['getItem', 'setItem']);
-    const phaseStateSpy = jasmine.createSpyObj('PhaseStateService', ['getCurrentPhase']);
+    
     const apiServiceSpy = jasmine.createSpyObj('ApiService', ['sendMessage', 'getConversation']);
 
     TestBed.configureTestingModule({
       providers: [
         ConversationService,
         { provide: LocalStorageService, useValue: localStorageSpy },
-        { provide: PhaseStateService, useValue: phaseStateSpy },
         { provide: ApiService, useValue: apiServiceSpy }
       ]
     });
 
     service = TestBed.inject(ConversationService);
     localStorageService = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
-    phaseStateService = TestBed.inject(PhaseStateService) as jasmine.SpyObj<PhaseStateService>;
     apiService = TestBed.inject(ApiService) as jasmine.SpyObj<ApiService>;
   });
 
@@ -53,7 +48,7 @@ describe('ConversationService', () => {
       expect(thread.messages).toEqual([]);
       expect(thread.currentBranchId).toBe('main');
       expect(thread.branches.has('main')).toBe(true);
-      expect(thread.metadata.phase).toBe('plot_outline');
+      // Test skipped - phase property removed
     });
 
     it('should load existing conversation thread from storage', () => {
@@ -107,7 +102,7 @@ describe('ConversationService', () => {
       expect(message.content).toBe('Hello world');
       expect(message.id).toBeTruthy();
       expect(message.timestamp).toBeTruthy();
-      expect(message.metadata?.phase).toBe('plot_outline');
+      // Test skipped - phase property removed
       expect(message.metadata?.branchId).toBe('main');
     });
 
@@ -125,7 +120,6 @@ describe('ConversationService', () => {
         providers: [
           ConversationService,
           { provide: LocalStorageService, useValue: localStorageService },
-          { provide: PhaseStateService, useValue: phaseStateService },
           { provide: ApiService, useValue: apiService }
         ]
       });
@@ -166,7 +160,6 @@ describe('ConversationService', () => {
         providers: [
           ConversationService,
           { provide: LocalStorageService, useValue: localStorageService },
-          { provide: PhaseStateService, useValue: phaseStateService },
           { provide: ApiService, useValue: apiService }
         ]
       });
@@ -262,7 +255,6 @@ describe('ConversationService', () => {
         providers: [
           ConversationService,
           { provide: LocalStorageService, useValue: localStorageService },
-          { provide: PhaseStateService, useValue: phaseStateService },
           { provide: ApiService, useValue: apiService }
         ]
       });
@@ -379,7 +371,6 @@ describe('ConversationService', () => {
         providers: [
           ConversationService,
           { provide: LocalStorageService, useValue: localStorageService },
-          { provide: PhaseStateService, useValue: phaseStateService },
           { provide: ApiService, useValue: apiService }
         ]
       });

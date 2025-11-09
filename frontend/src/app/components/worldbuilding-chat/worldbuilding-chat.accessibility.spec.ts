@@ -40,11 +40,6 @@ describe('WorldbuildingChatComponent Accessibility', () => {
         version: 1
       }
     },
-    chapterCreation: {
-      plotPoint: '',
-      incorporatedFeedback: [],
-      feedbackRequests: new Map()
-    },
     metadata: {
       version: '1.0.0',
       created: new Date(),
@@ -69,7 +64,6 @@ describe('WorldbuildingChatComponent Accessibility', () => {
     metadata: {
       created: new Date(),
       lastModified: new Date(),
-      phase: 'worldbuilding' as any
     }
   };
 

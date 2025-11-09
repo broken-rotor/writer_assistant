@@ -49,11 +49,6 @@ describe('WorldbuildingTabComponent', () => {
       summary: 'Test summary',
       chapters: []
     },
-    chapterCreation: {
-      plotPoint: 'Test plot point',
-      incorporatedFeedback: [],
-      feedbackRequests: new Map()
-    },
     metadata: {
       version: '1.0',
       created: new Date(),
@@ -173,7 +168,7 @@ describe('WorldbuildingTabComponent', () => {
     storyCopy.characters = new Map();
     storyCopy.raters = new Map();
     storyCopy.plotOutline.raterFeedback = new Map();
-    storyCopy.chapterCreation.feedbackRequests = new Map();
+//     storyCopy.chapterCreation.feedbackRequests = new Map();
     component.story = storyCopy;
   });
 

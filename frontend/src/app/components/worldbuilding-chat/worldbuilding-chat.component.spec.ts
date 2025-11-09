@@ -41,11 +41,6 @@ describe('WorldbuildingChatComponent', () => {
         version: 1
       }
     },
-    chapterCreation: {
-      plotPoint: '',
-      incorporatedFeedback: [],
-      feedbackRequests: new Map()
-    },
     metadata: {
       version: '1.0.0',
       created: new Date(),
@@ -70,7 +65,6 @@ describe('WorldbuildingChatComponent', () => {
     metadata: {
       created: new Date(),
       lastModified: new Date(),
-      phase: 'worldbuilding' as any
     }
   };
 
@@ -142,7 +136,7 @@ describe('WorldbuildingChatComponent', () => {
     fixture.detectChanges();
     
     expect(component.chatConfig).toBeDefined();
-    expect(component.chatConfig?.phase).toBe('worldbuilding' as any);
+    // Test skipped - phase property removed
     expect(component.chatConfig?.storyId).toBe('test-story-id');
     expect(component.chatConfig?.chapterNumber).toBe(0);
     expect(component.chatConfig?.enableBranching).toBe(true);

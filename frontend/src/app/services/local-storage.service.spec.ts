@@ -207,11 +207,6 @@ function createMockStory(id: string, title: string): Story {
       summary: '',
       chapters: []
     },
-    chapterCreation: {
-      plotPoint: '',
-      incorporatedFeedback: [],
-      feedbackRequests: new Map()
-    },
     metadata: {
       version: '1.0',
       created: new Date(),

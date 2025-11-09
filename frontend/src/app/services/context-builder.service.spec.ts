@@ -8,7 +8,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ContextBuilderService } from './context-builder.service';
 import { TokenCountingService } from './token-counting.service';
-import { Story, Character, FeedbackItem, ConversationThread, ChapterComposeState } from '../models/story.model';
+import { Story, Character, FeedbackItem, ConversationThread } from '../models/story.model';
 import {
   ContextBuildOptions
 } from '../models/context-builder.model';
@@ -134,11 +134,6 @@ describe('ContextBuilderService', () => {
         lastModified: new Date('2023-01-01'),
         version: 1
       }
-    },
-    chapterCreation: {
-      plotPoint: 'Test plot point',
-      incorporatedFeedback: [],
-      feedbackRequests: new Map()
     },
     metadata: {
       version: '1.0.0',
@@ -544,116 +539,7 @@ describe('ContextBuilderService', () => {
     });
   });
 
-  describe('buildPhaseContext', () => {
-    const mockChapterComposeState: ChapterComposeState = {
-      currentPhase: 'chapter_detail',
-      phases: {
-        plotOutline: {
-          status: 'completed',
-          outline: {
-            items: new Map([
-              ['item1', { id: 'item1', title: 'Opening Scene', description: 'Hero begins journey', order: 1 }],
-              ['item2', { id: 'item2', title: 'Conflict', description: 'Hero faces challenge', order: 2 }]
-            ])
-          }
-        } as any,
-        chapterDetailer: {
-          status: 'in_progress',
-          chapterDraft: {
-            content: 'Draft chapter content...'
-          }
-        } as any,
-        finalEdit: {
-          status: 'not_started'
-        } as any
-      },
-      sharedContext: {
-        chapterNumber: 1,
-        targetWordCount: 2000,
-        genre: 'fantasy',
-        tone: 'dramatic',
-        pov: 'third_person'
-      },
-      navigation: {
-        phaseHistory: ['plot_outline', 'chapter_detail'],
-        canGoBack: true,
-        canGoForward: false,
-        branchNavigation: {} as any
-      },
-      overallProgress: {
-        currentStep: 2,
-        totalSteps: 3,
-        phaseCompletionStatus: {
-          'plot_outline': true,
-          'chapter_detail': false,
-          'final_edit': false
-        },
-        estimatedTimeRemaining: 30
-      },
-      metadata: {
-        created: new Date('2023-01-01'),
-        lastModified: new Date('2023-01-01'),
-        version: '1.0.0'
-      }
-    } as ChapterComposeState;
-
-    it('should build valid phase context with plot outline', () => {
-      const result = service.buildPhaseContext(mockChapterComposeState, mockConversationThread, 'Additional instructions');
-
-      expect(result.success).toBe(true);
-      expect(result.data).toBeDefined();
-      expect(result.data!.currentPhase).toBe('chapter_detail');
-      expect(result.data!.isValid).toBe(true);
-      expect(result.data!.previousPhaseOutput).toContain('Opening Scene: Hero begins journey');
-      expect(result.data!.previousPhaseOutput).toContain('Conflict: Hero faces challenge');
-      expect(result.data!.phaseSpecificInstructions).toBe('Additional instructions');
-      expect(result.data!.conversationHistory).toBeDefined();
-      expect(result.data!.conversationHistory!.length).toBe(3);
-      expect(result.data!.conversationBranchId).toBe('branch1');
-    });
-
-    it('should handle final edit phase', () => {
-      const finalEditState = {
-        ...mockChapterComposeState,
-        currentPhase: 'final_edit',
-        phases: {
-          ...mockChapterComposeState.phases,
-          chapterDetailer: {
-            status: 'completed',
-            chapterDraft: {
-              content: 'Completed chapter draft content...'
-            }
-          }
-        }
-      } as ChapterComposeState;
-
-      const result = service.buildPhaseContext(finalEditState);
-
-      expect(result.success).toBe(true);
-      expect(result.data!.previousPhaseOutput).toBe('Completed chapter draft content...');
-    });
-
-    it('should handle empty chapter compose state', () => {
-      const result = service.buildPhaseContext(undefined);
-
-      expect(result.success).toBe(true);
-      expect(result.data!.currentPhase).toBe('');
-      expect(result.data!.isValid).toBe(false);
-    });
-
-    it('should validate current phase', () => {
-      const invalidState = {
-        ...mockChapterComposeState,
-        currentPhase: 'plot_outline' as const
-      } as ChapterComposeState;
-
-      const result = service.buildPhaseContext(invalidState);
-
-      expect(result.success).toBe(true);
-      expect(result.errors).toBeDefined();
-      expect(result.errors!.some(e => e.field === 'currentPhase')).toBe(true);
-    });
-  });
+  // buildPhaseContext tests removed - functionality no longer exists
 
   describe('buildChapterGenerationContext', () => {
     it('should build complete chapter generation context', () => {

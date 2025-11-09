@@ -75,52 +75,7 @@ describe('ReviewService', () => {
     story: {
       summary: 'Test summary',
       chapters: []
-    },
-    chapterCreation: {
-      plotPoint: 'Test plot point',
-      generatedChapter: undefined,
-      incorporatedFeedback: [],
-      feedbackRequests: new Map(),
-      editorReview: undefined
-    },
-    chapterCompose: {
-      currentPhase: 'final_edit',
-      phases: {
-        plotOutline: {} as any,
-        chapterDetailer: {} as any,
-        finalEdit: {
-          conversation: {} as any,
-          finalChapter: {
-            content: 'Test chapter content',
-            title: 'Test Chapter',
-            wordCount: 100,
-            version: 1
-          },
-          reviewSelection: {
-            availableReviews: [],
-            selectedReviews: [],
-            appliedReviews: []
-          },
-          status: 'active',
-          progress: {
-            reviewsApplied: 0,
-            totalReviews: 0,
-            lastActivity: new Date()
-          }
-        }
-      },
-      sharedContext: {
-        chapterNumber: 1,
-        targetWordCount: 2000
-      },
-      navigation: {} as any,
-      overallProgress: {} as any,
-      metadata: {
-        created: new Date(),
-        lastModified: new Date(),
-        version: '1.0'
-      }
-    },
+    } as any,
     metadata: {
       created: new Date(),
       lastModified: new Date(),
@@ -165,11 +120,11 @@ describe('ReviewService', () => {
     localStorageServiceSpy = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
 
     // Reset mockStory to clean state for each test
-    if (mockStory.chapterCompose) {
-      mockStory.chapterCompose.phases.finalEdit.reviewSelection.availableReviews = [];
-      mockStory.chapterCompose.phases.finalEdit.reviewSelection.selectedReviews = [];
-      mockStory.chapterCompose.phases.finalEdit.reviewSelection.appliedReviews = [];
-    }
+//     if (mockStory.chapterCompose) {
+//       mockStory.chapterCompose.phases.finalEdit.reviewSelection.availableReviews = [];
+//       mockStory.chapterCompose.phases.finalEdit.reviewSelection.selectedReviews = [];
+//       mockStory.chapterCompose.phases.finalEdit.reviewSelection.appliedReviews = [];
+//     }
   });
 
   it('should be created', () => {
