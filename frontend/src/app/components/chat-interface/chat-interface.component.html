@@ -2,7 +2,7 @@
   <!-- Chat Header -->
   <div class="chat-header">
     <div class="chat-title">
-      <h3>{{ config.phase | titlecase }} Phase</h3>
+      <h3>Story Chat</h3>
       <span class="branch-indicator" *ngIf="branchNavigation">
         Branch: <strong>{{ getCurrentBranchName() }}</strong>
       </span>
@@ -42,7 +42,7 @@
     <div class="empty-state" *ngIf="messages.length === 0">
       <div class="empty-icon">💬</div>
       <h4>Start Your Conversation</h4>
-      <p>Begin your {{ config.phase }} phase by typing a message below.</p>
+      <p>Begin your story conversation by typing a message below.</p>
     </div>
 
     <!-- Messages List -->

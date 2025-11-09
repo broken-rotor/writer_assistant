@@ -45,8 +45,7 @@ def extract_editor_review_result_from_streaming_response(response):
 from app.main import app
 from app.models.context_models import (
     ContextType,
-    AgentType,
-    ComposePhase
+    AgentType
 )
 from app.models.generation_models import (
     StructuredContextContainer,
@@ -124,7 +123,6 @@ class TestStructuredContextAPI:
         request_data = {
             "context_mode": "structured",
             "structured_context": sample_structured_context.model_dump(mode='json'),
-            "compose_phase": "chapter_detail",
             "plotPoint": "Discovery of hidden truth",
             "characters": [
                 {

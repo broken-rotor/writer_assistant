@@ -8,7 +8,7 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-import { Story, FeedbackItem, ConversationThread, ChapterComposeState } from '../models/story.model';
+import { Story, FeedbackItem, ConversationThread } from '../models/story.model';
 import {
   SystemPromptsContext,
   WorldbuildingContext,
@@ -21,7 +21,6 @@ import {
   FeedbackContext,
   ConversationContext,
   StructuredMessage,
-  PhaseContext,
   ChapterGenerationContext,
   ContextValidationResult,
   ContextValidationError,
@@ -490,81 +489,6 @@ export class ContextBuilderService {
     }
   }
 
-  /**
-   * Build phase context
-   */
-  buildPhaseContext(
-    chapterComposeState?: ChapterComposeState,
-    conversationThread?: ConversationThread,
-    additionalInstructions?: string,
-    _options: ContextBuildOptions = {}
-  ): ContextBuilderResponse<PhaseContext> {
-    try {
-      if (!chapterComposeState) {
-        return {
-          success: true,
-          data: {
-            currentPhase: '',
-            isValid: false
-          },
-          fromCache: false
-        };
-      }
-
-      const context: PhaseContext = {
-        currentPhase: chapterComposeState.currentPhase,
-        isValid: true
-      };
-
-      // Add previous phase output based on current phase
-      const currentPhase = chapterComposeState.currentPhase;
-      if (currentPhase === 'chapter_detail' && chapterComposeState.phases.plotOutline.status === 'completed') {
-        const outlineItems = Array.from(chapterComposeState.phases.plotOutline.outline.items.values());
-        context.previousPhaseOutput = outlineItems
-          .sort((a, b) => a.order - b.order)
-          .map(item => `${item.title}: ${item.description}`)
-          .join('\n\n');
-      } else if (currentPhase === 'final_edit' && chapterComposeState.phases.chapterDetailer.status === 'completed') {
-        context.previousPhaseOutput = chapterComposeState.phases.chapterDetailer.chapterDraft.content;
-      }
-
-      // Add phase-specific instructions
-      if (additionalInstructions) {
-        context.phaseSpecificInstructions = additionalInstructions;
-      }
-
-      // Add conversation history if available
-      if (conversationThread && conversationThread.messages.length > 0) {
-        const recentMessages = conversationThread.messages.slice(-5);
-        context.conversationHistory = recentMessages.map(msg => ({
-          role: msg.type === 'user' ? 'user' : 'assistant',
-          content: msg.content,
-          timestamp: msg.timestamp.toISOString()
-        }));
-        context.conversationBranchId = conversationThread.currentBranchId;
-      }
-
-      const validation = this.validatePhaseContext(context, chapterComposeState);
-
-      return {
-        success: true,
-        data: context,
-        errors: validation.errors,
-        warnings: validation.warnings,
-        fromCache: false
-      };
-    } catch (error) {
-      return {
-        success: false,
-        errors: [{
-          field: 'phase',
-          message: `Failed to build phase context: ${error}`,
-          severity: 'error'
-        }]
-      };
-    }
-  }
-
   // ============================================================================
   // PUBLIC API - COMPOSITE CONTEXT BUILDERS
   // ============================================================================
@@ -577,7 +501,6 @@ export class ContextBuilderService {
     plotPoint: string,
     incorporatedFeedback: FeedbackItem[] = [],
     conversationThread?: ConversationThread,
-    chapterComposeState?: ChapterComposeState,
     additionalInstructions?: string,
     options: ContextBuildOptions = {}
   ): ContextBuilderResponse<ChapterGenerationContext> {
@@ -626,15 +549,6 @@ export class ContextBuilderService {
           context.conversation = conversationResult.data;
           if (conversationResult.errors) errors.push(...conversationResult.errors);
           if (conversationResult.warnings) warnings.push(...conversationResult.warnings);
-        }
-      }
-
-      if (chapterComposeState) {
-        const phaseResult = this.buildPhaseContext(chapterComposeState, conversationThread, additionalInstructions, options);
-        if (phaseResult.success && phaseResult.data) {
-          context.phase = phaseResult.data;
-          if (phaseResult.errors) errors.push(...phaseResult.errors);
-          if (phaseResult.warnings) warnings.push(...phaseResult.warnings);
         }
       }
 
@@ -852,54 +766,4 @@ export class ContextBuilderService {
     return { isValid: errors.length === 0, errors, warnings };
   }
 
-  private validatePhaseContext(context: PhaseContext, chapterComposeState?: ChapterComposeState): ContextValidationResult {
-    const errors: ContextValidationError[] = [];
-    const warnings: ContextValidationWarning[] = [];
-
-    if (!context.currentPhase) {
-      errors.push({
-        field: 'currentPhase',
-        message: 'Current phase is required',
-        severity: 'error'
-      });
-    }
-
-    // Validate phase consistency with state
-    if (chapterComposeState && context.currentPhase) {
-      const currentPhase = context.currentPhase;
-      const phases = chapterComposeState.phases;
-
-      // Check if current phase is inconsistent with completed phases
-      if (currentPhase === 'plot_outline' && phases.plotOutline?.status === 'completed') {
-        errors.push({
-          field: 'currentPhase',
-          message: 'Cannot be in plot_outline phase when plot outline is already completed',
-          severity: 'error'
-        });
-      } else if (currentPhase === 'chapter_detail' && phases.chapterDetailer?.status === 'completed') {
-        errors.push({
-          field: 'currentPhase',
-          message: 'Cannot be in chapter_detail phase when chapter detailing is already completed',
-          severity: 'error'
-        });
-      }
-
-      // Check if current phase has prerequisites
-      if (currentPhase === 'chapter_detail' && phases.plotOutline?.status !== 'completed') {
-        warnings.push({
-          field: 'currentPhase',
-          message: 'Chapter detail phase should wait for plot outline completion',
-          suggestion: 'Complete the plot outline phase first'
-        });
-      } else if (currentPhase === 'final_edit' && phases.chapterDetailer?.status !== 'completed') {
-        warnings.push({
-          field: 'currentPhase',
-          message: 'Final edit phase should wait for chapter detailing completion',
-          suggestion: 'Complete the chapter detailing phase first'
-        });
-      }
-    }
-
-    return { isValid: errors.length === 0, errors, warnings };
-  }
 }

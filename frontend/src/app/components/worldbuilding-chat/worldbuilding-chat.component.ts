@@ -63,7 +63,6 @@ export class WorldbuildingChatComponent implements OnInit, OnDestroy, OnChanges 
 
     // Configure chat interface for worldbuilding
     this.chatConfig = {
-      phase: 'worldbuilding' as any,
       storyId: this.story.id,
       chapterNumber: 0,
       placeholder: 'Ask about worldbuilding, describe your world, or request assistance...',

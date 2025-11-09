@@ -40,8 +40,7 @@ async def modify_chapter(request: ModifyChapterRequest):
                 original_chapter=request.currentChapter,
                 modification_request=request.userRequest,
                 # Phase context
-                compose_phase=request.compose_phase,
-                phase_context=request.phase_context,
+                
                 # Structured context (required)
                 structured_context=request.structured_context,
                 context_processing_config=request.context_processing_config

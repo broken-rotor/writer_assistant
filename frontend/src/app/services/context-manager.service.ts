@@ -1,14 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { 
-  BaseContext, 
-  ContextType, 
+import {
+  BaseContext,
+  ContextType,
   ContextCollection,
   SessionContext,
   StoryContext,
   CharacterContext,
   ConversationContext,
-  PhaseContext,
   ServerContext,
   ContextQuery,
   ContextOperationResult,
@@ -32,8 +31,7 @@ export class ContextManagerService {
     sessionContext: this.createDefaultSessionContext(),
     storyContexts: new Map(),
     characterContexts: new Map(),
-    conversationContexts: new Map(),
-    phaseContexts: new Map()
+    conversationContexts: new Map()
   });
 
   // Current active context IDs
@@ -42,7 +40,6 @@ export class ContextManagerService {
     storyId?: string;
     characterId?: string;
     conversationId?: string;
-    phaseId?: string;
   }>({});
 
   public contextCollection$ = this.contextCollectionSubject.asObservable();
@@ -343,9 +340,6 @@ export class ContextManagerService {
         case ContextType.CONVERSATION:
           updatedActive.conversationId = contextId;
           break;
-        case ContextType.PHASE:
-          updatedActive.phaseId = contextId;
-          break;
       }
 
       this.activeContextsSubject.next(updatedActive);
@@ -383,11 +377,8 @@ export class ContextManagerService {
         return activeIds.characterId ? 
           (collection.characterContexts.get(activeIds.characterId) as unknown as T) || null : null;
       case ContextType.CONVERSATION:
-        return activeIds.conversationId ? 
+        return activeIds.conversationId ?
           (collection.conversationContexts.get(activeIds.conversationId) as unknown as T) || null : null;
-      case ContextType.PHASE:
-        return activeIds.phaseId ? 
-          (collection.phaseContexts.get(activeIds.phaseId) as unknown as T) || null : null;
       default:
         return null;
     }
@@ -505,9 +496,6 @@ export class ContextManagerService {
       case ContextType.CONVERSATION:
         collection.conversationContexts.set(context.id, context as ConversationContext);
         break;
-      case ContextType.PHASE:
-        collection.phaseContexts.set(context.id, context as PhaseContext);
-        break;
       case ContextType.SERVER:
         collection.serverContext = context as ServerContext;
         break;
@@ -532,9 +520,6 @@ export class ContextManagerService {
       case ContextType.CONVERSATION:
         collection.conversationContexts.delete(contextId);
         break;
-      case ContextType.PHASE:
-        collection.phaseContexts.delete(contextId);
-        break;
       case ContextType.SERVER:
         collection.serverContext = undefined;
         break;
@@ -549,10 +534,9 @@ export class ContextManagerService {
   private async updateSessionContextActiveIds(activeIds: any): Promise<void> {
     try {
       const sessionContext = this.getCurrentContextCollection().sessionContext;
-      
+
       const updates: Partial<SessionContext> = {
-        storyId: activeIds.storyId,
-        activePhase: activeIds.phaseId
+        storyId: activeIds.storyId
       };
 
       await this.updateContext(sessionContext.id, ContextType.SESSION, updates);

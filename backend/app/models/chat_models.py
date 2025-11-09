@@ -4,7 +4,7 @@ Separate from RAG chat functionality.
 """
 from typing import List, Optional, Literal, Dict, Any
 from pydantic import BaseModel
-from .generation_models import ConversationMessage, ComposePhase, SystemPrompts
+from .generation_models import ConversationMessage, SystemPrompts
 
 
 # Agent types for LLM chat
@@ -12,8 +12,7 @@ AgentType = Literal['writer', 'character', 'editor', 'worldbuilding']
 
 
 class ChatComposeContext(BaseModel):
-    """Context for three-phase compose system chat."""
-    current_phase: ComposePhase
+    """Context for compose system chat."""
     story_context: Dict[str, Any]  # Flexible story context
     chapter_draft: Optional[str] = None
     conversation_branch_id: Optional[str] = None

@@ -123,18 +123,6 @@ export interface StructuredMessage {
   messageId?: string;
 }
 
-/**
- * Phase-specific context for multi-phase workflows
- */
-export interface PhaseContext {
-  currentPhase: string;
-  previousPhaseOutput?: string;
-  phaseSpecificInstructions?: string;
-  conversationHistory?: StructuredMessage[];
-  conversationBranchId?: string;
-  isValid: boolean;
-}
-
 // ============================================================================
 // COMPOSITE CONTEXT INTERFACES
 // ============================================================================
@@ -151,7 +139,6 @@ export interface ChapterGenerationContext {
   plotPoint: PlotContext;
   feedback: FeedbackContext;
   conversation?: ConversationContext;
-  phase?: PhaseContext;
 }
 
 /**
@@ -183,7 +170,6 @@ export interface FeedbackRequestContext {
     type: 'character' | 'rater';
     name: string;
   };
-  phase?: PhaseContext;
 }
 
 // ============================================================================

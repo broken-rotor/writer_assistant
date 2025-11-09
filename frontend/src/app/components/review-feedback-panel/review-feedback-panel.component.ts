@@ -10,7 +10,6 @@ import {
   Rater
 } from '../../models/story.model';
 import { ReviewService, ReviewRequestStatus, QualityScore, ComprehensiveReviewRequest } from '../../services/review.service';
-import { PhaseStateService } from '../../services/phase-state.service';
 
 export interface ReviewFeedbackPanelConfig {
   storyId: string;
@@ -54,7 +53,6 @@ export class ReviewFeedbackPanelComponent implements OnInit, OnDestroy {
   @Output() addToChat = new EventEmitter<AddToChatEvent>();
 
   private reviewService = inject(ReviewService);
-  private phaseStateService = inject(PhaseStateService);
   private subscriptions: Subscription[] = [];
 
   // Component state

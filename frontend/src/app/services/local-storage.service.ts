@@ -65,17 +65,11 @@ export class LocalStorageService {
         ...story,
         characters: Array.from(story.characters.entries()),
         raters: Array.from(story.raters.entries()),
-        chapterCreation: {
-          ...story.chapterCreation,
-          feedbackRequests: Array.from(story.chapterCreation.feedbackRequests.entries())
-        },
         // Serialize plotOutline.raterFeedback Map if it exists
         plotOutline: story.plotOutline ? {
           ...story.plotOutline,
           raterFeedback: Array.from(story.plotOutline.raterFeedback.entries())
-        } : undefined,
-        // Serialize ChapterComposeState if it exists
-        chapterCompose: story.chapterCompose ? this.serializeChapterComposeState(story.chapterCompose) : undefined
+        } : undefined
       };
 
       localStorage.setItem(key, JSON.stringify(serializedStory));
@@ -104,10 +98,6 @@ export class LocalStorageService {
         ...parsed,
         characters: new Map(parsed.characters || []),
         raters: new Map(parsed.raters || []),
-        chapterCreation: {
-          ...parsed.chapterCreation,
-          feedbackRequests: new Map(parsed.chapterCreation?.feedbackRequests || [])
-        },
         // Deserialize plotOutline.raterFeedback Map if it exists
         plotOutline: parsed.plotOutline ? {
           ...parsed.plotOutline,
@@ -120,8 +110,6 @@ export class LocalStorageService {
             lastFeedbackRequest: parsed.plotOutline.metadata.lastFeedbackRequest ? new Date(parsed.plotOutline.metadata.lastFeedbackRequest) : undefined
           }
         } : undefined,
-        // Deserialize ChapterComposeState if it exists
-        chapterCompose: parsed.chapterCompose ? this.deserializeChapterComposeState(parsed.chapterCompose) : undefined,
         metadata: {
           ...parsed.metadata,
           created: new Date(parsed.metadata.created),
@@ -313,11 +301,7 @@ export class LocalStorageService {
         story: {
           ...story,
           characters: Array.from(story.characters.entries()),
-          raters: Array.from(story.raters.entries()),
-          chapterCreation: {
-            ...story.chapterCreation,
-            feedbackRequests: Array.from(story.chapterCreation.feedbackRequests.entries())
-          }
+          raters: Array.from(story.raters.entries())
         }
       };
 
@@ -339,11 +323,7 @@ export class LocalStorageService {
         stories.push({
           ...story,
           characters: Array.from(story.characters.entries()),
-          raters: Array.from(story.raters.entries()),
-          chapterCreation: {
-            ...story.chapterCreation,
-            feedbackRequests: Array.from(story.chapterCreation.feedbackRequests.entries())
-          }
+          raters: Array.from(story.raters.entries())
         });
       }
     });
@@ -380,10 +360,6 @@ export class LocalStorageService {
             ...storyData,
             characters: new Map(storyData.characters || []),
             raters: new Map(storyData.raters || []),
-            chapterCreation: {
-              ...storyData.chapterCreation,
-              feedbackRequests: new Map(storyData.chapterCreation?.feedbackRequests || [])
-            },
             metadata: {
               ...storyData.metadata,
               created: new Date(storyData.metadata.created),
@@ -469,67 +445,6 @@ export class LocalStorageService {
     }
   }
 
-  // ChapterComposeState serialization methods
-  private serializeChapterComposeState(state: any): any {
-    return {
-      ...state,
-      phases: {
-        plotOutline: {
-          ...state.phases.plotOutline,
-          conversation: this.serializeConversationThread(state.phases.plotOutline.conversation),
-          outline: {
-            ...state.phases.plotOutline.outline,
-            items: Array.from(state.phases.plotOutline.outline.items.entries())
-          }
-        },
-        chapterDetailer: {
-          ...state.phases.chapterDetailer,
-          conversation: this.serializeConversationThread(state.phases.chapterDetailer.conversation),
-          feedbackIntegration: {
-            ...state.phases.chapterDetailer.feedbackIntegration,
-            feedbackRequests: Array.from(state.phases.chapterDetailer.feedbackIntegration.feedbackRequests.entries())
-          }
-        },
-        finalEdit: {
-          ...state.phases.finalEdit,
-          conversation: this.serializeConversationThread(state.phases.finalEdit.conversation)
-        }
-      }
-    };
-  }
-
-  private deserializeChapterComposeState(serialized: any): any {
-    return {
-      ...serialized,
-      phases: {
-        plotOutline: {
-          ...serialized.phases.plotOutline,
-          conversation: this.deserializeConversationThread(serialized.phases.plotOutline.conversation),
-          outline: {
-            ...serialized.phases.plotOutline.outline,
-            items: new Map(serialized.phases.plotOutline.outline.items || [])
-          }
-        },
-        chapterDetailer: {
-          ...serialized.phases.chapterDetailer,
-          conversation: this.deserializeConversationThread(serialized.phases.chapterDetailer.conversation),
-          feedbackIntegration: {
-            ...serialized.phases.chapterDetailer.feedbackIntegration,
-            feedbackRequests: new Map(serialized.phases.chapterDetailer.feedbackIntegration.feedbackRequests || [])
-          }
-        },
-        finalEdit: {
-          ...serialized.phases.finalEdit,
-          conversation: this.deserializeConversationThread(serialized.phases.finalEdit.conversation)
-        }
-      },
-      metadata: {
-        ...serialized.metadata,
-        created: new Date(serialized.metadata.created),
-        lastModified: new Date(serialized.metadata.lastModified)
-      }
-    };
-  }
 
   private serializeConversationThread(conversation: any): any {
     return {

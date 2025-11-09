@@ -71,7 +71,7 @@ describe('FeedbackService', () => {
       chapters: []
     },
     plotOutline: {
-      content: '',
+      content: 'Test plot point',
       status: 'draft',
       chatHistory: [],
       raterFeedback: new Map(),
@@ -80,137 +80,6 @@ describe('FeedbackService', () => {
         lastModified: new Date(),
         version: 1
       }
-    },
-    chapterCompose: {
-      currentPhase: 'plot_outline',
-      phases: {
-        plotOutline: {
-          conversation: {
-            id: 'conv-1',
-            messages: [],
-            currentBranchId: 'main',
-            branches: new Map(),
-            metadata: {
-              created: new Date(),
-              lastModified: new Date(),
-              phase: 'plot_outline'
-            }
-          },
-          status: 'active',
-          outline: {
-            items: new Map(),
-            structure: []
-          },
-          draftSummary: '',
-          progress: {
-            totalItems: 0,
-            completedItems: 0,
-            lastActivity: new Date()
-          }
-        },
-        chapterDetailer: {
-          conversation: {
-            id: 'conv-2',
-            messages: [],
-            currentBranchId: 'main',
-            branches: new Map(),
-            metadata: {
-              created: new Date(),
-              lastModified: new Date(),
-              phase: 'chapter_detail'
-            }
-          },
-          chapterDraft: {
-            content: '',
-            title: '',
-            plotPoint: '',
-            wordCount: 0,
-            status: 'drafting'
-          },
-          feedbackIntegration: {
-            pendingFeedback: [],
-            incorporatedFeedback: [],
-            feedbackRequests: new Map()
-          },
-          status: 'active',
-          progress: {
-            feedbackIncorporated: 0,
-            totalFeedbackItems: 0,
-            lastActivity: new Date()
-          }
-        },
-        finalEdit: {
-          conversation: {
-            id: 'conv-3',
-            messages: [],
-            currentBranchId: 'main',
-            branches: new Map(),
-            metadata: {
-              created: new Date(),
-              lastModified: new Date(),
-              phase: 'final_edit'
-            }
-          },
-          finalChapter: {
-            content: '',
-            title: '',
-            wordCount: 0,
-            version: 1
-          },
-          reviewSelection: {
-            availableReviews: [],
-            selectedReviews: [],
-            appliedReviews: []
-          },
-          status: 'active',
-          progress: {
-            reviewsApplied: 0,
-            totalReviews: 0,
-            lastActivity: new Date()
-          }
-        }
-      },
-      sharedContext: {
-        chapterNumber: 1
-      },
-      navigation: {
-        phaseHistory: ['plot_outline'],
-        canGoBack: false,
-        canGoForward: false,
-        branchNavigation: {
-          currentBranchId: 'main',
-          availableBranches: ['main'],
-          branchHistory: [],
-          canNavigateBack: false,
-          canNavigateForward: false
-        }
-      },
-      overallProgress: {
-        currentStep: 1,
-        totalSteps: 3,
-        phaseCompletionStatus: {
-          'plot_outline': false,
-          'chapter_detail': false,
-          'final_edit': false
-        }
-      },
-      metadata: {
-        created: new Date(),
-        lastModified: new Date(),
-        version: '1'
-      }
-    },
-    chapterCreation: {
-      plotPoint: 'Test plot point',
-      incorporatedFeedback: [
-        {
-          source: 'John Doe',
-          type: 'action',
-          content: 'Existing feedback',
-          incorporated: true
-        }
-      ],
-      feedbackRequests: new Map()
     },
     metadata: {
       version: '1.0',
@@ -298,7 +167,6 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test feedback',
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
@@ -306,16 +174,47 @@ describe('FeedbackService', () => {
       ];
 
       // Set cache
-      service['feedbackCache'].set('test-story-id_1_chapter_detail', mockFeedback);
+      service['feedbackCache'].set('test-story-id_1', mockFeedback);
 
-      const result = service.getAvailableFeedback('test-story-id', 1, 'chapter_detail');
+      const result = service.getAvailableFeedback('test-story-id', 1);
 
       expect(result).toEqual(mockFeedback);
       expect(mockLocalStorageService.loadStory).not.toHaveBeenCalled();
     });
 
     it('should load feedback from story if not cached', () => {
-      const result = service.getAvailableFeedback('test-story-id', 1, 'chapter_detail');
+      // Add a chapter with incorporated feedback to mockStory
+      const storyWithFeedback = {
+        ...mockStory,
+        story: {
+          ...mockStory.story,
+          chapters: [
+            {
+              id: 'ch1',
+              number: 1,
+              title: 'Chapter 1',
+              content: 'Content',
+              plotPoint: 'Chapter plot point',
+              incorporatedFeedback: [
+                {
+                  source: 'John Doe',
+                  type: 'action' as const,
+                  content: 'Test feedback',
+                  incorporated: false
+                }
+              ],
+              metadata: {
+                created: new Date(),
+                lastModified: new Date(),
+                wordCount: 100
+              }
+            }
+          ]
+        }
+      };
+      mockLocalStorageService.loadStory.and.returnValue(storyWithFeedback);
+
+      const result = service.getAvailableFeedback('test-story-id', 1);
 
       expect(mockLocalStorageService.loadStory).toHaveBeenCalledWith('test-story-id');
       expect(result.length).toBeGreaterThan(0);
@@ -325,7 +224,7 @@ describe('FeedbackService', () => {
     it('should return empty array if story not found', () => {
       mockLocalStorageService.loadStory.and.returnValue(null);
 
-      const result = service.getAvailableFeedback('nonexistent', 1, 'chapter_detail');
+      const result = service.getAvailableFeedback('nonexistent', 1);
 
       expect(result).toEqual([]);
     });
@@ -405,7 +304,6 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test feedback',
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
@@ -415,9 +313,7 @@ describe('FeedbackService', () => {
       service.addFeedbackToChat(
         'test-story-id',
         1,
-        'chapter_detail',
-        mockFeedback,
-        'User comment'
+        mockFeedback
       ).subscribe(result => {
         expect(result).toBeTrue();
         expect(mockConversationService.sendMessage).toHaveBeenCalled();
@@ -433,7 +329,6 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test feedback',
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
@@ -443,13 +338,12 @@ describe('FeedbackService', () => {
       service.addFeedbackToChat(
         'test-story-id',
         1,
-        'chapter_detail',
         mockFeedback,
         'User comment'
       ).subscribe(() => {
         const callArgs = mockConversationService.sendMessage.calls.mostRecent().args;
         const messageContent = callArgs[0];
-        
+
         expect(messageContent).toContain('User comment');
         expect(messageContent).toContain('John Doe');
         expect(messageContent).toContain('Test feedback');
@@ -467,14 +361,13 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test',
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
         }
       ];
 
-      service.addFeedbackToChat('test-story-id', 1, 'chapter_detail', mockFeedback).subscribe(result => {
+      service.addFeedbackToChat('test-story-id', 1, mockFeedback).subscribe(result => {
         expect(result).toBeFalse();
         done();
       });
@@ -490,18 +383,17 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test',
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
         }
       ];
 
-      service['feedbackCache'].set('test-story-id_1_chapter_detail', mockFeedback);
+      service['feedbackCache'].set('test-story-id_1', mockFeedback);
 
       service.markFeedbackAsIncorporated('test-story-id', ['feedback1']);
 
-      const updatedFeedback = service['feedbackCache'].get('test-story-id_1_chapter_detail');
+      const updatedFeedback = service['feedbackCache'].get('test-story-id_1');
       expect(updatedFeedback![0].status).toBe('incorporated');
     });
 
@@ -513,14 +405,13 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Test feedback',
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
         }
       ];
 
-      service['feedbackCache'].set('test-story-id_1_chapter_detail', mockFeedback);
+      service['feedbackCache'].set('test-story-id_1', mockFeedback);
 
       service.markFeedbackAsIncorporated('test-story-id', ['feedback1']);
 
@@ -530,25 +421,25 @@ describe('FeedbackService', () => {
 
   describe('clearFeedbackCache', () => {
     beforeEach(() => {
-      service['feedbackCache'].set('story1_1_chapter_detail', []);
-      service['feedbackCache'].set('story1_2_chapter_detail', []);
-      service['feedbackCache'].set('story2_1_chapter_detail', []);
+      service['feedbackCache'].set('story1_1', []);
+      service['feedbackCache'].set('story1_2', []);
+      service['feedbackCache'].set('story2_1', []);
     });
 
     it('should clear specific cache entry', () => {
-      service.clearFeedbackCache('story1', 1, 'chapter_detail');
+      service.clearFeedbackCache('story1', 1);
 
-      expect(service['feedbackCache'].has('story1_1_chapter_detail')).toBeFalse();
-      expect(service['feedbackCache'].has('story1_2_chapter_detail')).toBeTrue();
-      expect(service['feedbackCache'].has('story2_1_chapter_detail')).toBeTrue();
+      expect(service['feedbackCache'].has('story1_1')).toBeFalse();
+      expect(service['feedbackCache'].has('story1_2')).toBeTrue();
+      expect(service['feedbackCache'].has('story2_1')).toBeTrue();
     });
 
     it('should clear all entries for a story', () => {
       service.clearFeedbackCache('story1');
 
-      expect(service['feedbackCache'].has('story1_1_chapter_detail')).toBeFalse();
-      expect(service['feedbackCache'].has('story1_2_chapter_detail')).toBeFalse();
-      expect(service['feedbackCache'].has('story2_1_chapter_detail')).toBeTrue();
+      expect(service['feedbackCache'].has('story1_1')).toBeFalse();
+      expect(service['feedbackCache'].has('story1_2')).toBeFalse();
+      expect(service['feedbackCache'].has('story2_1')).toBeTrue();
     });
 
     it('should clear entire cache', () => {
@@ -617,7 +508,6 @@ describe('FeedbackService', () => {
     it('should get plot point from existing chapter', () => {
       const storyWithChapter = {
         ...mockStory,
-        chapterCreation: { ...mockStory.chapterCreation, plotPoint: '' },
         story: {
           ...mockStory.story,
           chapters: [
@@ -645,7 +535,14 @@ describe('FeedbackService', () => {
     it('should return default plot point if none found', () => {
       const storyWithoutPlotPoint = {
         ...mockStory,
-        chapterCreation: { ...mockStory.chapterCreation, plotPoint: '' }
+        plotOutline: {
+          ...mockStory.plotOutline,
+          content: ''
+        },
+        story: {
+          ...mockStory.story,
+          summary: ''
+        }
       };
 
       const plotPoint = service['getPlotPointForChapter'](storyWithoutPlotPoint, 1);
@@ -660,7 +557,6 @@ describe('FeedbackService', () => {
           type: 'action',
           content: 'Be more decisive',
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'medium',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }
@@ -671,7 +567,6 @@ describe('FeedbackService', () => {
           type: 'suggestion',
           content: 'Add tension',
           incorporated: false,
-          phase: 'chapter_detail',
           priority: 'high',
           status: 'pending',
           metadata: { created: new Date(), lastModified: new Date() }

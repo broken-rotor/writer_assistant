@@ -19,7 +19,6 @@ describe('FeedbackSidebarComponent', () => {
   let requestStatusSubject: Subject<any>;
 
   const mockConfig: FeedbackSidebarConfig = {
-    phase: 'chapter_detail',
     storyId: 'test-story-id',
     chapterNumber: 1,
     showRequestButtons: true,
@@ -88,11 +87,6 @@ describe('FeedbackSidebarComponent', () => {
         version: 1
       }
     },
-    chapterCreation: {
-      plotPoint: 'Test plot point',
-      incorporatedFeedback: [],
-      feedbackRequests: new Map()
-    },
     metadata: {
       version: '1.0',
       created: new Date(),
@@ -107,7 +101,6 @@ describe('FeedbackSidebarComponent', () => {
       type: 'action',
       content: 'Character should be more decisive',
       incorporated: false,
-      phase: 'chapter_detail',
       priority: 'high',
       status: 'pending',
       metadata: {
@@ -121,7 +114,6 @@ describe('FeedbackSidebarComponent', () => {
       type: 'suggestion',
       content: 'Add more tension to the scene',
       incorporated: false,
-      phase: 'chapter_detail',
       priority: 'medium',
       status: 'pending',
       metadata: {
@@ -182,8 +174,7 @@ describe('FeedbackSidebarComponent', () => {
 
     expect(mockFeedbackService.getAvailableFeedback).toHaveBeenCalledWith(
       mockConfig.storyId,
-      mockConfig.chapterNumber,
-      mockConfig.phase
+      mockConfig.chapterNumber
     );
     expect(component.availableFeedback).toEqual(mockFeedbackItems);
   });
@@ -330,7 +321,6 @@ describe('FeedbackSidebarComponent', () => {
       type: 'action',
       content: 'Test',
       incorporated: false,
-      phase: 'chapter_detail',
       priority: 'medium',
       status: 'pending',
       metadata: { created: new Date(), lastModified: new Date() }
@@ -346,7 +336,6 @@ describe('FeedbackSidebarComponent', () => {
       type: 'suggestion',
       content: 'Test',
       incorporated: false,
-      phase: 'chapter_detail',
       priority: 'medium',
       status: 'pending',
       metadata: { created: new Date(), lastModified: new Date() }
@@ -413,7 +402,6 @@ describe('FeedbackSidebarComponent', () => {
       type: 'emotion' as const,
       content: 'New feedback',
       incorporated: false,
-      phase: 'chapter_detail' as const,
       priority: 'low' as const,
       status: 'pending' as const,
       metadata: { created: new Date(), lastModified: new Date() }

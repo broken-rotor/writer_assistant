@@ -4,7 +4,6 @@ import { of, BehaviorSubject } from 'rxjs';
 
 import { ReviewFeedbackPanelComponent, ReviewFeedbackPanelConfig } from './review-feedback-panel.component';
 import { ReviewService, ReviewRequestStatus, QualityScore } from '../../services/review.service';
-import { PhaseStateService } from '../../services/phase-state.service';
 import { Story, ReviewItem, Character, Rater } from '../../models/story.model';
 
 describe('ReviewFeedbackPanelComponent', () => {
@@ -95,7 +94,6 @@ describe('ReviewFeedbackPanelComponent', () => {
             metadata: {
               created: new Date(),
               lastModified: new Date(),
-              phase: 'plot_outline'
             }
           },
           status: 'active',
@@ -119,7 +117,6 @@ describe('ReviewFeedbackPanelComponent', () => {
             metadata: {
               created: new Date(),
               lastModified: new Date(),
-              phase: 'chapter_detail'
             }
           },
           chapterDraft: {
@@ -150,7 +147,6 @@ describe('ReviewFeedbackPanelComponent', () => {
             metadata: {
               created: new Date(),
               lastModified: new Date(),
-              phase: 'final_edit'
             }
           },
           finalChapter: {
@@ -290,13 +286,10 @@ describe('ReviewFeedbackPanelComponent', () => {
       qualityScore$: new BehaviorSubject<QualityScore | null>(mockQualityScore)
     });
 
-    const phaseSpy = jasmine.createSpyObj('PhaseStateService', ['getCurrentPhase']);
-
     await TestBed.configureTestingModule({
       imports: [ReviewFeedbackPanelComponent, FormsModule],
       providers: [
-        { provide: ReviewService, useValue: reviewSpy },
-        { provide: PhaseStateService, useValue: phaseSpy }
+        { provide: ReviewService, useValue: reviewSpy }
       ]
     }).compileComponents();
 

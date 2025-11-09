@@ -24,7 +24,9 @@
       "Bash(awk:*)",
       "Bash(npx ng lint:*)",
       "Bash(1)",
-      "Read(//c/**)"
+      "Read(//c/**)",
+      "Bash(npx ng build:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

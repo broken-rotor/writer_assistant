@@ -3,20 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
-import { 
-  ChatMessage, 
-  ConversationThread, 
-  ConversationBranch, 
-  BranchNavigation 
+import {
+  ChatMessage,
+  ConversationThread,
+  ConversationBranch,
+  BranchNavigation
 } from '../../models/story.model';
-import { 
-  ConversationService, 
+import {
+  ConversationService,
   ConversationConfig
 } from '../../services/conversation.service';
-import { PhaseType } from '../../services/phase-state.service';
 
 export interface ChatInterfaceConfig {
-  phase: PhaseType;
   storyId: string;
   chapterNumber: number;
   enableBranching?: boolean;
@@ -97,7 +95,6 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
 
   private initializeConversation(): void {
     const conversationConfig: ConversationConfig = {
-      phase: this.config.phase,
       storyId: this.config.storyId,
       chapterNumber: this.config.chapterNumber,
       enableBranching: this.config.enableBranching ?? true,
@@ -347,7 +344,7 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   getPlaceholderText(): string {
-    return this.config.placeholder || `Type your message for ${this.config.phase} phase...`;
+    return this.config.placeholder || 'Type your message...';
   }
 
   isCurrentBranch(branchId: string): boolean {

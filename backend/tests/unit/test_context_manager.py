@@ -124,7 +124,7 @@ class TestContextManager:
 
     def test_context_analysis_functionality(self):
         """Test context processing functionality with various scenarios."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         # Generate test scenario
         scenario = self.generator.generate_context_scenario("test_analysis", StoryComplexity.MODERATE)
@@ -137,7 +137,7 @@ class TestContextManager:
             # Create a processing configuration
             config = ContextProcessingConfig(
                 target_agent=AgentType.WRITER,
-                current_phase=ComposePhase.CHAPTER_DETAIL,
+                
                 max_tokens=5000,
                 prioritize_recent=True
             )
@@ -157,7 +157,7 @@ class TestContextManager:
     
     def test_context_optimization_workflow(self):
         """Test the complete context processing workflow with token limits."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         scenario = self.generator.generate_context_scenario("test_optimization", StoryComplexity.COMPLEX)
         
@@ -169,7 +169,7 @@ class TestContextManager:
             # Create a processing configuration with token limits
             config = ContextProcessingConfig(
                 target_agent=AgentType.WRITER,
-                current_phase=ComposePhase.CHAPTER_DETAIL,
+                
                 max_tokens=7000,  # Set a token limit to trigger optimization
                 prioritize_recent=True
             )
@@ -191,7 +191,7 @@ class TestContextManager:
     
     def test_priority_based_context_filtering(self):
         """Test context filtering based on priority thresholds."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         from app.models.generation_models import (
             StructuredContextContainer, PlotElement, CharacterContext, SystemInstruction
         )
@@ -246,7 +246,7 @@ class TestContextManager:
             # Create a processing configuration with strict token limits to trigger filtering
             config = ContextProcessingConfig(
                 target_agent=AgentType.WRITER,
-                current_phase=ComposePhase.CHAPTER_DETAIL,
+                
                 max_tokens=3000,  # Low token limit to force priority-based filtering
                 prioritize_recent=True
             )
@@ -353,7 +353,7 @@ class TestContextManager:
     
     def test_token_budget_enforcement(self):
         """Test enforcement of token budgets and limits."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         with patch('app.services.llm_inference.get_llm') as mock_get_llm:
             mock_get_llm.return_value = Mock()
@@ -367,7 +367,7 @@ class TestContextManager:
             # Create a processing configuration with very strict token limits
             config = ContextProcessingConfig(
                 target_agent=AgentType.WRITER,
-                current_phase=ComposePhase.CHAPTER_DETAIL,
+                
                 max_tokens=2000,  # Very strict token limit to force budget enforcement
                 prioritize_recent=True
             )
@@ -389,7 +389,7 @@ class TestContextManager:
     
     def test_context_assembly_performance(self):
         """Test context assembly performance and timeout handling."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         scenario = self.generator.generate_context_scenario("test_performance", StoryComplexity.MODERATE)
         
@@ -401,7 +401,7 @@ class TestContextManager:
             # Create a processing configuration for performance testing
             config = ContextProcessingConfig(
                 target_agent=AgentType.WRITER,
-                current_phase=ComposePhase.CHAPTER_DETAIL,
+                
                 max_tokens=6000,  # Moderate token limit
                 prioritize_recent=True
             )
@@ -426,7 +426,7 @@ class TestContextManager:
     
     def test_configuration_integration_with_settings(self):
         """Test integration with configuration settings."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         # Test with custom configuration
         custom_env = {
@@ -455,7 +455,7 @@ class TestContextManager:
                 # Create a processing configuration that uses custom settings
                 config = ContextProcessingConfig(
                     target_agent=AgentType.WRITER,
-                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    
                     max_tokens=16000,  # Use the custom max tokens setting
                     prioritize_recent=True
                 )
@@ -475,7 +475,7 @@ class TestContextManager:
     
     def test_error_handling_and_recovery(self):
         """Test error handling and recovery mechanisms."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         from app.models.generation_models import (
             StructuredContextContainer, PlotElement, SystemInstruction
         )
@@ -516,7 +516,7 @@ class TestContextManager:
             # Create a processing configuration
             config = ContextProcessingConfig(
                 target_agent=AgentType.WRITER,
-                current_phase=ComposePhase.CHAPTER_DETAIL,
+                
                 max_tokens=5000,
                 prioritize_recent=True
             )
@@ -533,7 +533,7 @@ class TestContextManager:
     
     def test_context_caching_functionality(self):
         """Test context caching when enabled."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         scenario = self.generator.generate_context_scenario("test_caching", StoryComplexity.MODERATE)
         
@@ -547,7 +547,7 @@ class TestContextManager:
                 # Create a processing configuration
                 config = ContextProcessingConfig(
                     target_agent=AgentType.WRITER,
-                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    
                     max_tokens=10000,
                     prioritize_recent=True
                 )
@@ -567,7 +567,7 @@ class TestContextManager:
     
     def test_monitoring_and_analytics_integration(self):
         """Test monitoring and analytics when enabled."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         scenario = self.generator.generate_context_scenario("test_monitoring", StoryComplexity.MODERATE)
         
@@ -581,7 +581,7 @@ class TestContextManager:
                 # Create a processing configuration
                 config = ContextProcessingConfig(
                     target_agent=AgentType.WRITER,
-                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    
                     max_tokens=10000,
                     prioritize_recent=True
                 )
@@ -602,7 +602,7 @@ class TestContextManager:
     
     def test_rag_integration_when_enabled(self):
         """Test RAG (Retrieval-Augmented Generation) integration."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         scenario = self.generator.generate_context_scenario("test_rag", StoryComplexity.COMPLEX)
         
@@ -616,7 +616,7 @@ class TestContextManager:
                 # Create a processing configuration for RAG testing
                 config = ContextProcessingConfig(
                     target_agent=AgentType.WRITER,
-                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    
                     max_tokens=10000,
                     prioritize_recent=True
                 )
@@ -636,7 +636,7 @@ class TestContextManager:
     
     def test_stress_testing_with_large_contexts(self):
         """Test system behavior under stress with large context scenarios."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         # Generate a very large context scenario
         large_scenario = self.generator.generate_context_scenario("stress_test", StoryComplexity.EPIC)
@@ -651,7 +651,7 @@ class TestContextManager:
                 # Create a processing configuration for stress testing
                 config = ContextProcessingConfig(
                     target_agent=AgentType.WRITER,
-                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    
                     max_tokens=30000,  # Large token limit for stress testing
                     prioritize_recent=True
                 )

@@ -13,7 +13,6 @@ describe('ChatInterfaceComponent', () => {
   let conversationService: jasmine.SpyObj<ConversationService>;
 
   const mockConfig: ChatInterfaceConfig = {
-    phase: 'plot_outline',
     storyId: 'test-story-1',
     chapterNumber: 1,
     enableBranching: true,
@@ -30,14 +29,14 @@ describe('ChatInterfaceComponent', () => {
         type: 'user',
         content: 'Hello',
         timestamp: new Date(),
-        metadata: { phase: 'plot_outline', messageIndex: 0, branchId: 'main' }
+        metadata: { messageIndex: 0, branchId: 'main' }
       },
       {
         id: 'msg-2',
         type: 'assistant',
         content: 'Hello back!',
         timestamp: new Date(),
-        metadata: { phase: 'plot_outline', messageIndex: 1, branchId: 'main' }
+        metadata: { messageIndex: 1, branchId: 'main' }
       }
     ],
     currentBranchId: 'main',
@@ -53,8 +52,7 @@ describe('ChatInterfaceComponent', () => {
     ]),
     metadata: {
       created: new Date(),
-      lastModified: new Date(),
-      phase: 'plot_outline'
+      lastModified: new Date()
     }
   };
 
@@ -109,7 +107,6 @@ describe('ChatInterfaceComponent', () => {
     component.ngOnInit();
 
     expect(conversationService.initializeConversation).toHaveBeenCalledWith({
-      phase: 'plot_outline',
       storyId: 'test-story-1',
       chapterNumber: 1,
       enableBranching: true,
@@ -155,7 +152,7 @@ describe('ChatInterfaceComponent', () => {
       type: 'user',
       content: 'New message',
       timestamp: new Date(),
-      metadata: { phase: 'plot_outline', messageIndex: 2, branchId: 'main' }
+      metadata: { messageIndex: 2, branchId: 'main' }
     };
 
     conversationService.sendMessage.and.returnValue(mockMessage);
@@ -177,7 +174,7 @@ describe('ChatInterfaceComponent', () => {
       type: 'user',
       content: 'New message',
       timestamp: new Date(),
-      metadata: { phase: 'plot_outline', messageIndex: 2, branchId: 'main' }
+      metadata: { messageIndex: 2, branchId: 'main' }
     };
 
     conversationService.sendMessage.and.returnValue(mockMessage);
@@ -376,7 +373,7 @@ describe('ChatInterfaceComponent', () => {
     expect(component.getPlaceholderText()).toBe('Custom placeholder');
 
     component.config = { ...mockConfig, placeholder: undefined };
-    expect(component.getPlaceholderText()).toContain('plot_outline phase');
+    expect(component.getPlaceholderText()).toBe('Type your message...');
   });
 
   it('should check if branch is current', () => {
@@ -419,7 +416,7 @@ describe('ChatInterfaceComponent', () => {
       type: 'user',
       content: 'New message',
       timestamp: new Date(),
-      metadata: { phase: 'plot_outline', messageIndex: 2, branchId: 'main' }
+      metadata: { messageIndex: 2, branchId: 'main' }
     };
 
     conversationService.sendMessage.and.returnValue(mockMessage);
