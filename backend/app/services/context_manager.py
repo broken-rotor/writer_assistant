@@ -184,7 +184,6 @@ class ContextManager:
             # Update state with processing history
             processing_metadata = {
                 'agent_type': config.target_agent.value,
-                'phase': config.current_phase.value,
                 'token_count': metadata.get('final_token_count', 0),
                 'elements_processed': metadata.get('final_count', 0),
                 'was_summarized': metadata.get('was_summarized', False)
@@ -238,9 +237,9 @@ class ContextManager:
 
         # Plot elements - relevant for WRITER, RATER, EDITOR agents
         if agent_type in [AgentType.WRITER, AgentType.RATER, AgentType.EDITOR]:
-            # Filter by phase-relevant tags if available
+            # Filter by priority and agent type
             for element in container.plot_elements:
-                if self._is_plot_element_relevant(element, agent_type, phase):
+                if self._is_plot_element_relevant(element, agent_type):
                     filtered["plot_elements"].append(element)
 
         # Character contexts - relevant for CHARACTER and WRITER agents
@@ -250,13 +249,13 @@ class ContextManager:
         # User requests - relevant for all agents (high priority user instructions)
         filtered["user_requests"] = [
             req for req in container.user_requests
-            if self._is_user_request_relevant(req, agent_type, phase)
+            if self._is_user_request_relevant(req, agent_type)
         ]
 
         # System instructions - relevant for all agents
         filtered["system_instructions"] = [
             inst for inst in container.system_instructions
-            if self._is_system_instruction_relevant(inst, agent_type, phase)
+            if self._is_system_instruction_relevant(inst, agent_type)
         ]
 
         return filtered

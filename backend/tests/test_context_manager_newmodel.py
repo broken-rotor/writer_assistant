@@ -12,7 +12,6 @@ from datetime import datetime, timezone
 from app.services.context_manager import ContextManager, ContextFormatter
 from app.models.context_models import (
     AgentType,
-    ComposePhase,
     ContextProcessingConfig
 )
 from app.models.generation_models import (
@@ -115,7 +114,7 @@ class TestContextManagerNewModel:
     def test_filter_elements_for_writer_agent(self):
         """Test filtering elements for WRITER agent."""
         filtered = self.manager._filter_elements_for_agent_and_phase(
-            self.container, AgentType.WRITER, ComposePhase.CHAPTER_DETAIL
+            self.container, AgentType.WRITER
         )
 
         # Writer should get plot elements, character contexts, user requests, and system instructions
@@ -127,7 +126,7 @@ class TestContextManagerNewModel:
     def test_filter_elements_for_character_agent(self):
         """Test filtering elements for CHARACTER agent."""
         filtered = self.manager._filter_elements_for_agent_and_phase(
-            self.container, AgentType.CHARACTER, ComposePhase.CHAPTER_DETAIL
+            self.container, AgentType.CHARACTER
         )
 
         # Character agent should get character contexts and some user requests
@@ -137,7 +136,7 @@ class TestContextManagerNewModel:
     def test_filter_plot_elements_by_priority(self):
         """Test that plot elements are filtered by priority."""
         filtered = self.manager._filter_elements_for_agent_and_phase(
-            self.container, AgentType.WRITER, ComposePhase.CHAPTER_DETAIL
+            self.container, AgentType.WRITER
         )
 
         # High priority plot element should be included
@@ -245,7 +244,6 @@ class TestContextManagerNewModel:
         """Test basic context processing for an agent."""
         config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL,
             max_tokens=10000,  # Generous limit
             prioritize_recent=True
         )
@@ -264,16 +262,13 @@ class TestContextManagerNewModel:
         assert "filtered_element_count" in metadata
         assert "final_element_count" in metadata
         assert "target_agent" in metadata
-        assert "current_phase" in metadata
 
         assert metadata["target_agent"] == "writer"
-        assert metadata["current_phase"] == "chapter_detail"
 
     def test_process_context_with_token_limit(self):
         """Test context processing with strict token limits."""
         config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL,
             max_tokens=200,  # Strict limit
             summarization_threshold=150
         )
@@ -293,7 +288,6 @@ class TestContextManagerNewModel:
         """Test context processing with custom filters."""
         config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL,
             custom_filters={
                 "required_tags": ["current_scene"]
             }
@@ -359,7 +353,7 @@ class TestContextFormatterNewModel:
     def test_format_for_writer(self):
         """Test formatting context for Writer agent."""
         formatted = self.formatter.format_for_agent(
-            self.collections, AgentType.WRITER, ComposePhase.CHAPTER_DETAIL
+            self.collections, AgentType.WRITER
         )
 
         # Should include all relevant sections
@@ -377,7 +371,7 @@ class TestContextFormatterNewModel:
     def test_format_for_character(self):
         """Test formatting context for Character agent."""
         formatted = self.formatter.format_for_agent(
-            self.collections, AgentType.CHARACTER, ComposePhase.CHAPTER_DETAIL
+            self.collections, AgentType.CHARACTER
         )
 
         # Should focus on character-relevant content
@@ -387,7 +381,7 @@ class TestContextFormatterNewModel:
     def test_format_for_rater(self):
         """Test formatting context for Rater agent."""
         formatted = self.formatter.format_for_agent(
-            self.collections, AgentType.RATER, ComposePhase.CHAPTER_DETAIL
+            self.collections, AgentType.RATER
         )
 
         # Should focus on evaluation-relevant content
@@ -397,7 +391,7 @@ class TestContextFormatterNewModel:
     def test_format_for_editor(self):
         """Test formatting context for Editor agent."""
         formatted = self.formatter.format_for_agent(
-            self.collections, AgentType.EDITOR, ComposePhase.FINAL_EDIT
+            self.collections, AgentType.EDITOR
         )
 
         # Should focus on editorial content
@@ -429,12 +423,10 @@ class TestContextProcessingConfig:
     def test_default_values(self):
         """Test default configuration values."""
         config = ContextProcessingConfig(
-            target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL
+            target_agent=AgentType.WRITER
         )
 
         assert config.target_agent == AgentType.WRITER
-        assert config.current_phase == ComposePhase.CHAPTER_DETAIL
         assert config.max_tokens is None
         assert config.prioritize_recent is True
         assert config.include_relationships is True
@@ -445,7 +437,6 @@ class TestContextProcessingConfig:
         """Test custom configuration values."""
         config = ContextProcessingConfig(
             target_agent=AgentType.CHARACTER,
-            current_phase=ComposePhase.FINAL_EDIT,
             max_tokens=2000,
             prioritize_recent=False,
             include_relationships=False,
@@ -454,7 +445,6 @@ class TestContextProcessingConfig:
         )
 
         assert config.target_agent == AgentType.CHARACTER
-        assert config.current_phase == ComposePhase.FINAL_EDIT
         assert config.max_tokens == 2000
         assert config.prioritize_recent is False
         assert config.include_relationships is False

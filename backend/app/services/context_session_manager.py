@@ -17,8 +17,7 @@ import gzip
 
 from app.models.context_models import (
     ContextProcessingConfig,
-    AgentType,
-    ComposePhase
+    AgentType
 )
 from app.models.generation_models import StructuredContextContainer
 

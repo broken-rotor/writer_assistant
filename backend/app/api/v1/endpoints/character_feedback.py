@@ -45,7 +45,7 @@ async def character_feedback(request: CharacterFeedbackRequest):
             # Process context using structured context only
             context_result = context_processor.process_character_feedback_context(
                 # Phase context
-                phase_context=request.phase_context,
+                
                 # Structured context (required)
                 structured_context=request.structured_context,
                 context_processing_config=request.context_processing_config

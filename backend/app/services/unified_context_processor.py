@@ -94,7 +94,7 @@ class UnifiedContextProcessor:
             if structured_context:
                 # Enhance structured context with plot outline information if available
                 enhanced_context = self._enhance_with_plot_outline_context(
-                    structured_context, phase_context, context_processing_config
+                    structured_context, context_processing_config
                 )
                 
                 result = self._process_structured_context(
@@ -528,18 +528,12 @@ class UnifiedContextProcessor:
         PlotElement objects to the structured context for chapter generation.
         """
         try:
-            # Extract plot outline information from phase context or config
+            # Extract plot outline information from config
             plot_outline_content = None
             draft_outline_items = None
             chapter_number = 1
             story_context = None
-            
-            # Try to extract plot outline data from various sources
-            if phase_context and hasattr(phase_context, 'previous_phase_output'):
-                # Check if previous phase output contains plot outline
-                if phase_context.previous_phase_output:
-                    plot_outline_content = phase_context.previous_phase_output
-            
+
             # Try to extract from context processing config
             if context_processing_config:
                 plot_outline_content = context_processing_config.get('plot_outline_content')

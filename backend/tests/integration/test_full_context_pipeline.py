@@ -87,7 +87,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_end_to_end_context_processing(self, mock_get_llm):
         """Test complete end-to-end context processing pipeline."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         mock_get_llm.return_value = Mock()
         
@@ -110,7 +110,7 @@ class TestFullContextPipeline:
         # Create processing configuration
         config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL,
+            
             max_tokens=self.settings.CONTEXT_MAX_TOKENS,
             prioritize_recent=True
         )
@@ -136,7 +136,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_configuration_driven_pipeline(self, mock_get_llm):
         """Test that pipeline behavior is properly driven by configuration."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         mock_get_llm.return_value = Mock()
         
@@ -175,7 +175,7 @@ class TestFullContextPipeline:
                 # Create processing configuration
                 processing_config = ContextProcessingConfig(
                     target_agent=AgentType.WRITER,
-                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    
                     max_tokens=target_tokens,
                     prioritize_recent=True
                 )
@@ -197,7 +197,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_layer_allocation_integration(self, mock_get_llm):
         """Test integration between context manager and token allocation layers."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         mock_get_llm.return_value = Mock()
         
@@ -208,7 +208,7 @@ class TestFullContextPipeline:
         # Create processing configuration with reasonable token limit
         processing_config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL,
+            
             max_tokens=self.settings.CONTEXT_MAX_TOKENS,
             prioritize_recent=True
         )
@@ -233,7 +233,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_overflow_handling_integration(self, mock_get_llm):
         """Test integration of overflow handling across the pipeline."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         mock_get_llm.return_value = Mock()
         
@@ -250,7 +250,7 @@ class TestFullContextPipeline:
         # Create processing configuration with small token limit
         processing_config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL,
+            
             max_tokens=target_tokens,
             prioritize_recent=True
         )
@@ -274,7 +274,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_priority_and_layer_interaction(self, mock_get_llm):
         """Test interaction between priority-based filtering and layer allocation."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         from app.models.generation_models import (
             StructuredContextContainer, PlotElement, CharacterContext,
             SystemInstruction
@@ -351,7 +351,7 @@ class TestFullContextPipeline:
         # Create processing configuration with limited tokens to force prioritization
         processing_config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL,
+            
             max_tokens=200,  # Small limit to force filtering
             prioritize_recent=True
         )
@@ -373,7 +373,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_feature_toggle_integration(self, mock_get_llm):
         """Test integration with feature toggles from configuration."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         mock_get_llm.return_value = Mock()
         
@@ -395,7 +395,7 @@ class TestFullContextPipeline:
                 # Create processing configuration
                 processing_config = ContextProcessingConfig(
                     target_agent=AgentType.WRITER,
-                    current_phase=ComposePhase.CHAPTER_DETAIL,
+                    
                     max_tokens=settings.CONTEXT_MAX_TOKENS,
                     prioritize_recent=True
                 )
@@ -417,7 +417,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_error_recovery_integration(self, mock_get_llm):
         """Test error recovery across the integrated pipeline."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         from app.models.generation_models import (
             StructuredContextContainer, PlotElement, CharacterContext
         )
@@ -469,7 +469,7 @@ class TestFullContextPipeline:
             # Create processing configuration
             processing_config = ContextProcessingConfig(
                 target_agent=AgentType.WRITER,
-                current_phase=ComposePhase.CHAPTER_DETAIL,
+                
                 max_tokens=self.settings.CONTEXT_MAX_TOKENS,
                 prioritize_recent=True
             )
@@ -495,7 +495,7 @@ class TestFullContextPipeline:
     @patch('app.services.llm_inference.get_llm')
     def test_memory_efficiency_integration(self, mock_get_llm):
         """Test memory efficiency across the integrated pipeline."""
-        from app.models.context_models import ContextProcessingConfig, AgentType, ComposePhase
+        from app.models.context_models import ContextProcessingConfig, AgentType
         
         mock_get_llm.return_value = Mock()
         
@@ -508,7 +508,7 @@ class TestFullContextPipeline:
         # Create processing configuration with reasonable token limit
         processing_config = ContextProcessingConfig(
             target_agent=AgentType.WRITER,
-            current_phase=ComposePhase.CHAPTER_DETAIL,
+            
             max_tokens=self.settings.CONTEXT_MAX_TOKENS,
             prioritize_recent=True
         )

@@ -37,7 +37,7 @@ async def generate_chapter(request: GenerateChapterRequest):
             # Get unified context processor and process context
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_generate_chapter_context(
-                phase_context=request.phase_context,
+                
                 structured_context=request.structured_context,
                 context_processing_config=request.context_processing_config)
 
@@ -88,8 +88,6 @@ async def generate_chapter(request: GenerateChapterRequest):
                 metadata={
                     "generatedAt": datetime.now(UTC).isoformat(),
                     "plotPoint": request.plotPoint,
-                    "phaseContextProvided": bool(
-                        request.phase_context),
                     "contextMode": "structured",
                     "structuredContextProvided": bool(
                         request.structured_context),

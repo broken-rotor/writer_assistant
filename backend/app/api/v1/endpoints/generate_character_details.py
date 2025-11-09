@@ -40,7 +40,7 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
             context_result = context_processor.process_character_generation_context(
                 basic_bio=request.basicBio,
                 existing_characters=request.existingCharacters,
-                phase_context=request.phase_context,
+                
                 structured_context=request.structured_context,
                 context_processing_config=request.context_processing_config)
 
