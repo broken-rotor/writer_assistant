@@ -33,16 +33,6 @@ def _build_agent_system_prompt(
 
     prompt = base_prompts.get(agent_type, base_prompts['writer'])
 
-    # Add phase-specific context if available
-    if compose_context:
-        phase_guidance = {
-            'plot_outline': "Focus on plot structure, story beats, and narrative arc development.",
-            'chapter_detail': "Help with scene development, character interactions, and detailed storytelling.",
-            'final_edit': "Provide polishing suggestions, consistency checks, and final refinements."}
-        phase_context = phase_guidance.get(compose_context.current_phase, "")
-        if phase_context:
-            prompt += f"\n\nCurrent phase: {compose_context.current_phase}. {phase_context}"
-
     # Add custom system prompts if provided
     if system_prompts:
         if system_prompts.mainPrefix:
@@ -141,9 +131,7 @@ async def llm_chat(request: LLMChatRequest):
                 agent_type=request.agent_type,
                 metadata={
                     "generatedAt": datetime.now(UTC).isoformat(),
-                    "phase": request.compose_context.current_phase if request.compose_context else None,
-                    "conversationLength": len(
-                        request.messages),
+                    "conversationLength": len(request.messages),
                     "contextProvided": bool(context)})
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.dict(), 'status': 'complete'})}\n\n"

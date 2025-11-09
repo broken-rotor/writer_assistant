@@ -10,7 +10,6 @@ Classes in this module:
 - ContextType: Enum of context element types
 - SummarizationRule: Enum of summarization strategies
 - AgentType: Enum of agent types
-- ComposePhase: Enum of compose phases
 - ContextProcessingConfig: Configuration for context processing
 """
 
@@ -74,23 +73,12 @@ class AgentType(str, Enum):
     WORLDBUILDING = "worldbuilding"
 
 
-class ComposePhase(str, Enum):
-    """Three-phase compose system phases."""
-    PLOT_OUTLINE = "plot_outline"
-    CHAPTER_DETAIL = "chapter_detail"
-    FINAL_EDIT = "final_edit"
-
-
 # Context Processing Configuration
 class ContextProcessingConfig(BaseModel):
     """Configuration for how context should be processed and filtered."""
 
     target_agent: AgentType = Field(
         description="Target agent type for context processing"
-    )
-
-    current_phase: ComposePhase = Field(
-        description="Current compose phase"
     )
 
     max_tokens: Optional[int] = Field(

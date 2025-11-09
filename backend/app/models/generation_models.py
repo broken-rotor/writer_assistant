@@ -107,21 +107,10 @@ class FeedbackItem(BaseModel):
     incorporated: bool = True
 
 
-# Phase-specific models for three-phase compose system
-ComposePhase = Literal['plot_outline', 'chapter_detail', 'final_edit']
-
-
 class ConversationMessage(BaseModel):
     role: Literal['user', 'assistant']
     content: str
     timestamp: Optional[str] = None
-
-
-class PhaseContext(BaseModel):
-    previous_phase_output: Optional[str] = None
-    phase_specific_instructions: Optional[str] = None
-    conversation_history: Optional[List[ConversationMessage]] = None
-    conversation_branch_id: Optional[str] = None
 
 
 # Structured Context Models
@@ -509,8 +498,6 @@ class CharacterFeedbackRequest(BaseModel):
         description="The plot point or scene for character feedback")
 
     # Phase-specific fields
-    compose_phase: Optional[ComposePhase] = None
-    phase_context: Optional[PhaseContext] = None
 
     # Structured context fields (required)
     structured_context: StructuredContextContainer = Field(
@@ -554,8 +541,6 @@ class RaterFeedbackRequest(BaseModel):
     plotPoint: str = Field(description="The plot point or scene to evaluate")
 
     # Phase-specific fields
-    compose_phase: Optional[ComposePhase] = None
-    phase_context: Optional[PhaseContext] = None
 
     # Structured context fields (required)
     structured_context: StructuredContextContainer = Field(
@@ -595,8 +580,6 @@ class GenerateChapterRequest(BaseModel):
     plotPoint: str = Field(description="The plot point or scene to generate")
 
     # Phase-specific fields
-    compose_phase: Optional[ComposePhase] = None
-    phase_context: Optional[PhaseContext] = None
 
     # Structured context fields (required)
     structured_context: StructuredContextContainer = Field(
@@ -633,8 +616,6 @@ class ModifyChapterRequest(BaseModel):
     userRequest: str = Field(description="User's modification request")
 
     # Phase-specific fields
-    compose_phase: Optional[ComposePhase] = None
-    phase_context: Optional[PhaseContext] = None
 
     # Structured context fields (required)
     structured_context: StructuredContextContainer = Field(
@@ -670,8 +651,6 @@ class EditorReviewRequest(BaseModel):
     chapterToReview: str = Field(description="The chapter text to be reviewed")
 
     # Phase-specific fields
-    compose_phase: Optional[ComposePhase] = None
-    phase_context: Optional[PhaseContext] = None
 
     # Structured context fields (required)
     structured_context: StructuredContextContainer = Field(
@@ -714,8 +693,6 @@ class FleshOutRequest(BaseModel):
         default="", description="Additional context for the flesh out operation")
 
     # Phase-specific fields
-    compose_phase: Optional[ComposePhase] = None
-    phase_context: Optional[PhaseContext] = None
 
     # Structured context fields (required)
     structured_context: StructuredContextContainer = Field(
@@ -756,8 +733,6 @@ class GenerateCharacterDetailsRequest(BaseModel):
     )
 
     # Phase-specific fields
-    compose_phase: Optional[ComposePhase] = None
-    phase_context: Optional[PhaseContext] = None
 
     # Structured context fields (required)
     structured_context: StructuredContextContainer = Field(
@@ -806,8 +781,6 @@ class RegenerateBioRequest(BaseModel):
                                description="Character relationships")
 
     # Context fields (optional for bio regeneration)
-    compose_phase: Optional[ComposePhase] = None
-    phase_context: Optional[PhaseContext] = None
     structured_context: Optional[StructuredContextContainer] = Field(
         default=None,
         description="Optional structured context container"

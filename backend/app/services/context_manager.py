@@ -18,7 +18,6 @@ from dataclasses import dataclass
 
 from app.models.context_models import (
     AgentType,
-    ComposePhase,
     ContextProcessingConfig
 )
 from app.models.generation_models import (
@@ -86,9 +85,9 @@ class ContextManager:
             Tuple of (formatted_context_string, processing_metadata)
         """
         try:
-            # Step 1: Filter collections for target agent and phase
+            # Step 1: Filter collections for target agent
             relevant_collections = self._filter_elements_for_agent_and_phase(
-                context_container, config.target_agent, config.current_phase
+                context_container, config.target_agent
             )
 
             # Step 2: Apply custom filters if provided
@@ -111,7 +110,7 @@ class ContextManager:
 
             # Step 6: Format for the target agent
             formatted_context = self.formatter.format_for_agent(
-                final_collections, config.target_agent, config.current_phase
+                final_collections, config.target_agent
             )
 
             # Step 7: Generate processing metadata
@@ -129,8 +128,7 @@ class ContextManager:
                 filtered_count=filtered_count,
                 final_count=final_count,
                 was_summarized=was_summarized,
-                target_agent=config.target_agent,
-                current_phase=config.current_phase
+                target_agent=config.target_agent
             )
 
             return formatted_context, metadata
@@ -224,11 +222,10 @@ class ContextManager:
     def _filter_elements_for_agent_and_phase(
         self,
         container: StructuredContextContainer,
-        agent_type: AgentType,
-        phase: ComposePhase
+        agent_type: AgentType
     ) -> Dict[str, List]:
         """
-        Filter context elements for specific agent and phase.
+        Filter context elements for specific agent.
 
         Returns dict with keys: plot_elements, character_contexts, user_requests, system_instructions
         """
@@ -264,35 +261,24 @@ class ContextManager:
 
         return filtered
 
-    def _is_plot_element_relevant(self, element: PlotElement, agent_type: AgentType, phase: ComposePhase) -> bool:
-        """Check if plot element is relevant for agent and phase."""
+    def _is_plot_element_relevant(self, element: PlotElement, agent_type: AgentType) -> bool:
+        """Check if plot element is relevant for agent."""
         # High priority elements always included
         if element.priority == "high":
-            return True
-
-        # Phase-specific filtering via tags
-        phase_tag_map = {
-            ComposePhase.PLOT_OUTLINE: ["plot_outline", "outline"],
-            ComposePhase.CHAPTER_DETAIL: ["chapter", "scene", "current_scene"],
-            ComposePhase.FINAL_EDIT: ["revision", "edit"]
-        }
-
-        phase_tags = phase_tag_map.get(phase, [])
-        if phase_tags and any(tag in element.tags for tag in phase_tags):
             return True
 
         # Medium priority included by default
         if element.priority == "medium":
             return True
 
-        # Low priority only for WRITER in CHAPTER_DETAIL
-        if element.priority == "low" and agent_type == AgentType.WRITER and phase == ComposePhase.CHAPTER_DETAIL:
+        # Low priority included for WRITER
+        if element.priority == "low" and agent_type == AgentType.WRITER:
             return True
 
         return False
 
-    def _is_user_request_relevant(self, request: UserRequest, agent_type: AgentType, phase: ComposePhase) -> bool:
-        """Check if user request is relevant for agent and phase."""
+    def _is_user_request_relevant(self, request: UserRequest, agent_type: AgentType) -> bool:
+        """Check if user request is relevant for agent."""
         # High priority requests always included
         if request.priority == "high":
             return True
@@ -303,8 +289,8 @@ class ContextManager:
 
         return False
 
-    def _is_system_instruction_relevant(self, instruction: SystemInstruction, agent_type: AgentType, phase: ComposePhase) -> bool:
-        """Check if system instruction is relevant for agent and phase."""
+    def _is_system_instruction_relevant(self, instruction: SystemInstruction, agent_type: AgentType) -> bool:
+        """Check if system instruction is relevant for agent."""
         # Global scope always included
         if instruction.scope == "global":
             return True
@@ -640,8 +626,7 @@ class ContextManager:
         filtered_count: int,
         final_count: int,
         was_summarized: bool,
-        target_agent: AgentType,
-        current_phase: ComposePhase
+        target_agent: AgentType
     ) -> Dict[str, Any]:
         """Generate metadata about context processing."""
         return {
@@ -650,7 +635,6 @@ class ContextManager:
             "final_element_count": final_count,
             "was_summarized": was_summarized,
             "target_agent": target_agent.value,
-            "current_phase": current_phase.value,
             "processing_timestamp": datetime.now(timezone.utc).isoformat(),
             "reduction_ratio": final_count / original_count if original_count > 0 else 0
         }
@@ -662,24 +646,23 @@ class ContextFormatter:
     def format_for_agent(
         self,
         collections: Dict[str, List],
-        agent_type: AgentType,
-        phase: ComposePhase
+        agent_type: AgentType
     ) -> str:
         """Format typed collections for a specific agent type."""
         if agent_type == AgentType.WRITER:
-            return self._format_for_writer(collections, phase)
+            return self._format_for_writer(collections)
         elif agent_type == AgentType.CHARACTER:
-            return self._format_for_character(collections, phase)
+            return self._format_for_character(collections)
         elif agent_type == AgentType.RATER:
-            return self._format_for_rater(collections, phase)
+            return self._format_for_rater(collections)
         elif agent_type == AgentType.EDITOR:
-            return self._format_for_editor(collections, phase)
+            return self._format_for_editor(collections)
         elif agent_type == AgentType.WORLDBUILDING:
-            return self._format_for_worldbuilding(collections, phase)
+            return self._format_for_worldbuilding(collections)
         else:
-            return self._format_generic(collections, phase)
+            return self._format_for_generic(collections)
 
-    def _format_for_writer(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+    def _format_for_writer(self, collections: Dict[str, List]) -> str:
         """Format context for the Writer agent using new model."""
         sections = []
 
@@ -723,7 +706,7 @@ class ContextFormatter:
             parts.append(f"Relationships: {char.relationships}")
         return "; ".join(parts)
 
-    def _format_for_character(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+    def _format_for_character(self, collections: Dict[str, List]) -> str:
         """Format context for Character agents using new model."""
         sections = []
 
@@ -742,7 +725,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_for_rater(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+    def _format_for_rater(self, collections: Dict[str, List]) -> str:
         """Format context for Rater agents using new model."""
         sections = []
 
@@ -760,7 +743,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_for_editor(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+    def _format_for_editor(self, collections: Dict[str, List]) -> str:
         """Format context for Editor agent using new model."""
         sections = []
 
@@ -778,7 +761,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_for_worldbuilding(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+    def _format_for_worldbuilding(self, collections: Dict[str, List]) -> str:
         """Format context for Worldbuilding agent using new model."""
         sections = []
 
@@ -790,7 +773,7 @@ class ContextFormatter:
 
         return "\n".join(sections)
 
-    def _format_generic(self, collections: Dict[str, List], phase: ComposePhase) -> str:
+    def _format_generic(self, collections: Dict[str, List]) -> str:
         """Generic formatting for unknown agent types using new model."""
         sections = []
 

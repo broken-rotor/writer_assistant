@@ -24,8 +24,7 @@ from app.services.plot_outline_extractor import get_plot_outline_extractor
 from app.core.config import settings
 from app.models.context_models import (
     ContextProcessingConfig,
-    AgentType,
-    ComposePhase
+    AgentType
 )
 from app.models.generation_models import (
     StructuredContextContainer,
@@ -33,7 +32,6 @@ from app.models.generation_models import (
     CharacterInfo,
     ChapterInfo,
     FeedbackItem,
-    PhaseContext,
     ContextMetadata
 )
 
@@ -71,8 +69,6 @@ class UnifiedContextProcessor:
     def process_generate_chapter_context(
         self,
         # Phase context
-        compose_phase: Optional[ComposePhase] = None,
-        phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
         context_processing_config: Optional[Dict[str, Any]] = None
@@ -104,7 +100,6 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=enhanced_context,
                     agent_type=AgentType.WRITER,
-                    compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="full_narrative_assembly"
                 )
@@ -127,8 +122,6 @@ class UnifiedContextProcessor:
     def process_character_feedback_context(
         self,
         # Phase context
-        compose_phase: Optional[ComposePhase] = None,
-        phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
         context_processing_config: Optional[Dict[str, Any]] = None
@@ -155,7 +148,6 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.CHARACTER,
-                    compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="character_specific_prioritization"
                 )
@@ -176,8 +168,6 @@ class UnifiedContextProcessor:
     def process_editor_review_context(
         self,
         # Phase context
-        compose_phase: Optional[ComposePhase] = None,
-        phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
         context_processing_config: Optional[Dict[str, Any]] = None
@@ -203,7 +193,6 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.EDITOR,
-                    compose_phase=compose_phase or ComposePhase.FINAL_EDIT,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="review_focused_filtering"
                 )
@@ -227,8 +216,6 @@ class UnifiedContextProcessor:
         rater_prompt: Optional[str] = None,
         plot_point: Optional[str] = None,
         # Phase context
-        compose_phase: Optional[ComposePhase] = None,
-        phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
         context_processing_config: Optional[Dict[str, Any]] = None
@@ -254,7 +241,6 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.RATER,
-                    compose_phase=compose_phase or ComposePhase.FINAL_EDIT,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="rater_specific_preparation"
                 )
@@ -282,8 +268,6 @@ class UnifiedContextProcessor:
         original_chapter: Optional[str] = None,
         modification_request: Optional[str] = None,
         # Phase context
-        compose_phase: Optional[ComposePhase] = None,
-        phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
         context_processing_config: Optional[Dict[str, Any]] = None
@@ -309,7 +293,6 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
-                    compose_phase=compose_phase or ComposePhase.FINAL_EDIT,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="change_focused_management"
                 )
@@ -336,8 +319,6 @@ class UnifiedContextProcessor:
         characters: Optional[List[CharacterInfo]] = None,
         outline_section: Optional[str] = None,
         # Phase context
-        compose_phase: Optional[ComposePhase] = None,
-        phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
         context_processing_config: Optional[Dict[str, Any]] = None
@@ -363,7 +344,6 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
-                    compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="expansion_specific_assembly"
                 )
@@ -390,8 +370,6 @@ class UnifiedContextProcessor:
         basic_bio: Optional[str] = None,
         existing_characters: Optional[List[Dict[str, str]]] = None,
         # Phase context
-        compose_phase: Optional[ComposePhase] = None,
-        phase_context: Optional[PhaseContext] = None,
         # Structured context
         structured_context: Optional[StructuredContextContainer] = None,
         context_processing_config: Optional[Dict[str, Any]] = None
@@ -418,7 +396,6 @@ class UnifiedContextProcessor:
                 result = self._process_structured_context(
                     structured_context=structured_context,
                     agent_type=AgentType.WRITER,
-                    compose_phase=compose_phase or ComposePhase.CHAPTER_DETAIL,
                     context_processing_config=context_processing_config,
                     endpoint_strategy="character_generation_prioritization"
                 )
@@ -440,7 +417,6 @@ class UnifiedContextProcessor:
         self,
         structured_context: StructuredContextContainer,
         agent_type: AgentType,
-        compose_phase: ComposePhase,
         context_processing_config: Optional[Dict[str, Any]],
         endpoint_strategy: str
     ) -> UnifiedContextResult:
@@ -449,7 +425,6 @@ class UnifiedContextProcessor:
             # Create processing configuration
             processing_config = ContextProcessingConfig(
                 target_agent=agent_type,
-                current_phase=compose_phase,
                 max_tokens=context_processing_config.get(
                     "max_context_length", 8000) if context_processing_config else 8000,
                 summarization_threshold=context_processing_config.get(
@@ -544,7 +519,6 @@ class UnifiedContextProcessor:
     def _enhance_with_plot_outline_context(
         self,
         structured_context: StructuredContextContainer,
-        phase_context: Optional[PhaseContext] = None,
         context_processing_config: Optional[Dict[str, Any]] = None
     ) -> StructuredContextContainer:
         """
