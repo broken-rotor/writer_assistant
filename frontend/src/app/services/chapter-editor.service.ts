@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, throwError } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, Observable, Subject, throwError, forkJoin } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import { 
   Chapter, 
@@ -8,7 +8,6 @@ import {
   GenerateChapterResponse,
   ModifyChapterResponse,
   LLMChatRequest,
-  LLMChatResponse,
   FeedbackItem,
   Story
 } from '../models/story.model';
@@ -50,11 +49,9 @@ export class ChapterEditorService {
   private errorSubject = new Subject<string>();
   public error$ = this.errorSubject.asObservable();
 
-  constructor(
-    private generationService: GenerationService,
-    private apiService: ApiService,
-    private contextBuilder: ContextBuilderService
-  ) {}
+  private generationService = inject(GenerationService);
+  private apiService = inject(ApiService);
+  private contextBuilder = inject(ContextBuilderService);
 
   /**
    * Initialize chapter editing for a specific chapter
@@ -196,13 +193,7 @@ export class ChapterEditorService {
 
     this.updateState({ isGenerating: true });
 
-    const context = this.contextBuilder.buildStructuredContext(story);
-    const request = {
-      structured_context: context,
-      context_processing_config: {}
-    };
-
-    return this.generationService.generateChapter(request).pipe(
+    return this.generationService.generateChapter(story, '', []).pipe(
       map((response: GenerateChapterResponse) => {
         const updatedChapter = {
           ...currentState.currentChapter!,
@@ -255,7 +246,7 @@ export class ChapterEditorService {
       })),
       agent_type: 'writer',
       compose_context: {
-        story_context: this.contextBuilder.buildLegacyContext(story),
+        story_context: this.contextBuilder.buildStorySummaryContext(story).data || {},
         chapter_draft: currentState.currentChapter?.content
       },
       system_prompts: {
@@ -265,7 +256,7 @@ export class ChapterEditorService {
       }
     };
 
-    return this.apiService.post<LLMChatResponse>('/llm-chat', chatRequest).pipe(
+    return this.apiService.llmChat(chatRequest).pipe(
       map(response => {
         // Add assistant response
         chatHistory.push({
@@ -298,30 +289,42 @@ export class ChapterEditorService {
 
     this.updateState({ isGettingFeedback: true });
 
-    const context = this.contextBuilder.buildStructuredContext(story);
     const requests = Array.from(story.characters.values())
       .filter(char => !char.isHidden)
       .map(character => {
-        return this.generationService.getCharacterFeedback({
-          structured_context: context,
-          character_name: character.name,
-          chapter_content: currentState.currentChapter!.content,
-          context_processing_config: {}
-        });
+        return this.generationService.requestCharacterFeedback(
+          story,
+          character,
+          currentState.currentChapter!.content
+        );
       });
 
-    return new Observable(observer => {
-      Promise.all(requests).then(responses => {
-        this.updateState({ characterFeedback: responses });
-        observer.next(responses);
+    if (requests.length === 0) {
+      this.updateState({ isGettingFeedback: false });
+      return new Observable(observer => {
+        observer.next([]);
         observer.complete();
-      }).catch(error => {
-        this.errorSubject.next('Failed to get character feedback: ' + error.message);
-        observer.error(error);
-      }).finally(() => {
-        this.updateState({ isGettingFeedback: false });
       });
-    });
+    }
+
+    return forkJoin(requests).pipe(
+      map(responses => {
+        // Convert StructuredCharacterFeedbackResponse to CharacterFeedbackResponse
+        const characterFeedback = responses.map(response => ({
+          characterName: response.characterName || 'Unknown',
+          feedback: response.feedback || 'No feedback provided'
+        }));
+        this.updateState({ characterFeedback });
+        return characterFeedback;
+      }),
+      catchError(error => {
+        this.errorSubject.next('Failed to get character feedback: ' + error.message);
+        return throwError(() => error);
+      }),
+      finalize(() => {
+        this.updateState({ isGettingFeedback: false });
+      })
+    );
   }
 
   /**
@@ -335,31 +338,42 @@ export class ChapterEditorService {
 
     this.updateState({ isGettingFeedback: true });
 
-    const context = this.contextBuilder.buildStructuredContext(story);
     const requests = Array.from(story.raters.values())
       .filter(rater => rater.enabled)
       .map(rater => {
-        return this.generationService.getRaterFeedback({
-          structured_context: context,
-          rater_name: rater.name,
-          rater_prompt: rater.systemPrompt,
-          chapter_content: currentState.currentChapter!.content,
-          context_processing_config: {}
-        });
+        return this.generationService.requestRaterFeedback(
+          story,
+          rater,
+          currentState.currentChapter!.content
+        );
       });
 
-    return new Observable(observer => {
-      Promise.all(requests).then(responses => {
-        this.updateState({ raterFeedback: responses });
-        observer.next(responses);
+    if (requests.length === 0) {
+      this.updateState({ isGettingFeedback: false });
+      return new Observable(observer => {
+        observer.next([]);
         observer.complete();
-      }).catch(error => {
-        this.errorSubject.next('Failed to get rater feedback: ' + error.message);
-        observer.error(error);
-      }).finally(() => {
-        this.updateState({ isGettingFeedback: false });
       });
-    });
+    }
+
+    return forkJoin(requests).pipe(
+      map(responses => {
+        // Convert StructuredRaterFeedbackResponse to RaterFeedbackResponse
+        const raterFeedback = responses.map(response => ({
+          raterName: response.raterName || 'Unknown',
+          feedback: response.feedback || 'No feedback provided'
+        }));
+        this.updateState({ raterFeedback });
+        return raterFeedback;
+      }),
+      catchError(error => {
+        this.errorSubject.next('Failed to get rater feedback: ' + error.message);
+        return throwError(() => error);
+      }),
+      finalize(() => {
+        this.updateState({ isGettingFeedback: false });
+      })
+    );
   }
 
   /**
@@ -373,15 +387,11 @@ export class ChapterEditorService {
 
     this.updateState({ isApplyingGuidance: true, userGuidance: guidance });
 
-    const context = this.contextBuilder.buildStructuredContext(story);
-    const request = {
-      structured_context: context,
-      current_chapter: currentState.currentChapter.content,
-      user_request: guidance,
-      context_processing_config: {}
-    };
-
-    return this.generationService.modifyChapter(request).pipe(
+    return this.generationService.modifyChapter(
+      story,
+      currentState.currentChapter.content,
+      guidance
+    ).pipe(
       map((response: ModifyChapterResponse) => {
         const updatedChapter = {
           ...currentState.currentChapter!,

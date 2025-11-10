@@ -8,8 +8,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { 
   CharacterFeedbackResponse, 
-  RaterFeedbackResponse, 
-  FeedbackItem 
+  RaterFeedbackResponse
 } from '../../models/story.model';
 
 export interface FeedbackAction {
@@ -45,7 +44,7 @@ export class FeedbackIntegrationComponent implements OnInit {
   @Output() applyFeedback = new EventEmitter<FeedbackAction>();
   @Output() clearFeedback = new EventEmitter<void>();
 
-  expandedPanels: Set<string> = new Set();
+  expandedPanels = new Set<string>();
 
   ngOnInit(): void {
     // Auto-expand first panel if there's feedback
@@ -116,7 +115,7 @@ export class FeedbackIntegrationComponent implements OnInit {
   }
 
   getFeedbackTypeIcon(type: string): string {
-    const icons: { [key: string]: string } = {
+    const icons: Record<string, string> = {
       'actions': '🎬',
       'dialog': '💬',
       'physicalSensations': '👋',

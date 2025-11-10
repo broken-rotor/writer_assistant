@@ -71,7 +71,7 @@
             <h4>Key Plot Items:</h4>
             <mat-chip-listbox class="plot-items-chips">
               <mat-chip-option 
-                *ngFor="let item of state.currentChapter.keyPlotItems; let i = index"
+                *ngFor="let item of state.currentChapter?.keyPlotItems; let i = index"
                 [removable]="!disabled && !isAnyOperationInProgress()"
                 (removed)="onRemovePlotItem(i)">
                 {{ item }}
@@ -194,7 +194,7 @@
                   [disabled]="!canChat()"
                   placeholder="e.g., 'I need help developing the conflict in this scene' or 'What are some ways to show character growth here?'"
                   rows="3"
-                  (keydown.enter)="$event.ctrlKey && chatInput.value.trim() && onChatMessage(chatInput.value) && (chatInput.value = '')">
+                  (keydown.enter)="onChatKeydown($any($event), chatInput)">
                 </textarea>
                 <mat-hint>Press Ctrl+Enter to send</mat-hint>
               </mat-form-field>
@@ -235,7 +235,7 @@
         <mat-card-content>
           <div class="generation-info" *ngIf="state.currentChapter?.plotPoint">
             <h4>Plot Point:</h4>
-            <p>{{ state.currentChapter.plotPoint }}</p>
+            <p>{{ state.currentChapter?.plotPoint }}</p>
           </div>
           <div class="generation-actions">
             <button 

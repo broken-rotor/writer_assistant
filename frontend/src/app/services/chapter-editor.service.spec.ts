@@ -66,13 +66,13 @@ describe('ChapterEditorService', () => {
     const generationSpy = jasmine.createSpyObj('GenerationService', [
       'generateChapter',
       'modifyChapter',
-      'getCharacterFeedback',
-      'getRaterFeedback'
+      'requestCharacterFeedback',
+      'requestRaterFeedback'
     ]);
-    const apiSpy = jasmine.createSpyObj('ApiService', ['post']);
+    const apiSpy = jasmine.createSpyObj('ApiService', ['llmChat']);
     const contextSpy = jasmine.createSpyObj('ContextBuilderService', [
-      'buildStructuredContext',
-      'buildLegacyContext'
+      'buildChapterGenerationContext',
+      'buildStorySummaryContext'
     ]);
 
     TestBed.configureTestingModule({
@@ -130,7 +130,7 @@ describe('ChapterEditorService', () => {
 
   it('should generate chapter from outline', () => {
     const mockResponse = { chapterText: 'Generated content' };
-    mockContextBuilder.buildStructuredContext.and.returnValue({});
+    // No context builder call needed - generateChapter handles it internally
     mockGenerationService.generateChapter.and.returnValue(of(mockResponse));
     
     service.initializeChapterEditing(mockChapter);
@@ -147,7 +147,7 @@ describe('ChapterEditorService', () => {
 
   it('should handle generation error', () => {
     const error = new Error('Generation failed');
-    mockContextBuilder.buildStructuredContext.and.returnValue({});
+    // No context builder call needed - generateChapter handles it internally
     mockGenerationService.generateChapter.and.returnValue(throwError(() => error));
     
     service.initializeChapterEditing(mockChapter);
@@ -170,8 +170,16 @@ describe('ChapterEditorService', () => {
       agent_type: 'writer' as const,
       metadata: {}
     };
-    mockContextBuilder.buildLegacyContext.and.returnValue({});
-    mockApiService.post.and.returnValue(of(mockResponse));
+    mockContextBuilder.buildStorySummaryContext.and.returnValue({ 
+      success: true,
+      data: { 
+        summary: 'Test summary', 
+        isValid: true, 
+        wordCount: 100, 
+        lastUpdated: new Date() 
+      } 
+    });
+    mockApiService.llmChat.and.returnValue(of(mockResponse));
     
     service.initializeChapterEditing(mockChapter);
     
@@ -192,7 +200,7 @@ describe('ChapterEditorService', () => {
       wordCount: 2,
       changesSummary: 'Applied guidance'
     };
-    mockContextBuilder.buildStructuredContext.and.returnValue({});
+    // No context builder call needed - modifyChapter handles it internally
     mockGenerationService.modifyChapter.and.returnValue(of(mockResponse));
     
     service.initializeChapterEditing(mockChapter);

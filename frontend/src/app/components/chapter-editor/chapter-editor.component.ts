@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,9 +14,7 @@ import { Subject, takeUntil } from 'rxjs';
 
 import { 
   Chapter, 
-  Story, 
-  CharacterFeedbackResponse, 
-  RaterFeedbackResponse 
+  Story
 } from '../../models/story.model';
 import { ChapterEditorService, ChapterEditingState } from '../../services/chapter-editor.service';
 import { FeedbackIntegrationComponent, FeedbackAction } from '../feedback-integration/feedback-integration.component';
@@ -66,11 +64,9 @@ export class ChapterEditorComponent implements OnInit, OnDestroy {
 
   userGuidanceText = '';
   private destroy$ = new Subject<void>();
-
-  constructor(
-    private chapterEditorService: ChapterEditorService,
-    private snackBar: MatSnackBar
-  ) {}
+  
+  private chapterEditorService = inject(ChapterEditorService);
+  private snackBar = inject(MatSnackBar);
 
   ngOnInit(): void {
     // Initialize the chapter editor service
@@ -136,7 +132,7 @@ export class ChapterEditorComponent implements OnInit, OnDestroy {
 
     this.chapterEditorService.generateChapterFromOutline(this.story)
       .subscribe({
-        next: (content) => {
+        next: (_content) => {
           this.snackBar.open('Chapter generated successfully!', 'Close', {
             duration: 3000,
             panelClass: ['success-snackbar']
@@ -153,7 +149,7 @@ export class ChapterEditorComponent implements OnInit, OnDestroy {
 
     this.chapterEditorService.sendChatMessage(message, this.story)
       .subscribe({
-        next: (response) => {
+        next: (_response) => {
           // Chat history is automatically updated in the service
         },
         error: (error) => {
@@ -203,7 +199,7 @@ export class ChapterEditorComponent implements OnInit, OnDestroy {
       `Please incorporate this ${action.feedbackType} feedback from ${action.source}: ${action.content}`,
       this.story
     ).subscribe({
-      next: (modifiedContent) => {
+      next: (_modifiedContent) => {
         this.snackBar.open('Feedback applied successfully!', 'Close', {
           duration: 3000,
           panelClass: ['success-snackbar']
@@ -222,12 +218,19 @@ export class ChapterEditorComponent implements OnInit, OnDestroy {
     });
   }
 
+  onChatKeydown(event: KeyboardEvent, chatInput: HTMLTextAreaElement): void {
+    if (event.ctrlKey && chatInput.value.trim()) {
+      this.onChatMessage(chatInput.value);
+      chatInput.value = '';
+    }
+  }
+
   onApplyUserGuidance(): void {
     if (!this.story || !this.userGuidanceText.trim()) return;
 
     this.chapterEditorService.applyUserGuidance(this.userGuidanceText, this.story)
       .subscribe({
-        next: (modifiedContent) => {
+        next: (_modifiedContent) => {
           this.userGuidanceText = '';
           this.snackBar.open('Guidance applied successfully!', 'Close', {
             duration: 3000,
