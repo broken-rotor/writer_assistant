@@ -86,11 +86,11 @@
                 [disabled]="disabled || isAnyOperationInProgress()"
                 placeholder="Enter a key plot item..."
                 (keydown.enter)="onAddPlotItem(plotItemInput.value); plotItemInput.value = ''">
-              <button 
-                matSuffix 
-                mat-icon-button 
+              <button
+                matSuffix
+                mat-icon-button
                 (click)="onAddPlotItem(plotItemInput.value); plotItemInput.value = ''"
-                [disabled]="disabled || isAnyOperationInProgress() || !plotItemInput.value?.trim()">
+                [disabled]="disabled || isAnyOperationInProgress() || !plotItemInput.value.trim()">
                 <mat-icon>add</mat-icon>
               </button>
             </mat-form-field>
@@ -199,11 +199,11 @@
                 <mat-hint>Press Ctrl+Enter to send</mat-hint>
               </mat-form-field>
               <div class="chat-actions">
-                <button 
-                  mat-raised-button 
-                  color="primary" 
+                <button
+                  mat-raised-button
+                  color="primary"
                   (click)="onChatMessage(chatInput.value); chatInput.value = ''"
-                  [disabled]="!canChat() || !chatInput.value?.trim()">
+                  [disabled]="!canChat() || !chatInput.value.trim()">
                   <mat-icon>send</mat-icon>
                   <span *ngIf="!state.isChatting">Send</span>
                   <span *ngIf="state.isChatting">Sending...</span>

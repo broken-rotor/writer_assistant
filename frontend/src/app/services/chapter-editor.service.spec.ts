@@ -216,22 +216,36 @@ describe('ChapterEditorService', () => {
   });
 
   it('should clear chat history', () => {
+    const mockResponse = {
+      message: { role: 'assistant' as const, content: 'Test response' },
+      agent_type: 'writer' as const,
+      metadata: {}
+    };
+    mockContextBuilder.buildStorySummaryContext.and.returnValue({
+      success: true,
+      data: {
+        summary: 'Test summary',
+        isValid: true,
+        wordCount: 100,
+        lastUpdated: new Date()
+      }
+    });
+    mockApiService.llmChat.and.returnValue(of(mockResponse));
+
     service.initializeChapterEditing(mockChapter);
-    
-    // Add some chat history first
-    service.state$.subscribe(state => {
-      state.chatHistory.push({
-        role: 'user',
-        content: 'Test',
-        timestamp: new Date()
-      });
-    });
-    
+
+    // Add some chat history first by sending a message
+    service.sendChatMessage('Test message', mockStory).subscribe();
+
+    // Verify chat history has messages
+    const stateBeforeClear = service['stateSubject'].value;
+    expect(stateBeforeClear.chatHistory.length).toBe(2); // User message + AI response
+
     service.clearChatHistory();
-    
-    service.state$.subscribe(state => {
-      expect(state.chatHistory.length).toBe(0);
-    });
+
+    // Verify chat history is cleared
+    const stateAfterClear = service['stateSubject'].value;
+    expect(stateAfterClear.chatHistory.length).toBe(0);
   });
 
   it('should mark as saved', () => {
