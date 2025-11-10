@@ -1,0 +1,546 @@
+.chapter-editor {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 10;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .back-button {
+        color: #666;
+        
+        &:hover {
+          color: #333;
+        }
+      }
+
+      .chapter-info {
+        h2 {
+          margin: 0;
+          font-size: 1.5em;
+          font-weight: 500;
+          color: #333;
+        }
+
+        .chapter-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-top: 4px;
+          font-size: 0.9em;
+          color: #666;
+
+          .word-count {
+            font-weight: 500;
+          }
+
+          .save-status.unsaved {
+            color: #ff9800;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+
+    .header-actions {
+      .save-button {
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  .editor-content {
+    flex: 1;
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    overflow: hidden;
+
+    .content-panel {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+
+      .chapter-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        mat-card-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+
+          .title-field {
+            width: 100%;
+            margin-bottom: 16px;
+          }
+
+          .outline-field {
+            width: 100%;
+            margin-bottom: 16px;
+
+            .outline-textarea {
+              font-family: 'Roboto', sans-serif;
+              font-size: 14px;
+              line-height: 1.5;
+              resize: vertical;
+            }
+          }
+
+          .key-plot-items {
+            margin-bottom: 16px;
+
+            h4 {
+              margin: 0 0 12px 0;
+              color: #333;
+              font-size: 1em;
+              font-weight: 500;
+            }
+
+            .plot-items-chips {
+              margin-bottom: 12px;
+              min-height: 40px;
+              border: 1px solid #e0e0e0;
+              border-radius: 8px;
+              padding: 8px;
+              background: #fafafa;
+
+              mat-chip-option {
+                margin: 4px;
+              }
+            }
+
+            .add-plot-item-field {
+              width: 100%;
+            }
+          }
+
+          .content-divider {
+            margin: 20px 0;
+          }
+
+          .content-field {
+            flex: 1;
+            width: 100%;
+
+            .chapter-textarea {
+              min-height: 400px;
+              font-family: 'Roboto Mono', monospace;
+              font-size: 14px;
+              line-height: 1.6;
+              resize: vertical;
+            }
+          }
+        }
+      }
+
+      .guidance-card {
+        mat-card-header {
+          mat-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            mat-icon {
+              color: #666;
+            }
+          }
+        }
+
+        .guidance-field {
+          width: 100%;
+          margin-bottom: 16px;
+        }
+
+        .guidance-actions {
+          display: flex;
+          justify-content: flex-end;
+
+          .apply-guidance-button {
+            mat-icon {
+              margin-right: 8px;
+            }
+          }
+        }
+      }
+    }
+
+    .tools-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      min-width: 400px;
+
+      .chat-card {
+        mat-card-header {
+          mat-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            mat-icon {
+              color: #2196f3;
+            }
+          }
+        }
+
+        .chat-container {
+          .chat-history {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            background: #fafafa;
+
+            .chat-message {
+              margin-bottom: 16px;
+              padding: 12px;
+              border-radius: 8px;
+
+              &.user-message {
+                background: #e3f2fd;
+                margin-left: 20px;
+              }
+
+              &.assistant-message {
+                background: #f3e5f5;
+                margin-right: 20px;
+              }
+
+              .message-content {
+                strong {
+                  color: #333;
+                }
+
+                p {
+                  margin: 4px 0 0 0;
+                  line-height: 1.5;
+                  color: #444;
+                }
+              }
+
+              .message-time {
+                font-size: 0.8em;
+                color: #666;
+                margin-top: 8px;
+                text-align: right;
+              }
+            }
+          }
+
+          .chat-input-section {
+            .chat-input-field {
+              width: 100%;
+              margin-bottom: 12px;
+            }
+
+            .chat-actions {
+              display: flex;
+              gap: 8px;
+              justify-content: flex-end;
+
+              button {
+                mat-icon {
+                  margin-right: 4px;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      .generation-card {
+        mat-card-header {
+          mat-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            mat-icon {
+              color: #4caf50;
+            }
+          }
+        }
+
+        .generation-info {
+          margin-bottom: 16px;
+          padding: 12px;
+          background: #f0f8ff;
+          border-radius: 8px;
+          border-left: 4px solid #2196f3;
+
+          h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 1em;
+          }
+
+          p {
+            margin: 0;
+            color: #555;
+            line-height: 1.5;
+          }
+        }
+
+        .generation-actions {
+          margin-bottom: 16px;
+
+          .generate-button {
+            width: 100%;
+
+            mat-icon {
+              margin-right: 8px;
+            }
+          }
+        }
+
+        .section-divider {
+          margin: 16px 0;
+        }
+
+        .generation-note {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 12px;
+          background: #fff3e0;
+          border-radius: 8px;
+
+          .info-icon {
+            color: #ff9800;
+            margin-top: 2px;
+          }
+
+          p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.4;
+          }
+        }
+      }
+
+      .feedback-section {
+        flex: 1;
+        min-height: 300px;
+      }
+    }
+  }
+
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+    .loading-content {
+      background: white;
+      padding: 32px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+
+      p {
+        margin: 16px 0 0 0;
+        color: #666;
+        font-size: 1.1em;
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 1200px) {
+  .chapter-editor {
+    .editor-content {
+      flex-direction: column;
+
+      .content-panel {
+        flex: none;
+      }
+
+      .tools-panel {
+        flex: none;
+        min-width: auto;
+        max-height: 600px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .chapter-editor {
+    .editor-header {
+      padding: 12px 16px;
+
+      .header-left {
+        gap: 12px;
+
+        .chapter-info {
+          h2 {
+            font-size: 1.2em;
+          }
+
+          .chapter-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+          }
+        }
+      }
+
+      .header-actions {
+        .save-button {
+          .mat-button-wrapper {
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+    }
+
+    .editor-content {
+      padding: 12px;
+      gap: 12px;
+
+      .tools-panel {
+        .chat-card {
+          .chat-container {
+            .chat-history {
+              max-height: 200px;
+
+              .chat-message {
+                &.user-message {
+                  margin-left: 0;
+                }
+
+                &.assistant-message {
+                  margin-right: 0;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .chapter-editor {
+    background: #303030;
+
+    .editor-header {
+      background: #424242;
+      border-bottom-color: #555;
+      color: #fff;
+
+      .header-left {
+        .chapter-info {
+          h2 {
+            color: #fff;
+          }
+
+          .chapter-meta {
+            color: #bbb;
+          }
+        }
+      }
+    }
+
+    .editor-content {
+      .content-panel {
+        .chapter-card {
+          background: #424242;
+          color: #fff;
+        }
+
+        .guidance-card {
+          background: #424242;
+          color: #fff;
+        }
+      }
+
+      .tools-panel {
+        .chat-card {
+          background: #424242;
+          color: #fff;
+
+          .chat-container {
+            .chat-history {
+              background: #333;
+              border-color: #555;
+
+              .chat-message {
+                &.user-message {
+                  background: #1565c0;
+                  color: #fff;
+                }
+
+                &.assistant-message {
+                  background: #7b1fa2;
+                  color: #fff;
+                }
+              }
+            }
+          }
+        }
+
+        .generation-card {
+          background: #424242;
+          color: #fff;
+
+          .generation-info {
+            background: #1a237e;
+            color: #fff;
+          }
+
+          .generation-note {
+            background: #e65100;
+            color: #fff;
+
+            p {
+              color: #fff;
+            }
+          }
+        }
+      }
+    }
+
+    .loading-overlay {
+      .loading-content {
+        background: #424242;
+        color: #fff;
+      }
+    }
+  }
+}

@@ -1,0 +1,285 @@
+<div class="chapter-editor">
+  <!-- Header -->
+  <div class="editor-header">
+    <div class="header-left">
+      <button 
+        mat-icon-button 
+        (click)="onBackToList()" 
+        [disabled]="isAnyOperationInProgress()"
+        class="back-button"
+        title="Back to chapters list">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="chapter-info">
+        <h2>Chapter {{ state.currentChapter?.number }}: {{ state.currentChapter?.title || 'Untitled' }}</h2>
+        <div class="chapter-meta">
+          <span class="word-count">{{ getWordCount() }} words</span>
+          <span class="save-status" *ngIf="state.hasUnsavedChanges" class="unsaved">• Unsaved changes</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="onSaveChapter()"
+        [disabled]="!state.hasUnsavedChanges || isAnyOperationInProgress()"
+        class="save-button">
+        <mat-icon>save</mat-icon>
+        Save Chapter
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="editor-content">
+    <!-- Left Panel: Chapter Content -->
+    <div class="content-panel">
+      <mat-card class="chapter-card">
+        <mat-card-header>
+          <mat-card-title>Chapter Content</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <!-- Chapter Title Input -->
+          <mat-form-field appearance="outline" class="title-field">
+            <mat-label>Chapter Title</mat-label>
+            <input 
+              matInput 
+              [value]="state.currentChapter?.title || ''"
+              (input)="onTitleChange($any($event.target).value)"
+              [disabled]="disabled || isAnyOperationInProgress()"
+              placeholder="Enter chapter title">
+          </mat-form-field>
+
+          <!-- Chapter Outline/Plot Points Section -->
+          <mat-form-field appearance="outline" class="outline-field">
+            <mat-label>Chapter Outline & Key Plot Points</mat-label>
+            <textarea 
+              matInput 
+              [value]="state.currentChapter?.plotPoint || ''"
+              (input)="onPlotPointChange($any($event.target).value)"
+              [disabled]="disabled || isAnyOperationInProgress()"
+              placeholder="Describe the main plot points, key events, and story beats for this chapter..."
+              rows="4"
+              class="outline-textarea">
+            </textarea>
+            <mat-hint>This outline will guide AI generation and provide context for feedback</mat-hint>
+          </mat-form-field>
+
+          <!-- Key Plot Items -->
+          <div class="key-plot-items">
+            <h4>Key Plot Items:</h4>
+            <mat-chip-listbox class="plot-items-chips">
+              <mat-chip-option 
+                *ngFor="let item of state.currentChapter?.keyPlotItems; let i = index"
+                [removable]="!disabled && !isAnyOperationInProgress()"
+                (removed)="onRemovePlotItem(i)">
+                {{ item }}
+                <mat-icon matChipRemove *ngIf="!disabled && !isAnyOperationInProgress()">cancel</mat-icon>
+              </mat-chip-option>
+            </mat-chip-listbox>
+            <mat-form-field appearance="outline" class="add-plot-item-field">
+              <mat-label>Add plot item</mat-label>
+              <input 
+                matInput 
+                #plotItemInput
+                [disabled]="disabled || isAnyOperationInProgress()"
+                placeholder="Enter a key plot item..."
+                (keydown.enter)="onAddPlotItem(plotItemInput.value); plotItemInput.value = ''">
+              <button
+                matSuffix
+                mat-icon-button
+                (click)="onAddPlotItem(plotItemInput.value); plotItemInput.value = ''"
+                [disabled]="disabled || isAnyOperationInProgress() || !plotItemInput.value.trim()">
+                <mat-icon>add</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+
+          <mat-divider class="content-divider"></mat-divider>
+
+          <!-- Chapter Content Textarea -->
+          <mat-form-field appearance="outline" class="content-field">
+            <mat-label>Chapter Content</mat-label>
+            <textarea 
+              matInput 
+              [value]="state.currentChapter?.content || ''"
+              (input)="onContentChange($any($event.target).value)"
+              [disabled]="disabled || isAnyOperationInProgress()"
+              placeholder="Write your chapter content here, or use the AI tools to generate it..."
+              rows="20"
+              class="chapter-textarea">
+            </textarea>
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- User Guidance Section -->
+      <mat-card class="guidance-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>edit</mat-icon>
+            User Guidance
+          </mat-card-title>
+          <mat-card-subtitle>
+            Provide specific instructions for AI modifications
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="guidance-field">
+            <mat-label>Modification Instructions</mat-label>
+            <textarea 
+              matInput 
+              [(ngModel)]="userGuidanceText"
+              [disabled]="disabled || isAnyOperationInProgress()"
+              placeholder="e.g., 'Add more dialogue between Sarah and John, make the scene more dramatic, focus on emotional tension...'"
+              rows="4">
+            </textarea>
+          </mat-form-field>
+          <div class="guidance-actions">
+            <button 
+              mat-raised-button 
+              color="accent" 
+              (click)="onApplyUserGuidance()"
+              [disabled]="!canApplyGuidance()"
+              class="apply-guidance-button">
+              <mat-icon>auto_fix_high</mat-icon>
+              <span *ngIf="!state.isApplyingGuidance">Apply Guidance</span>
+              <span *ngIf="state.isApplyingGuidance">Applying...</span>
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Right Panel: AI Tools -->
+    <div class="tools-panel">
+      <!-- Brainstorm Chat Section -->
+      <mat-card class="chat-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>chat</mat-icon>
+            Brainstorm Chat
+          </mat-card-title>
+          <mat-card-subtitle>
+            Discuss ideas with AI before writing
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chat-container">
+            <!-- Chat History -->
+            <div class="chat-history" *ngIf="state.chatHistory.length > 0">
+              <div 
+                *ngFor="let message of state.chatHistory" 
+                class="chat-message"
+                [class.user-message]="message.role === 'user'"
+                [class.assistant-message]="message.role === 'assistant'">
+                <div class="message-content">
+                  <strong>{{ message.role === 'user' ? 'You' : 'AI' }}:</strong>
+                  <p>{{ message.content }}</p>
+                </div>
+                <div class="message-time">
+                  {{ message.timestamp | date:'short' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-section">
+              <mat-form-field appearance="outline" class="chat-input-field">
+                <mat-label>Ask for ideas or guidance...</mat-label>
+                <textarea 
+                  matInput 
+                  #chatInput
+                  [disabled]="!canChat()"
+                  placeholder="e.g., 'I need help developing the conflict in this scene' or 'What are some ways to show character growth here?'"
+                  rows="3"
+                  (keydown.enter)="onChatKeydown($any($event), chatInput)">
+                </textarea>
+                <mat-hint>Press Ctrl+Enter to send</mat-hint>
+              </mat-form-field>
+              <div class="chat-actions">
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="onChatMessage(chatInput.value); chatInput.value = ''"
+                  [disabled]="!canChat() || !chatInput.value.trim()">
+                  <mat-icon>send</mat-icon>
+                  <span *ngIf="!state.isChatting">Send</span>
+                  <span *ngIf="state.isChatting">Sending...</span>
+                </button>
+                <button 
+                  mat-button 
+                  (click)="onClearChat()"
+                  [disabled]="state.chatHistory.length === 0 || isAnyOperationInProgress()">
+                  <mat-icon>clear</mat-icon>
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Chapter Generation Section -->
+      <mat-card class="generation-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>auto_stories</mat-icon>
+            Generate Chapter
+          </mat-card-title>
+          <mat-card-subtitle>
+            Create content from your chapter outline
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="generation-info" *ngIf="state.currentChapter?.plotPoint">
+            <h4>Plot Point:</h4>
+            <p>{{ state.currentChapter?.plotPoint }}</p>
+          </div>
+          <div class="generation-actions">
+            <button 
+              mat-raised-button 
+              color="primary" 
+              (click)="onGenerateChapter()"
+              [disabled]="!canGenerate()"
+              class="generate-button">
+              <mat-icon>auto_stories</mat-icon>
+              <span *ngIf="!state.isGenerating">Generate from Outline</span>
+              <span *ngIf="state.isGenerating">Generating...</span>
+            </button>
+          </div>
+          <mat-divider class="section-divider"></mat-divider>
+          <div class="generation-note">
+            <mat-icon class="info-icon">info</mat-icon>
+            <p>This will generate a full chapter based on your story outline, characters, and worldbuilding. Existing content will be replaced.</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Feedback Integration Section -->
+      <app-feedback-integration
+        [characterFeedback]="state.characterFeedback"
+        [raterFeedback]="state.raterFeedback"
+        [isLoading]="state.isGettingFeedback"
+        [disabled]="disabled || isAnyOperationInProgress()"
+        [showGetFeedbackButton]="canGetFeedback()"
+        (getFeedback)="onGetFeedback($event)"
+        (applyFeedback)="onApplyFeedback($event)"
+        (clearFeedback)="onClearFeedback()"
+        class="feedback-section">
+      </app-feedback-integration>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isAnyOperationInProgress()">
+    <div class="loading-content">
+      <mat-spinner diameter="60"></mat-spinner>
+      <p *ngIf="state.isGenerating">Generating chapter content...</p>
+      <p *ngIf="state.isGettingFeedback">Getting AI feedback...</p>
+      <p *ngIf="state.isApplyingGuidance">Applying your guidance...</p>
+      <p *ngIf="state.isChatting">Thinking...</p>
+    </div>
+  </div>
+</div>

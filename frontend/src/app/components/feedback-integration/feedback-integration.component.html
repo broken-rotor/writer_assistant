@@ -1,0 +1,328 @@
+<div class="feedback-integration">
+  <!-- Header with action buttons -->
+  <div class="feedback-header">
+    <h3>AI Feedback</h3>
+    <div class="feedback-summary" *ngIf="hasAnyFeedback()">
+      <span class="feedback-count">
+        <mat-icon>people</mat-icon>
+        {{ characterFeedback.length }} character{{ characterFeedback.length !== 1 ? 's' : '' }}
+      </span>
+      <span class="feedback-count">
+        <mat-icon>star</mat-icon>
+        {{ raterFeedback.length }} reviewer{{ raterFeedback.length !== 1 ? 's' : '' }}
+      </span>
+    </div>
+    <div class="feedback-actions" *ngIf="showGetFeedbackButton">
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="onGetCharacterFeedback()"
+        [disabled]="isLoading || disabled"
+        class="feedback-button">
+        <mat-icon>people</mat-icon>
+        <span *ngIf="!isLoading">Get Character Feedback</span>
+        <span *ngIf="isLoading">Getting Feedback...</span>
+      </button>
+      
+      <button 
+        mat-raised-button 
+        color="accent" 
+        (click)="onGetRaterFeedback()"
+        [disabled]="isLoading || disabled"
+        class="feedback-button">
+        <mat-icon>star</mat-icon>
+        <span *ngIf="!isLoading">Get Rater Feedback</span>
+        <span *ngIf="isLoading">Getting Feedback...</span>
+      </button>
+      
+      <button 
+        mat-stroked-button 
+        (click)="onGetAllFeedback()"
+        [disabled]="isLoading || disabled"
+        class="feedback-button">
+        <mat-icon>feedback</mat-icon>
+        Get All Feedback
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading indicator -->
+  <div class="loading-section" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Getting AI feedback...</p>
+  </div>
+
+  <!-- No feedback state -->
+  <div class="no-feedback" *ngIf="!hasAnyFeedback() && !isLoading">
+    <mat-icon class="no-feedback-icon">feedback</mat-icon>
+    <p>No feedback yet. Click the buttons above to get AI feedback on your chapter.</p>
+  </div>
+
+  <!-- Character Feedback Section -->
+  <div class="feedback-section" *ngIf="characterFeedback.length > 0">
+    <h4>👥 Character Feedback</h4>
+    
+    <mat-expansion-panel 
+      *ngFor="let feedback of characterFeedback; let i = index"
+      [expanded]="isPanelExpanded('character-' + i)"
+      (opened)="expandedPanels.add('character-' + i)"
+      (closed)="expandedPanels.delete('character-' + i)"
+      class="feedback-panel">
+      
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>person</mat-icon>
+          {{ feedback.characterName }}
+        </mat-panel-title>
+        <mat-panel-description>
+          Character perspective and suggestions
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="feedback-content">
+        <!-- Actions -->
+        <div class="feedback-category" *ngIf="feedback.feedback.actions.length > 0">
+          <h5>{{ getFeedbackTypeIcon('actions') }} Actions</h5>
+          <div class="feedback-items">
+            <mat-card 
+              *ngFor="let action of feedback.feedback.actions" 
+              class="feedback-item">
+              <mat-card-content>
+                <p>{{ action }}</p>
+                <div class="feedback-item-actions">
+                  <button 
+                    mat-button 
+                    color="primary" 
+                    (click)="onApplyCharacterFeedback(feedback, 'actions', action)"
+                    [disabled]="disabled">
+                    <mat-icon>check</mat-icon>
+                    Apply
+                  </button>
+                  <button 
+                    mat-button 
+                    (click)="onDismissFeedback('character', feedback.characterName, action)"
+                    [disabled]="disabled">
+                    <mat-icon>close</mat-icon>
+                    Dismiss
+                  </button>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+
+        <!-- Dialog -->
+        <div class="feedback-category" *ngIf="feedback.feedback.dialog.length > 0">
+          <h5>{{ getFeedbackTypeIcon('dialog') }} Dialog</h5>
+          <div class="feedback-items">
+            <mat-card 
+              *ngFor="let dialog of feedback.feedback.dialog" 
+              class="feedback-item">
+              <mat-card-content>
+                <p>{{ dialog }}</p>
+                <div class="feedback-item-actions">
+                  <button 
+                    mat-button 
+                    color="primary" 
+                    (click)="onApplyCharacterFeedback(feedback, 'dialog', dialog)"
+                    [disabled]="disabled">
+                    <mat-icon>check</mat-icon>
+                    Apply
+                  </button>
+                  <button 
+                    mat-button 
+                    (click)="onDismissFeedback('character', feedback.characterName, dialog)"
+                    [disabled]="disabled">
+                    <mat-icon>close</mat-icon>
+                    Dismiss
+                  </button>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+
+        <!-- Physical Sensations -->
+        <div class="feedback-category" *ngIf="feedback.feedback.physicalSensations.length > 0">
+          <h5>{{ getFeedbackTypeIcon('physicalSensations') }} Physical Sensations</h5>
+          <div class="feedback-items">
+            <mat-card 
+              *ngFor="let sensation of feedback.feedback.physicalSensations" 
+              class="feedback-item">
+              <mat-card-content>
+                <p>{{ sensation }}</p>
+                <div class="feedback-item-actions">
+                  <button 
+                    mat-button 
+                    color="primary" 
+                    (click)="onApplyCharacterFeedback(feedback, 'physicalSensations', sensation)"
+                    [disabled]="disabled">
+                    <mat-icon>check</mat-icon>
+                    Apply
+                  </button>
+                  <button 
+                    mat-button 
+                    (click)="onDismissFeedback('character', feedback.characterName, sensation)"
+                    [disabled]="disabled">
+                    <mat-icon>close</mat-icon>
+                    Dismiss
+                  </button>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+
+        <!-- Emotions -->
+        <div class="feedback-category" *ngIf="feedback.feedback.emotions.length > 0">
+          <h5>{{ getFeedbackTypeIcon('emotions') }} Emotions</h5>
+          <div class="feedback-items">
+            <mat-card 
+              *ngFor="let emotion of feedback.feedback.emotions" 
+              class="feedback-item">
+              <mat-card-content>
+                <p>{{ emotion }}</p>
+                <div class="feedback-item-actions">
+                  <button 
+                    mat-button 
+                    color="primary" 
+                    (click)="onApplyCharacterFeedback(feedback, 'emotions', emotion)"
+                    [disabled]="disabled">
+                    <mat-icon>check</mat-icon>
+                    Apply
+                  </button>
+                  <button 
+                    mat-button 
+                    (click)="onDismissFeedback('character', feedback.characterName, emotion)"
+                    [disabled]="disabled">
+                    <mat-icon>close</mat-icon>
+                    Dismiss
+                  </button>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+
+        <!-- Internal Monologue -->
+        <div class="feedback-category" *ngIf="feedback.feedback.internalMonologue.length > 0">
+          <h5>{{ getFeedbackTypeIcon('internalMonologue') }} Internal Monologue</h5>
+          <div class="feedback-items">
+            <mat-card 
+              *ngFor="let thought of feedback.feedback.internalMonologue" 
+              class="feedback-item">
+              <mat-card-content>
+                <p>{{ thought }}</p>
+                <div class="feedback-item-actions">
+                  <button 
+                    mat-button 
+                    color="primary" 
+                    (click)="onApplyCharacterFeedback(feedback, 'internalMonologue', thought)"
+                    [disabled]="disabled">
+                    <mat-icon>check</mat-icon>
+                    Apply
+                  </button>
+                  <button 
+                    mat-button 
+                    (click)="onDismissFeedback('character', feedback.characterName, thought)"
+                    [disabled]="disabled">
+                    <mat-icon>close</mat-icon>
+                    Dismiss
+                  </button>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </div>
+
+  <!-- Rater Feedback Section -->
+  <div class="feedback-section" *ngIf="raterFeedback.length > 0">
+    <h4>⭐ Rater Feedback</h4>
+    
+    <mat-expansion-panel 
+      *ngFor="let feedback of raterFeedback; let i = index"
+      [expanded]="isPanelExpanded('rater-' + i)"
+      (opened)="expandedPanels.add('rater-' + i)"
+      (closed)="expandedPanels.delete('rater-' + i)"
+      class="feedback-panel">
+      
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>star</mat-icon>
+          {{ feedback.raterName }}
+        </mat-panel-title>
+        <mat-panel-description>
+          Editorial review and suggestions
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="feedback-content">
+        <!-- Overall Opinion -->
+        <div class="feedback-category" *ngIf="feedback.feedback.opinion">
+          <h5>📝 Overall Opinion</h5>
+          <mat-card class="opinion-card">
+            <mat-card-content>
+              <p>{{ feedback.feedback.opinion }}</p>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="feedback-category" *ngIf="feedback.feedback.suggestions.length > 0">
+          <h5>💡 Suggestions</h5>
+          <div class="feedback-items">
+            <mat-card 
+              *ngFor="let suggestion of feedback.feedback.suggestions" 
+              class="feedback-item"
+              [class]="'priority-' + suggestion.priority">
+              <mat-card-content>
+                <div class="suggestion-header">
+                  <mat-chip 
+                    [color]="getPriorityColor(suggestion.priority)"
+                    selected>
+                    <mat-icon>{{ getPriorityIcon(suggestion.priority) }}</mat-icon>
+                    {{ suggestion.priority | titlecase }}
+                  </mat-chip>
+                </div>
+                <h6>{{ suggestion.issue }}</h6>
+                <p>{{ suggestion.suggestion }}</p>
+                <div class="feedback-item-actions">
+                  <button 
+                    mat-button 
+                    color="primary" 
+                    (click)="onApplyRaterFeedback(feedback, suggestion)"
+                    [disabled]="disabled">
+                    <mat-icon>check</mat-icon>
+                    Apply
+                  </button>
+                  <button 
+                    mat-button 
+                    (click)="onDismissFeedback('rater', feedback.raterName, suggestion.suggestion)"
+                    [disabled]="disabled">
+                    <mat-icon>close</mat-icon>
+                    Dismiss
+                  </button>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </div>
+
+  <!-- Clear all feedback button -->
+  <div class="clear-feedback-section" *ngIf="hasAnyFeedback()">
+    <button 
+      mat-stroked-button 
+      color="warn" 
+      (click)="onClearAllFeedback()"
+      [disabled]="disabled">
+      <mat-icon>clear_all</mat-icon>
+      Clear All Feedback
+    </button>
+  </div>
+</div>

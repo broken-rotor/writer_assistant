@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, finalize } from 'rxjs';
-import { Story } from '../../models/story.model';
+import { Story, Chapter } from '../../models/story.model';
 import { StoryService } from '../../services/story.service';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
@@ -27,6 +27,8 @@ import { FeedbackSidebarComponent, FeedbackSidebarConfig } from '../feedback-sid
 import { FeedbackService } from '../../services/feedback.service';
 import { ContextBuilderService } from '../../services/context-builder.service';
 import { WorldbuildingTabComponent } from '../worldbuilding-tab/worldbuilding-tab.component';
+import { ChapterEditorComponent } from '../chapter-editor/chapter-editor.component';
+import { MatIconModule } from '@angular/material/icon';
 
 interface ResearchChatMessage {
   role: string;
@@ -38,7 +40,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlineTabComponent, FeedbackSidebarComponent, WorldbuildingTabComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlineTabComponent, FeedbackSidebarComponent, WorldbuildingTabComponent, ChapterEditorComponent, MatIconModule],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -47,6 +49,10 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   activeTab: 'general' | 'worldbuilding' | 'characters' | 'raters' | 'plot-outline' | 'story' = 'general';
   loading = true;
   error: string | null = null;
+  
+  // Chapter editing state
+  isEditingChapter = false;
+  currentEditingChapter: Chapter | null = null;
 
   // Characters tab state
   selectedCharacterId: string | null = null;
@@ -998,5 +1004,21 @@ Provide actionable insights and creative suggestions to enhance this plot point.
       case 'needs_revision': return '🔄 Needs Revision';
       default: return this.story.plotOutline.status;
     }
+  }
+
+  /**
+   * Navigate to chapter editor
+   */
+  editChapter(chapter: Chapter): void {
+    this.currentEditingChapter = chapter;
+    this.isEditingChapter = true;
+  }
+
+  /**
+   * Return from chapter editor to main workspace
+   */
+  onBackFromChapterEditor(): void {
+    this.isEditingChapter = false;
+    this.currentEditingChapter = null;
   }
 }

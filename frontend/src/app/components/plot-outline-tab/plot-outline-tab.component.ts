@@ -20,6 +20,7 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   @Input() disabled = false;
   @Output() outlineUpdated = new EventEmitter<string>();
   @Output() outlineApproved = new EventEmitter<void>();
+  @Output() chapterEdit = new EventEmitter<Chapter>();
 
   @ViewChild('chatMessages') private chatMessagesContainer!: ElementRef;
 
@@ -623,22 +624,11 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Edit a specific chapter
+   * Edit a specific chapter - emit event to parent component
    */
   editChapter(chapter: Chapter): void {
-    // For now, just show a simple prompt to edit the title and plot point
-    const newTitle = prompt('Edit chapter title:', chapter.title);
-    if (newTitle !== null && newTitle.trim()) {
-      const newPlotPoint = prompt('Edit chapter plot point (overall theme):', chapter.plotPoint || '');
-      if (newPlotPoint !== null && newPlotPoint.trim()) {
-        // Update the chapter in the story data
-        chapter.title = newTitle.trim();
-        chapter.plotPoint = newPlotPoint.trim(); // Overall chapter plot/theme
-        
-        chapter.metadata.lastModified = new Date();
-        this.toastService.showSuccess('Chapter updated successfully!');
-      }
-    }
+    // Emit event to parent component to handle chapter editing
+    this.chapterEdit.emit(chapter);
   }
 
   /**

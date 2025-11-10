@@ -331,7 +331,8 @@
         [story]="story"
         [disabled]="loading"
         (outlineUpdated)="onPlotOutlineUpdated($event)"
-        (outlineApproved)="onPlotOutlineApproved()">
+        (outlineApproved)="onPlotOutlineApproved()"
+        (chapterEdit)="editChapter($event)">
       </app-plot-outline-tab>
     </div>
 
@@ -357,6 +358,10 @@
             <div class="chapter-header">
               <h4>Chapter {{ chapter.number }}: {{ chapter.title }}</h4>
               <div class="chapter-actions">
+                <button class="primary-button" (click)="editChapter(chapter)" title="Edit chapter">
+                  <mat-icon>edit</mat-icon>
+                  Edit
+                </button>
                 <button class="danger-button" (click)="deleteChapter(chapter.id)">Delete</button>
               </div>
             </div>
@@ -502,6 +507,16 @@
 <!-- Loading State -->
 <div class="loading" *ngIf="loading">
   <p>Loading story...</p>
+</div>
+
+<!-- Chapter Editor Modal -->
+<div class="chapter-editor-overlay" *ngIf="isEditingChapter && currentEditingChapter && story">
+  <app-chapter-editor
+    [chapter]="currentEditingChapter"
+    [story]="story"
+    (backToList)="onBackFromChapterEditor()"
+    class="chapter-editor-modal">
+  </app-chapter-editor>
 </div>
 
 <!-- Error State -->
