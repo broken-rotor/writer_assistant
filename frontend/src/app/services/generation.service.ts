@@ -508,42 +508,6 @@ export class GenerationService {
       });
     }
 
-    // Add key plot points from existing chapters
-    story.story.chapters.forEach((chapter, _index) => {
-      // Add chapter plot point if available
-      if (chapter.plotPoint?.trim()) {
-        plotElements.push({
-          type: "transition" as const,
-          content: `Chapter ${chapter.number}: ${chapter.plotPoint}`,
-          priority: "medium" as const,
-          tags: ["chapter_plot_point", `chapter_${chapter.number}`],
-          metadata: {
-            chapterNumber: chapter.number,
-            chapterTitle: chapter.title
-          }
-        });
-      }
-
-      // Add key plot items from chapter if available
-      if (chapter.keyPlotItems && chapter.keyPlotItems.length > 0) {
-        chapter.keyPlotItems.forEach((plotItem, itemIndex) => {
-          if (plotItem?.trim()) {
-            plotElements.push({
-              type: "setup" as const,
-              content: `Chapter ${chapter.number} - ${plotItem}`,
-              priority: "medium" as const,
-              tags: ["key_plot_item", `chapter_${chapter.number}`],
-              metadata: {
-                chapterNumber: chapter.number,
-                chapterTitle: chapter.title,
-                itemIndex: itemIndex
-              }
-            });
-          }
-        });
-      }
-    });
-
     const structuredContext = {
       plot_elements: plotElements,
       character_contexts: Array.from(story.characters.values())

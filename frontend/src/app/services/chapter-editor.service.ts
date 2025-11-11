@@ -193,7 +193,7 @@ export class ChapterEditorService {
 
     this.updateState({ isGenerating: true });
 
-    return this.generationService.generateChapter(story, '', []).pipe(
+    return this.generationService.generateChapter(story, currentState.currentChapter?.plotPoint || '', []).pipe(
       map((response: GenerateChapterResponse) => {
         const updatedChapter = {
           ...currentState.currentChapter!,
