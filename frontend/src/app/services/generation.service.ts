@@ -275,13 +275,13 @@ export class GenerationService {
     chapterNumber: number
   ): any {
     // Create structured context container
-    const plotElements: Array<{
+    const plotElements: {
       type: "scene" | "conflict" | "resolution" | "twist" | "setup" | "payoff" | "transition" | "chapter_outline";
       content: string;
       priority: "high" | "medium" | "low";
       tags: string[];
       metadata: any;
-    }> = [
+    }[] = [
       {
         type: "scene" as const,
         content: plotPoint,
@@ -341,7 +341,7 @@ export class GenerationService {
     }
 
     // Add key plot points from existing chapters
-    story.story.chapters.forEach((chapter, index) => {
+    story.story.chapters.forEach((chapter, _index) => {
       // Add chapter plot point if available
       if (chapter.plotPoint?.trim()) {
         plotElements.push({
@@ -477,13 +477,13 @@ export class GenerationService {
     incorporatedFeedback: FeedbackItem[] = []
   ): BackendGenerateChapterRequest {
     // Create structured context container
-    const plotElements: Array<{
+    const plotElements: {
       type: "scene" | "conflict" | "resolution" | "twist" | "setup" | "payoff" | "transition" | "chapter_outline";
       content: string;
       priority: "high" | "medium" | "low";
       tags: string[];
       metadata: any;
-    }> = [
+    }[] = [
       {
         type: "scene" as const,
         content: plotPoint,
@@ -509,7 +509,7 @@ export class GenerationService {
     }
 
     // Add key plot points from existing chapters
-    story.story.chapters.forEach((chapter, index) => {
+    story.story.chapters.forEach((chapter, _index) => {
       // Add chapter plot point if available
       if (chapter.plotPoint?.trim()) {
         plotElements.push({
