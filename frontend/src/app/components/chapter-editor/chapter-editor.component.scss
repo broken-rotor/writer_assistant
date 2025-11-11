@@ -118,10 +118,10 @@
             .plot-items-chips {
               margin-bottom: 12px;
               min-height: 40px;
-              border: 1px solid #e0e0e0;
+              border: 2px solid #e0e0e0;
               border-radius: 8px;
               padding: 8px;
-              background: #fafafa;
+              background: #ffffff;
 
               mat-chip-option {
                 margin: 4px;
@@ -209,10 +209,10 @@
             max-height: 300px;
             overflow-y: auto;
             margin-bottom: 16px;
-            border: 1px solid #e0e0e0;
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
             padding: 12px;
-            background: #fafafa;
+            background: #ffffff;
 
             .chat-message {
               margin-bottom: 16px;
@@ -449,97 +449,6 @@
             }
           }
         }
-      }
-    }
-  }
-}
-
-// Dark theme support
-@media (prefers-color-scheme: dark) {
-  .chapter-editor {
-    background: #303030;
-
-    .editor-header {
-      background: #424242;
-      border-bottom-color: #555;
-      color: #fff;
-
-      .header-left {
-        .chapter-info {
-          h2 {
-            color: #fff;
-          }
-
-          .chapter-meta {
-            color: #bbb;
-          }
-        }
-      }
-    }
-
-    .editor-content {
-      .content-panel {
-        .chapter-card {
-          background: #424242;
-          color: #fff;
-        }
-
-        .guidance-card {
-          background: #424242;
-          color: #fff;
-        }
-      }
-
-      .tools-panel {
-        .chat-card {
-          background: #424242;
-          color: #fff;
-
-          .chat-container {
-            .chat-history {
-              background: #333;
-              border-color: #555;
-
-              .chat-message {
-                &.user-message {
-                  background: #1565c0;
-                  color: #fff;
-                }
-
-                &.assistant-message {
-                  background: #7b1fa2;
-                  color: #fff;
-                }
-              }
-            }
-          }
-        }
-
-        .generation-card {
-          background: #424242;
-          color: #fff;
-
-          .generation-info {
-            background: #1a237e;
-            color: #fff;
-          }
-
-          .generation-note {
-            background: #e65100;
-            color: #fff;
-
-            p {
-              color: #fff;
-            }
-          }
-        }
-      }
-    }
-
-    .loading-overlay {
-      .loading-content {
-        background: #424242;
-        color: #fff;
       }
     }
   }
