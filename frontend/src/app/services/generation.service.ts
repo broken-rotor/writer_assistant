@@ -25,7 +25,9 @@ import {
   // Chapter Outline Generation interfaces
   ChapterOutlineGenerationRequest,
   ChapterOutlineGenerationResponse,
-  CharacterContext
+  CharacterContext,
+  // Backend request interfaces
+  BackendGenerateChapterRequest
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
@@ -62,53 +64,14 @@ export class GenerationService {
    */
   generateChapter(story: Story, plotPoint: string, incorporatedFeedback: FeedbackItem[] = []): Observable<GenerateChapterResponse> {
     try {
-      // Build structured context using ContextBuilderService
-      const contextResult = this.contextBuilderService.buildChapterGenerationContext(
-        story,
-        plotPoint,
+      // Convert to backend-compatible format using the same approach as generateChapterFromOutline
+      const backendRequest = this.convertToBackendGenerateChapterRequestGeneral(
+        story, 
+        plotPoint, 
         incorporatedFeedback
       );
 
-      // Check if context building was successful
-      if (!contextResult.success || !contextResult.data) {
-        throw new Error('Failed to build required context for chapter generation');
-      }
-
-      const context = contextResult.data;
-
-      // Build structured request using structured context
-      const request: StructuredGenerateChapterRequest = {
-        systemPrompts: {
-          mainPrefix: context.systemPrompts.mainPrefix,
-          mainSuffix: context.systemPrompts.mainSuffix,
-          assistantPrompt: this.buildChapterGenerationPrompt(story, context.plotPoint.plotPoint)
-        },
-        worldbuilding: { content: context.worldbuilding.content },
-        storySummary: { summary: context.storySummary.summary },
-        plotContext: { plotPoint: context.plotPoint.plotPoint },
-        feedbackContext: { incorporatedFeedback: context.feedback.incorporatedFeedback },
-        previousChapters: context.previousChapters.chapters.map(ch => ({
-          number: ch.number,
-          title: ch.title,
-          content: ch.content
-        })),
-        characters: context.characters.characters.map(c => ({
-          name: c.name,
-          basicBio: c.basicBio,
-          sex: c.sex,
-          gender: c.gender,
-          sexualPreference: c.sexualPreference,
-          age: c.age,
-          physicalAppearance: c.physicalAppearance,
-          usualClothing: c.usualClothing,
-          personality: c.personality,
-          motivations: c.motivations,
-          fears: c.fears,
-          relationships: c.relationships
-        }))
-      };
-
-      return this.apiService.generateChapter(request);
+      return this.apiService.generateChapter(backendRequest);
     } catch (error) {
       throw new Error(`Failed to generate chapter with structured context: ${error}`);
     }
@@ -335,16 +298,18 @@ export class GenerationService {
       user_requests: [],
       system_instructions: [
         {
-          instruction_id: 'main_prefix',
-          instruction_type: 'system_prompt',
+          id: 'main_prefix',
+          type: 'behavior' as const,
           content: story.general.systemPrompts.mainPrefix,
-          priority: 1
+          priority: 'high' as const,
+          scope: 'story' as const
         },
         {
-          instruction_id: 'main_suffix',
-          instruction_type: 'system_prompt',
+          id: 'main_suffix',
+          type: 'behavior' as const,
           content: story.general.systemPrompts.mainSuffix,
-          priority: 2
+          priority: 'high' as const,
+          scope: 'story' as const
         }
       ],
       metadata: {
@@ -359,10 +324,11 @@ export class GenerationService {
     // Add assistant prompt if available
     if (story.general.systemPrompts.assistantPrompt) {
       structuredContext.system_instructions.push({
-        instruction_id: 'assistant_prompt',
-        instruction_type: 'assistant_prompt',
+        id: 'assistant_prompt',
+        type: 'behavior' as const,
         content: story.general.systemPrompts.assistantPrompt,
-        priority: 3
+        priority: 'high' as const,
+        scope: 'story' as const
       });
     }
 
@@ -398,7 +364,109 @@ export class GenerationService {
     };
   }
 
+  /**
+   * Convert story and plot point to backend-compatible request format for general chapter generation
+   */
+  private convertToBackendGenerateChapterRequestGeneral(
+    story: Story,
+    plotPoint: string,
+    incorporatedFeedback: FeedbackItem[] = []
+  ): BackendGenerateChapterRequest {
+    // Create structured context container
+    const structuredContext = {
+      plot_elements: [
+        {
+          type: "scene" as const,
+          content: plotPoint,
+          priority: "high" as const,
+          tags: ["current_scene"],
+          metadata: {}
+        }
+      ],
+      character_contexts: Array.from(story.characters.values())
+        .filter(c => !c.isHidden)
+        .map(c => ({
+          character_id: c.id || c.name.toLowerCase().replace(/\s+/g, '_'),
+          character_name: c.name,
+          current_state: {
+            emotional_state: "",
+            physical_state: "",
+            goals: c.motivations ? [c.motivations] : [],
+            conflicts: c.fears ? [c.fears] : []
+          },
+          recent_actions: [],
+          relationships: c.relationships ? { general: c.relationships } : undefined,
+          goals: c.motivations ? [c.motivations] : [],
+          memories: [],
+          personality_traits: c.personality ? [c.personality] : []
+        })),
+      user_requests: incorporatedFeedback.map((feedback, index) => ({
+        id: `feedback_${index}`,
+        type: 'general' as const,
+        content: feedback.content,
+        priority: 'medium' as const,
+        context: `User feedback: ${feedback.type || 'general'}`,
+        target: undefined
+      })),
+      system_instructions: [
+        {
+          id: 'main_prefix',
+          type: 'behavior' as const,
+          content: story.general.systemPrompts.mainPrefix,
+          priority: 'high' as const,
+          scope: 'story' as const
+        },
+        {
+          id: 'main_suffix',
+          type: 'behavior' as const,
+          content: story.general.systemPrompts.mainSuffix,
+          priority: 'high' as const,
+          scope: 'story' as const
+        }
+      ],
+      metadata: {
+        total_elements: 1, // plot_elements count
+        processing_applied: false,
+        story_title: story.general.title,
+        worldbuilding_summary: story.general.worldbuilding,
+        story_summary: story.story.summary,
+        chapter_number: story.story.chapters.length + 1,
+        total_chapters: story.story.chapters.length
+      }
+    };
 
+    // Add assistant prompt if available
+    if (story.general.systemPrompts.assistantPrompt) {
+      structuredContext.system_instructions.push({
+        id: 'assistant_prompt',
+        type: 'behavior' as const,
+        content: story.general.systemPrompts.assistantPrompt,
+        priority: 'high' as const,
+        scope: 'story' as const
+      });
+    }
+
+    // Create context processing config
+    const contextProcessingConfig = {
+      story_context: {
+        title: story.general.title,
+        worldbuilding: story.general.worldbuilding,
+        summary: story.story.summary,
+        previous_chapters: story.story.chapters.map(ch => ({
+          number: ch.number,
+          title: ch.title,
+          content: ch.content
+        }))
+      }
+    };
+
+    // Create backend-compatible request
+    return {
+      plotPoint: plotPoint,
+      structured_context: structuredContext,
+      context_processing_config: contextProcessingConfig
+    };
+  }
 
   // Continue Writing Chapter
   continueChapter(
@@ -1057,87 +1125,17 @@ ${story.plotOutline.content}`;
     options: { validate?: boolean; optimize?: boolean } = {}
   ): Observable<StructuredGenerateChapterResponse> {
     try {
-      // Build structured request using ContextBuilderService
-      const contextResult = this.contextBuilderService.buildChapterGenerationContext(
-        story,
-        plotPoint,
+      // Convert to backend-compatible format using the same approach as generateChapter
+      const backendRequest = this.convertToBackendGenerateChapterRequestGeneral(
+        story, 
+        plotPoint, 
         incorporatedFeedback
       );
 
-      // Check if context building was successful
-      if (!contextResult.success || !contextResult.data) {
-        throw new Error('Failed to build required context for structured chapter generation');
-      }
+      // Note: Validation and optimization are skipped for backend requests as they use a different format
+      // The backend handles validation internally
 
-      const context = contextResult.data;
-
-      // Build structured request
-      let structuredRequest: StructuredGenerateChapterRequest = {
-        systemPrompts: {
-          mainPrefix: context.systemPrompts.mainPrefix,
-          mainSuffix: context.systemPrompts.mainSuffix,
-          assistantPrompt: context.systemPrompts.assistantPrompt
-        },
-        worldbuilding: {
-          content: context.worldbuilding.content,
-          lastModified: new Date(),
-          wordCount: context.worldbuilding.content.split(/\s+/).length
-        },
-        storySummary: {
-          summary: context.storySummary.summary,
-          lastModified: new Date(),
-          wordCount: context.storySummary.summary.split(/\s+/).length
-        },
-        previousChapters: context.previousChapters.chapters.map(ch => ({
-          number: ch.number,
-          title: ch.title,
-          content: ch.content,
-          wordCount: ch.content.split(/\s+/).length
-        })),
-        characters: context.characters.characters.map(c => ({
-          name: c.name,
-          basicBio: c.basicBio,
-          sex: c.sex,
-          gender: c.gender,
-          sexualPreference: c.sexualPreference,
-          age: c.age,
-          physicalAppearance: c.physicalAppearance,
-          usualClothing: c.usualClothing,
-          personality: c.personality,
-          motivations: c.motivations,
-          fears: c.fears,
-          relationships: c.relationships,
-          isHidden: c.isHidden
-        })),
-        plotContext: {
-          plotPoint: context.plotPoint.plotPoint,
-          plotOutline: story.plotOutline?.content,
-          plotOutlineStatus: story.plotOutline?.status
-        },
-        feedbackContext: {
-          incorporatedFeedback: context.feedback.incorporatedFeedback
-        },
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
-        }
-      };
-
-      // Validate request if requested
-      if (options.validate !== false) {
-        const validationResult = this.requestValidatorService.validateGenerateChapterRequest(structuredRequest);
-        if (!validationResult.isValid) {
-          throw new Error(`Request validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
-        }
-      }
-
-      // Optimize request if requested
-      if (options.optimize !== false) {
-        const optimizationResult = this.requestOptimizerService.optimizeGenerateChapterRequest(structuredRequest);
-        structuredRequest = optimizationResult.optimizedRequest;
-      }
-
-      return this.apiService.generateChapter(structuredRequest);
+      return this.apiService.generateChapter(backendRequest);
     } catch (error) {
       throw new Error(`Failed to generate chapter with structured context: ${error}`);
     }

@@ -11,6 +11,7 @@ import {
   StructuredGenerateChapterResponse,
   StructuredEditorReviewRequest
 } from '../models/structured-request.model';
+import { BackendGenerateChapterRequest } from '../models/story.model';
 import { TokenStrategiesResponse } from '../models/token-limits.model';
 
 describe('ApiService', () => {
@@ -144,26 +145,19 @@ describe('ApiService', () => {
 
   describe('generateChapter', () => {
     it('should send POST request to generate-chapter endpoint', () => {
-      const request: StructuredGenerateChapterRequest = {
-        systemPrompts: {
-          mainPrefix: '',
-          mainSuffix: '',
-          assistantPrompt: 'You are a writer'
+      const request: BackendGenerateChapterRequest = {
+        plotPoint: 'The hero enters the dungeon',
+        structured_context: {
+          plot_elements: [],
+          character_contexts: [],
+          user_requests: [],
+          system_instructions: [],
+          metadata: {
+            total_elements: 0,
+            processing_applied: false
+          }
         },
-        worldbuilding: {
-          content: 'A fantasy world'
-        },
-        storySummary: {
-          summary: 'A story'
-        },
-        previousChapters: [],
-        characters: [],
-        plotContext: {
-          plotPoint: 'The hero enters the dungeon'
-        },
-        feedbackContext: {
-          incorporatedFeedback: []
-        }
+        context_processing_config: {}
       };
 
       const mockResponse: StructuredGenerateChapterResponse = {
