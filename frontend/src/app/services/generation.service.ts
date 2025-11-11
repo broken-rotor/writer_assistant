@@ -275,8 +275,109 @@ export class GenerationService {
     chapterNumber: number
   ): any {
     // Create structured context container
+    const plotElements: Array<{
+      type: "scene" | "conflict" | "resolution" | "twist" | "setup" | "payoff" | "transition" | "chapter_outline";
+      content: string;
+      priority: "high" | "medium" | "low";
+      tags: string[];
+      metadata: any;
+    }> = [
+      {
+        type: "scene" as const,
+        content: plotPoint,
+        priority: "high" as const,
+        tags: ["current_scene"],
+        metadata: {}
+      }
+    ];
+
+    // Add outline items from chapter generation
+    outlineItems.forEach((item, index) => {
+      plotElements.push({
+        type: "chapter_outline" as const,
+        content: `${item.title}: ${item.description}`,
+        priority: "high" as const,
+        tags: ["chapter_outline", `outline_item_${index}`],
+        metadata: {
+          title: item.title,
+          description: item.description,
+          itemIndex: index
+        }
+      });
+
+      // Add key plot items if available
+      if (item.key_plot_items && item.key_plot_items.length > 0) {
+        item.key_plot_items.forEach((plotItem, plotIndex) => {
+          if (plotItem?.trim()) {
+            plotElements.push({
+              type: "setup" as const,
+              content: `${item.title} - ${plotItem}`,
+              priority: "medium" as const,
+              tags: ["key_plot_item", `outline_item_${index}`],
+              metadata: {
+                parentTitle: item.title,
+                itemIndex: index,
+                plotIndex: plotIndex
+              }
+            });
+          }
+        });
+      }
+    });
+
+    // Add main plot outline if available
+    if (story.plotOutline?.content?.trim()) {
+      plotElements.push({
+        type: "setup" as const,
+        content: story.plotOutline.content,
+        priority: "high" as const,
+        tags: ["main_plot_outline"],
+        metadata: {
+          status: story.plotOutline.status,
+          lastModified: story.plotOutline.metadata.lastModified,
+          approved: story.plotOutline.status === 'approved'
+        }
+      });
+    }
+
+    // Add key plot points from existing chapters
+    story.story.chapters.forEach((chapter, index) => {
+      // Add chapter plot point if available
+      if (chapter.plotPoint?.trim()) {
+        plotElements.push({
+          type: "transition" as const,
+          content: `Chapter ${chapter.number}: ${chapter.plotPoint}`,
+          priority: "medium" as const,
+          tags: ["chapter_plot_point", `chapter_${chapter.number}`],
+          metadata: {
+            chapterNumber: chapter.number,
+            chapterTitle: chapter.title
+          }
+        });
+      }
+
+      // Add key plot items from chapter if available
+      if (chapter.keyPlotItems && chapter.keyPlotItems.length > 0) {
+        chapter.keyPlotItems.forEach((plotItem, itemIndex) => {
+          if (plotItem?.trim()) {
+            plotElements.push({
+              type: "setup" as const,
+              content: `Chapter ${chapter.number} - ${plotItem}`,
+              priority: "medium" as const,
+              tags: ["key_plot_item", `chapter_${chapter.number}`],
+              metadata: {
+                chapterNumber: chapter.number,
+                chapterTitle: chapter.title,
+                itemIndex: itemIndex
+              }
+            });
+          }
+        });
+      }
+    });
+
     const structuredContext = {
-      plot_elements: [],
+      plot_elements: plotElements,
       character_contexts: Array.from(story.characters.values())
         .filter(c => !c.isHidden)
         .map(c => ({
@@ -312,11 +413,15 @@ export class GenerationService {
         }
       ],
       metadata: {
+        total_elements: plotElements.length, // plot_elements count
+        processing_applied: false,
         story_title: story.general.title,
         worldbuilding_summary: story.general.worldbuilding,
         story_summary: story.story.summary,
         chapter_number: chapterNumber,
-        total_chapters: story.story.chapters.length
+        total_chapters: story.story.chapters.length,
+        plot_outline_included: !!story.plotOutline?.content?.trim(),
+        plot_outline_status: story.plotOutline?.status || 'none'
       }
     };
 
@@ -372,16 +477,75 @@ export class GenerationService {
     incorporatedFeedback: FeedbackItem[] = []
   ): BackendGenerateChapterRequest {
     // Create structured context container
-    const structuredContext = {
-      plot_elements: [
-        {
-          type: "scene" as const,
-          content: plotPoint,
-          priority: "high" as const,
-          tags: ["current_scene"],
-          metadata: {}
+    const plotElements: Array<{
+      type: "scene" | "conflict" | "resolution" | "twist" | "setup" | "payoff" | "transition" | "chapter_outline";
+      content: string;
+      priority: "high" | "medium" | "low";
+      tags: string[];
+      metadata: any;
+    }> = [
+      {
+        type: "scene" as const,
+        content: plotPoint,
+        priority: "high" as const,
+        tags: ["current_scene"],
+        metadata: {}
+      }
+    ];
+
+    // Add main plot outline if available
+    if (story.plotOutline?.content?.trim()) {
+      plotElements.push({
+        type: "setup" as const,
+        content: story.plotOutline.content,
+        priority: "high" as const,
+        tags: ["main_plot_outline"],
+        metadata: {
+          status: story.plotOutline.status,
+          lastModified: story.plotOutline.metadata.lastModified,
+          approved: story.plotOutline.status === 'approved'
         }
-      ],
+      });
+    }
+
+    // Add key plot points from existing chapters
+    story.story.chapters.forEach((chapter, index) => {
+      // Add chapter plot point if available
+      if (chapter.plotPoint?.trim()) {
+        plotElements.push({
+          type: "transition" as const,
+          content: `Chapter ${chapter.number}: ${chapter.plotPoint}`,
+          priority: "medium" as const,
+          tags: ["chapter_plot_point", `chapter_${chapter.number}`],
+          metadata: {
+            chapterNumber: chapter.number,
+            chapterTitle: chapter.title
+          }
+        });
+      }
+
+      // Add key plot items from chapter if available
+      if (chapter.keyPlotItems && chapter.keyPlotItems.length > 0) {
+        chapter.keyPlotItems.forEach((plotItem, itemIndex) => {
+          if (plotItem?.trim()) {
+            plotElements.push({
+              type: "setup" as const,
+              content: `Chapter ${chapter.number} - ${plotItem}`,
+              priority: "medium" as const,
+              tags: ["key_plot_item", `chapter_${chapter.number}`],
+              metadata: {
+                chapterNumber: chapter.number,
+                chapterTitle: chapter.title,
+                itemIndex: itemIndex
+              }
+            });
+          }
+        });
+      }
+    });
+
+    const structuredContext = {
+      plot_elements: plotElements,
       character_contexts: Array.from(story.characters.values())
         .filter(c => !c.isHidden)
         .map(c => ({
@@ -424,13 +588,15 @@ export class GenerationService {
         }
       ],
       metadata: {
-        total_elements: 1, // plot_elements count
+        total_elements: plotElements.length, // plot_elements count
         processing_applied: false,
         story_title: story.general.title,
         worldbuilding_summary: story.general.worldbuilding,
         story_summary: story.story.summary,
         chapter_number: story.story.chapters.length + 1,
-        total_chapters: story.story.chapters.length
+        total_chapters: story.story.chapters.length,
+        plot_outline_included: !!story.plotOutline?.content?.trim(),
+        plot_outline_status: story.plotOutline?.status || 'none'
       }
     };
 
