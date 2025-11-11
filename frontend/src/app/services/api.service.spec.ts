@@ -7,7 +7,6 @@ import {
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackRequest,
   StructuredRaterFeedbackResponse,
-  StructuredGenerateChapterRequest,
   StructuredGenerateChapterResponse,
   StructuredEditorReviewRequest
 } from '../models/structured-request.model';

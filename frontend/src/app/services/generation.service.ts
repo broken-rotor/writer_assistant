@@ -31,7 +31,6 @@ import {
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
-  StructuredGenerateChapterRequest,
   StructuredEditorReviewRequest,
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackResponse,
@@ -1122,7 +1121,7 @@ ${story.plotOutline.content}`;
     story: Story,
     plotPoint: string,
     incorporatedFeedback: FeedbackItem[] = [],
-    options: { validate?: boolean; optimize?: boolean } = {}
+    _options: { validate?: boolean; optimize?: boolean } = {}
   ): Observable<StructuredGenerateChapterResponse> {
     try {
       // Convert to backend-compatible format using the same approach as generateChapter
