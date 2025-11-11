@@ -377,6 +377,12 @@ export interface EditorReviewRequest {
   chapterToReview: string;
 }
 
+export interface BackendGenerateChapterRequest {
+  plotPoint: string;
+  structured_context: StructuredContextContainer;
+  context_processing_config?: Record<string, any>;
+}
+
 export interface FleshOutRequest {
   textToFleshOut: string;
   context?: string;

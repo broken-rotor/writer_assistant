@@ -17,7 +17,9 @@ import {
   LLMChatStreamMessage,
   // Chapter Outline Generation interfaces
   ChapterOutlineGenerationRequest,
-  ChapterOutlineGenerationResponse
+  ChapterOutlineGenerationResponse,
+  // Backend request interfaces
+  BackendGenerateChapterRequest
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackRequest,
@@ -341,7 +343,7 @@ export class ApiService {
   }
 
   // Chapter Generation
-  generateChapter(request: any): Observable<StructuredGenerateChapterResponse> {
+  generateChapter(request: BackendGenerateChapterRequest): Observable<StructuredGenerateChapterResponse> {
     return this.http.post<StructuredGenerateChapterResponse>(`${this.baseUrl}/generate-chapter`, request);
   }
 
