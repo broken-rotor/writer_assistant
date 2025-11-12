@@ -255,8 +255,8 @@ class ContextManager:
             )
             
             # Apply token budget constraints
-            final_collections = self._apply_token_budget(
-                filtered_collections, config
+            final_collections, was_summarized = self._apply_token_budget(
+                filtered_collections, config.max_tokens, config.summarization_threshold
             )
             
             # Format for the specific agent
@@ -278,7 +278,7 @@ class ContextManager:
                 original_count=original_count,
                 filtered_count=filtered_count,
                 final_count=final_count,
-                was_summarized=False,  # For now, we don't support summarization in this method
+                was_summarized=was_summarized,
                 target_agent=config.target_agent
             )
             
