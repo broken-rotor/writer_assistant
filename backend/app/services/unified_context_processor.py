@@ -677,8 +677,8 @@ class UnifiedContextProcessor:
                     "include_relationships", True) if context_processing_config else True
             )
 
-            # Process context with ContextManager (now using new model natively)
-            formatted_context, metadata = self.context_manager.process_context_for_agent(
+            # Process context with ContextManager (using structured context method)
+            formatted_context, metadata = self.context_manager.process_structured_context_for_agent(
                 structured_context, processing_config
             )
 

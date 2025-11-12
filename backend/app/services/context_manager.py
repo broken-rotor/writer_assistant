@@ -228,6 +228,67 @@ class ContextManager:
             # Fall back to regular processing
             return self.process_context_for_agent(request_context, config)
 
+    def process_structured_context_for_agent(
+        self,
+        structured_context: StructuredContextContainer,
+        config: ContextProcessingConfig
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Process structured context container for a specific agent and phase.
+        
+        This method provides backward compatibility for code that still uses
+        StructuredContextContainer instead of RequestContext.
+        
+        Args:
+            structured_context: The structured context container to process
+            config: Processing configuration for the target agent
+            
+        Returns:
+            Tuple of (formatted_context_string, metadata_dict)
+        """
+        try:
+            logger.debug(f"Processing structured context for agent {config.target_agent}")
+            
+            # Filter elements for the specific agent
+            filtered_collections = self._filter_elements_for_agent_and_phase(
+                structured_context, config.target_agent
+            )
+            
+            # Apply token budget constraints
+            final_collections = self._apply_token_budget(
+                filtered_collections, config
+            )
+            
+            # Format for the specific agent
+            formatted_context = self.format_for_agent(
+                final_collections, config.target_agent
+            )
+            
+            # Generate processing metadata
+            original_count = (
+                len(structured_context.plot_elements) +
+                len(structured_context.character_contexts) +
+                len(structured_context.user_requests) +
+                len(structured_context.system_instructions)
+            )
+            filtered_count = sum(len(v) for v in filtered_collections.values())
+            final_count = sum(len(v) for v in final_collections.values())
+            
+            metadata = self._generate_processing_metadata(
+                original_count=original_count,
+                filtered_count=filtered_count,
+                final_count=final_count,
+                was_summarized=False,  # For now, we don't support summarization in this method
+                target_agent=config.target_agent
+            )
+            
+            logger.debug(f"Successfully processed structured context for {config.target_agent}")
+            return formatted_context, metadata
+            
+        except Exception as e:
+            logger.error(f"Error processing structured context for agent {config.target_agent}: {str(e)}")
+            raise
+
     def _filter_elements_for_agent_and_phase(
         self,
         container: StructuredContextContainer,
