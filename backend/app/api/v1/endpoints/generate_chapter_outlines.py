@@ -57,7 +57,7 @@ Guidelines:
 IMPORTANT: Format your response as a JSON array where each chapter is an object with these exact fields:
 {
   "title": "Chapter title (without 'Chapter X:' prefix)",
-  "description": "Brief 1-2 sentence summary of the chapter",
+  "description": "Brief 2-4 sentence summary of the chapter",
   "key_plot_items": ["Specific plot item 1", "Specific plot item 2", "Specific plot item 3"],
   "involved_characters": ["character1", "character2", ...]
 }
@@ -108,22 +108,21 @@ Respond ONLY with the JSON array, no additional text."""
                     char_info += f": {char_details.basic_bio}"
                 # Note: personality and goals fields don't exist in CharacterDetails model
                 characters_list.append(char_info)
-            characters_info = f"""
-
-CHARACTERS:
-{chr(10).join(characters_list)}"""
+            characters_info = f"""\n<CHARACTERS>\n{chr(10).join(characters_list)}\n</CHARACTERS>"""
 
         # Extract additional story context from RequestContext
         story_context_info = ""
         if request.request_context.context_metadata.story_title:
-            story_context_info += f"\nSTORY TITLE: {request.request_context.context_metadata.story_title}"
+            story_context_info += f"\n<STORY TITLE>\n{request.request_context.context_metadata.story_title}\n</STORY TITLE>"
         if request.request_context.worldbuilding.content:
-            story_context_info += f"\nWORLDBUILDING: {request.request_context.worldbuilding.content}"
+            story_context_info += f"\n<WORLDBUILDING>\n{request.request_context.worldbuilding.content}\n<WORLDBUILDING>"
 
         user_prompt = f"""Please analyze this story outline and create a detailed chapter breakdown:
 
-STORY OUTLINE:
-{request.request_context.story_outline.summary}{story_context_info}{characters_info}
+{story_context_info}{characters_info}
+<STORY OUTLINE>
+{request.request_context.story_outline.summary}
+</STORY OUTLINE>
 
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 
