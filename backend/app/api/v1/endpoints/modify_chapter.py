@@ -7,6 +7,7 @@ from app.models.generation_models import (
     ModifyChapterRequest,
     ModifyChapterResponse
 )
+from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.core.config import settings
@@ -40,9 +41,7 @@ async def modify_chapter(request: ModifyChapterRequest):
                 # Core fields
                 original_chapter=request.currentChapter,
                 modification_request=request.userRequest,
-                context_processing_config=request.context_processing_config,
-                # Legacy parameter for backward compatibility
-                structured_context=request.structured_context
+                context_processing_config=request.context_processing_config
             )
 
             # Log context processing results
@@ -112,7 +111,7 @@ Rewrite the chapter incorporating the requested changes while maintaining consis
                     "originalWordCount": len(request.currentChapter.split()),
                     "modificationRequest": request.userRequest,
                     "contextMode": "structured",
-                    "structuredContextProvided": bool(request.structured_context),
+                    "requestContextProvided": bool(request.request_context),
                     "processingMode": context_result.processing_mode
                 }
             )

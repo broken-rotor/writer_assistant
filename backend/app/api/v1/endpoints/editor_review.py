@@ -8,6 +8,7 @@ from app.models.generation_models import (
     EditorReviewResponse,
     EditorSuggestion
 )
+from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
@@ -41,9 +42,7 @@ async def editor_review(request: EditorReviewRequest):
             # Process context using request context (preferred) or structured context (legacy)
             context_result = context_processor.process_editor_review_context(
                 request_context=request.request_context,
-                context_processing_config=request.context_processing_config,
-                # Legacy parameter for backward compatibility
-                structured_context=request.structured_context
+                context_processing_config=request.context_processing_config
             )
 
             # Log context processing results

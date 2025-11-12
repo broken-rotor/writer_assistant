@@ -8,6 +8,7 @@ from app.models.generation_models import (
     RaterFeedbackResponse,
     RaterFeedback
 )
+from app.models.request_context import RequestContext
 from app.models.streaming_models import (
     StreamingStatusEvent,
     StreamingResultEvent,
@@ -48,9 +49,7 @@ async def rater_feedback_stream(request: RaterFeedbackRequest):
                 request_context=request.request_context,
                 rater_prompt=request.raterPrompt,
                 plot_point=request.plotPoint,
-                context_processing_config=request.context_processing_config,
-                # Legacy parameter for backward compatibility
-                structured_context=request.structured_context
+                context_processing_config=request.context_processing_config
             )
 
             # Log context processing results

@@ -27,6 +27,7 @@ from app.models.generation_models import (
     UserRequest,
     SystemInstruction
 )
+from app.models.request_context import RequestContext
 from app.services.token_management.token_counter import (
     TokenCounter,
     ContentType,
@@ -75,7 +76,7 @@ class ContextManager:
 
     def process_context_for_agent(
         self,
-        context_container: StructuredContextContainer,
+        request_context: RequestContext,
         config: ContextProcessingConfig
     ) -> Tuple[str, Dict[str, Any]]:
         """
@@ -85,6 +86,9 @@ class ContextManager:
             Tuple of (formatted_context_string, processing_metadata)
         """
         try:
+            # Convert RequestContext to StructuredContextContainer for backward compatibility
+            context_container = self._convert_request_context_to_structured(request_context)
+            
             # Step 1: Filter collections for target agent
             relevant_collections = self._filter_elements_for_agent_and_phase(
                 context_container, config.target_agent
@@ -139,7 +143,7 @@ class ContextManager:
 
     def process_context_with_state(
         self,
-        context_container: StructuredContextContainer,
+        request_context: RequestContext,
         config: ContextProcessingConfig,
         context_state: Optional[str] = None,
         story_id: Optional[str] = None
@@ -148,7 +152,7 @@ class ContextManager:
         Process context container with stateless state management support.
 
         Args:
-            context_container: Context container to process
+            request_context: Request context to process
             config: Processing configuration
             context_state: Optional serialized context state from client
             story_id: Optional story ID for new states
@@ -158,7 +162,7 @@ class ContextManager:
         """
         if not self.enable_session_persistence or not self.state_manager:
             # Fall back to regular processing
-            return self.process_context_for_agent(context_container, config)
+            return self.process_context_for_agent(request_context, config)
 
         try:
             # Get or create state
@@ -168,18 +172,22 @@ class ContextManager:
                     logger.debug(f"Using existing context state {state.state_id}")
                 except Exception as e:
                     logger.warning(f"Failed to deserialize context state, creating new: {e}")
+                    # Convert RequestContext to StructuredContextContainer for state storage
+                    context_container = self._convert_request_context_to_structured(request_context)
                     state = self.state_manager.create_initial_state(
                         story_id=story_id,
                         initial_context=context_container
                     )
             else:
+                # Convert RequestContext to StructuredContextContainer for state storage
+                context_container = self._convert_request_context_to_structured(request_context)
                 state = self.state_manager.create_initial_state(
                     story_id=story_id,
                     initial_context=context_container
                 )
 
             # Process context normally
-            formatted_context, metadata = self.process_context_for_agent(context_container, config)
+            formatted_context, metadata = self.process_context_for_agent(request_context, config)
 
             # Update state with processing history
             processing_metadata = {
@@ -197,6 +205,8 @@ class ContextManager:
 
             # Update state context if it was modified during processing
             if metadata.get('was_summarized', False):
+                # Convert RequestContext to StructuredContextContainer for state update
+                context_container = self._convert_request_context_to_structured(request_context)
                 state = self.state_manager.update_state_context(
                     state,
                     context_container,
@@ -216,7 +226,7 @@ class ContextManager:
         except Exception as e:
             logger.error(f"Error processing context with state: {str(e)}")
             # Fall back to regular processing
-            return self.process_context_for_agent(context_container, config)
+            return self.process_context_for_agent(request_context, config)
 
     def _filter_elements_for_agent_and_phase(
         self,
@@ -637,6 +647,174 @@ class ContextManager:
             "processing_timestamp": datetime.now(timezone.utc).isoformat(),
             "reduction_ratio": final_count / original_count if original_count > 0 else 0
         }
+
+    def _convert_request_context_to_structured(
+        self, 
+        request_context: RequestContext
+    ) -> StructuredContextContainer:
+        """
+        Convert RequestContext to StructuredContextContainer for internal processing.
+        
+        This method maps the rich RequestContext structure to the format expected
+        by the ContextManager, preserving all relevant information while organizing
+        it according to the established context categories.
+        """
+        try:
+            plot_elements = []
+            character_contexts = []
+            user_requests = []
+            system_instructions = []
+            
+            # Map system prompts to system instructions
+            if request_context.configuration.system_prompts.main_prefix:
+                system_instructions.append(SystemInstruction(
+                    id="main_prefix",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.main_prefix,
+                    scope="global",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.main_suffix:
+                system_instructions.append(SystemInstruction(
+                    id="main_suffix",
+                    type="behavior", 
+                    content=request_context.configuration.system_prompts.main_suffix,
+                    scope="global",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.assistant_prompt:
+                system_instructions.append(SystemInstruction(
+                    id="assistant_prompt",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.assistant_prompt,
+                    scope="agent",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.editor_prompt:
+                system_instructions.append(SystemInstruction(
+                    id="editor_prompt",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.editor_prompt,
+                    scope="agent",
+                    priority="high"
+                ))
+            
+            # Map worldbuilding content to plot elements
+            if request_context.worldbuilding.content:
+                plot_elements.append(PlotElement(
+                    id="worldbuilding_main",
+                    type="setup",
+                    content=request_context.worldbuilding.content,
+                    priority="high",
+                    tags=["worldbuilding"]
+                ))
+            
+            # Map worldbuilding key elements
+            for i, element in enumerate(request_context.worldbuilding.key_elements):
+                plot_elements.append(PlotElement(
+                    id=f"worldbuilding_element_{i}",
+                    type="setup",
+                    content=f"{element.name}: {element.description}",
+                    priority=element.importance,
+                    tags=["worldbuilding", element.type]
+                ))
+            
+            # Map story outline to plot elements
+            if request_context.story_outline.content:
+                plot_elements.append(PlotElement(
+                    id="story_outline_main",
+                    type="outline",
+                    content=request_context.story_outline.content,
+                    priority="high",
+                    tags=["outline"]
+                ))
+            
+            if request_context.story_outline.summary:
+                plot_elements.append(PlotElement(
+                    id="story_summary",
+                    type="summary",
+                    content=request_context.story_outline.summary,
+                    priority="high",
+                    tags=["summary"]
+                ))
+            
+            # Map outline items to plot elements
+            for item in request_context.story_outline.outline_items:
+                plot_elements.append(PlotElement(
+                    id=f"outline_item_{item.id}",
+                    type="scene" if item.type == "scene" else "outline",
+                    content=f"{item.title}: {item.description}",
+                    priority="medium",
+                    tags=["outline", item.type]
+                ))
+            
+            # Map characters to character contexts
+            for char in request_context.characters:
+                if char.is_hidden:
+                    continue  # Skip hidden characters
+                    
+                character_contexts.append(CharacterContext(
+                    character_id=char.id,
+                    character_name=char.name,
+                    current_state=char.current_state,
+                    goals=char.goals,
+                    recent_actions=char.recent_actions,
+                    memories=char.memories,
+                    personality_traits=[char.personality] if char.personality else []
+                ))
+            
+            # Map recent chapters to plot elements (limit to last 3 chapters for context)
+            recent_chapters = sorted(request_context.chapters, key=lambda x: x.number, reverse=True)[:3]
+            for chapter in recent_chapters:
+                if chapter.content:
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}",
+                        type="recent_story",
+                        content=f"Chapter {chapter.number}: {chapter.title}\n{chapter.content}",
+                        priority="medium",
+                        tags=["chapter", "recent_story"]
+                    ))
+                
+                # Include chapter plot points
+                if chapter.plot_point:
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}_plot_point",
+                        type="scene",
+                        content=chapter.plot_point,
+                        priority="medium",
+                        tags=["plot_point", "chapter"]
+                    ))
+                
+                # Include key plot items from chapters
+                for i, plot_item in enumerate(chapter.key_plot_items):
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}_plot_item_{i}",
+                        type="scene",
+                        content=plot_item,
+                        priority="low",
+                        tags=["plot_item", "chapter"]
+                    ))
+            
+            # Create the structured context container
+            return StructuredContextContainer(
+                plot_elements=plot_elements,
+                character_contexts=character_contexts,
+                user_requests=user_requests,
+                system_instructions=system_instructions
+            )
+            
+        except Exception as e:
+            logger.error(f"Error converting RequestContext to StructuredContextContainer: {str(e)}")
+            # Return minimal valid container on error
+            return StructuredContextContainer(
+                plot_elements=[],
+                character_contexts=[],
+                user_requests=[],
+                system_instructions=[]
+            )
 
 
 class ContextFormatter:

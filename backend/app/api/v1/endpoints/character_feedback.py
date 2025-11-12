@@ -8,6 +8,7 @@ from app.models.generation_models import (
     CharacterFeedbackResponse,
     CharacterFeedback
 )
+from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
@@ -34,10 +35,10 @@ async def character_feedback(request: CharacterFeedbackRequest):
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context and plot point...', 'progress': 25})}\n\n"
 
-            # Extract character name from structured context
+            # Extract character name from request context
             character_name = "Character"
-            if request.structured_context.character_contexts:
-                character_name = request.structured_context.character_contexts[0].character_name
+            if request.request_context.characters:
+                character_name = request.request_context.characters[0].name
 
             # Get unified context processor
             context_processor = get_unified_context_processor()
@@ -45,9 +46,7 @@ async def character_feedback(request: CharacterFeedbackRequest):
             # Process context using request context (preferred) or structured context (legacy)
             context_result = context_processor.process_character_feedback_context(
                 request_context=request.request_context,
-                context_processing_config=request.context_processing_config,
-                # Legacy parameter for backward compatibility
-                structured_context=request.structured_context
+                context_processing_config=request.context_processing_config
             )
 
             # Log context processing results

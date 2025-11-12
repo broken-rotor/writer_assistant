@@ -7,6 +7,7 @@ from app.models.generation_models import (
     GenerateChapterRequest,
     GenerateChapterResponse
 )
+from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.core.config import settings
@@ -38,9 +39,7 @@ async def generate_chapter(request: GenerateChapterRequest):
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_generate_chapter_context(
                 request_context=request.request_context,
-                context_processing_config=request.context_processing_config,
-                # Legacy parameter for backward compatibility
-                structured_context=request.structured_context
+                context_processing_config=request.context_processing_config
             )
 
             # Log context processing results
@@ -91,8 +90,8 @@ async def generate_chapter(request: GenerateChapterRequest):
                     "generatedAt": datetime.now(UTC).isoformat(),
                     "plotPoint": request.plotPoint,
                     "contextMode": "structured",
-                    "structuredContextProvided": bool(
-                        request.structured_context),
+                    "requestContextProvided": bool(
+                        request.request_context),
                     "processingMode": context_result.processing_mode})
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"

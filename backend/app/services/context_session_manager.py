@@ -20,6 +20,7 @@ from app.models.context_models import (
     AgentType
 )
 from app.models.generation_models import StructuredContextContainer
+from app.models.request_context import RequestContext
 
 logger = logging.getLogger(__name__)
 
