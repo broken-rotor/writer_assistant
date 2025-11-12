@@ -68,6 +68,7 @@ The `context_processing_config` field allows fine-tuned control over how context
 from typing import Dict, List, Optional, Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import datetime
+from app.models.request_context import RequestContext
 
 
 # System Prompts Configuration
@@ -499,22 +500,35 @@ class CharacterFeedbackRequest(BaseModel):
 
     # Phase-specific fields
 
-    # Structured context fields (required)
-    structured_context: StructuredContextContainer = Field(
-        description="Structured context container with plot elements, character contexts, "
-                    "user requests, and system instructions")
+    # Request context fields (required)
+    request_context: Optional[RequestContext] = Field(
+        default=None,
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters")
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
+    
+    # DEPRECATED: Legacy structured context field - will be removed in B4
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="DEPRECATED: Use request_context instead. Will be removed in B4."
+    )
 
-    @field_validator('structured_context')
+    @model_validator(mode='before')
     @classmethod
-    def validate_structured_context(cls, v):
-        """Validate that structured context is provided."""
-        if v is None:
-            raise ValueError("structured_context is required")
-        return v
+    def validate_context_fields(cls, values):
+        """Handle backward compatibility for structured_context field."""
+        if isinstance(values, dict):
+            # If structured_context is provided but request_context is not, use structured_context
+            if 'structured_context' in values and 'request_context' not in values:
+                # For backward compatibility during transition
+                pass  # Allow structured_context to be used
+            # Ensure at least one context field is provided
+            if not values.get('structured_context') and not values.get('request_context'):
+                raise ValueError("Either request_context or structured_context is required")
+        return values
 
 
 class CharacterFeedback(BaseModel):
@@ -542,22 +556,35 @@ class RaterFeedbackRequest(BaseModel):
 
     # Phase-specific fields
 
-    # Structured context fields (required)
-    structured_context: StructuredContextContainer = Field(
-        description="Structured context container with plot elements, character contexts, "
-                    "user requests, and system instructions")
+    # Request context fields (required)
+    request_context: Optional[RequestContext] = Field(
+        default=None,
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters")
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
+    
+    # DEPRECATED: Legacy structured context field - will be removed in B4
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="DEPRECATED: Use request_context instead. Will be removed in B4."
+    )
 
-    @field_validator('structured_context')
+    @model_validator(mode='before')
     @classmethod
-    def validate_structured_context(cls, v):
-        """Validate that structured context is provided."""
-        if v is None:
-            raise ValueError("structured_context is required")
-        return v
+    def validate_context_fields(cls, values):
+        """Handle backward compatibility for structured_context field."""
+        if isinstance(values, dict):
+            # If structured_context is provided but request_context is not, use structured_context
+            if 'structured_context' in values and 'request_context' not in values:
+                # For backward compatibility during transition
+                pass  # Allow structured_context to be used
+            # Ensure at least one context field is provided
+            if not values.get('structured_context') and not values.get('request_context'):
+                raise ValueError("Either request_context or structured_context is required")
+        return values
 
 
 class RaterFeedback(BaseModel):
@@ -581,22 +608,35 @@ class GenerateChapterRequest(BaseModel):
 
     # Phase-specific fields
 
-    # Structured context fields (required)
-    structured_context: StructuredContextContainer = Field(
-        description="Structured context container with plot elements, character contexts, "
-                    "user requests, and system instructions")
+    # Request context fields (required)
+    request_context: Optional[RequestContext] = Field(
+        default=None,
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters")
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
+    
+    # DEPRECATED: Legacy structured context field - will be removed in B4
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="DEPRECATED: Use request_context instead. Will be removed in B4."
+    )
 
-    @field_validator('structured_context')
+    @model_validator(mode='before')
     @classmethod
-    def validate_structured_context(cls, v):
-        """Validate that structured context is provided."""
-        if v is None:
-            raise ValueError("structured_context is required")
-        return v
+    def validate_context_fields(cls, values):
+        """Handle backward compatibility for structured_context field."""
+        if isinstance(values, dict):
+            # If structured_context is provided but request_context is not, use structured_context
+            if 'structured_context' in values and 'request_context' not in values:
+                # For backward compatibility during transition
+                pass  # Allow structured_context to be used
+            # Ensure at least one context field is provided
+            if not values.get('structured_context') and not values.get('request_context'):
+                raise ValueError("Either request_context or structured_context is required")
+        return values
 
 
 class GenerateChapterResponse(BaseModel):
@@ -617,22 +657,35 @@ class ModifyChapterRequest(BaseModel):
 
     # Phase-specific fields
 
-    # Structured context fields (required)
-    structured_context: StructuredContextContainer = Field(
-        description="Structured context container with plot elements, character contexts, "
-                    "user requests, and system instructions")
+    # Request context fields (required)
+    request_context: Optional[RequestContext] = Field(
+        default=None,
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters")
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
+    
+    # DEPRECATED: Legacy structured context field - will be removed in B4
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="DEPRECATED: Use request_context instead. Will be removed in B4."
+    )
 
-    @field_validator('structured_context')
+    @model_validator(mode='before')
     @classmethod
-    def validate_structured_context(cls, v):
-        """Validate that structured context is provided."""
-        if v is None:
-            raise ValueError("structured_context is required")
-        return v
+    def validate_context_fields(cls, values):
+        """Handle backward compatibility for structured_context field."""
+        if isinstance(values, dict):
+            # If structured_context is provided but request_context is not, use structured_context
+            if 'structured_context' in values and 'request_context' not in values:
+                # For backward compatibility during transition
+                pass  # Allow structured_context to be used
+            # Ensure at least one context field is provided
+            if not values.get('structured_context') and not values.get('request_context'):
+                raise ValueError("Either request_context or structured_context is required")
+        return values
 
 
 class ModifyChapterResponse(BaseModel):
@@ -652,22 +705,35 @@ class EditorReviewRequest(BaseModel):
 
     # Phase-specific fields
 
-    # Structured context fields (required)
-    structured_context: StructuredContextContainer = Field(
-        description="Structured context container with plot elements, character contexts, "
-                    "user requests, and system instructions")
+    # Request context fields (required)
+    request_context: Optional[RequestContext] = Field(
+        default=None,
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters")
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
+    
+    # DEPRECATED: Legacy structured context field - will be removed in B4
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="DEPRECATED: Use request_context instead. Will be removed in B4."
+    )
 
-    @field_validator('structured_context')
+    @model_validator(mode='before')
     @classmethod
-    def validate_structured_context(cls, v):
-        """Validate that structured context is provided."""
-        if v is None:
-            raise ValueError("structured_context is required")
-        return v
+    def validate_context_fields(cls, values):
+        """Handle backward compatibility for structured_context field."""
+        if isinstance(values, dict):
+            # If structured_context is provided but request_context is not, use structured_context
+            if 'structured_context' in values and 'request_context' not in values:
+                # For backward compatibility during transition
+                pass  # Allow structured_context to be used
+            # Ensure at least one context field is provided
+            if not values.get('structured_context') and not values.get('request_context'):
+                raise ValueError("Either request_context or structured_context is required")
+        return values
 
 
 class EditorSuggestion(BaseModel):
@@ -694,22 +760,35 @@ class FleshOutRequest(BaseModel):
 
     # Phase-specific fields
 
-    # Structured context fields (required)
-    structured_context: StructuredContextContainer = Field(
-        description="Structured context container with plot elements, character contexts, "
-                    "user requests, and system instructions")
+    # Request context fields (required)
+    request_context: Optional[RequestContext] = Field(
+        default=None,
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters")
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
+    
+    # DEPRECATED: Legacy structured context field - will be removed in B4
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="DEPRECATED: Use request_context instead. Will be removed in B4."
+    )
 
-    @field_validator('structured_context')
+    @model_validator(mode='before')
     @classmethod
-    def validate_structured_context(cls, v):
-        """Validate that structured context is provided."""
-        if v is None:
-            raise ValueError("structured_context is required")
-        return v
+    def validate_context_fields(cls, values):
+        """Handle backward compatibility for structured_context field."""
+        if isinstance(values, dict):
+            # If structured_context is provided but request_context is not, use structured_context
+            if 'structured_context' in values and 'request_context' not in values:
+                # For backward compatibility during transition
+                pass  # Allow structured_context to be used
+            # Ensure at least one context field is provided
+            if not values.get('structured_context') and not values.get('request_context'):
+                raise ValueError("Either request_context or structured_context is required")
+        return values
 
 
 class FleshOutResponse(BaseModel):
@@ -734,22 +813,35 @@ class GenerateCharacterDetailsRequest(BaseModel):
 
     # Phase-specific fields
 
-    # Structured context fields (required)
-    structured_context: StructuredContextContainer = Field(
-        description="Structured context container with plot elements, character contexts, "
-                    "user requests, and system instructions")
+    # Request context fields (required)
+    request_context: Optional[RequestContext] = Field(
+        default=None,
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters")
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
+    
+    # DEPRECATED: Legacy structured context field - will be removed in B4
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="DEPRECATED: Use request_context instead. Will be removed in B4."
+    )
 
-    @field_validator('structured_context')
+    @model_validator(mode='before')
     @classmethod
-    def validate_structured_context(cls, v):
-        """Validate that structured context is provided."""
-        if v is None:
-            raise ValueError("structured_context is required")
-        return v
+    def validate_context_fields(cls, values):
+        """Handle backward compatibility for structured_context field."""
+        if isinstance(values, dict):
+            # If structured_context is provided but request_context is not, use structured_context
+            if 'structured_context' in values and 'request_context' not in values:
+                # For backward compatibility during transition
+                pass  # Allow structured_context to be used
+            # Ensure at least one context field is provided
+            if not values.get('structured_context') and not values.get('request_context'):
+                raise ValueError("Either request_context or structured_context is required")
+        return values
 
 
 class GenerateCharacterDetailsResponse(BaseModel):
@@ -781,13 +873,19 @@ class RegenerateBioRequest(BaseModel):
                                description="Character relationships")
 
     # Context fields (optional for bio regeneration)
-    structured_context: Optional[StructuredContextContainer] = Field(
+    request_context: Optional[RequestContext] = Field(
         default=None,
-        description="Optional structured context container"
+        description="Optional complete request context"
     )
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing"
+    )
+    
+    # DEPRECATED: Legacy structured context field - will be removed in B4
+    structured_context: Optional[StructuredContextContainer] = Field(
+        default=None,
+        description="DEPRECATED: Use request_context instead. Will be removed in B4."
     )
 
 
