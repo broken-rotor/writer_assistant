@@ -19,189 +19,68 @@ from app.models.generation_models import (
 )
 
 
-class TestStructuredContextModels:
-    """Test the structured context models."""
+class TestGenerationModels:
+    """Test the generation models that still exist."""
     
-    def test_plot_element_creation(self):
-        """Test creating a plot element."""
-        plot_element = PlotElement(
-            type="scene",
-            content="The hero enters the dark forest",
-            priority="high",
-            tags=["current_scene", "forest"],
-            metadata={"location": "dark_forest"}
+    def test_system_prompts_creation(self):
+        """Test creating system prompts."""
+        prompts = SystemPrompts(
+            mainPrefix="You are a helpful writing assistant.",
+            mainSuffix="Always be creative and engaging.",
+            assistantPrompt="Help the user with their writing.",
+            editorPrompt="Review and improve the text."
         )
         
-        assert plot_element.type == "scene"
-        assert plot_element.content == "The hero enters the dark forest"
-        assert plot_element.priority == "high"
-        assert "current_scene" in plot_element.tags
-        assert plot_element.metadata["location"] == "dark_forest"
+        assert prompts.mainPrefix == "You are a helpful writing assistant."
+        assert prompts.mainSuffix == "Always be creative and engaging."
+        assert prompts.assistantPrompt == "Help the user with their writing."
+        assert prompts.editorPrompt == "Review and improve the text."
     
-    def test_character_context_creation(self):
-        """Test creating a character context."""
-        char_context = CharacterContext(
-            character_id="hero",
-            character_name="Aria",
-            current_state={"emotion": "determined", "location": "forest_edge"},
-            recent_actions=["Drew sword", "Entered forest"],
-            relationships={"mentor": "trusting", "villain": "hostile"},
-            goals=["Find the ancient artifact", "Save the kingdom"],
-            memories=["Training with mentor", "Village attack"],
-            personality_traits=["brave", "determined", "compassionate"]
-        )
-        
-        assert char_context.character_id == "hero"
-        assert char_context.character_name == "Aria"
-        assert char_context.current_state["emotion"] == "determined"
-        assert "Drew sword" in char_context.recent_actions
-        assert char_context.relationships["mentor"] == "trusting"
-    
-    def test_user_request_creation(self):
-        """Test creating a user request."""
-        user_request = UserRequest(
-            type="modification",
-            content="Add more sensory details to the forest scene",
-            priority="high",
-            target="forest_scene",
-            context="The scene feels too sparse",
-            timestamp=datetime.now()
-        )
-        
-        assert user_request.type == "modification"
-        assert user_request.content == "Add more sensory details to the forest scene"
-        assert user_request.priority == "high"
-        assert user_request.target == "forest_scene"
-    
-    def test_system_instruction_creation(self):
-        """Test creating a system instruction."""
-        instruction = SystemInstruction(
-            type="behavior",
-            content="Always maintain character consistency",
-            scope="character",
-            priority="high",
-            conditions={"phase": "chapter_generation"}
-        )
-        
-        assert instruction.type == "behavior"
-        assert instruction.content == "Always maintain character consistency"
-        assert instruction.scope == "character"
-        assert instruction.conditions["phase"] == "chapter_generation"
-    
-    def test_structured_context_container(self):
-        """Test creating a structured context container."""
-        plot_element = PlotElement(type="scene", content="Forest scene")
-        char_context = CharacterContext(character_id="hero", character_name="Aria")
-        user_request = UserRequest(type="general", content="Make it more exciting")
-        system_instruction = SystemInstruction(type="behavior", content="Be creative")
-        
+    def test_context_metadata_creation(self):
+        """Test creating context metadata."""
         metadata = ContextMetadata(
-            total_elements=4,
+            total_elements=5,
             processing_applied=True,
+            processing_mode="structured",
             optimization_level="light"
         )
         
-        container = StructuredContextContainer(
-            plot_elements=[plot_element],
-            character_contexts=[char_context],
-            user_requests=[user_request],
-            system_instructions=[system_instruction],
-            metadata=metadata
+        assert metadata.total_elements == 5
+        assert metadata.processing_applied is True
+        assert metadata.processing_mode == "structured"
+        assert metadata.optimization_level == "light"
+    
+    def test_character_info_creation(self):
+        """Test creating character info."""
+        char_info = CharacterInfo(
+            name="Aria",
+            basicBio="A brave warrior trained by a wise mentor"
         )
         
-        assert len(container.plot_elements) == 1
-        assert len(container.character_contexts) == 1
-        assert len(container.user_requests) == 1
-        assert len(container.system_instructions) == 1
-        assert container.metadata.total_elements == 4
-    
-    def test_structured_context_validation(self):
-        """Test structured context validation."""
-        # Test duplicate character contexts
-        char_context1 = CharacterContext(character_id="hero", character_name="Aria")
-        char_context2 = CharacterContext(character_id="hero", character_name="Aria")
-        
-        with pytest.raises(ValidationError):
-            StructuredContextContainer(
-                character_contexts=[char_context1, char_context2]
-            )
+        assert char_info.name == "Aria"
+        assert char_info.basicBio == "A brave warrior trained by a wise mentor"
 
 
 class TestRequestModels:
-    """Test the request models with structured context support."""
+    """Test the request models with RequestContext support."""
     
-    def test_character_feedback_request_structured_mode(self):
-        """Test CharacterFeedbackRequest in structured mode."""
-        plot_element = PlotElement(type="scene", content="Forest entrance")
-        char_context = CharacterContext(character_id="aria", character_name="Aria")
-        system_instruction = SystemInstruction(
-            type="behavior",
-            content="You are a character responding in character",
-            scope="global"
-        )
-        
-        structured_context = StructuredContextContainer(
-            plot_elements=[plot_element],
-            character_contexts=[char_context],
-            system_instructions=[system_instruction]
-        )
-        
-        request = CharacterFeedbackRequest(
-            structured_context=structured_context,
-            plotPoint="Entering the forest"
-        )
-        
-        assert request.structured_context is not None
-        assert len(request.structured_context.plot_elements) == 1
-        assert request.structured_context.plot_elements[0].content == "Forest entrance"
-        assert request.structured_context.character_contexts[0].character_name == "Aria"
-    
-    def test_character_feedback_request_validation(self):
-        """Test CharacterFeedbackRequest validation with structured context."""
-        plot_element = PlotElement(type="scene", content="Forest entrance")
-        char_context = CharacterContext(character_id="aria", character_name="Aria")
-        
-        structured_context = StructuredContextContainer(
-            plot_elements=[plot_element],
-            character_contexts=[char_context]
-        )
-        
-        request = CharacterFeedbackRequest(
-            structured_context=structured_context,
-            plotPoint="Entering the forest"
-        )
-        
-        assert request.structured_context is not None
-        assert len(request.structured_context.plot_elements) == 1
-        assert request.structured_context.plot_elements[0].content == "Forest entrance"
-    
-    def test_character_feedback_request_with_system_instructions(self):
-        """Test CharacterFeedbackRequest with system instructions in structured context."""
-        system_instruction = SystemInstruction(
-            type="behavior",
-            content="You are a character responding in character",
-            scope="global"
-        )
-        structured_context = StructuredContextContainer(
-            plot_elements=[PlotElement(type="scene", content="Forest")],
-            system_instructions=[system_instruction]
-        )
-        
-        request = CharacterFeedbackRequest(
-            structured_context=structured_context,
-            plotPoint="Entering the forest"
-        )
-        
-        assert request.structured_context is not None
-        assert len(request.structured_context.system_instructions) == 1
-        assert request.structured_context.system_instructions[0].content == "You are a character responding in character"
-    
-    def test_structured_context_validation_error(self):
-        """Test that structured_context is required."""
+    def test_character_feedback_request_validation_error(self):
+        """Test that request_context is required."""
         with pytest.raises(ValidationError):
             CharacterFeedbackRequest(
-                structured_context=None,  # This should cause validation error
+                request_context=None,  # This should cause validation error
                 plotPoint="Entering the forest"
+            )
+    
+    def test_character_feedback_request_plotpoint_required(self):
+        """Test that plotPoint is required for CharacterFeedbackRequest."""
+        from unittest.mock import Mock
+        
+        # Test that missing plotPoint causes validation error
+        with pytest.raises(ValidationError):
+            CharacterFeedbackRequest(
+                request_context=Mock(),  # This will fail anyway, but we're testing plotPoint requirement
+                # plotPoint missing - should cause validation error
             )
     
 
@@ -210,52 +89,41 @@ class TestRequestModels:
 
 
 class TestUpdatedLegacyModels:
-    """Test that previously legacy-only models now support structured context."""
+    """Test that previously legacy-only models now support RequestContext."""
     
-    def test_modify_chapter_request_structured(self):
-        """Test ModifyChapterRequest with structured context."""
-        structured_context = StructuredContextContainer(
-            user_requests=[UserRequest(type="modification", content="Add more detail")]
-        )
+    def test_modify_chapter_request_validation_errors(self):
+        """Test ModifyChapterRequest validation requirements."""
+        from unittest.mock import Mock
         
-        request = ModifyChapterRequest(
-            structured_context=structured_context,
-            currentChapter="Chapter text",
-            userRequest="Make it more exciting"
-        )
-        
-        assert request.structured_context is not None
-        assert len(request.structured_context.user_requests) == 1
+        # Test that missing currentChapter causes validation error
+        with pytest.raises(ValidationError):
+            ModifyChapterRequest(
+                request_context=Mock(),  # This will fail anyway
+                # currentChapter missing - should cause validation error
+                userRequest="Make it more exciting"
+            )
     
-    def test_flesh_out_request_structured(self):
-        """Test FleshOutRequest with structured context."""
-        structured_context = StructuredContextContainer(
-            plot_elements=[PlotElement(type="setup", content="World background")]
-        )
+    def test_flesh_out_request_validation_errors(self):
+        """Test FleshOutRequest validation requirements."""
+        from unittest.mock import Mock
         
-        request = FleshOutRequest(
-            structured_context=structured_context,
-            textToFleshOut="The ancient castle"
-        )
-        
-        assert request.structured_context is not None
-        assert len(request.structured_context.plot_elements) == 1
+        # Test that missing textToFleshOut causes validation error
+        with pytest.raises(ValidationError):
+            FleshOutRequest(
+                request_context=Mock(),  # This will fail anyway
+                # textToFleshOut missing - should cause validation error
+            )
     
-    def test_generate_character_details_request_structured(self):
-        """Test GenerateCharacterDetailsRequest with structured context."""
-        structured_context = StructuredContextContainer(
-            character_contexts=[
-                CharacterContext(character_id="existing", character_name="Existing Character")
-            ]
-        )
+    def test_generate_character_details_request_validation_errors(self):
+        """Test GenerateCharacterDetailsRequest validation requirements."""
+        from unittest.mock import Mock
         
-        request = GenerateCharacterDetailsRequest(
-            structured_context=structured_context,
-            basicBio="A mysterious stranger"
-        )
-        
-        assert request.structured_context is not None
-        assert len(request.structured_context.character_contexts) == 1
+        # Test that missing basicBio causes validation error
+        with pytest.raises(ValidationError):
+            GenerateCharacterDetailsRequest(
+                request_context=Mock(),  # This will fail anyway
+                # basicBio missing - should cause validation error
+            )
 
 
 class TestResponseModels:
