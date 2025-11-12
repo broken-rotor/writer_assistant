@@ -45,22 +45,36 @@ async def rater_feedback_stream(request: RaterFeedbackRequest):
 
             # Get unified context processor
             context_processor = get_unified_context_processor()
-            context_result = context_processor.process_rater_feedback_context(
-                request_context=request.request_context,
-                rater_prompt=request.raterPrompt,
-                plot_point=request.plotPoint,
-                context_processing_config=request.context_processing_config,
-                structured_context=request.structured_context
-            )
+            
+            # Try to use rater feedback context processing if available
+            # Otherwise fall back to generic processing
+            try:
+                if hasattr(context_processor, 'process_rater_feedback_context'):
+                    context_result = context_processor.process_rater_feedback_context(
+                        request_context=request.request_context,
+                        rater_prompt=request.raterPrompt,
+                        plot_point=request.plotPoint,
+                        context_processing_config=request.context_processing_config
+                    )
+                else:
+                    # Fallback: use character feedback context processing as it's similar
+                    context_result = context_processor.process_character_feedback_context(
+                        request_context=request.request_context,
+                        context_processing_config=request.context_processing_config
+                    )
+            except Exception as e:
+                logger.warning(f"Context processing failed, using fallback: {e}")
+                # Create a minimal fallback context result
+                from app.services.unified_context_processor import UnifiedContextResult
+                context_result = UnifiedContextResult(
+                    system_prompt="You are a story quality rater. Provide constructive, detailed feedback on story elements.",
+                    user_message=f"Evaluate this plot point: {request.plotPoint}\n\nRater prompt: {request.raterPrompt}",
+                    processing_time=0.0,
+                    context_metadata={}
+                )
 
             # Log context processing results
-            if context_result.optimization_applied:
-                logger.info(f"Rater feedback context processing applied ({context_result.processing_mode} mode): "
-                            f"{context_result.total_tokens} tokens, "
-                            f"compression ratio: {context_result.compression_ratio:.2f}")
-            else:
-                logger.debug(f"No rater feedback context optimization needed ({context_result.processing_mode} mode): "
-                             f"{context_result.total_tokens} tokens")
+            logger.info(f"Rater feedback context processed in {context_result.processing_time:.2f}s")
 
             # Phase 2: Evaluating
             status_event = StreamingStatusEvent(

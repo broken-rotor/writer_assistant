@@ -237,43 +237,47 @@ def sample_character_feedback_request():
 
 @pytest.fixture
 def sample_rater_feedback_request():
-    """Sample rater feedback request using structured context only"""
+    """Sample rater feedback request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a story quality rater specializing in narrative analysis.",
+                main_suffix="Provide constructive, detailed feedback on story elements.",
+                assistant_prompt="Focus on narrative flow, character consistency, and plot development.",
+                editor_prompt="Review feedback for clarity and actionable suggestions."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The atmosphere is dark and moody, with corruption and mystery permeating every corner of the city."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective story involving investigation and discovery of crucial evidence",
+            status="draft",
+            content="A story where the detective uncovers important clues that advance the investigation and reveal deeper mysteries."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_rater_006",
+            story_title="Clues and Shadows",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=400
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_investigator",
+                name="Detective",
+                basic_bio="A skilled detective investigating mysterious cases in 1940s Los Angeles",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "The detective discovers a crucial clue at the crime scene",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation"],
-                    "metadata": {"location": "crime_scene", "time": "night"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [],
-            "user_requests": [
-                {
-                    "type": "general",
-                    "content": "Evaluate the narrative flow and character consistency",
-                    "priority": "high",
-                    "context": "rater_evaluation"
-                }
-            ],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a story quality rater. Provide constructive feedback.",
-                    "scope": "global",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "raterPrompt": "Evaluate the narrative flow and character consistency",
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
