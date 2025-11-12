@@ -32,8 +32,13 @@ from app.models.generation_models import (
     CharacterInfo,
     ChapterInfo,
     FeedbackItem,
-    ContextMetadata
+    ContextMetadata,
+    PlotElement,
+    CharacterContext,
+    UserRequest,
+    SystemInstruction
 )
+from app.models.request_context import RequestContext
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +71,180 @@ class UnifiedContextProcessor:
 
         logger.info("UnifiedContextProcessor initialized")
 
+    def _convert_request_context_to_structured(
+        self, 
+        request_context: RequestContext
+    ) -> StructuredContextContainer:
+        """
+        Convert RequestContext to StructuredContextContainer for internal processing.
+        
+        This method maps the rich RequestContext structure to the format expected
+        by the ContextManager, preserving all relevant information while organizing
+        it according to the established context categories.
+        """
+        try:
+            plot_elements = []
+            character_contexts = []
+            user_requests = []
+            system_instructions = []
+            
+            # Map system prompts to system instructions
+            if request_context.configuration.system_prompts.main_prefix:
+                system_instructions.append(SystemInstruction(
+                    id="main_prefix",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.main_prefix,
+                    scope="global",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.main_suffix:
+                system_instructions.append(SystemInstruction(
+                    id="main_suffix",
+                    type="behavior", 
+                    content=request_context.configuration.system_prompts.main_suffix,
+                    scope="global",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.assistant_prompt:
+                system_instructions.append(SystemInstruction(
+                    id="assistant_prompt",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.assistant_prompt,
+                    scope="agent",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.editor_prompt:
+                system_instructions.append(SystemInstruction(
+                    id="editor_prompt",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.editor_prompt,
+                    scope="agent",
+                    priority="high"
+                ))
+            
+            # Map worldbuilding content to plot elements
+            if request_context.worldbuilding.content:
+                plot_elements.append(PlotElement(
+                    id="worldbuilding_main",
+                    type="setup",
+                    content=request_context.worldbuilding.content,
+                    priority="high",
+                    tags=["worldbuilding"]
+                ))
+            
+            # Map worldbuilding key elements
+            for i, element in enumerate(request_context.worldbuilding.key_elements):
+                plot_elements.append(PlotElement(
+                    id=f"worldbuilding_element_{i}",
+                    type="setup",
+                    content=f"{element.name}: {element.description}",
+                    priority=element.importance,
+                    tags=["worldbuilding", element.type]
+                ))
+            
+            # Map story outline to plot elements
+            if request_context.story_outline.content:
+                plot_elements.append(PlotElement(
+                    id="story_outline_main",
+                    type="outline",
+                    content=request_context.story_outline.content,
+                    priority="high",
+                    tags=["outline"]
+                ))
+            
+            if request_context.story_outline.summary:
+                plot_elements.append(PlotElement(
+                    id="story_summary",
+                    type="summary",
+                    content=request_context.story_outline.summary,
+                    priority="high",
+                    tags=["summary"]
+                ))
+            
+            # Map outline items to plot elements
+            for item in request_context.story_outline.outline_items:
+                plot_elements.append(PlotElement(
+                    id=f"outline_item_{item.id}",
+                    type="scene" if item.type == "scene" else "outline",
+                    content=f"{item.title}: {item.description}",
+                    priority="medium",
+                    tags=["outline", item.type]
+                ))
+            
+            # Map characters to character contexts
+            for char in request_context.characters:
+                if char.is_hidden:
+                    continue  # Skip hidden characters
+                    
+                character_contexts.append(CharacterContext(
+                    character_id=char.id,
+                    character_name=char.name,
+                    current_state=char.current_state,
+                    goals=char.goals,
+                    recent_actions=char.recent_actions,
+                    memories=char.memories,
+                    personality_traits=[char.personality] if char.personality else []
+                ))
+            
+            # Map recent chapters to plot elements (limit to last 3 chapters for context)
+            recent_chapters = sorted(request_context.chapters, key=lambda x: x.number, reverse=True)[:3]
+            for chapter in recent_chapters:
+                if chapter.content:
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}",
+                        type="recent_story",
+                        content=f"Chapter {chapter.number}: {chapter.title}\n{chapter.content}",
+                        priority="medium",
+                        tags=["chapter", "recent_story"]
+                    ))
+                
+                # Include chapter plot points
+                if chapter.plot_point:
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}_plot_point",
+                        type="scene",
+                        content=chapter.plot_point,
+                        priority="medium",
+                        tags=["plot_point", "chapter"]
+                    ))
+                
+                # Include key plot items from chapters
+                for i, plot_item in enumerate(chapter.key_plot_items):
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}_plot_item_{i}",
+                        type="scene",
+                        content=plot_item,
+                        priority="low",
+                        tags=["plot_item", "chapter"]
+                    ))
+            
+            # Create the structured context container
+            return StructuredContextContainer(
+                plot_elements=plot_elements,
+                character_contexts=character_contexts,
+                user_requests=user_requests,
+                system_instructions=system_instructions
+            )
+            
+        except Exception as e:
+            logger.error(f"Error converting RequestContext to StructuredContextContainer: {str(e)}")
+            # Return minimal valid container on error
+            return StructuredContextContainer(
+                plot_elements=[],
+                character_contexts=[],
+                user_requests=[],
+                system_instructions=[]
+            )
+
     def process_generate_chapter_context(
         self,
-        # Phase context
-        # Structured context
-        structured_context: Optional[StructuredContextContainer] = None,
-        context_processing_config: Optional[Dict[str, Any]] = None
+        request_context: RequestContext,
+        context_processing_config: Optional[Dict[str, Any]] = None,
+        # Legacy parameter for backward compatibility
+        structured_context: Optional[StructuredContextContainer] = None
     ) -> UnifiedContextResult:
         """
         Process context for chapter generation with full narrative context assembly.
@@ -91,20 +264,25 @@ class UnifiedContextProcessor:
                         f"Cache hit for generate_chapter: {cache_key}")
                     return self._cache[cache_key]
 
+            # Convert RequestContext to StructuredContextContainer
             if structured_context:
-                # Enhance structured context with plot outline information if available
-                enhanced_context = self._enhance_with_plot_outline_context(
-                    structured_context, context_processing_config
-                )
-                
-                result = self._process_structured_context(
-                    structured_context=enhanced_context,
-                    agent_type=AgentType.WRITER,
-                    context_processing_config=context_processing_config,
-                    endpoint_strategy="full_narrative_assembly"
-                )
+                # Use legacy structured context if provided (backward compatibility)
+                context_to_process = structured_context
             else:
-                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
+                # Convert RequestContext to StructuredContextContainer
+                context_to_process = self._convert_request_context_to_structured(request_context)
+
+            # Enhance structured context with plot outline information if available
+            enhanced_context = self._enhance_with_plot_outline_context(
+                context_to_process, context_processing_config, request_context
+            )
+            
+            result = self._process_structured_context(
+                structured_context=enhanced_context,
+                agent_type=AgentType.WRITER,
+                context_processing_config=context_processing_config,
+                endpoint_strategy="full_narrative_assembly"
+            )
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -121,10 +299,10 @@ class UnifiedContextProcessor:
 
     def process_character_feedback_context(
         self,
-        # Phase context
-        # Structured context
-        structured_context: Optional[StructuredContextContainer] = None,
-        context_processing_config: Optional[Dict[str, Any]] = None
+        request_context: RequestContext,
+        context_processing_config: Optional[Dict[str, Any]] = None,
+        # Legacy parameter for backward compatibility
+        structured_context: Optional[StructuredContextContainer] = None
     ) -> UnifiedContextResult:
         """
         Process context for character feedback with character-specific prioritization.
@@ -144,15 +322,20 @@ class UnifiedContextProcessor:
                         f"Cache hit for character_feedback: {cache_key}")
                     return self._cache[cache_key]
 
+            # Convert RequestContext to StructuredContextContainer
             if structured_context:
-                result = self._process_structured_context(
-                    structured_context=structured_context,
-                    agent_type=AgentType.CHARACTER,
-                    context_processing_config=context_processing_config,
-                    endpoint_strategy="character_specific_prioritization"
-                )
+                # Use legacy structured context if provided (backward compatibility)
+                context_to_process = structured_context
             else:
-                raise ValueError("Only structured context mode is supported. Please provide structured_context.")
+                # Convert RequestContext to StructuredContextContainer
+                context_to_process = self._convert_request_context_to_structured(request_context)
+
+            result = self._process_structured_context(
+                structured_context=context_to_process,
+                agent_type=AgentType.CHARACTER,
+                context_processing_config=context_processing_config,
+                endpoint_strategy="character_specific_prioritization"
+            )
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -167,10 +350,10 @@ class UnifiedContextProcessor:
 
     def process_editor_review_context(
         self,
-        # Phase context
-        # Structured context
-        structured_context: Optional[StructuredContextContainer] = None,
-        context_processing_config: Optional[Dict[str, Any]] = None
+        request_context: RequestContext,
+        context_processing_config: Optional[Dict[str, Any]] = None,
+        # Legacy parameter for backward compatibility
+        structured_context: Optional[StructuredContextContainer] = None
     ) -> UnifiedContextResult:
         """
         Process context for editor review with review-focused context filtering.
@@ -189,15 +372,20 @@ class UnifiedContextProcessor:
                     logger.debug(f"Cache hit for editor_review: {cache_key}")
                     return self._cache[cache_key]
 
+            # Convert RequestContext to StructuredContextContainer
             if structured_context:
-                result = self._process_structured_context(
-                    structured_context=structured_context,
-                    agent_type=AgentType.EDITOR,
-                    context_processing_config=context_processing_config,
-                    endpoint_strategy="review_focused_filtering"
-                )
+                # Use legacy structured context if provided (backward compatibility)
+                context_to_process = structured_context
             else:
-                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
+                # Convert RequestContext to StructuredContextContainer
+                context_to_process = self._convert_request_context_to_structured(request_context)
+
+            result = self._process_structured_context(
+                structured_context=context_to_process,
+                agent_type=AgentType.EDITOR,
+                context_processing_config=context_processing_config,
+                endpoint_strategy="review_focused_filtering"
+            )
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -212,13 +400,12 @@ class UnifiedContextProcessor:
 
     def process_rater_feedback_context(
         self,
+        request_context: RequestContext,
+        context_processing_config: Optional[Dict[str, Any]] = None,
         # Legacy fields (kept for backward compatibility in method signature)
         rater_prompt: Optional[str] = None,
         plot_point: Optional[str] = None,
-        # Phase context
-        # Structured context
-        structured_context: Optional[StructuredContextContainer] = None,
-        context_processing_config: Optional[Dict[str, Any]] = None
+        structured_context: Optional[StructuredContextContainer] = None
     ) -> UnifiedContextResult:
         """
         Process context for rater feedback with rater-specific context preparation.
@@ -237,15 +424,20 @@ class UnifiedContextProcessor:
                     logger.debug(f"Cache hit for rater_feedback: {cache_key}")
                     return self._cache[cache_key]
 
+            # Convert RequestContext to StructuredContextContainer
             if structured_context:
-                result = self._process_structured_context(
-                    structured_context=structured_context,
-                    agent_type=AgentType.RATER,
-                    context_processing_config=context_processing_config,
-                    endpoint_strategy="rater_specific_preparation"
-                )
+                # Use legacy structured context if provided (backward compatibility)
+                context_to_process = structured_context
             else:
-                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
+                # Convert RequestContext to StructuredContextContainer
+                context_to_process = self._convert_request_context_to_structured(request_context)
+
+            result = self._process_structured_context(
+                structured_context=context_to_process,
+                agent_type=AgentType.RATER,
+                context_processing_config=context_processing_config,
+                endpoint_strategy="rater_specific_preparation"
+            )
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -260,6 +452,8 @@ class UnifiedContextProcessor:
 
     def process_modify_chapter_context(
         self,
+        request_context: RequestContext,
+        context_processing_config: Optional[Dict[str, Any]] = None,
         # Legacy fields
         system_prompts: Optional[SystemPrompts] = None,
         worldbuilding: Optional[str] = None,
@@ -267,10 +461,7 @@ class UnifiedContextProcessor:
         characters: Optional[List[CharacterInfo]] = None,
         original_chapter: Optional[str] = None,
         modification_request: Optional[str] = None,
-        # Phase context
-        # Structured context
-        structured_context: Optional[StructuredContextContainer] = None,
-        context_processing_config: Optional[Dict[str, Any]] = None
+        structured_context: Optional[StructuredContextContainer] = None
     ) -> UnifiedContextResult:
         """
         Process context for chapter modification with change-focused context management.
@@ -289,15 +480,20 @@ class UnifiedContextProcessor:
                     logger.debug(f"Cache hit for modify_chapter: {cache_key}")
                     return self._cache[cache_key]
 
+            # Convert RequestContext to StructuredContextContainer
             if structured_context:
-                result = self._process_structured_context(
-                    structured_context=structured_context,
-                    agent_type=AgentType.WRITER,
-                    context_processing_config=context_processing_config,
-                    endpoint_strategy="change_focused_management"
-                )
+                # Use legacy structured context if provided (backward compatibility)
+                context_to_process = structured_context
             else:
-                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
+                # Convert RequestContext to StructuredContextContainer
+                context_to_process = self._convert_request_context_to_structured(request_context)
+
+            result = self._process_structured_context(
+                structured_context=context_to_process,
+                agent_type=AgentType.WRITER,
+                context_processing_config=context_processing_config,
+                endpoint_strategy="change_focused_management"
+            )
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -312,16 +508,15 @@ class UnifiedContextProcessor:
 
     def process_flesh_out_context(
         self,
+        request_context: RequestContext,
+        context_processing_config: Optional[Dict[str, Any]] = None,
         # Legacy fields
         system_prompts: Optional[SystemPrompts] = None,
         worldbuilding: Optional[str] = None,
         story_summary: Optional[str] = None,
         characters: Optional[List[CharacterInfo]] = None,
         outline_section: Optional[str] = None,
-        # Phase context
-        # Structured context
-        structured_context: Optional[StructuredContextContainer] = None,
-        context_processing_config: Optional[Dict[str, Any]] = None
+        structured_context: Optional[StructuredContextContainer] = None
     ) -> UnifiedContextResult:
         """
         Process context for flesh out with expansion-specific context assembly.
@@ -340,15 +535,20 @@ class UnifiedContextProcessor:
                     logger.debug(f"Cache hit for flesh_out: {cache_key}")
                     return self._cache[cache_key]
 
+            # Convert RequestContext to StructuredContextContainer
             if structured_context:
-                result = self._process_structured_context(
-                    structured_context=structured_context,
-                    agent_type=AgentType.WRITER,
-                    context_processing_config=context_processing_config,
-                    endpoint_strategy="expansion_specific_assembly"
-                )
+                # Use legacy structured context if provided (backward compatibility)
+                context_to_process = structured_context
             else:
-                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
+                # Convert RequestContext to StructuredContextContainer
+                context_to_process = self._convert_request_context_to_structured(request_context)
+
+            result = self._process_structured_context(
+                structured_context=context_to_process,
+                agent_type=AgentType.WRITER,
+                context_processing_config=context_processing_config,
+                endpoint_strategy="expansion_specific_assembly"
+            )
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -363,16 +563,15 @@ class UnifiedContextProcessor:
 
     def process_character_generation_context(
         self,
+        request_context: RequestContext,
+        context_processing_config: Optional[Dict[str, Any]] = None,
         # Legacy fields
         system_prompts: Optional[SystemPrompts] = None,
         worldbuilding: Optional[str] = None,
         story_summary: Optional[str] = None,
         basic_bio: Optional[str] = None,
         existing_characters: Optional[List[Dict[str, str]]] = None,
-        # Phase context
-        # Structured context
-        structured_context: Optional[StructuredContextContainer] = None,
-        context_processing_config: Optional[Dict[str, Any]] = None
+        structured_context: Optional[StructuredContextContainer] = None
     ) -> UnifiedContextResult:
         """
         Process context for character generation with character-creation-specific prioritization.
@@ -392,15 +591,20 @@ class UnifiedContextProcessor:
                         f"Cache hit for character_generation: {cache_key}")
                     return self._cache[cache_key]
 
+            # Convert RequestContext to StructuredContextContainer
             if structured_context:
-                result = self._process_structured_context(
-                    structured_context=structured_context,
-                    agent_type=AgentType.WRITER,
-                    context_processing_config=context_processing_config,
-                    endpoint_strategy="character_generation_prioritization"
-                )
+                # Use legacy structured context if provided (backward compatibility)
+                context_to_process = structured_context
             else:
-                raise ValueError("Legacy context processing is no longer supported. Please provide structured_context.")
+                # Convert RequestContext to StructuredContextContainer
+                context_to_process = self._convert_request_context_to_structured(request_context)
+
+            result = self._process_structured_context(
+                structured_context=context_to_process,
+                agent_type=AgentType.WRITER,
+                context_processing_config=context_processing_config,
+                endpoint_strategy="character_generation_prioritization"
+            )
 
             # Cache the result
             if self.enable_caching and cache_key:
@@ -519,7 +723,8 @@ class UnifiedContextProcessor:
     def _enhance_with_plot_outline_context(
         self,
         structured_context: StructuredContextContainer,
-        context_processing_config: Optional[Dict[str, Any]] = None
+        context_processing_config: Optional[Dict[str, Any]] = None,
+        request_context: Optional[RequestContext] = None
     ) -> StructuredContextContainer:
         """
         Enhance structured context with plot outline information when available.
@@ -534,8 +739,27 @@ class UnifiedContextProcessor:
             chapter_number = 1
             story_context = None
 
-            # Try to extract from context processing config
-            if context_processing_config:
+            # Try to extract from RequestContext first, then fall back to context processing config
+            if request_context:
+                plot_outline_content = request_context.story_outline.content
+                draft_outline_items = [
+                    {
+                        'id': item.id,
+                        'title': item.title,
+                        'description': item.description,
+                        'key_plot_items': item.key_plot_items,
+                        'order': item.order,
+                        'type': item.type
+                    }
+                    for item in request_context.story_outline.outline_items
+                ]
+                chapter_number = context_processing_config.get('chapter_number', 1) if context_processing_config else 1
+                story_context = {
+                    'story_title': request_context.context_metadata.story_title,
+                    'worldbuilding': request_context.worldbuilding.content,
+                    'characters': [char.name for char in request_context.characters if not char.is_hidden]
+                }
+            elif context_processing_config:
                 plot_outline_content = context_processing_config.get('plot_outline_content')
                 draft_outline_items = context_processing_config.get('draft_outline_items')
                 chapter_number = context_processing_config.get('chapter_number', 1)
