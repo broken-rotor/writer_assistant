@@ -39,7 +39,8 @@ async def generate_chapter(request: GenerateChapterRequest):
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_generate_chapter_context(
                 request_context=request.request_context,
-                context_processing_config=request.context_processing_config
+                context_processing_config=request.context_processing_config,
+                structured_context=request.structured_context
             )
 
             # Log context processing results

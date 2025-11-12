@@ -276,7 +276,7 @@ class UnifiedContextProcessor:
 
     def process_generate_chapter_context(
         self,
-        request_context: RequestContext,
+        request_context: Optional[RequestContext],
         context_processing_config: Optional[Dict[str, Any]] = None,
         # Legacy parameter for backward compatibility
         structured_context: Optional[StructuredContextContainer] = None
@@ -303,9 +303,12 @@ class UnifiedContextProcessor:
             if structured_context:
                 # Use legacy structured context if provided (backward compatibility)
                 context_to_process = structured_context
-            else:
+            elif request_context:
                 # Convert RequestContext to StructuredContextContainer
                 context_to_process = self._convert_request_context_to_structured(request_context)
+            else:
+                # Neither structured_context nor request_context provided
+                raise ValueError("Either request_context or structured_context must be provided")
 
             # Enhance structured context with plot outline information if available
             enhanced_context = self._enhance_with_plot_outline_context(
