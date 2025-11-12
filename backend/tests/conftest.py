@@ -433,44 +433,47 @@ def sample_editor_review_request():
 
 @pytest.fixture
 def sample_flesh_out_request():
-    """Sample flesh out request using structured context only"""
+    """Sample flesh out request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant specializing in detailed scene expansion.",
+                main_suffix="Expand text with relevant detail while maintaining narrative consistency.",
+                assistant_prompt="Focus on adding atmospheric details and character insights.",
+                editor_prompt="Review expanded text for flow and narrative coherence."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The city is shrouded in shadows and mystery, with corruption lurking around every corner. Post-war atmosphere with returning veterans and changing social dynamics."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective story involving mysterious evidence and corruption in 1940s Los Angeles",
+            status="draft",
+            content="A story where the detective discovers crucial evidence that leads deeper into a web of mystery and corruption."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_flesh_005",
+            story_title="Shadows and Evidence",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=500
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_protagonist",
+                name="Detective",
+                basic_bio="A seasoned detective investigating mysterious cases in 1940s Los Angeles",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "The detective finds a mysterious photograph",
-                    "priority": "high",
-                    "tags": ["current_scene", "evidence", "mystery"],
-                    "metadata": {"item": "photograph", "significance": "mysterious"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [],
-            "user_requests": [
-                {
-                    "type": "addition",
-                    "content": "Expand with relevant detail about the photograph",
-                    "priority": "high",
-                    "target": "photograph_scene",
-                    "context": "worldbuilding"
-                }
-            ],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a creative writing assistant. Expand with relevant detail.",
-                    "scope": "global",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "textToFleshOut": "The detective finds a mysterious photograph"
     }
 
