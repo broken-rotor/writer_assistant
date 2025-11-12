@@ -78,42 +78,31 @@ class TestGenerateChapterEndpoint:
 
     def test_generate_chapter_with_multiple_characters(self, client, sample_generate_chapter_request):
         """Test chapter generation with multiple characters"""
-        sample_generate_chapter_request["structured_context"]["character_contexts"].append({
-            "character_id": "john_doe",
-            "character_name": "John Doe",
-            "current_state": {
-                "emotion": "mysterious",
-                "location": "unknown",
-                "mental_state": "calculating"
-            },
-            "recent_actions": ["Appeared at scene", "Watching from shadows"],
-            "relationships": {"detective": "unknown"},
-            "goals": ["Remain hidden", "Observe"],
-            "memories": ["Past encounters", "Secret knowledge"],
-            "personality_traits": ["enigmatic", "imposing", "secretive"]
+        from datetime import datetime
+        
+        # Add another character to the RequestContext
+        sample_generate_chapter_request["request_context"]["characters"].append({
+            "id": "john_doe",
+            "name": "John Doe",
+            "basic_bio": "A mysterious figure who appears at crime scenes, enigmatic and imposing with secretive motives.",
+            "creation_source": "user",
+            "last_modified": datetime.now().isoformat()
         })
+        
         response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
         data = extract_final_result_from_streaming_response(response)
 
     def test_generate_chapter_with_incorporated_feedback(self, client, sample_generate_chapter_request):
-        """Test chapter generation with incorporated feedback via structured context"""
-        # Add feedback as user requests in structured context
-        sample_generate_chapter_request["structured_context"]["user_requests"].extend([
-            {
-                "type": "modification",
-                "content": "Consider this feedback from character1",
-                "priority": "high",
-                "target": "character1",
-                "context": "action_feedback"
-            },
-            {
-                "type": "general", 
-                "content": "Add more detail as suggested by rater1",
-                "priority": "medium",
-                "target": "rater1",
-                "context": "suggestion_feedback"
-            }
-        ])
+        """Test chapter generation with incorporated feedback via worldbuilding content"""
+        # Add feedback information to the worldbuilding content
+        original_content = sample_generate_chapter_request["request_context"]["worldbuilding"]["content"]
+        feedback_content = (
+            f"{original_content} "
+            "FEEDBACK TO INCORPORATE: Consider adding more atmospheric details as suggested by reviewers. "
+            "Focus on character emotions and environmental descriptions to enhance the scene."
+        )
+        sample_generate_chapter_request["request_context"]["worldbuilding"]["content"] = feedback_content
+        
         response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
         data = extract_final_result_from_streaming_response(response)
         # Verify that the response includes context metadata
