@@ -79,7 +79,7 @@ Writer Assistant is a full-stack application that combines local LLM inference w
 │                      │                                           │
 │  ┌───────────────────┴────────────────────────────┐             │
 │  │         Context Management Layer               │             │
-│  │  • StructuredContextContainer                  │             │
+│  │  • RequestContext (comprehensive context)      │             │
 │  │  • Token Budget Management                     │             │
 │  │  • Priority-based Trimming                     │             │
 │  │  • Context Distillation                        │             │

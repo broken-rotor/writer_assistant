@@ -513,41 +513,96 @@ def sample_generate_character_request():
 
 
 @pytest.fixture
-def sample_structured_context_container():
-    """Sample structured context container for testing"""
-    from app.models.generation_models import (
-        StructuredContextContainer,
-        PlotElement,
-        CharacterContext,
-        UserRequest,
-        SystemInstruction,
-        ContextMetadata
+def sample_request_context():
+    """Sample request context for testing"""
+    from app.models.request_context import (
+        RequestContext,
+        StoryConfiguration,
+        SystemPrompts,
+        RaterConfig,
+        WorldbuildingInfo,
+        WorldElement,
+        ChatMessage,
+        CharacterDetails,
+        StoryOutline,
+        OutlineItem,
+        OutlineFeedback,
+        ChapterDetails,
+        FeedbackItem,
+        CharacterFeedbackItem,
+        RaterFeedbackItem,
+        EditorSuggestion,
+        RequestContextMetadata
     )
     from datetime import datetime
     
-    return StructuredContextContainer(
-        plot_elements=[
-            PlotElement(
-                id="scene_001",
-                type="scene",
-                content="The detective arrives at the crime scene on a rainy night",
-                priority="high",
-                tags=["current_scene", "investigation", "weather"],
-                metadata={"location": "crime_scene", "time": "night", "weather": "rain"}
+    return RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant focused on noir storytelling",
+                main_suffix="Use vivid descriptions and maintain consistent tone",
+                assistant_prompt="Help develop the story with atmospheric details",
+                editor_prompt="Review content for consistency and quality"
             ),
-            PlotElement(
-                id="setup_001",
-                type="setup",
-                content="A noir detective story set in 1940s Los Angeles",
-                priority="medium",
-                tags=["setting", "genre", "background"],
-                metadata={"era": "1940s", "location": "los_angeles", "genre": "noir"}
-            )
-        ],
-        character_contexts=[
-            CharacterContext(
-                character_id="detective_sarah_chen",
-                character_name="Detective Sarah Chen",
+            raters=[
+                RaterConfig(
+                    id="rater_001",
+                    name="Story Quality Rater",
+                    system_prompt="Evaluate story quality and coherence",
+                    enabled=True
+                )
+            ],
+            generation_preferences={
+                "genre": "noir",
+                "style": "atmospheric",
+                "focus": "character_development"
+            }
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The city is shrouded in perpetual fog and moral ambiguity.",
+            chat_history=[
+                ChatMessage(
+                    id="msg_001",
+                    type="user",
+                    content="I want to set this in 1940s LA",
+                    timestamp=datetime.now()
+                ),
+                ChatMessage(
+                    id="msg_002",
+                    type="assistant",
+                    content="Perfect! 1940s Los Angeles provides a rich noir backdrop with its post-war atmosphere.",
+                    timestamp=datetime.now()
+                )
+            ],
+            key_elements=[
+                WorldElement(
+                    type="location",
+                    name="1940s Los Angeles",
+                    description="Post-war city with fog, neon lights, and moral ambiguity",
+                    importance="high"
+                ),
+                WorldElement(
+                    type="culture",
+                    name="Noir Atmosphere",
+                    description="Dark, cynical worldview with complex moral situations",
+                    importance="high"
+                )
+            ]
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A tough but fair detective with a mysterious past",
+                sex="female",
+                gender="female",
+                age=35,
+                physical_appearance="Tall, sharp-eyed, with weathered hands from years on the force",
+                usual_clothing="Dark coat, practical shoes, always carries a notebook",
+                personality="Cynical yet determined, observant and methodical",
+                motivations="Seeking justice and truth in a corrupt world",
+                fears="Losing another partner, becoming too cynical",
+                relationships="Works alone after losing previous partner",
                 current_state={
                     "emotion": "focused",
                     "location": "crime_scene",
@@ -555,49 +610,103 @@ def sample_structured_context_container():
                     "physical_state": "alert"
                 },
                 recent_actions=["Arrived at scene", "Examining evidence", "Taking notes"],
-                relationships={"partner": "works_alone", "suspects": "suspicious"},
                 goals=["Solve the murder case", "Find justice", "Protect the innocent"],
                 memories=["Previous partner's death", "Similar cases", "Training"],
-                personality_traits=["cynical", "determined", "observant", "methodical"]
+                creation_source="user",
+                last_modified=datetime.now()
             )
         ],
-        user_requests=[
-            UserRequest(
-                id="req_001",
-                type="general",
-                content="Focus on atmospheric details and character development",
-                priority="medium",
-                context="story_enhancement",
-                timestamp=datetime.now()
+        story_outline=StoryOutline(
+            summary="A detective investigates a murder in 1940s Los Angeles, uncovering corruption and personal demons",
+            status="draft",
+            content="Chapter 1: The Crime Scene - Detective arrives at a murder scene on a rainy night",
+            outline_items=[
+                OutlineItem(
+                    id="chapter_001",
+                    type="chapter",
+                    title="The Crime Scene",
+                    description="Detective Sarah Chen arrives at the murder scene",
+                    key_plot_items=["Arrival at scene", "Initial investigation", "Discovery of key evidence"],
+                    order=1,
+                    involved_characters=["Detective Sarah Chen"],
+                    status="draft",
+                    word_count_estimate=2000
+                )
+            ],
+            rater_feedback=[
+                OutlineFeedback(
+                    rater_id="rater_001",
+                    rater_name="Story Quality Rater",
+                    feedback="Strong opening with good atmospheric setup",
+                    status="complete",
+                    timestamp=datetime.now()
+                )
+            ]
+        ),
+        chapters=[
+            ChapterDetails(
+                id="chapter_001",
+                number=1,
+                title="The Crime Scene",
+                content="The rain fell in sheets across the empty street as Detective Sarah Chen pulled up to the crime scene. The neon signs reflected in the puddles, casting an eerie glow over the scene.",
+                plot_point="Detective arrives at the crime scene on a rainy night",
+                key_plot_items=["Arrival at scene", "Initial investigation", "Atmospheric setup"],
+                incorporated_feedback=[
+                    FeedbackItem(
+                        id="feedback_001",
+                        source="Story Quality Rater",
+                        type="suggestion",
+                        content="Add more sensory details to enhance atmosphere",
+                        incorporated=True,
+                        priority="medium",
+                        status="incorporated"
+                    )
+                ],
+                character_feedback=[
+                    CharacterFeedbackItem(
+                        character_name="Detective Sarah Chen",
+                        actions=["Step out of car", "Survey the scene", "Take notes"],
+                        dialog=["What do we have here?", "Secure the perimeter"],
+                        physical_sensations=["Cold rain on face", "Tension in shoulders"],
+                        emotions=["Focused determination", "Slight apprehension"],
+                        internal_monologue=["Another case, another chance for justice"]
+                    )
+                ],
+                rater_feedback=[
+                    RaterFeedbackItem(
+                        rater_name="Story Quality Rater",
+                        opinion="Strong atmospheric opening with good character establishment",
+                        suggestions=["Consider adding more background details", "Develop the crime scene description"]
+                    )
+                ],
+                editor_suggestions=[
+                    EditorSuggestion(
+                        issue="Pacing could be improved",
+                        suggestion="Add a brief pause before entering the scene",
+                        priority="medium",
+                        selected=False
+                    )
+                ],
+                word_count=156,
+                created=datetime.now(),
+                last_modified=datetime.now()
             )
         ],
-        system_instructions=[
-            SystemInstruction(
-                id="inst_001",
-                type="behavior",
-                content="You are a creative writing assistant focused on noir storytelling",
-                scope="global",
-                priority="high",
-                metadata={"genre": "noir", "style": "atmospheric"}
-            ),
-            SystemInstruction(
-                id="inst_002",
-                type="style",
-                content="Use vivid descriptions and maintain consistent tone",
-                scope="chapter",
-                priority="medium"
-            )
-        ],
-        metadata=ContextMetadata(
-            total_elements=6,
-            processing_applied=True,
-            processing_mode="structured",
-            optimization_level="light",
-            compression_ratio=0.85,
-            filtered_elements={"plot": 2, "character": 1, "user": 1, "system": 2},
-            processing_time_ms=150.5,
-            created_at=datetime.now().isoformat(),
-            version="1.0"
+        context_metadata=RequestContextMetadata(
+            story_id="story_001",
+            story_title="Shadows in the Rain",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=1,
+            total_word_count=156,
+            context_size_estimate=2500,
+            processing_hints={
+                "genre": "noir",
+                "style": "atmospheric",
+                "focus": "character_development",
+                "optimization_level": "light"
+            }
         )
     )
 
