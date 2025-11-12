@@ -39,22 +39,11 @@ async def generate_chapter(request: GenerateChapterRequest):
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_generate_chapter_context(
                 request_context=request.request_context,
-                context_processing_config=request.context_processing_config,
-                structured_context=request.structured_context
+                context_processing_config=request.context_processing_config
             )
 
             # Log context processing results
-            if context_result.optimization_applied:
-                logger.info(
-                    "Context processing applied ("
-                    f"{context_result.processing_mode} mode): "
-                    f"{context_result.total_tokens} tokens, "
-                    f"compression ratio: {context_result.compression_ratio:.2f}")
-            else:
-                logger.debug(
-                    "No context optimization needed ("
-                    f"{context_result.processing_mode} mode): "
-                    f"{context_result.total_tokens} tokens")
+            logger.info(f"Chapter generation context processed in {context_result.processing_time:.2f}s")
 
             # Phase 2: Generation
             yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating chapter content...', 'progress': 60})}\n\n"
@@ -93,9 +82,8 @@ async def generate_chapter(request: GenerateChapterRequest):
                     "contextMode": "structured",
                     "requestContextProvided": bool(
                         request.request_context),
-                    "structuredContextProvided": bool(
-                        request.structured_context),
-                    "processingMode": context_result.processing_mode})
+                    "structuredContextProvided": False,
+                    "processingMode": "request_context"})
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 

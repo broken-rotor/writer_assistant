@@ -281,57 +281,47 @@ def sample_rater_feedback_request():
 
 @pytest.fixture
 def sample_generate_chapter_request():
-    """Sample chapter generation request using structured context only"""
+    """Sample chapter generation request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant.",
+                main_suffix="Write engaging prose with vivid descriptions.",
+                assistant_prompt="Focus on creating compelling narrative scenes.",
+                editor_prompt="Review and enhance the chapter content."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles with dark atmosphere and rain-soaked streets."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective Sarah Chen investigates a murder case in 1940s Los Angeles",
+            status="draft",
+            content="The story follows Detective Sarah Chen as she solves crimes in the dark streets of Los Angeles."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_002",
+            story_title="The Los Angeles Case",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=1,
+            total_word_count=1200,
+            context_size_estimate=600
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A determined detective working crime scenes in 1940s Los Angeles, cynical but observant.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "The detective discovers a crucial clue at the crime scene",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation"],
-                    "metadata": {"location": "crime_scene", "time": "night"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [
-                {
-                    "character_id": "detective_sarah_chen",
-                    "character_name": "Detective Sarah Chen",
-                    "current_state": {
-                        "emotion": "determined",
-                        "location": "crime_scene",
-                        "mental_state": "focused"
-                    },
-                    "recent_actions": ["Arrived at scene", "Examining evidence"],
-                    "relationships": {"partner": "works_alone"},
-                    "goals": ["Solve the murder case", "Find justice"],
-                    "memories": ["Previous cases", "Lost partner"],
-                    "personality_traits": ["cynical", "determined", "observant"]
-                }
-            ],
-            "user_requests": [],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a creative writing assistant. Write engaging prose.",
-                    "scope": "global",
-                    "priority": "high"
-                },
-                {
-                    "type": "style",
-                    "content": "Focus on vivid descriptions",
-                    "scope": "chapter",
-                    "priority": "medium"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 
