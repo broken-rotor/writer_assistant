@@ -18,20 +18,54 @@ def client():
 
 @pytest.fixture
 def sample_streaming_request():
-    """Sample request for streaming rater feedback."""
+    """Sample request for streaming rater feedback using new RequestContext format."""
+    from datetime import datetime
+    from app.models.request_context import RequestContext, StoryConfiguration, SystemPrompts, WorldbuildingInfo, StoryOutline, RequestContextMetadata, CharacterDetails
+    
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant.",
+                main_suffix="Write engaging prose with vivid descriptions.",
+                assistant_prompt="Focus on creating compelling narrative scenes.",
+                editor_prompt="Review and enhance the chapter content."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A fantasy adventure story with magical elements and hidden mysteries."
+        ),
+        story_outline=StoryOutline(
+            summary="A hero's journey through a mysterious world filled with secrets",
+            status="draft",
+            content="The story follows a hero who discovers hidden doors and magical secrets."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="streaming_rater_test_001",
+            story_title="The Hidden Door Adventure",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=1,
+            total_word_count=800,
+            context_size_estimate=400
+        ),
+        characters=[
+            CharacterDetails(
+                id="hero_character",
+                name="The Hero",
+                basic_bio="A brave adventurer seeking hidden truths and magical secrets.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
         "raterPrompt": "You are a story critic. Evaluate this plot point.",
         "plotPoint": "The hero discovers a hidden door in the basement.",
         "compose_phase": "plot_outline",
         "phase_context": {},
-        "structured_context": {
-            "system_prompts": [],
-            "worldbuilding": [],
-            "story_summary": [],
-            "characters": [],
-            "phase_context": [],
-            "conversation_history": []
-        }
+        "request_context": request_context.model_dump(mode='json')
     }
 
 
