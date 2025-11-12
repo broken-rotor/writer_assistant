@@ -47,12 +47,14 @@ from app.models.context_models import (
     ContextType,
     AgentType
 )
+from app.models.request_context import (
+    RequestContext,
+    StoryOutline,
+    CharacterDetails,
+    WorldbuildingInfo,
+    StoryConfiguration
+)
 from app.models.generation_models import (
-    StructuredContextContainer,
-    PlotElement,
-    CharacterContext,
-    UserRequest,
-    SystemInstruction,
     ContextMetadata,
     GenerateChapterRequest,
     CharacterFeedbackRequest,

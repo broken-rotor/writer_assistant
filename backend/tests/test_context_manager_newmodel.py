@@ -9,17 +9,17 @@ instead of the legacy BaseContextElement list.
 import pytest
 from datetime import datetime, timezone
 
-from app.services.context_manager import ContextManager, ContextFormatter
+from app.services.context_manager import ContextManager
 from app.models.context_models import (
     AgentType,
     ContextProcessingConfig
 )
-from app.models.generation_models import (
-    StructuredContextContainer,
-    PlotElement,
-    CharacterContext,
-    UserRequest,
-    SystemInstruction
+from app.models.request_context import (
+    RequestContext,
+    CharacterDetails,
+    StoryOutline,
+    WorldbuildingInfo,
+    StoryConfiguration
 )
 
 

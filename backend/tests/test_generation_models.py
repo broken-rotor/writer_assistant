@@ -7,11 +7,6 @@ from pydantic import ValidationError
 
 from app.models.generation_models import (
     SystemPrompts,
-    StructuredContextContainer,
-    PlotElement,
-    CharacterContext,
-    UserRequest,
-    SystemInstruction,
     ContextMetadata,
     CharacterInfo,
     CharacterFeedbackRequest,
