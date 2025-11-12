@@ -477,37 +477,39 @@ def sample_flesh_out_request():
 
 @pytest.fixture
 def sample_generate_character_request():
-    """Sample generate character details request using structured context only"""
+    """Sample generate character details request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a character creator specializing in noir fiction.",
+                main_suffix="Create believable, complex characters with depth and authenticity.",
+                assistant_prompt="Focus on developing compelling character backgrounds and motivations.",
+                editor_prompt="Review character details for consistency and narrative potential."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The city is filled with corruption, shadows, and moral ambiguity. Post-war atmosphere with returning veterans, changing social dynamics."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective story involving corruption and mystery in 1940s Los Angeles",
+            status="draft",
+            content="A story requiring a tough but fair detective character with a mysterious past to navigate the corrupt underworld."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_character_004",
+            story_title="Shadows and Secrets",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=0,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=600
+        ),
+        characters=[]  # Empty since we're generating new characters
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [],
-            "user_requests": [
-                {
-                    "type": "addition",
-                    "content": "Create a tough but fair detective with a mysterious past",
-                    "priority": "high",
-                    "target": "new_character",
-                    "context": "character_creation"
-                }
-            ],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a character creator. Create believable characters.",
-                    "scope": "global",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "basicBio": "A tough but fair detective with a mysterious past",
         "existingCharacters": []
     }
