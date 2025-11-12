@@ -146,7 +146,7 @@ class TestContextManager:
             container = self._create_context_container_from_scenario(scenario)
             
             # Process context using the new API
-            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
             
             # Verify the results
             assert isinstance(formatted_context, str)
@@ -178,7 +178,7 @@ class TestContextManager:
             container = self._create_context_container_from_scenario(scenario)
             
             # Process context using the new API
-            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
             
             # Verify the results - context should be optimized to fit within token limits
             assert isinstance(formatted_context, str)
@@ -259,7 +259,7 @@ class TestContextManager:
             )
             
             # Process context using the new API
-            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
             
             # Verify the results - lower priority items should be filtered out
             assert isinstance(formatted_context, str)
@@ -376,7 +376,7 @@ class TestContextManager:
             container = self._create_context_container_from_scenario(large_scenario)
             
             # Process context using the new API
-            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
             
             # Verify budget enforcement occurred
             assert isinstance(formatted_context, str)
@@ -412,7 +412,7 @@ class TestContextManager:
             # Process context using the new API and measure performance
             import time
             start_time = time.time()
-            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
             processing_time = time.time() - start_time
             
             # Verify performance and results
@@ -464,7 +464,7 @@ class TestContextManager:
                 container = self._create_context_container_from_scenario(scenario)
                 
                 # Process context using the new API
-                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
                 
                 # Verify that configuration settings are respected
                 assert isinstance(formatted_context, str)
@@ -522,7 +522,7 @@ class TestContextManager:
             )
             
             # Test that the system handles problematic elements gracefully
-            formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+            formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
             
             # The processing should still work even with problematic elements
             assert isinstance(formatted_context, str)
@@ -556,7 +556,7 @@ class TestContextManager:
                 container = self._create_context_container_from_scenario(scenario)
                 
                 # Test basic context processing (which would use caching if enabled)
-                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
                 
                 # Verify processing worked
                 assert isinstance(formatted_context, str)
@@ -590,7 +590,7 @@ class TestContextManager:
                 container = self._create_context_container_from_scenario(scenario)
                 
                 # Test context processing (which would be monitored)
-                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
                 
                 # Verify processing worked and includes monitoring metadata
                 assert isinstance(formatted_context, str)
@@ -625,7 +625,7 @@ class TestContextManager:
                 container = self._create_context_container_from_scenario(scenario)
                 
                 # Test context processing (which could use RAG if enabled)
-                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
                 
                 # Verify processing worked
                 assert isinstance(formatted_context, str)
@@ -660,7 +660,7 @@ class TestContextManager:
                 container = self._create_context_container_from_scenario(large_scenario)
                 
                 # Test processing of large context
-                formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+                formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
                 
                 # Verify processing worked even with large context
                 assert isinstance(formatted_context, str)

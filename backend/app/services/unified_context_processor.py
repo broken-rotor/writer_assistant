@@ -83,6 +83,23 @@ class UnifiedContextProcessor:
         it according to the established context categories.
         """
         try:
+            # Handle null request_context
+            if request_context is None:
+                from app.models.generation_models import ContextMetadata
+                error_metadata = ContextMetadata(
+                    total_elements=0,
+                    processing_applied=False,
+                    processing_mode="structured",
+                    optimization_level="none"
+                )
+                return StructuredContextContainer(
+                    plot_elements=[],
+                    character_contexts=[],
+                    user_requests=[],
+                    system_instructions=[],
+                    metadata=error_metadata
+                )
+            
             plot_elements = []
             character_contexts = []
             user_requests = []
@@ -221,27 +238,45 @@ class UnifiedContextProcessor:
                         tags=["plot_item", "chapter"]
                     ))
             
+            # Create metadata for the conversion
+            from app.models.generation_models import ContextMetadata
+            metadata = ContextMetadata(
+                total_elements=len(plot_elements) + len(character_contexts) + len(user_requests) + len(system_instructions),
+                processing_applied=True,
+                processing_mode="structured",
+                optimization_level="none"
+            )
+            
             # Create the structured context container
             return StructuredContextContainer(
                 plot_elements=plot_elements,
                 character_contexts=character_contexts,
                 user_requests=user_requests,
-                system_instructions=system_instructions
+                system_instructions=system_instructions,
+                metadata=metadata
             )
             
         except Exception as e:
             logger.error(f"Error converting RequestContext to StructuredContextContainer: {str(e)}")
             # Return minimal valid container on error
+            from app.models.generation_models import ContextMetadata
+            error_metadata = ContextMetadata(
+                total_elements=0,
+                processing_applied=False,
+                processing_mode="structured",
+                optimization_level="none"
+            )
             return StructuredContextContainer(
                 plot_elements=[],
                 character_contexts=[],
                 user_requests=[],
-                system_instructions=[]
+                system_instructions=[],
+                metadata=error_metadata
             )
 
     def process_generate_chapter_context(
         self,
-        request_context: RequestContext,
+        request_context: Optional[RequestContext],
         context_processing_config: Optional[Dict[str, Any]] = None,
         # Legacy parameter for backward compatibility
         structured_context: Optional[StructuredContextContainer] = None
@@ -268,9 +303,12 @@ class UnifiedContextProcessor:
             if structured_context:
                 # Use legacy structured context if provided (backward compatibility)
                 context_to_process = structured_context
-            else:
+            elif request_context:
                 # Convert RequestContext to StructuredContextContainer
                 context_to_process = self._convert_request_context_to_structured(request_context)
+            else:
+                # Neither structured_context nor request_context provided
+                raise ValueError("Either request_context or structured_context must be provided")
 
             # Enhance structured context with plot outline information if available
             enhanced_context = self._enhance_with_plot_outline_context(
@@ -639,8 +677,8 @@ class UnifiedContextProcessor:
                     "include_relationships", True) if context_processing_config else True
             )
 
-            # Process context with ContextManager (now using new model natively)
-            formatted_context, metadata = self.context_manager.process_context_for_agent(
+            # Process context with ContextManager (using structured context method)
+            formatted_context, metadata = self.context_manager.process_structured_context_for_agent(
                 structured_context, processing_config
             )
 

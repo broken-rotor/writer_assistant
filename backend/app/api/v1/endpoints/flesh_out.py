@@ -7,6 +7,7 @@ from app.models.generation_models import (
     FleshOutRequest,
     FleshOutResponse
 )
+from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.core.config import settings
@@ -41,7 +42,6 @@ async def flesh_out(request: FleshOutRequest):
                 # Core fields
                 outline_section=request.textToFleshOut,
                 context_processing_config=request.context_processing_config,
-                # Legacy parameter for backward compatibility
                 structured_context=request.structured_context
             )
 
@@ -113,6 +113,8 @@ Provide a detailed, atmospheric expansion (200-400 words)."""
                         response_text.strip()),
                     "contextType": request.context,
                     "contextMode": "structured",
+                    "requestContextProvided": bool(
+                        request.request_context),
                     "structuredContextProvided": bool(
                         request.structured_context),
                     "processingMode": context_result.processing_mode})

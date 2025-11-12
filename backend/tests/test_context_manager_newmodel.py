@@ -248,7 +248,7 @@ class TestContextManagerNewModel:
             prioritize_recent=True
         )
 
-        formatted_context, metadata = self.manager.process_context_for_agent(
+        formatted_context, metadata = self.manager.process_structured_context_for_agent(
             self.container, config
         )
 
@@ -273,7 +273,7 @@ class TestContextManagerNewModel:
             summarization_threshold=150
         )
 
-        formatted_context, metadata = self.manager.process_context_for_agent(
+        formatted_context, metadata = self.manager.process_structured_context_for_agent(
             self.container, config
         )
 
@@ -293,7 +293,7 @@ class TestContextManagerNewModel:
             }
         )
 
-        formatted_context, metadata = self.manager.process_context_for_agent(
+        formatted_context, metadata = self.manager.process_structured_context_for_agent(
             self.container, config
         )
 

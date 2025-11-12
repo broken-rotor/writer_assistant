@@ -8,6 +8,7 @@ from app.models.generation_models import (
     GenerateCharacterDetailsResponse,
     CharacterInfo
 )
+from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.api.v1.endpoints.shared_utils import parse_json_response
@@ -42,7 +43,6 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
                 basic_bio=request.basicBio,
                 existing_characters=request.existingCharacters,
                 context_processing_config=request.context_processing_config,
-                # Legacy parameter for backward compatibility
                 structured_context=request.structured_context
             )
 

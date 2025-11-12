@@ -7,6 +7,7 @@ from app.models.generation_models import (
     RegenerateBioRequest,
     RegenerateBioResponse
 )
+from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.unified_context_processor import get_unified_context_processor
 from app.core.config import settings
@@ -63,16 +64,16 @@ async def regenerate_bio(request: RegenerateBioRequest):
 
             character_summary = "\n".join(character_details)
 
-            # Use context processor if structured context is provided
+            # Use context processor if request context is provided
             context_result = None
-            if request.structured_context:
+            if request.request_context:
                 context_processor = get_unified_context_processor()
                 context_result = context_processor.process_character_generation_context(
+                    request_context=request.request_context,
                     basic_bio=character_summary,  # Use character details as "bio" for context
                     existing_characters=[],  # Not needed for bio regeneration
-                    
-                    structured_context=request.structured_context,
-                    context_processing_config=request.context_processing_config
+                    context_processing_config=request.context_processing_config,
+                    structured_context=request.structured_context
                 )
 
                 # Log context processing results
