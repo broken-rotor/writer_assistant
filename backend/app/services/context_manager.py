@@ -798,22 +798,40 @@ class ContextManager:
                         tags=["plot_item", "chapter"]
                     ))
             
+            # Create metadata for the conversion
+            from app.models.generation_models import ContextMetadata
+            metadata = ContextMetadata(
+                total_elements=len(plot_elements) + len(character_contexts) + len(user_requests) + len(system_instructions),
+                processing_applied=True,
+                processing_mode="structured",
+                optimization_level="none"
+            )
+            
             # Create the structured context container
             return StructuredContextContainer(
                 plot_elements=plot_elements,
                 character_contexts=character_contexts,
                 user_requests=user_requests,
-                system_instructions=system_instructions
+                system_instructions=system_instructions,
+                metadata=metadata
             )
             
         except Exception as e:
             logger.error(f"Error converting RequestContext to StructuredContextContainer: {str(e)}")
             # Return minimal valid container on error
+            from app.models.generation_models import ContextMetadata
+            error_metadata = ContextMetadata(
+                total_elements=0,
+                processing_applied=False,
+                processing_mode="structured",
+                optimization_level="none"
+            )
             return StructuredContextContainer(
                 plot_elements=[],
                 character_contexts=[],
                 user_requests=[],
-                system_instructions=[]
+                system_instructions=[],
+                metadata=error_metadata
             )
 
 
