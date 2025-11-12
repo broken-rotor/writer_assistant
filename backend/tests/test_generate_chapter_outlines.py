@@ -168,7 +168,7 @@ class TestGenerateChapterOutlineEndpoint:
     def test_generate_chapter_outlines_empty_story_outline(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with empty story outline"""
         request = sample_chapter_outline_request.copy()
-        request["story_outline"] = ""
+        request["request_context"]["story_outline"]["summary"] = ""
         
         response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
@@ -178,7 +178,7 @@ class TestGenerateChapterOutlineEndpoint:
     def test_generate_chapter_outlines_whitespace_only_story_outline(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with whitespace-only story outline"""
         request = sample_chapter_outline_request.copy()
-        request["story_outline"] = "   \n\t   "
+        request["request_context"]["story_outline"]["summary"] = "   \n\t   "
         
         response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
@@ -194,8 +194,42 @@ class TestGenerateChapterOutlineEndpoint:
 
     def test_generate_chapter_outlines_minimal_request(self, client):
         """Test chapter outline generation with minimal request"""
+        from app.models.request_context import RequestContext, StoryConfiguration, SystemPrompts, WorldbuildingInfo, StoryOutline, RequestContextMetadata, CharacterDetails
+        from datetime import datetime
+        
+        # Create minimal RequestContext
+        request_context = RequestContext(
+            configuration=StoryConfiguration(
+                system_prompts=SystemPrompts(
+                    main_prefix="You are a creative writing assistant.",
+                    main_suffix="Create compelling chapter outlines.",
+                    assistant_prompt="Focus on plot development.",
+                    editor_prompt="Review for story coherence."
+                )
+            ),
+            worldbuilding=WorldbuildingInfo(
+                content="A simple detective story setting."
+            ),
+            story_outline=StoryOutline(
+                summary="A simple detective story about solving a murder case.",
+                status="draft",
+                content="A detective investigates a murder case."
+            ),
+            context_metadata=RequestContextMetadata(
+                story_id="minimal_detective_009",
+                story_title="Simple Detective Story",
+                version="1.0",
+                created_at=datetime.now(),
+                total_characters=0,
+                total_chapters=0,
+                total_word_count=0,
+                context_size_estimate=100
+            ),
+            characters=[]
+        )
+        
         minimal_request = {
-            "story_outline": "A simple detective story about solving a murder case."
+            "request_context": request_context.model_dump(mode='json')
         }
         
         response = client.post("/api/v1/generate-chapter-outlines", json=minimal_request)
@@ -209,18 +243,50 @@ class TestGenerateChapterOutlineEndpoint:
 
     def test_generate_chapter_outlines_with_story_context_only(self, client):
         """Test chapter outline generation with story context but no character contexts"""
+        from app.models.request_context import RequestContext, StoryConfiguration, SystemPrompts, WorldbuildingInfo, StoryOutline, RequestContextMetadata, CharacterDetails
+        from datetime import datetime
+        
+        # Create RequestContext with story context only
+        request_context = RequestContext(
+            configuration=StoryConfiguration(
+                system_prompts=SystemPrompts(
+                    main_prefix="You are a creative writing assistant.",
+                    main_suffix="Create compelling chapter outlines.",
+                    assistant_prompt="Focus on plot development.",
+                    editor_prompt="Review for story coherence."
+                )
+            ),
+            worldbuilding=WorldbuildingInfo(
+                content="1940s Los Angeles - a city of dreams and nightmares."
+            ),
+            story_outline=StoryOutline(
+                summary="A detective investigates a murder in 1940s Los Angeles.",
+                status="draft",
+                content="A detective investigates a murder case in the noir atmosphere of 1940s Los Angeles."
+            ),
+            context_metadata=RequestContextMetadata(
+                story_id="noir_story_context_010",
+                story_title="Noir Mystery",
+                version="1.0",
+                created_at=datetime.now(),
+                total_characters=1,
+                total_chapters=0,
+                total_word_count=0,
+                context_size_estimate=200
+            ),
+            characters=[
+                CharacterDetails(
+                    id="detective_smith",
+                    name="Detective Smith",
+                    basic_bio="A hardboiled detective",
+                    creation_source="user",
+                    last_modified=datetime.now()
+                )
+            ]
+        )
+        
         request = {
-            "story_outline": "A detective investigates a murder in 1940s Los Angeles.",
-            "story_context": {
-                "title": "Noir Mystery",
-                "worldbuilding": "1940s Los Angeles",
-                "characters": [
-                    {
-                        "name": "Detective Smith",
-                        "basicBio": "A hardboiled detective"
-                    }
-                ]
-            }
+            "request_context": request_context.model_dump(mode='json')
         }
         
         response = client.post("/api/v1/generate-chapter-outlines", json=request)
@@ -323,4 +389,3 @@ class TestGenerateChapterOutlineEndpoint:
             # Should not contain placeholder text
             assert "TODO" not in item["title"]
             assert "TODO" not in item["description"]
-

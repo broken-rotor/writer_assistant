@@ -692,40 +692,50 @@ def sample_chapter_outline_request():
 
 @pytest.fixture
 def sample_chapter_outline_request_with_system_prompts():
-    """Sample chapter outline generation request with system prompts"""
+    """Sample chapter outline generation request with system prompts using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="Always maintain character consistency and emotional coherence throughout the story.",
+                main_suffix="Ensure each chapter ends with a compelling hook for the next chapter.",
+                assistant_prompt="You are a noir fiction specialist.",
+                editor_prompt="Focus on atmospheric descriptions."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="1940s Los Angeles - a city of dreams and nightmares, where corruption runs deep and everyone has secrets. The noir atmosphere permeates every street corner."
+        ),
+        story_outline=StoryOutline(
+            summary="A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
+            status="draft",
+            content="Detective Sarah Chen receives a new murder case that initially appears straightforward but quickly reveals layers of corruption and personal connection to her past."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_outlines_with_prompts_008",
+            story_title="Shadows of the Past",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=900
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A hardboiled detective with a troubled past and a reputation for getting results. Cynical but determined to find justice.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "story_outline": "A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit.",
-        "story_context": {
-            "title": "Shadows of the Past",
-            "worldbuilding": "1940s Los Angeles - a city of dreams and nightmares.",
-            "characters": [
-                {
-                    "name": "Detective Sarah Chen",
-                    "basicBio": "A hardboiled detective with a troubled past"
-                }
-            ]
-        },
-        "character_contexts": [
-            {
-                "character_id": "detective_sarah_chen",
-                "character_name": "Detective Sarah Chen",
-                "current_state": {
-                    "emotion": "determined",
-                    "location": "police_station",
-                    "mental_state": "focused"
-                },
-                "recent_actions": ["Received new case"],
-                "relationships": {"captain": "professional_respect"},
-                "goals": ["Solve the murder case"],
-                "memories": ["Previous cases"],
-                "personality_traits": ["cynical", "determined"]
-            }
-        ],
-        "generation_preferences": {},
-        "system_prompts": {
-            "mainPrefix": "Always maintain character consistency and emotional coherence throughout the story.",
-            "mainSuffix": "Ensure each chapter ends with a compelling hook for the next chapter.",
-            "assistantPrompt": "You are a noir fiction specialist.",
-            "editorPrompt": "Focus on atmospheric descriptions."
+        "request_context": request_context.model_dump(mode='json'),
+        "generation_preferences": {
+            "chapter_count_preference": "8-12",
+            "pacing": "steady",
+            "focus": "character_development"
         }
     }
