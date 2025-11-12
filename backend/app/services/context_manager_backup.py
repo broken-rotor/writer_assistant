@@ -758,6 +758,198 @@ class ContextManager:
         }
 
     def _format_for_writer(self, collections: Dict[str, List]) -> str:
+                system_instructions.append(SystemInstruction(
+                    id="main_prefix",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.main_prefix,
+                    scope="global",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.main_suffix:
+                system_instructions.append(SystemInstruction(
+                    id="main_suffix",
+                    type="behavior", 
+                    content=request_context.configuration.system_prompts.main_suffix,
+                    scope="global",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.assistant_prompt:
+                system_instructions.append(SystemInstruction(
+                    id="assistant_prompt",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.assistant_prompt,
+                    scope="agent",
+                    priority="high"
+                ))
+            
+            if request_context.configuration.system_prompts.editor_prompt:
+                system_instructions.append(SystemInstruction(
+                    id="editor_prompt",
+                    type="behavior",
+                    content=request_context.configuration.system_prompts.editor_prompt,
+                    scope="agent",
+                    priority="high"
+                ))
+            
+            # Map worldbuilding content to plot elements
+            if request_context.worldbuilding.content:
+                plot_elements.append(PlotElement(
+                    id="worldbuilding_main",
+                    type="setup",
+                    content=request_context.worldbuilding.content,
+                    priority="high",
+                    tags=["worldbuilding"]
+                ))
+            
+            # Map worldbuilding key elements
+            for i, element in enumerate(request_context.worldbuilding.key_elements):
+                plot_elements.append(PlotElement(
+                    id=f"worldbuilding_element_{i}",
+                    type="setup",
+                    content=f"{element.name}: {element.description}",
+                    priority=element.importance,
+                    tags=["worldbuilding", element.type]
+                ))
+            
+            # Map story outline to plot elements
+            if request_context.story_outline.content:
+                plot_elements.append(PlotElement(
+                    id="story_outline_main",
+                    type="outline",
+                    content=request_context.story_outline.content,
+                    priority="high",
+                    tags=["outline"]
+                ))
+            
+            if request_context.story_outline.summary:
+                plot_elements.append(PlotElement(
+                    id="story_summary",
+                    type="summary",
+                    content=request_context.story_outline.summary,
+                    priority="high",
+                    tags=["summary"]
+                ))
+            
+            # Map outline items to plot elements
+            for item in request_context.story_outline.outline_items:
+                plot_elements.append(PlotElement(
+                    id=f"outline_item_{item.id}",
+                    type="scene" if item.type == "scene" else "outline",
+                    content=f"{item.title}: {item.description}",
+                    priority="medium",
+                    tags=["outline", item.type]
+                ))
+            
+            # Map characters to character contexts
+            for char in request_context.characters:
+                if char.is_hidden:
+                    continue  # Skip hidden characters
+                    
+                character_contexts.append(CharacterContext(
+                    character_id=char.id,
+                    character_name=char.name,
+                    current_state=char.current_state,
+                    goals=char.goals,
+                    recent_actions=char.recent_actions,
+                    memories=char.memories,
+                    personality_traits=[char.personality] if char.personality else []
+                ))
+            
+            # Map recent chapters to plot elements (limit to last 3 chapters for context)
+            recent_chapters = sorted(request_context.chapters, key=lambda x: x.number, reverse=True)[:3]
+            for chapter in recent_chapters:
+                if chapter.content:
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}",
+                        type="recent_story",
+                        content=f"Chapter {chapter.number}: {chapter.title}\n{chapter.content}",
+                        priority="medium",
+                        tags=["chapter", "recent_story"]
+                    ))
+                
+                # Include chapter plot points
+                if chapter.plot_point:
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}_plot_point",
+                        type="scene",
+                        content=chapter.plot_point,
+                        priority="medium",
+                        tags=["plot_point", "chapter"]
+                    ))
+                
+                # Include key plot items from chapters
+                for i, plot_item in enumerate(chapter.key_plot_items):
+                    plot_elements.append(PlotElement(
+                        id=f"chapter_{chapter.number}_plot_item_{i}",
+                        type="scene",
+                        content=plot_item,
+                        priority="low",
+                        tags=["plot_item", "chapter"]
+                    ))
+            
+            # Create metadata for the conversion
+            from app.models.generation_models import ContextMetadata
+            metadata = ContextMetadata(
+                total_elements=len(plot_elements) + len(character_contexts) + len(user_requests) + len(system_instructions),
+                processing_applied=True,
+                processing_mode="structured",
+                optimization_level="none"
+            )
+            
+            # Create the structured context container
+            return StructuredContextContainer(
+                plot_elements=plot_elements,
+                character_contexts=character_contexts,
+                user_requests=user_requests,
+                system_instructions=system_instructions,
+                metadata=metadata
+            )
+            
+        except Exception as e:
+            logger.error(f"Error converting RequestContext to StructuredContextContainer: {str(e)}")
+            # Return minimal valid container on error
+            from app.models.generation_models import ContextMetadata
+            error_metadata = ContextMetadata(
+                total_elements=0,
+                processing_applied=False,
+                processing_mode="structured",
+                optimization_level="none"
+            )
+            return StructuredContextContainer(
+                plot_elements=[],
+                character_contexts=[],
+                user_requests=[],
+                system_instructions=[],
+                metadata=error_metadata
+            )
+        """
+
+
+class ContextFormatter:
+    """Service for formatting context elements for different agents."""
+
+    def format_for_agent(
+        self,
+        collections: Dict[str, List],
+        agent_type: AgentType
+    ) -> str:
+        """Format typed collections for a specific agent type."""
+        if agent_type == AgentType.WRITER:
+            return self._format_for_writer(collections)
+        elif agent_type == AgentType.CHARACTER:
+            return self._format_for_character(collections)
+        elif agent_type == AgentType.RATER:
+            return self._format_for_rater(collections)
+        elif agent_type == AgentType.EDITOR:
+            return self._format_for_editor(collections)
+        elif agent_type == AgentType.WORLDBUILDING:
+            return self._format_for_worldbuilding(collections)
+        else:
+            return self._format_for_generic(collections)
+
+    def _format_for_writer(self, collections: Dict[str, List]) -> str:
         """Format context for the Writer agent using new model."""
         sections = []
 
