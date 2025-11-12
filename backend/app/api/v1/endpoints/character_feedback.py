@@ -35,10 +35,12 @@ async def character_feedback(request: CharacterFeedbackRequest):
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context and plot point...', 'progress': 25})}\n\n"
 
-            # Extract character name from request context
+            # Extract character name from request context or structured context
             character_name = "Character"
             if request.request_context and request.request_context.characters:
                 character_name = request.request_context.characters[0].name
+            elif request.structured_context and request.structured_context.character_contexts:
+                character_name = request.structured_context.character_contexts[0].character_name
 
             # Get unified context processor
             context_processor = get_unified_context_processor()
