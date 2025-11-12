@@ -87,9 +87,9 @@ class UnifiedContextProcessor:
         
         # Extract context data from RequestContext
         context_data = {
-            "story_outline": request_context.story_outline.outline_summary if request_context.story_outline else None,
+            "story_outline": request_context.story_outline.summary if request_context.story_outline else None,
             "characters": [char.model_dump() for char in request_context.characters] if request_context.characters else [],
-            "worldbuilding": request_context.worldbuilding.worldbuilding_details if request_context.worldbuilding else None,
+            "worldbuilding": request_context.worldbuilding.content if request_context.worldbuilding else None,
             "configuration": request_context.configuration.model_dump() if request_context.configuration else {},
             "context_metadata": request_context.context_metadata.model_dump() if request_context.context_metadata else {}
         }

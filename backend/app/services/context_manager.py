@@ -59,6 +59,27 @@ class ContextAnalysis:
     optimization_suggestions: List[str]
 
 
+class ContextFormatter:
+    """Simple context formatter for B4 architecture compatibility."""
+    
+    def format_for_agent(self, collections: Dict[str, List], agent_type: AgentType) -> str:
+        """Format collections for a specific agent type."""
+        # Simple implementation for B4 compatibility
+        sections = []
+        
+        for collection_name, items in collections.items():
+            if items:
+                sections.append(f"=== {collection_name.upper().replace('_', ' ')} ===")
+                for item in items:
+                    if hasattr(item, 'content'):
+                        sections.append(str(item.content))
+                    else:
+                        sections.append(str(item))
+                sections.append("")  # Add blank line between sections
+        
+        return "\n".join(sections)
+
+
 class ContextManager:
     """Service for managing structured context elements."""
 

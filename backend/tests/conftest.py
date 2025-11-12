@@ -3,10 +3,20 @@ from unittest.mock import Mock, MagicMock, patch
 from fastapi.testclient import TestClient
 from pydantic import ConfigDict, Field
 import json
+from datetime import datetime
 
 from app.main import app
 from app.core.config import Settings
 from app.services.llm_inference import LLMInference
+from app.models.request_context import (
+    RequestContext,
+    CharacterDetails,
+    StoryOutline,
+    WorldbuildingInfo,
+    StoryConfiguration,
+    SystemPrompts,
+    RequestContextMetadata
+)
 
 
 
@@ -179,51 +189,48 @@ def client():
 
 @pytest.fixture
 def sample_character_feedback_request():
-    """Sample character feedback request using structured context only"""
+    """Sample character feedback request using new RequestContext format"""
+    # Create a proper RequestContext with all required fields
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant.",
+                main_suffix="Be detailed and authentic.",
+                assistant_prompt="Provide helpful character feedback.",
+                editor_prompt="Review and improve the character development."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles with dark atmosphere and complex mysteries."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective Sarah Chen investigates a murder case in 1940s Los Angeles",
+            status="draft",
+            content="The story follows Detective Sarah Chen as she uncovers clues in a complex murder case."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_001",
+            story_title="The Los Angeles Mystery",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=1,
+            total_word_count=1000,
+            context_size_estimate=500
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A determined detective working alone in 1940s Los Angeles, haunted by her previous partner's death.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "The detective discovers a crucial clue at the crime scene",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation"],
-                    "metadata": {"location": "crime_scene", "time": "night"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [
-                {
-                    "character_id": "detective_sarah_chen",
-                    "character_name": "Detective Sarah Chen",
-                    "current_state": {
-                        "emotion": "focused",
-                        "location": "crime_scene",
-                        "mental_state": "analytical"
-                    },
-                    "recent_actions": ["Arrived at crime scene", "Began investigation"],
-                    "relationships": {"partner": "works_alone", "suspects": "suspicious"},
-                    "goals": ["Find the murderer", "Solve the case"],
-                    "memories": ["Previous partner's death", "Similar cases"],
-                    "personality_traits": ["cynical", "determined", "observant"]
-                }
-            ],
-            "user_requests": [],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a creative writing assistant. Be detailed and authentic.",
-                    "scope": "global",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 
