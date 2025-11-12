@@ -119,7 +119,7 @@ class TestFullContextPipeline:
         container = self._create_context_container_from_scenario(scenario)
         
         # Process context using the new unified API
-        formatted_context, metadata = context_manager.process_context_for_agent(container, config)
+        formatted_context, metadata = context_manager.process_structured_context_for_agent(container, config)
         
         processing_time = time.time() - start_time
         
@@ -184,7 +184,7 @@ class TestFullContextPipeline:
                 container = self._create_context_container_from_scenario(scenario)
                 
                 # Process context using the new unified API
-                formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
+                formatted_context, metadata = context_manager.process_structured_context_for_agent(container, processing_config)
                 
                 # Verify configuration is respected
                 assert isinstance(formatted_context, str)
@@ -217,7 +217,7 @@ class TestFullContextPipeline:
         container = self._create_context_container_from_scenario(scenario)
         
         # Process context using the new unified API
-        formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
+        formatted_context, metadata = context_manager.process_structured_context_for_agent(container, processing_config)
         
         # Verify layer allocation integration worked
         assert isinstance(formatted_context, str)
@@ -259,7 +259,7 @@ class TestFullContextPipeline:
         container = self._create_context_container_from_scenario(large_scenario)
         
         # Process context using the new unified API
-        formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
+        formatted_context, metadata = context_manager.process_structured_context_for_agent(container, processing_config)
         
         # Verify overflow was handled
         assert isinstance(formatted_context, str)
@@ -357,7 +357,7 @@ class TestFullContextPipeline:
         )
 
         # Process context using the new unified API
-        formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
+        formatted_context, metadata = context_manager.process_structured_context_for_agent(container, processing_config)
 
         # Verify priority-based filtering worked
         assert isinstance(formatted_context, str)
@@ -404,7 +404,7 @@ class TestFullContextPipeline:
                 container = self._create_context_container_from_scenario(scenario)
                 
                 # Process context using the new unified API
-                formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
+                formatted_context, metadata = context_manager.process_structured_context_for_agent(container, processing_config)
                 
                 # Verify feature-driven behavior
                 assert isinstance(formatted_context, str)
@@ -475,7 +475,7 @@ class TestFullContextPipeline:
             )
             
             # Process context using the new unified API
-            formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
+            formatted_context, metadata = context_manager.process_structured_context_for_agent(container, processing_config)
             
             # Should handle gracefully and return valid results
             assert isinstance(formatted_context, str)
@@ -517,7 +517,7 @@ class TestFullContextPipeline:
         container = self._create_context_container_from_scenario(large_scenario)
         
         # Process context using the new unified API
-        formatted_context, metadata = context_manager.process_context_for_agent(container, processing_config)
+        formatted_context, metadata = context_manager.process_structured_context_for_agent(container, processing_config)
         
         # Verify memory-efficient processing worked
         assert isinstance(formatted_context, str)

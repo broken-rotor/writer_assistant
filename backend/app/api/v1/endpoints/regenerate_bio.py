@@ -72,7 +72,8 @@ async def regenerate_bio(request: RegenerateBioRequest):
                     request_context=request.request_context,
                     basic_bio=character_summary,  # Use character details as "bio" for context
                     existing_characters=[],  # Not needed for bio regeneration
-                    context_processing_config=request.context_processing_config
+                    context_processing_config=request.context_processing_config,
+                    structured_context=request.structured_context
                 )
 
                 # Log context processing results

@@ -48,7 +48,8 @@ async def character_feedback(request: CharacterFeedbackRequest):
             # Process context using request context (preferred) or structured context (legacy)
             context_result = context_processor.process_character_feedback_context(
                 request_context=request.request_context,
-                context_processing_config=request.context_processing_config
+                context_processing_config=request.context_processing_config,
+                structured_context=request.structured_context
             )
 
             # Log context processing results

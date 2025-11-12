@@ -49,7 +49,8 @@ async def rater_feedback_stream(request: RaterFeedbackRequest):
                 request_context=request.request_context,
                 rater_prompt=request.raterPrompt,
                 plot_point=request.plotPoint,
-                context_processing_config=request.context_processing_config
+                context_processing_config=request.context_processing_config,
+                structured_context=request.structured_context
             )
 
             # Log context processing results

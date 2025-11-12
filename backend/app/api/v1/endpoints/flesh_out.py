@@ -41,7 +41,8 @@ async def flesh_out(request: FleshOutRequest):
                 request_context=request.request_context,
                 # Core fields
                 outline_section=request.textToFleshOut,
-                context_processing_config=request.context_processing_config
+                context_processing_config=request.context_processing_config,
+                structured_context=request.structured_context
             )
 
             # Log context processing results

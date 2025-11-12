@@ -41,7 +41,8 @@ async def modify_chapter(request: ModifyChapterRequest):
                 # Core fields
                 original_chapter=request.currentChapter,
                 modification_request=request.userRequest,
-                context_processing_config=request.context_processing_config
+                context_processing_config=request.context_processing_config,
+                structured_context=request.structured_context
             )
 
             # Log context processing results
