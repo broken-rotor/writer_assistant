@@ -146,14 +146,42 @@ describe('ApiService', () => {
     it('should send POST request to generate-chapter endpoint', () => {
       const request: BackendGenerateChapterRequest = {
         plotPoint: 'The hero enters the dungeon',
-        structured_context: {
-          plot_elements: [],
-          character_contexts: [],
-          user_requests: [],
-          system_instructions: [],
-          metadata: {
-            total_elements: 0,
-            processing_applied: false
+        request_context: {
+          configuration: {
+            system_prompts: {
+              main_prefix: 'Test prefix',
+              main_suffix: 'Test suffix',
+              assistant_prompt: 'Test assistant',
+              editor_prompt: 'Test editor'
+            },
+            raters: [],
+            generation_preferences: {}
+          },
+          worldbuilding: {
+            content: 'Test worldbuilding',
+            chat_history: [],
+            key_elements: []
+          },
+          characters: [],
+          story_outline: {
+            summary: 'Test summary',
+            status: 'draft' as const,
+            content: 'Test Story',
+            outline_items: [],
+            rater_feedback: [],
+            chat_history: []
+          },
+          chapters: [],
+          context_metadata: {
+            story_id: 'test-story',
+            story_title: 'Test Story',
+            version: '1.0',
+            created_at: new Date().toISOString(),
+            total_characters: 0,
+            total_chapters: 0,
+            total_word_count: 0,
+            context_size_estimate: 0,
+            processing_hints: {}
           }
         },
         context_processing_config: {}
@@ -291,50 +319,43 @@ describe('ApiService', () => {
       const request = {
         textToFleshOut: 'The hero is brave',
         context: 'character description',
-        structured_context: {
-          plot_elements: [
-            {
-              type: 'setup' as const,
-              content: 'A fantasy world',
-              priority: 'high' as const,
-              tags: ['worldbuilding', 'setting'],
-              metadata: {
-                source: 'worldbuilding',
-                category: 'background'
-              }
+        request_context: {
+          configuration: {
+            system_prompts: {
+              main_prefix: 'Test prefix',
+              main_suffix: 'Test suffix',
+              assistant_prompt: 'Test assistant',
+              editor_prompt: 'Test editor'
             },
-            {
-              type: 'scene' as const,
-              content: 'A story',
-              priority: 'high' as const,
-              tags: ['story_summary', 'plot'],
-              metadata: {
-                source: 'story_summary',
-                category: 'narrative'
-              }
-            },
-            {
-              type: 'scene' as const,
-              content: 'The hero is brave',
-              priority: 'high' as const,
-              tags: ['current_scene', 'flesh_out_target'],
-              metadata: {
-                source: 'text_to_flesh_out',
-                category: 'target_content'
-              }
-            }
-          ],
-          character_contexts: [],
-          user_requests: [
-            {
-              type: 'addition' as const,
-              content: 'Expand and flesh out the following text with relevant detail: The hero is brave',
-              priority: 'high' as const,
-              target: 'flesh_out_target',
-              context: 'character description'
-            }
-          ],
-          system_instructions: []
+            raters: [],
+            generation_preferences: {}
+          },
+          worldbuilding: {
+            content: 'A fantasy world',
+            chat_history: [],
+            key_elements: []
+          },
+          characters: [],
+          story_outline: {
+            summary: 'A story',
+            status: 'draft' as const,
+            content: 'Test Story',
+            outline_items: [],
+            rater_feedback: [],
+            chat_history: []
+          },
+          chapters: [],
+          context_metadata: {
+            story_id: 'test-story',
+            story_title: 'Test Story',
+            version: '1.0',
+            created_at: new Date().toISOString(),
+            total_characters: 0,
+            total_chapters: 0,
+            total_word_count: 0,
+            context_size_estimate: 0,
+            processing_hints: {}
+          }
         }
       };
 
@@ -357,40 +378,43 @@ describe('ApiService', () => {
       const request = {
         basicBio: 'A brave knight',
         existingCharacters: [],
-        structured_context: {
-          plot_elements: [
-            {
-              type: 'setup' as const,
-              content: 'A fantasy world',
-              priority: 'high' as const,
-              tags: ['worldbuilding', 'setting'],
-              metadata: {
-                source: 'worldbuilding',
-                category: 'background'
-              }
+        request_context: {
+          configuration: {
+            system_prompts: {
+              main_prefix: 'Test prefix',
+              main_suffix: 'Test suffix',
+              assistant_prompt: 'Test assistant',
+              editor_prompt: 'Test editor'
             },
-            {
-              type: 'scene' as const,
-              content: 'A story',
-              priority: 'high' as const,
-              tags: ['story_summary', 'plot'],
-              metadata: {
-                source: 'story_summary',
-                category: 'narrative'
-              }
-            }
-          ],
-          character_contexts: [],
-          user_requests: [
-            {
-              type: 'general' as const,
-              content: 'Generate detailed character information for: A brave knight',
-              priority: 'high' as const,
-              target: 'new_character',
-              context: 'character_generation'
-            }
-          ],
-          system_instructions: []
+            raters: [],
+            generation_preferences: {}
+          },
+          worldbuilding: {
+            content: 'A fantasy world',
+            chat_history: [],
+            key_elements: []
+          },
+          characters: [],
+          story_outline: {
+            summary: 'A story',
+            status: 'draft' as const,
+            content: 'Test Story',
+            outline_items: [],
+            rater_feedback: [],
+            chat_history: []
+          },
+          chapters: [],
+          context_metadata: {
+            story_id: 'test-story',
+            story_title: 'Test Story',
+            version: '1.0',
+            created_at: new Date().toISOString(),
+            total_characters: 0,
+            total_chapters: 0,
+            total_word_count: 0,
+            context_size_estimate: 0,
+            processing_hints: {}
+          }
         }
       };
 

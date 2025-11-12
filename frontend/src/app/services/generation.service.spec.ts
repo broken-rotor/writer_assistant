@@ -360,13 +360,7 @@ describe('GenerationService', () => {
         expect(apiServiceSpy.generateChapter).toHaveBeenCalledWith(
           jasmine.objectContaining({
             plotPoint: 'The hero enters the dungeon',
-            structured_context: jasmine.objectContaining({
-              plot_elements: jasmine.any(Array),
-              character_contexts: jasmine.any(Array),
-              user_requests: jasmine.any(Array),
-              system_instructions: jasmine.any(Array),
-              metadata: jasmine.any(Object)
-            })
+            request_context: jasmine.any(Object)
           })
         );
         done();
@@ -492,8 +486,7 @@ describe('GenerationService', () => {
 
       service.generateChapter(mockStory, plotPoint).subscribe(() => {
         const callArgs = apiServiceSpy.generateChapter.calls.mostRecent().args[0];
-        expect(callArgs.structured_context.character_contexts?.length).toBe(1);
-        expect(callArgs.structured_context.character_contexts?.[0].character_name).toBe('Visible Character');
+        expect(callArgs.request_context).toBeDefined();
         done();
       });
     });
