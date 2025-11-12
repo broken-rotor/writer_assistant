@@ -260,7 +260,7 @@ class ContextManager:
             )
             
             # Format for the specific agent
-            formatted_context = self.format_for_agent(
+            formatted_context = self.formatter.format_for_agent(
                 final_collections, config.target_agent
             )
             
