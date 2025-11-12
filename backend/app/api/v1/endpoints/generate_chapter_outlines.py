@@ -29,7 +29,7 @@ async def generate_chapter_outlines(request: ChapterOutlineRequest):
     """
     logger.info("Starting chapter outline generation")
     
-    if not request.story_outline.strip():
+    if not request.request_context.story_outline.outline_summary.strip():
         raise HTTPException(status_code=400, detail="Story outline cannot be empty")
     
     try:
@@ -92,50 +92,41 @@ Respond ONLY with the JSON array, no additional text."""
 
         # Apply custom system prompts if provided
         system_prompt = base_system_prompt
-        if request.system_prompts:
-            if request.system_prompts.mainPrefix:
-                system_prompt = f"{request.system_prompts.mainPrefix}\n\n{system_prompt}"
-            if request.system_prompts.mainSuffix:
-                system_prompt = f"{system_prompt}\n\n{request.system_prompts.mainSuffix}"
+        if request.request_context.configuration.system_prompts:
+            if request.request_context.configuration.system_prompts.main_prefix:
+                system_prompt = f"{request.request_context.configuration.system_prompts.main_prefix}\n\n{system_prompt}"
+            if request.request_context.configuration.system_prompts.main_suffix:
+                system_prompt = f"{system_prompt}\n\n{request.request_context.configuration.system_prompts.main_suffix}"
 
-        # Extract character information - prefer CharacterContext, fallback to story_context
+        # Extract character information from RequestContext
         characters_info = ""
-        if request.character_contexts:
-            # Use CharacterContext objects (preferred approach)
+        if request.request_context.characters:
             characters_list = []
-            for char_context in request.character_contexts:
-                char_info = f"- {char_context.character_name}"
-                if char_context.personality_traits:
-                    char_info += f": {', '.join(char_context.personality_traits)}"
-                if char_context.goals:
-                    char_info += f" (Goals: {', '.join(char_context.goals)})"
-                characters_list.append(char_info)
-            characters_info = f"""
-
-CHARACTERS:
-{chr(10).join(characters_list)}"""
-        elif request.story_context.get('characters'):
-            # Fallback to legacy format for backward compatibility
-            characters_list = []
-            for char in request.story_context['characters']:
-                char_info = f"- {char.get('name', 'Unknown')}: {char.get('basicBio', 'No description')}"
+            for char_details in request.request_context.characters:
+                char_info = f"- {char_details.character_name}"
+                if char_details.basic_bio:
+                    char_info += f": {char_details.basic_bio}"
+                if char_details.personality:
+                    char_info += f" (Personality: {char_details.personality})"
+                if char_details.goals:
+                    char_info += f" (Goals: {char_details.goals})"
                 characters_list.append(char_info)
             characters_info = f"""
 
 CHARACTERS:
 {chr(10).join(characters_list)}"""
 
-        # Extract additional story context
+        # Extract additional story context from RequestContext
         story_context_info = ""
-        if request.story_context.get('title'):
-            story_context_info += f"\nSTORY TITLE: {request.story_context['title']}"
-        if request.story_context.get('worldbuilding'):
-            story_context_info += f"\nWORLDBUILDING: {request.story_context['worldbuilding']}"
+        if request.request_context.context_metadata.story_title:
+            story_context_info += f"\nSTORY TITLE: {request.request_context.context_metadata.story_title}"
+        if request.request_context.worldbuilding.worldbuilding_details:
+            story_context_info += f"\nWORLDBUILDING: {request.request_context.worldbuilding.worldbuilding_details}"
 
         user_prompt = f"""Please analyze this story outline and create a detailed chapter breakdown:
 
 STORY OUTLINE:
-{request.story_outline}{story_context_info}{characters_info}
+{request.request_context.story_outline.outline_summary}{story_context_info}{characters_info}
 
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 

@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 def _build_agent_system_prompt(
-        agent_type: str, compose_context=None, system_prompts=None) -> str:
+        agent_type: str, request_context=None) -> str:
     """Build system prompt based on agent type and context."""
     base_prompts = {
         'writer': "You are a skilled writer assistant helping with story creation. "
@@ -34,28 +34,39 @@ def _build_agent_system_prompt(
     prompt = base_prompts.get(agent_type, base_prompts['writer'])
 
     # Add custom system prompts if provided
-    if system_prompts:
-        if system_prompts.mainPrefix:
-            prompt = f"{system_prompts.mainPrefix}\n{prompt}"
-        if system_prompts.mainSuffix:
-            prompt = f"{prompt}\n{system_prompts.mainSuffix}"
+    if request_context and request_context.configuration.system_prompts:
+        if request_context.configuration.system_prompts.main_prefix:
+            prompt = f"{request_context.configuration.system_prompts.main_prefix}\n{prompt}"
+        if request_context.configuration.system_prompts.main_suffix:
+            prompt = f"{prompt}\n{request_context.configuration.system_prompts.main_suffix}"
 
     return prompt
 
 
-def _build_conversation_context(messages, compose_context=None) -> str:
-    """Build context from conversation history and compose context."""
+def _build_conversation_context(messages, request_context=None) -> str:
+    """Build context from conversation history and request context."""
     context_parts = []
 
-    if compose_context and compose_context.story_context:
-        context_parts.append("Story Context:")
-        for key, value in compose_context.story_context.items():
-            if value:
-                context_parts.append(f"- {key}: {value}")
-
-    if compose_context and compose_context.chapter_draft:
-        context_parts.append(
-            f"\nCurrent Chapter Draft:\n{compose_context.chapter_draft}")
+    if request_context:
+        # Add story title and worldbuilding context
+        if request_context.context_metadata.story_title:
+            context_parts.append(f"Story Title: {request_context.context_metadata.story_title}")
+        
+        if request_context.worldbuilding.worldbuilding_details:
+            context_parts.append(f"Worldbuilding: {request_context.worldbuilding.worldbuilding_details}")
+        
+        # Add character information
+        if request_context.characters:
+            context_parts.append("Characters:")
+            for char in request_context.characters:
+                char_info = f"- {char.character_name}"
+                if char.basic_bio:
+                    char_info += f": {char.basic_bio}"
+                context_parts.append(char_info)
+        
+        # Add story outline if available
+        if request_context.story_outline.outline_summary:
+            context_parts.append(f"Story Outline: {request_context.story_outline.outline_summary}")
 
     return "\n".join(context_parts) if context_parts else ""
 
@@ -80,13 +91,12 @@ async def llm_chat(request: LLMChatRequest):
             # Build system prompt based on agent type and context
             system_prompt = _build_agent_system_prompt(
                 request.agent_type,
-                request.compose_context,
-                request.system_prompts
+                request.request_context
             )
 
             # Build conversation context
             context = _build_conversation_context(
-                request.messages, request.compose_context)
+                request.messages, request.request_context)
 
             # Prepare messages for LLM
             llm_messages = [{"role": "system", "content": system_prompt}]

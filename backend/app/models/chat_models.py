@@ -3,8 +3,9 @@ Pydantic models for LLM chat API requests and responses.
 Separate from RAG chat functionality.
 """
 from typing import List, Optional, Literal, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from .generation_models import ConversationMessage, SystemPrompts
+from .request_context import RequestContext
 
 
 # Agent types for LLM chat
@@ -26,8 +27,20 @@ class LLMChatRequest(BaseModel):
     """Request model for direct LLM chat (separate from RAG)."""
     messages: List[ConversationMessage]
     agent_type: AgentType
-    compose_context: Optional[ChatComposeContext] = None
-    system_prompts: Optional[SystemPrompts] = None
+    
+    # Unified context field (replaces individual context fields)
+    request_context: Optional[RequestContext] = Field(
+        default=None,
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters"
+    )
+    
+    # Optional processing configuration
+    context_processing_config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Configuration for context processing (summarization, filtering, etc.)"
+    )
+    
     # Optional parameters for chat behavior
     max_tokens: Optional[int] = 1000
     temperature: Optional[float] = 0.8
