@@ -38,13 +38,12 @@ async def editor_review(request: EditorReviewRequest):
             # Get unified context processor
             context_processor = get_unified_context_processor()
 
-            # Process context using structured context only
+            # Process context using request context (preferred) or structured context (legacy)
             context_result = context_processor.process_editor_review_context(
-                # Phase context
-                
-                # Structured context (required)
-                structured_context=request.structured_context,
-                context_processing_config=request.context_processing_config
+                request_context=request.request_context,
+                context_processing_config=request.context_processing_config,
+                # Legacy parameter for backward compatibility
+                structured_context=request.structured_context
             )
 
             # Log context processing results

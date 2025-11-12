@@ -37,13 +37,12 @@ async def flesh_out(request: FleshOutRequest):
             # Get unified context processor
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_flesh_out_context(
+                request_context=request.request_context,
                 # Core fields
                 outline_section=request.textToFleshOut,
-                # Phase context
-                
-                # Structured context (required)
-                structured_context=request.structured_context,
-                context_processing_config=request.context_processing_config
+                context_processing_config=request.context_processing_config,
+                # Legacy parameter for backward compatibility
+                structured_context=request.structured_context
             )
 
             # Log context processing results

@@ -38,11 +38,13 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
             # Get unified context processor
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_character_generation_context(
+                request_context=request.request_context,
                 basic_bio=request.basicBio,
                 existing_characters=request.existingCharacters,
-                
-                structured_context=request.structured_context,
-                context_processing_config=request.context_processing_config)
+                context_processing_config=request.context_processing_config,
+                # Legacy parameter for backward compatibility
+                structured_context=request.structured_context
+            )
 
             # Log context processing results
             if context_result.optimization_applied:

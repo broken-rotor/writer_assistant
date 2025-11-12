@@ -45,11 +45,12 @@ async def rater_feedback_stream(request: RaterFeedbackRequest):
             # Get unified context processor
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_rater_feedback_context(
+                request_context=request.request_context,
                 rater_prompt=request.raterPrompt,
                 plot_point=request.plotPoint,
-                
-                structured_context=request.structured_context,
-                context_processing_config=request.context_processing_config
+                context_processing_config=request.context_processing_config,
+                # Legacy parameter for backward compatibility
+                structured_context=request.structured_context
             )
 
             # Log context processing results
