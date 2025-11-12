@@ -36,14 +36,13 @@ async def modify_chapter(request: ModifyChapterRequest):
             # Get unified context processor
             context_processor = get_unified_context_processor()
             context_result = context_processor.process_modify_chapter_context(
+                request_context=request.request_context,
                 # Core fields
                 original_chapter=request.currentChapter,
                 modification_request=request.userRequest,
-                # Phase context
-                
-                # Structured context (required)
-                structured_context=request.structured_context,
-                context_processing_config=request.context_processing_config
+                context_processing_config=request.context_processing_config,
+                # Legacy parameter for backward compatibility
+                structured_context=request.structured_context
             )
 
             # Log context processing results
