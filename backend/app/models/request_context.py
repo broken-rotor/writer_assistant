@@ -22,7 +22,7 @@ Issue: WRI-138 - New RequestContext for the backend API
 """
 
 from typing import Dict, List, Optional, Any, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
 
@@ -381,10 +381,8 @@ class RequestContext(BaseModel):
         description="Context processing metadata and optimization hints"
     )
     
-    class Config:
-        """Pydantic configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
-        validate_assignment = True
-        use_enum_values = True
+    # Pydantic V2 configuration using ConfigDict
+    model_config = ConfigDict(
+        validate_assignment=True,
+        use_enum_values=True
+    )
