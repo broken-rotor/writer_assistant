@@ -110,11 +110,13 @@ ng test --include='**/context-builder.service.spec.ts'
    - Configuration via environment variables (MODEL_PATH, LLM_N_CTX, etc.)
 
 2. **Context Management System** (`app/services/context_manager.py`)
-   - **StructuredContextContainer** (`app/models/generation_models.py`): Main context model with typed collections:
-     - `plot_elements`: Story/plot information
-     - `character_contexts`: Character state and goals
-     - `user_requests`: User instructions and feedback
-     - `system_instructions`: System-level guidelines
+   - **RequestContext** (`app/models/request_context.py`): Main context model with comprehensive story state:
+     - `configuration`: System prompts and agent configuration
+     - `worldbuilding`: Complete world information with history
+     - `characters`: Full character details and current state
+     - `story_outline`: Hierarchical story structure
+     - `chapters`: Complete chapter content with feedback
+     - `context_metadata`: Processing optimization hints
    - **Token Budget Management** (`app/services/token_management/`):
      - Layered token allocation (System, Recent Story, Characters, Plot Summary, etc.)
      - Priority-based trimming ("high", "medium", "low")

@@ -603,66 +603,80 @@ collection_name = settings.ARCHIVE_COLLECTION_NAME
 model_path = settings.MODEL_PATH
 ```
 
-## Structured Context System
+## RequestContext System
 
 ### Overview
 
-The Writer Assistant uses a `StructuredContextContainer` model for passing context to AI agents. This system was recently migrated to use typed collections for better type safety and developer experience.
+The Writer Assistant uses a `RequestContext` model for passing comprehensive story state to AI agents. This system provides complete story information including configuration, worldbuilding, characters, story structure, and chapters with feedback.
 
 ### Quick Example
 
 ```python
-from app.models.generation_models import (
-    StructuredContextContainer,
-    PlotElement,
-    CharacterContext,
-    UserRequest,
-    SystemInstruction
+from app.models.request_context import (
+    RequestContext,
+    StoryConfiguration,
+    SystemPrompts,
+    WorldbuildingInfo,
+    CharacterDetails,
+    StoryOutline,
+    RequestContextMetadata
 )
+from datetime import datetime
 
-# Create structured context
-context = StructuredContextContainer(
-    plot_elements=[
-        PlotElement(
-            type="scene",
-            content="Hero enters dark forest",
-            priority="high",
-            tags=["current_scene"]
+# Create request context
+context = RequestContext(
+    configuration=StoryConfiguration(
+        system_prompts=SystemPrompts(
+            main_prefix="You are a creative writing assistant",
+            main_suffix="Focus on character development",
+            assistant_prompt="Help develop the story",
+            editor_prompt="Review content for quality"
+        )
+    ),
+    worldbuilding=WorldbuildingInfo(
+        content="A fantasy world with magic and dragons"
+    ),
+        CharacterDetails(
+            id="hero",
+            name="Aria",
+            basic_bio="A brave adventurer seeking ancient artifacts",
+            current_state={"emotion": "determined", "location": "forest_edge"},
+            goals=["Find the ancient artifact", "Survive the dark forest"],
+            creation_source="user",
+            last_modified=datetime.now()
         )
     ],
-    character_contexts=[
-        CharacterContext(
-            character_id="hero",
-            character_name="Aria",
-            current_state="determined",
-            goals=["Find artifact"]
-        )
-    ],
-    user_requests=[
-        UserRequest(
-            type="instruction",
-            content="Add sensory details",
-            priority="high"
-        )
-    ],
-    system_instructions=[
-        SystemInstruction(
-            type="behavior",
-            content="Maintain character consistency",
-            scope="global",
-            priority="high"
-        )
-    ]
+    story_outline=StoryOutline(
+        summary="Hero's quest to find a magical artifact in a dangerous forest",
+        status="draft",
+        content="Chapter 1: The Dark Forest - Hero enters the mysterious woods"
+    ),
+    context_metadata=RequestContextMetadata(
+        story_id="quest_001",
+        story_title="The Artifact Quest",
+        version="1.0",
+        created_at=datetime.now(),
+        total_characters=1,
+        total_chapters=0,
+        total_word_count=0,
+        context_size_estimate=1500,
+        processing_hints={
+            "focus": "character_development",
+            "style": "descriptive"
+        }
+    )
 )
 ```
 
 ### Key Features
 
-1. **Typed Collections**: Separate collections for different content types
-   - `plot_elements`: Story/plot information
-   - `character_contexts`: Character state and information
-   - `user_requests`: User instructions and feedback
-   - `system_instructions`: System-level guidelines
+1. **Comprehensive Story State**: Complete representation of story information
+   - `configuration`: System prompts and agent configuration
+   - `worldbuilding`: Complete world context with conversation history
+   - `characters`: Full character details and current state
+   - `story_outline`: Hierarchical story structure with feedback
+   - `chapters`: Complete chapter content with all feedback types
+   - `context_metadata`: Processing optimization hints and metadata
 
 2. **String Priorities**: Simple "high", "medium", "low" priority system
 
@@ -757,32 +771,45 @@ Context management is controlled by these settings (see Context Management Confi
 
 ```python
 # Extract from API request
-container = StructuredContextContainer(
-    plot_elements=[
-        PlotElement(**elem) for elem in request.plot_elements
+context = RequestContext(
+    configuration=StoryConfiguration(
+        system_prompts=SystemPrompts(**request.system_prompts),
+        generation_preferences=request.generation_preferences or {}
+    ),
+    worldbuilding=WorldbuildingInfo(
+        content=request.worldbuilding_content,
+        key_elements=[WorldElement(**elem) for elem in request.world_elements]
+    ),
+    characters=[
+        CharacterDetails(**char) for char in request.characters
     ],
-    character_contexts=[
-        CharacterContext(**char) for char in request.characters
+    story_outline=StoryOutline(**request.story_outline),
+    chapters=[
+        ChapterDetails(**chapter) for chapter in request.chapters
     ],
-    user_requests=[
-        UserRequest(**req) for req in request.user_feedback
-    ]
+    context_metadata=RequestContextMetadata(**request.metadata)
 )
 ```
 
-#### Filtering by Priority
+#### Working with Context Components
 
 ```python
-# Get only high-priority elements
-high_priority = container.get_high_priority_elements()
+# Access different components
+system_prompts = context.configuration.system_prompts
+characters = context.characters
+story_structure = context.story_outline.outline_items
 
-# Create filtered container
-filtered = StructuredContextContainer(
-    plot_elements=high_priority.get("plot_elements", []),
-    character_contexts=high_priority.get("character_contexts", []),
-    user_requests=high_priority.get("user_requests", []),
-    system_instructions=high_priority.get("system_instructions", [])
-)
+# Filter characters by criteria
+active_characters = [
+    char for char in context.characters 
+    if not char.is_hidden and char.current_state.get("active", True)
+]
+
+# Get chapters with feedback
+chapters_with_feedback = [
+    chapter for chapter in context.chapters
+    if chapter.character_feedback or chapter.rater_feedback
+]
 ```
 
 #### Token Budget Checking
@@ -791,33 +818,44 @@ filtered = StructuredContextContainer(
 from app.services.token_management.token_counter import TokenCounter
 
 token_counter = TokenCounter()
-total_tokens = container.calculate_total_tokens(token_counter)
+total_tokens = context.context_metadata.context_size_estimate
 
 if total_tokens > config.max_tokens:
-    # Handle overflow - trim low priority items
-    container.plot_elements = [
-        p for p in container.plot_elements
-        if p.priority != "low"
-    ]
+    # Handle overflow using processing hints
+    context.context_metadata.processing_hints.update({
+        "optimization_level": "aggressive",
+        "token_budget": "strict"
+    })
 ```
 
-### Migration from Old Model
+### Migration from StructuredContextContainer
 
-If you're working with code that uses the old `StructuredContextContainer` from `context_models.py`:
+If you're working with code that uses the old `StructuredContextContainer` model:
 
-**Old Model**:
-```python
-from app.models.context_models import StructuredContextContainer
-container = StructuredContextContainer(elements=[...])  # Generic list
-```
-
-**New Model**:
+**Old StructuredContextContainer**:
 ```python
 from app.models.generation_models import StructuredContextContainer
 container = StructuredContextContainer(
-    plot_elements=[...],      # Typed collections
-    character_contexts=[...]
+    plot_elements=[...],
+    character_contexts=[...],
+    user_requests=[...],
+    system_instructions=[...]
 )
 ```
 
-See the [Migration Guide](STRUCTURED_CONTEXT_MIGRATION_GUIDE.md) for detailed migration instructions.
+**New RequestContext**:
+```python
+from app.models.request_context import RequestContext, StoryConfiguration, SystemPrompts
+context = RequestContext(
+    configuration=StoryConfiguration(
+        system_prompts=SystemPrompts(...),
+        generation_preferences={...}
+    ),
+    worldbuilding=WorldbuildingInfo(...),
+    characters=[CharacterDetails(...)],
+    story_outline=StoryOutline(...),
+    context_metadata=RequestContextMetadata(...)
+)
+```
+
+See the [REQUEST_CONTEXT_REFERENCE.md](REQUEST_CONTEXT_REFERENCE.md) for detailed migration instructions and examples.

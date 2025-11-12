@@ -44,7 +44,8 @@ backend/
 │   │   └── config.py          # Pydantic settings (all env vars)
 │   │
 │   ├── models/                 # Pydantic models
-│   │   ├── generation_models.py    # StructuredContextContainer
+│   │   ├── generation_models.py    # Generation request/response models
+│   │   ├── request_context.py     # RequestContext (main context model)
 │   │   ├── context_models.py       # Context processing models
 │   │   ├── chapter_models.py       # Chapter-specific models
 │   │   ├── chat_models.py          # Chat models
@@ -107,14 +108,15 @@ if llm:
 
 #### 2. Context Management System
 
-**StructuredContextContainer** (`models/generation_models.py`):
+**RequestContext** (`models/request_context.py`):
 ```python
-class StructuredContextContainer(BaseModel):
-    plot_elements: List[PlotElement]
-    character_contexts: List[CharacterContext]
-    user_requests: List[UserRequest]
-    system_instructions: List[SystemInstruction]
-    metadata: Dict[str, Any]
+class RequestContext(BaseModel):
+    configuration: StoryConfiguration      # System prompts and agent config
+    worldbuilding: WorldbuildingInfo      # Complete world context
+    characters: List[CharacterDetails]    # Character information
+    story_outline: StoryOutline          # Hierarchical story structure
+    chapters: List[ChapterDetails]       # Chapter content with feedback
+    context_metadata: RequestContextMetadata  # Processing optimization
 ```
 
 **ContextManager** (`services/context_manager.py`):
@@ -209,7 +211,7 @@ results = await service.search(query, n_results=5)
 1. **Client Request** → FastAPI endpoint
 2. **Validation** → Pydantic models validate request
 3. **LLM Check** → Verify LLM is loaded and available
-4. **Context Building** → Assemble StructuredContextContainer
+4. **Context Building** → Assemble RequestContext
 5. **Context Processing** → ContextManager applies filters, priorities, token budget
 6. **Agent Selection** → Select prompt template and parameters for agent type
 7. **LLM Inference** → Generate response with llama-cpp-python
@@ -218,7 +220,7 @@ results = await service.search(query, n_results=5)
 ### Context Processing Pipeline
 
 ```
-StructuredContextContainer (from frontend)
+RequestContext (from frontend)
     ↓
 ContextManager.process_context_for_agent()
     ↓
