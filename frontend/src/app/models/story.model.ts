@@ -1,5 +1,7 @@
 // Story Model matching new simplified requirements
 
+import { RequestContext } from '../utils/context-transformer';
+
 export interface SystemPrompts {
   mainPrefix: string;
   mainSuffix: string;
@@ -379,14 +381,14 @@ export interface EditorReviewRequest {
 
 export interface BackendGenerateChapterRequest {
   plotPoint: string;
-  structured_context: StructuredContextContainer;
+  request_context: RequestContext;
   context_processing_config?: Record<string, any>;
 }
 
 export interface FleshOutRequest {
   textToFleshOut: string;
   context?: string;
-  structured_context: StructuredContextContainer;
+  request_context: RequestContext;
   context_processing_config?: Record<string, any>;
 }
 
@@ -458,7 +460,7 @@ export interface GenerateCharacterDetailsRequest {
     basicBio: string;
     relationships: string;
   }[];
-  structured_context: StructuredContextContainer;
+  request_context: RequestContext;
   context_processing_config?: Record<string, any>;
 }
 
@@ -538,7 +540,7 @@ export interface RegenerateBioRequest {
   motivations?: string;
   fears?: string;
   relationships?: string;
-  structured_context?: StructuredContextContainer;
+  request_context?: RequestContext;
   context_processing_config?: Record<string, any>;
 }
 
