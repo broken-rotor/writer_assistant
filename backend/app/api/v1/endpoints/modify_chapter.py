@@ -36,25 +36,13 @@ async def modify_chapter(request: ModifyChapterRequest):
 
             # Get unified context processor
             context_processor = get_unified_context_processor()
-            context_result = context_processor.process_modify_chapter_context(
+            context_result = context_processor.process_generate_chapter_context(
                 request_context=request.request_context,
-                # Core fields
-                original_chapter=request.currentChapter,
-                modification_request=request.userRequest,
-                context_processing_config=request.context_processing_config,
-                structured_context=request.structured_context
+                context_processing_config=request.context_processing_config
             )
 
             # Log context processing results
-            if context_result.optimization_applied:
-                logger.info(
-                    f"Modify chapter context processing applied ({context_result.processing_mode} mode): "
-                    f"{context_result.total_tokens} tokens, "
-                    f"compression ratio: {context_result.compression_ratio:.2f}")
-            else:
-                logger.debug(
-                    f"No modify chapter context optimization needed ({context_result.processing_mode} mode): "
-                    f"{context_result.total_tokens} tokens")
+            logger.info(f"Modify chapter context processed in {context_result.processing_time:.2f}s")
 
             # Phase 2: Analyzing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing chapter and modification request...', 'progress': 40})}\n\n"
@@ -113,7 +101,7 @@ Rewrite the chapter incorporating the requested changes while maintaining consis
                     "modificationRequest": request.userRequest,
                     "contextMode": "structured",
                     "requestContextProvided": bool(request.request_context),
-                    "processingMode": context_result.processing_mode
+                    "processingMode": "request_context"
                 }
             )
 

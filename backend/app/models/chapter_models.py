@@ -4,18 +4,37 @@ Chapter Outline Models for Writer Assistant API.
 This module defines the data models used for chapter outline generation.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Any, Optional
-from app.models.generation_models import CharacterContext, SystemPrompts
+# Legacy import removed in B4 - CharacterContext class removed
+from app.models.generation_models import SystemPrompts
+from app.models.request_context import RequestContext
 
 
 class ChapterOutlineRequest(BaseModel):
     """Request model for chapter outline generation"""
-    story_outline: str = Field(..., description="The story outline content")
-    story_context: Dict[str, Any] = Field(default_factory=dict, description="Additional story context")
-    character_contexts: List[CharacterContext] = Field(default_factory=list, description="Character context information (preferred)")
-    generation_preferences: Dict[str, Any] = Field(default_factory=dict, description="Generation preferences")
-    system_prompts: Optional[SystemPrompts] = Field(None, description="Custom system prompt prefix and suffix")
+    
+    # Unified context field (replaces individual context fields)
+    request_context: RequestContext = Field(
+        description="Complete request context with story configuration, worldbuilding, "
+                    "characters, outline, and chapters"
+    )
+    
+    # Optional processing configuration
+    context_processing_config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Configuration for context processing (summarization, filtering, etc.)"
+    )
+
+    @model_validator(mode='before')
+    @classmethod
+    def validate_context_fields(cls, values):
+        """Ensure request_context is provided."""
+        if isinstance(values, dict):
+            # Ensure request_context is provided
+            if not values.get('request_context'):
+                raise ValueError("request_context is required")
+        return values
 
 
 class OutlineItem(BaseModel):

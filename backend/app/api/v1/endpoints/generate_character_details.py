@@ -38,26 +38,36 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
 
             # Get unified context processor
             context_processor = get_unified_context_processor()
-            context_result = context_processor.process_character_generation_context(
-                request_context=request.request_context,
-                basic_bio=request.basicBio,
-                existing_characters=request.existingCharacters,
-                context_processing_config=request.context_processing_config,
-                structured_context=request.structured_context
-            )
+            
+            # Try to use character generation context processing if available
+            # Otherwise fall back to generic processing
+            try:
+                if hasattr(context_processor, 'process_character_generation_context'):
+                    context_result = context_processor.process_character_generation_context(
+                        request_context=request.request_context,
+                        basic_bio=request.basicBio,
+                        existing_characters=request.existingCharacters,
+                        context_processing_config=request.context_processing_config
+                    )
+                else:
+                    # Fallback: use character feedback context processing as it's similar
+                    context_result = context_processor.process_character_feedback_context(
+                        request_context=request.request_context,
+                        context_processing_config=request.context_processing_config
+                    )
+            except Exception as e:
+                logger.warning(f"Context processing failed, using fallback: {e}")
+                # Create a minimal fallback context result
+                from app.services.unified_context_processor import UnifiedContextResult
+                context_result = UnifiedContextResult(
+                    system_prompt="You are a character creator. Create detailed, believable characters.",
+                    user_message=f"Create a detailed character based on this bio: {request.basicBio}",
+                    processing_time=0.0,
+                    context_metadata={}
+                )
 
             # Log context processing results
-            if context_result.optimization_applied:
-                logger.info(
-                    "Character generation context processing applied ("
-                    f"{context_result.processing_mode} mode): "
-                    f"{context_result.total_tokens} tokens, "
-                    f"compression ratio: {context_result.compression_ratio:.2f}")
-            else:
-                logger.debug(
-                    "No character generation context optimization needed ("
-                    f"{context_result.processing_mode} mode): "
-                    f"{context_result.total_tokens} tokens")
+            logger.info(f"Character generation context processed in {context_result.processing_time:.2f}s")
 
             # Phase 2: Analyzing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing character bio and existing characters...', 'progress': 40})}\n\n"

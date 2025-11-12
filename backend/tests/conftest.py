@@ -3,10 +3,20 @@ from unittest.mock import Mock, MagicMock, patch
 from fastapi.testclient import TestClient
 from pydantic import ConfigDict, Field
 import json
+from datetime import datetime
 
 from app.main import app
 from app.core.config import Settings
 from app.services.llm_inference import LLMInference
+from app.models.request_context import (
+    RequestContext,
+    CharacterDetails,
+    StoryOutline,
+    WorldbuildingInfo,
+    StoryConfiguration,
+    SystemPrompts,
+    RequestContextMetadata
+)
 
 
 
@@ -179,94 +189,95 @@ def client():
 
 @pytest.fixture
 def sample_character_feedback_request():
-    """Sample character feedback request using structured context only"""
+    """Sample character feedback request using new RequestContext format"""
+    # Create a proper RequestContext with all required fields
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant.",
+                main_suffix="Be detailed and authentic.",
+                assistant_prompt="Provide helpful character feedback.",
+                editor_prompt="Review and improve the character development."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles with dark atmosphere and complex mysteries."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective Sarah Chen investigates a murder case in 1940s Los Angeles",
+            status="draft",
+            content="The story follows Detective Sarah Chen as she uncovers clues in a complex murder case."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_001",
+            story_title="The Los Angeles Mystery",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=1,
+            total_word_count=1000,
+            context_size_estimate=500
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A determined detective working alone in 1940s Los Angeles, haunted by her previous partner's death.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "The detective discovers a crucial clue at the crime scene",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation"],
-                    "metadata": {"location": "crime_scene", "time": "night"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [
-                {
-                    "character_id": "detective_sarah_chen",
-                    "character_name": "Detective Sarah Chen",
-                    "current_state": {
-                        "emotion": "focused",
-                        "location": "crime_scene",
-                        "mental_state": "analytical"
-                    },
-                    "recent_actions": ["Arrived at crime scene", "Began investigation"],
-                    "relationships": {"partner": "works_alone", "suspects": "suspicious"},
-                    "goals": ["Find the murderer", "Solve the case"],
-                    "memories": ["Previous partner's death", "Similar cases"],
-                    "personality_traits": ["cynical", "determined", "observant"]
-                }
-            ],
-            "user_requests": [],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a creative writing assistant. Be detailed and authentic.",
-                    "scope": "global",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 
 
 @pytest.fixture
 def sample_rater_feedback_request():
-    """Sample rater feedback request using structured context only"""
+    """Sample rater feedback request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a story quality rater specializing in narrative analysis.",
+                main_suffix="Provide constructive, detailed feedback on story elements.",
+                assistant_prompt="Focus on narrative flow, character consistency, and plot development.",
+                editor_prompt="Review feedback for clarity and actionable suggestions."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The atmosphere is dark and moody, with corruption and mystery permeating every corner of the city."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective story involving investigation and discovery of crucial evidence",
+            status="draft",
+            content="A story where the detective uncovers important clues that advance the investigation and reveal deeper mysteries."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_rater_006",
+            story_title="Clues and Shadows",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=400
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_investigator",
+                name="Detective",
+                basic_bio="A skilled detective investigating mysterious cases in 1940s Los Angeles",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "The detective discovers a crucial clue at the crime scene",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation"],
-                    "metadata": {"location": "crime_scene", "time": "night"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [],
-            "user_requests": [
-                {
-                    "type": "general",
-                    "content": "Evaluate the narrative flow and character consistency",
-                    "priority": "high",
-                    "context": "rater_evaluation"
-                }
-            ],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a story quality rater. Provide constructive feedback.",
-                    "scope": "global",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "raterPrompt": "Evaluate the narrative flow and character consistency",
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
@@ -274,122 +285,94 @@ def sample_rater_feedback_request():
 
 @pytest.fixture
 def sample_generate_chapter_request():
-    """Sample chapter generation request using structured context only"""
+    """Sample chapter generation request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant.",
+                main_suffix="Write engaging prose with vivid descriptions.",
+                assistant_prompt="Focus on creating compelling narrative scenes.",
+                editor_prompt="Review and enhance the chapter content."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles with dark atmosphere and rain-soaked streets."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective Sarah Chen investigates a murder case in 1940s Los Angeles",
+            status="draft",
+            content="The story follows Detective Sarah Chen as she solves crimes in the dark streets of Los Angeles."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_002",
+            story_title="The Los Angeles Case",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=1,
+            total_word_count=1200,
+            context_size_estimate=600
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A determined detective working crime scenes in 1940s Los Angeles, cynical but observant.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "The detective discovers a crucial clue at the crime scene",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation"],
-                    "metadata": {"location": "crime_scene", "time": "night"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [
-                {
-                    "character_id": "detective_sarah_chen",
-                    "character_name": "Detective Sarah Chen",
-                    "current_state": {
-                        "emotion": "determined",
-                        "location": "crime_scene",
-                        "mental_state": "focused"
-                    },
-                    "recent_actions": ["Arrived at scene", "Examining evidence"],
-                    "relationships": {"partner": "works_alone"},
-                    "goals": ["Solve the murder case", "Find justice"],
-                    "memories": ["Previous cases", "Lost partner"],
-                    "personality_traits": ["cynical", "determined", "observant"]
-                }
-            ],
-            "user_requests": [],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a creative writing assistant. Write engaging prose.",
-                    "scope": "global",
-                    "priority": "high"
-                },
-                {
-                    "type": "style",
-                    "content": "Focus on vivid descriptions",
-                    "scope": "chapter",
-                    "priority": "medium"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 
 
 @pytest.fixture
 def sample_modify_chapter_request():
-    """Sample chapter modification request using structured context only"""
+    """Sample chapter modification request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant.",
+                main_suffix="Maintain consistency and apply changes carefully.",
+                assistant_prompt="Provide helpful chapter modification suggestions.",
+                editor_prompt="Review and improve the chapter modifications."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles with dark atmosphere and rain-soaked streets."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective Chen investigates a murder case in 1940s Los Angeles",
+            status="draft",
+            content="The story follows Detective Chen as she examines crime scenes in the rain-soaked streets of Los Angeles."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_001",
+            story_title="The Los Angeles Mystery",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=1,
+            total_word_count=1000,
+            context_size_estimate=500
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_chen",
+                name="Detective Chen",
+                basic_bio="An experienced detective working crime scenes in 1940s Los Angeles, methodical and observant.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "Detective examining crime scene in the rain",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation", "weather"],
-                    "metadata": {"location": "crime_scene", "time": "night", "weather": "rain"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [
-                {
-                    "character_id": "detective_chen",
-                    "character_name": "Detective Chen",
-                    "current_state": {
-                        "emotion": "focused",
-                        "location": "crime_scene",
-                        "mental_state": "analytical"
-                    },
-                    "recent_actions": ["Arrived at scene", "Examining evidence"],
-                    "relationships": {},
-                    "goals": ["Examine the crime scene thoroughly"],
-                    "memories": ["Previous crime scenes"],
-                    "personality_traits": ["experienced", "methodical", "observant"]
-                }
-            ],
-            "user_requests": [
-                {
-                    "type": "modification",
-                    "content": "Add more atmospheric details about the weather and setting",
-                    "priority": "high",
-                    "target": "current_chapter",
-                    "context": "enhancement"
-                }
-            ],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a creative writing assistant. Maintain consistency.",
-                    "scope": "global",
-                    "priority": "high"
-                },
-                {
-                    "type": "constraint",
-                    "content": "Apply changes carefully",
-                    "scope": "chapter",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "currentChapter": "The rain fell hard on the city streets. Detective Chen examined the crime scene with practiced eyes.",
         "userRequest": "Add more atmospheric details about the weather and setting"
     }
@@ -397,138 +380,133 @@ def sample_modify_chapter_request():
 
 @pytest.fixture
 def sample_editor_review_request():
-    """Sample editor review request using structured context only"""
+    """Sample editor review request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are an editor specializing in prose quality and narrative consistency.",
+                main_suffix="Provide constructive suggestions for improving writing quality.",
+                assistant_prompt="Focus on prose quality, consistency, and narrative flow.",
+                editor_prompt="Review text for clarity, style, and structural improvements."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The atmosphere is dark and moody, with rain-soaked streets and shadowy crime scenes. The setting emphasizes the gritty, atmospheric nature of detective work."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective story involving crime scene investigation in atmospheric 1940s Los Angeles",
+            status="draft",
+            content="A story where Detective Chen methodically examines crime scenes, using analytical skills to uncover clues in the rain-soaked city."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_editor_007",
+            story_title="Rain and Investigation",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=350
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_chen",
+                name="Detective Chen",
+                basic_bio="A methodical and observant detective investigating cases in 1940s Los Angeles",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "Detective examining crime scene in the rain",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation", "weather"],
-                    "metadata": {"location": "crime_scene", "time": "night", "weather": "rain"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [
-                {
-                    "character_id": "detective_chen",
-                    "character_name": "Detective Chen",
-                    "current_state": {
-                        "emotion": "focused",
-                        "location": "crime_scene",
-                        "mental_state": "analytical"
-                    },
-                    "recent_actions": ["Examining crime scene"],
-                    "relationships": {},
-                    "goals": ["Investigate the case"],
-                    "memories": [],
-                    "personality_traits": ["methodical", "observant"]
-                }
-            ],
-            "user_requests": [],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are an editor. Provide constructive suggestions.",
-                    "scope": "global",
-                    "priority": "high"
-                },
-                {
-                    "type": "constraint",
-                    "content": "Focus on prose quality and consistency",
-                    "scope": "chapter",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "chapterToReview": "The rain fell hard on the city streets. Detective Chen examined the crime scene."
     }
 
 
 @pytest.fixture
 def sample_flesh_out_request():
-    """Sample flesh out request using structured context only"""
+    """Sample flesh out request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant specializing in detailed scene expansion.",
+                main_suffix="Expand text with relevant detail while maintaining narrative consistency.",
+                assistant_prompt="Focus on adding atmospheric details and character insights.",
+                editor_prompt="Review expanded text for flow and narrative coherence."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The city is shrouded in shadows and mystery, with corruption lurking around every corner. Post-war atmosphere with returning veterans and changing social dynamics."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective story involving mysterious evidence and corruption in 1940s Los Angeles",
+            status="draft",
+            content="A story where the detective discovers crucial evidence that leads deeper into a web of mystery and corruption."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_flesh_005",
+            story_title="Shadows and Evidence",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=500
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_protagonist",
+                name="Detective",
+                basic_bio="A seasoned detective investigating mysterious cases in 1940s Los Angeles",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "The detective finds a mysterious photograph",
-                    "priority": "high",
-                    "tags": ["current_scene", "evidence", "mystery"],
-                    "metadata": {"item": "photograph", "significance": "mysterious"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [],
-            "user_requests": [
-                {
-                    "type": "addition",
-                    "content": "Expand with relevant detail about the photograph",
-                    "priority": "high",
-                    "target": "photograph_scene",
-                    "context": "worldbuilding"
-                }
-            ],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a creative writing assistant. Expand with relevant detail.",
-                    "scope": "global",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "textToFleshOut": "The detective finds a mysterious photograph"
     }
 
 
 @pytest.fixture
 def sample_generate_character_request():
-    """Sample generate character details request using structured context only"""
+    """Sample generate character details request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a character creator specializing in noir fiction.",
+                main_suffix="Create believable, complex characters with depth and authenticity.",
+                assistant_prompt="Focus on developing compelling character backgrounds and motivations.",
+                editor_prompt="Review character details for consistency and narrative potential."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The city is filled with corruption, shadows, and moral ambiguity. Post-war atmosphere with returning veterans, changing social dynamics."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective story involving corruption and mystery in 1940s Los Angeles",
+            status="draft",
+            content="A story requiring a tough but fair detective character with a mysterious past to navigate the corrupt underworld."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_character_004",
+            story_title="Shadows and Secrets",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=0,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=600
+        ),
+        characters=[]  # Empty since we're generating new characters
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [],
-            "user_requests": [
-                {
-                    "type": "addition",
-                    "content": "Create a tough but fair detective with a mysterious past",
-                    "priority": "high",
-                    "target": "new_character",
-                    "context": "character_creation"
-                }
-            ],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a character creator. Create believable characters.",
-                    "scope": "global",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "basicBio": "A tough but fair detective with a mysterious past",
         "existingCharacters": []
     }
@@ -656,53 +634,54 @@ def sample_legacy_context_request():
 
 @pytest.fixture
 def sample_chapter_outline_request():
-    """Sample chapter outline generation request"""
+    """Sample chapter outline generation request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant specializing in story structure.",
+                main_suffix="Create compelling chapter outlines with clear narrative progression.",
+                assistant_prompt="Focus on developing engaging plot points and character arcs.",
+                editor_prompt="Review chapter outlines for pacing and story coherence."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="1940s Los Angeles - a city of dreams and nightmares, where corruption runs deep and everyone has secrets. The noir atmosphere permeates every street corner."
+        ),
+        story_outline=StoryOutline(
+            summary="A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
+            status="draft",
+            content="Detective Sarah Chen receives a new murder case that initially appears straightforward but quickly reveals layers of corruption and personal connection to her past."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_outlines_003",
+            story_title="Shadows of the Past",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=2,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=800
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A hardboiled detective with a troubled past and a reputation for getting results. Cynical but determined to find justice.",
+                creation_source="user",
+                last_modified=datetime.now()
+            ),
+            CharacterDetails(
+                id="captain_rodriguez",
+                name="Captain Rodriguez",
+                basic_bio="Sarah's boss, a veteran cop trying to keep his department clean while dealing with political pressures.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "story_outline": "A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
-        "story_context": {
-            "title": "Shadows of the Past",
-            "worldbuilding": "1940s Los Angeles - a city of dreams and nightmares, where corruption runs deep and everyone has secrets.",
-            "characters": [
-                {
-                    "name": "Detective Sarah Chen",
-                    "basicBio": "A hardboiled detective with a troubled past and a reputation for getting results"
-                },
-                {
-                    "name": "Captain Rodriguez",
-                    "basicBio": "Sarah's boss, a veteran cop trying to keep his department clean"
-                }
-            ]
-        },
-        "character_contexts": [
-            {
-                "character_id": "detective_sarah_chen",
-                "character_name": "Detective Sarah Chen",
-                "current_state": {
-                    "emotion": "determined",
-                    "location": "police_station",
-                    "mental_state": "focused"
-                },
-                "recent_actions": ["Received new case", "Reviewing evidence"],
-                "relationships": {"captain": "professional_respect", "partner": "lost_previous_partner"},
-                "goals": ["Solve the murder case", "Find justice for victims", "Prove herself"],
-                "memories": ["Previous cases", "Lost partner", "Personal trauma"],
-                "personality_traits": ["cynical", "determined", "observant", "haunted"]
-            },
-            {
-                "character_id": "captain_rodriguez",
-                "character_name": "Captain Rodriguez",
-                "current_state": {
-                    "emotion": "concerned",
-                    "location": "police_station",
-                    "mental_state": "worried"
-                },
-                "recent_actions": ["Assigned case to Sarah", "Dealing with department politics"],
-                "relationships": {"sarah": "protective_mentor"},
-                "goals": ["Keep department clean", "Support his detectives", "Maintain order"],
-                "memories": ["Years of service", "Department corruption scandals"],
-                "personality_traits": ["experienced", "protective", "principled", "weary"]
-            }
-        ],
+        "request_context": request_context.model_dump(mode='json'),
         "generation_preferences": {
             "chapter_count_preference": "8-12",
             "pacing": "steady",
@@ -713,40 +692,50 @@ def sample_chapter_outline_request():
 
 @pytest.fixture
 def sample_chapter_outline_request_with_system_prompts():
-    """Sample chapter outline generation request with system prompts"""
+    """Sample chapter outline generation request with system prompts using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="Always maintain character consistency and emotional coherence throughout the story.",
+                main_suffix="Ensure each chapter ends with a compelling hook for the next chapter.",
+                assistant_prompt="You are a noir fiction specialist.",
+                editor_prompt="Focus on atmospheric descriptions."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="1940s Los Angeles - a city of dreams and nightmares, where corruption runs deep and everyone has secrets. The noir atmosphere permeates every street corner."
+        ),
+        story_outline=StoryOutline(
+            summary="A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
+            status="draft",
+            content="Detective Sarah Chen receives a new murder case that initially appears straightforward but quickly reveals layers of corruption and personal connection to her past."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_outlines_with_prompts_008",
+            story_title="Shadows of the Past",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=900
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A hardboiled detective with a troubled past and a reputation for getting results. Cynical but determined to find justice.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "story_outline": "A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit.",
-        "story_context": {
-            "title": "Shadows of the Past",
-            "worldbuilding": "1940s Los Angeles - a city of dreams and nightmares.",
-            "characters": [
-                {
-                    "name": "Detective Sarah Chen",
-                    "basicBio": "A hardboiled detective with a troubled past"
-                }
-            ]
-        },
-        "character_contexts": [
-            {
-                "character_id": "detective_sarah_chen",
-                "character_name": "Detective Sarah Chen",
-                "current_state": {
-                    "emotion": "determined",
-                    "location": "police_station",
-                    "mental_state": "focused"
-                },
-                "recent_actions": ["Received new case"],
-                "relationships": {"captain": "professional_respect"},
-                "goals": ["Solve the murder case"],
-                "memories": ["Previous cases"],
-                "personality_traits": ["cynical", "determined"]
-            }
-        ],
-        "generation_preferences": {},
-        "system_prompts": {
-            "mainPrefix": "Always maintain character consistency and emotional coherence throughout the story.",
-            "mainSuffix": "Ensure each chapter ends with a compelling hook for the next chapter.",
-            "assistantPrompt": "You are a noir fiction specialist.",
-            "editorPrompt": "Focus on atmospheric descriptions."
+        "request_context": request_context.model_dump(mode='json'),
+        "generation_preferences": {
+            "chapter_count_preference": "8-12",
+            "pacing": "steady",
+            "focus": "character_development"
         }
     }

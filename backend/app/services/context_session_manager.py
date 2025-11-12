@@ -19,7 +19,8 @@ from app.models.context_models import (
     ContextProcessingConfig,
     AgentType
 )
-from app.models.generation_models import StructuredContextContainer
+# Legacy import removed in B4 - StructuredContextContainer class removed
+# from app.models.generation_models import StructuredContextContainer
 from app.models.request_context import RequestContext
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,9 @@ class ContextState:
     story_id: Optional[str]
     created_at: datetime
     last_updated: datetime
-    context_container: StructuredContextContainer
+    # TODO: Remove or replace - StructuredContextContainer removed in B4
+    # context_container: StructuredContextContainer
+    context_container: Dict[str, Any]  # TODO: Was StructuredContextContainer
     processing_history: List[Dict[str, Any]]
     state_metadata: Dict[str, Any]
     version: str = "1.0"
@@ -59,7 +62,8 @@ class ContextState:
             story_id=data.get('story_id'),
             created_at=datetime.fromisoformat(data['created_at']),
             last_updated=datetime.fromisoformat(data['last_updated']),
-            context_container=StructuredContextContainer(**data['context_container']),
+            # TODO: Was StructuredContextContainer(**data['context_container']) - now using dict directly
+            context_container=data['context_container'],
             processing_history=data.get('processing_history', []),
             state_metadata=data.get('state_metadata', {}),
             version=data.get('version', '1.0')
@@ -101,7 +105,7 @@ class ContextStateManager:
     def create_initial_state(
         self,
         story_id: Optional[str] = None,
-        initial_context: Optional[StructuredContextContainer] = None,
+        initial_context: Optional[Dict[str, Any]] = None,  # TODO: Was StructuredContextContainer
         state_metadata: Optional[Dict[str, Any]] = None
     ) -> ContextState:
         """
@@ -120,7 +124,8 @@ class ContextStateManager:
 
         # Create initial context container if not provided
         if initial_context is None:
-            initial_context = StructuredContextContainer()
+            # TODO: Was StructuredContextContainer() - now using empty dict
+            initial_context = {}
 
         state = ContextState(
             state_id=state_id,
@@ -207,7 +212,7 @@ class ContextStateManager:
     def update_state_context(
         self,
         state: ContextState,
-        context_container: StructuredContextContainer,
+        context_container: Dict[str, Any],  # TODO: Was StructuredContextContainer
         processing_metadata: Optional[Dict[str, Any]] = None
     ) -> ContextState:
         """
