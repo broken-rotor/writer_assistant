@@ -27,16 +27,18 @@ from app.models.context_models import (
     AgentType
 )
 from app.models.generation_models import (
-    StructuredContextContainer,
+    # Legacy import removed in B4 - StructuredContextContainer class removed
+    # StructuredContextContainer,
     SystemPrompts,
     CharacterInfo,
     ChapterInfo,
     FeedbackItem,
     ContextMetadata,
-    PlotElement,
-    CharacterContext,
-    UserRequest,
-    SystemInstruction
+    # Legacy imports removed in B4 - classes removed
+    # PlotElement,
+    # CharacterContext,
+    # UserRequest,
+    # SystemInstruction
 )
 from app.models.request_context import RequestContext
 
@@ -71,16 +73,20 @@ class UnifiedContextProcessor:
 
         logger.info("UnifiedContextProcessor initialized")
 
+    # TODO: Remove this function - StructuredContextContainer removed in B4
     def _convert_request_context_to_structured(
         self, 
         request_context: RequestContext
-    ) -> StructuredContextContainer:
+    ):  # -> StructuredContextContainer:
         """
         Convert RequestContext to StructuredContextContainer for internal processing.
         
         This method maps the rich RequestContext structure to the format expected
         by the ContextManager, preserving all relevant information while organizing
         it according to the established context categories.
+        """
+        raise NotImplementedError("StructuredContextContainer removed in B4 - function needs refactoring")
+        # COMMENTED OUT - Legacy code that used removed classes
         """
         try:
             # Handle null request_context

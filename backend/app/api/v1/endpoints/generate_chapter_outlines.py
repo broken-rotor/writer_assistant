@@ -11,7 +11,8 @@ from datetime import datetime, UTC
 
 from app.services.llm_inference import get_llm
 from app.models.chapter_models import ChapterOutlineRequest, OutlineItem, ChapterOutlineResponse
-from app.models.generation_models import CharacterContext
+# Legacy import removed in B4 - CharacterContext class removed
+# from app.models.generation_models import CharacterContext
 from app.api.v1.endpoints.shared_utils import parse_json_array_response
 
 logger = logging.getLogger(__name__)

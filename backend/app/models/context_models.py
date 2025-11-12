@@ -3,8 +3,9 @@ Context Models for Writer Assistant API.
 
 This module defines enums and configuration classes for context processing.
 
-For structured context containers, use app.models.generation_models.StructuredContextContainer
-which provides typed collections (PlotElement, CharacterContext, UserRequest, SystemInstruction).
+Legacy structured context models (StructuredContextContainer, PlotElement, CharacterContext, 
+UserRequest, SystemInstruction) have been removed in B4. Use RequestContext from 
+app.models.request_context instead.
 
 Classes in this module:
 - ContextType: Enum of context element types

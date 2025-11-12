@@ -114,110 +114,8 @@ class ConversationMessage(BaseModel):
     timestamp: Optional[str] = None
 
 
-# Structured Context Models
-class PlotElement(BaseModel):
-    """Individual plot element with metadata."""
-    id: Optional[str] = Field(
-        None, description="Unique identifier for the plot element")
-    type: Literal["scene", "conflict", "resolution", "twist", "setup", "payoff", "transition", "chapter_outline"] = Field(
-        description="Type of plot element"
-    )
-    content: str = Field(description="The actual plot content or description")
-    priority: Literal["high", "medium", "low"] = Field(
-        default="medium",
-        description="Priority level for context inclusion"
-    )
-    tags: List[str] = Field(
-        default_factory=list,
-        description="Tags for categorization and filtering"
-    )
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional metadata for the plot element (e.g., chapter_number, target_word_count, outline_summary)"
-    )
-
-
-class CharacterContext(BaseModel):
-    """Character-specific context information."""
-    character_id: str = Field(
-        description="Unique identifier for the character")
-    character_name: str = Field(description="Character name")
-    current_state: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Current emotional, physical, and mental state"
-    )
-    recent_actions: List[str] = Field(
-        default_factory=list,
-        description="Recent actions taken by the character"
-    )
-    relationships: Dict[str, str] = Field(
-        default_factory=dict,
-        description="Current relationship dynamics with other characters"
-    )
-    goals: List[str] = Field(
-        default_factory=list,
-        description="Character's current goals and motivations"
-    )
-    memories: List[str] = Field(
-        default_factory=list,
-        description="Relevant memories that should influence behavior"
-    )
-    personality_traits: List[str] = Field(
-        default_factory=list,
-        description="Active personality traits relevant to current context"
-    )
-
-
-class UserRequest(BaseModel):
-    """User-provided request or instruction."""
-    id: Optional[str] = Field(
-        None, description="Unique identifier for the request")
-    type: Literal["modification", "addition", "removal", "style_change", "tone_adjustment", "general"] = Field(
-        description="Type of user request"
-    )
-    content: str = Field(description="The actual user request or instruction")
-    priority: Literal["high", "medium", "low"] = Field(
-        default="medium",
-        description="Priority level for request processing"
-    )
-    target: Optional[str] = Field(
-        None,
-        description="Specific target of the request (character, scene, etc.)"
-    )
-    context: Optional[str] = Field(
-        None,
-        description="Additional context for the request"
-    )
-    timestamp: Optional[datetime] = Field(
-        None,
-        description="When the request was made"
-    )
-
-
-class SystemInstruction(BaseModel):
-    """System-level instruction for AI behavior."""
-    id: Optional[str] = Field(
-        None, description="Unique identifier for the instruction")
-    type: Literal["behavior", "style", "constraint", "preference", "rule"] = Field(
-        description="Type of system instruction"
-    )
-    content: str = Field(description="The actual instruction content")
-    scope: Literal["global", "character", "scene", "chapter", "story"] = Field(
-        default="global",
-        description="Scope of application for the instruction"
-    )
-    priority: Literal["high", "medium", "low"] = Field(
-        default="medium",
-        description="Priority level for instruction enforcement"
-    )
-    conditions: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Conditions under which this instruction applies"
-    )
-    metadata: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Additional metadata for the instruction"
-    )
+# Legacy Structured Context Models have been removed in B4
+# Use RequestContext from app.models.request_context instead
 
 
 class ContextMetadata(BaseModel):
@@ -255,241 +153,8 @@ class ContextMetadata(BaseModel):
     )
 
 
-class StructuredContextContainer(BaseModel):
-    """Container for all structured context elements."""
-    plot_elements: List[PlotElement] = Field(
-        default_factory=list,
-        description="Plot-related context elements"
-    )
-    character_contexts: List[CharacterContext] = Field(
-        default_factory=list,
-        description="Character-specific context information"
-    )
-    user_requests: List[UserRequest] = Field(
-        default_factory=list,
-        description="User-provided requests and instructions"
-    )
-    system_instructions: List[SystemInstruction] = Field(
-        default_factory=list,
-        description="System-level instructions for AI behavior"
-    )
-    metadata: Optional[ContextMetadata] = Field(
-        None,
-        description="Metadata about the context container"
-    )
-
-    @model_validator(mode='after')
-    def validate_context_consistency(self):
-        """Validate consistency across context elements."""
-        # Check for duplicate character contexts
-        character_ids = [ctx.character_id for ctx in self.character_contexts]
-        if len(character_ids) != len(set(character_ids)):
-            raise ValueError("Duplicate character contexts found")
-
-        # Validate character references in plot elements
-        character_names = {ctx.character_name.lower()
-                           for ctx in self.character_contexts}
-        for plot_element in self.plot_elements:
-            # Check if plot element mentions characters that aren't in context
-            content_lower = plot_element.content.lower()
-            for char_name in character_names:
-                if char_name in content_lower:
-                    # Character is mentioned and exists in context - good
-                    break
-
-        return self
-
-    # Query methods for easier filtering
-    def get_plot_elements_by_type(self, element_type: str) -> List[PlotElement]:
-        """Get plot elements filtered by type."""
-        return [el for el in self.plot_elements if el.type == element_type]
-
-    def get_plot_elements_by_priority(self, priority: Literal["high", "medium", "low"]) -> List[PlotElement]:
-        """Get plot elements with specified priority."""
-        return [el for el in self.plot_elements if el.priority == priority]
-
-    def get_plot_elements_by_tag(self, tag: str) -> List[PlotElement]:
-        """Get plot elements that have the specified tag."""
-        return [el for el in self.plot_elements if tag in el.tags]
-
-    def get_character_context_by_id(self, character_id: str) -> Optional[CharacterContext]:
-        """Get character context by ID."""
-        return next((c for c in self.character_contexts if c.character_id == character_id), None)
-
-    def get_character_context_by_name(self, character_name: str) -> Optional[CharacterContext]:
-        """Get character context by name (case-insensitive)."""
-        name_lower = character_name.lower()
-        return next((c for c in self.character_contexts
-                    if c.character_name.lower() == name_lower), None)
-
-    def get_high_priority_elements(self) -> Dict[str, List]:
-        """Get all high-priority elements across collections."""
-        return {
-            "plot_elements": [el for el in self.plot_elements if el.priority == "high"],
-            "user_requests": [req for req in self.user_requests if req.priority == "high"],
-            "system_instructions": [inst for inst in self.system_instructions if inst.priority == "high"]
-        }
-
-    def get_user_requests_by_type(self, request_type: str) -> List[UserRequest]:
-        """Get user requests filtered by type."""
-        return [req for req in self.user_requests if req.type == request_type]
-
-    def get_system_instructions_by_scope(self, scope: str) -> List[SystemInstruction]:
-        """Get system instructions filtered by scope."""
-        return [inst for inst in self.system_instructions if inst.scope == scope]
-
-    # Token counting methods (using TokenCounter from token_management)
-    def calculate_total_tokens(
-        self,
-        token_counter: Optional[Any] = None,
-        use_estimation: bool = False
-    ) -> int:
-        """
-        Calculate total estimated tokens for all elements using llama.cpp tokenization.
-
-        Args:
-            token_counter: TokenCounter instance. If None, will create one.
-            use_estimation: If True, use ESTIMATED strategy (10% overhead) for speed.
-                          If False, use EXACT strategy for accuracy.
-
-        Returns:
-            Total token count across all context elements
-        """
-        # Lazy import to avoid circular dependency
-        if token_counter is None:
-            from app.services.token_management.token_counter import TokenCounter
-            token_counter = TokenCounter()
-
-        from app.services.token_management.token_counter import (
-            ContentType,
-            CountingStrategy
-        )
-
-        strategy = CountingStrategy.ESTIMATED if use_estimation else CountingStrategy.EXACT
-        total = 0
-
-        # Count plot elements
-        for element in self.plot_elements:
-            result = token_counter.count_tokens(
-                element.content,
-                content_type=ContentType.NARRATIVE,
-                strategy=strategy
-            )
-            total += result.token_count
-
-        # Count character contexts (combine all fields)
-        for char in self.character_contexts:
-            char_text = self._format_character_for_counting(char)
-            result = token_counter.count_tokens(
-                char_text,
-                content_type=ContentType.CHARACTER_DESCRIPTION,
-                strategy=strategy
-            )
-            total += result.token_count
-
-        # Count user requests
-        for req in self.user_requests:
-            result = token_counter.count_tokens(
-                req.content,
-                content_type=ContentType.METADATA,
-                strategy=strategy
-            )
-            total += result.token_count
-
-        # Count system instructions
-        for inst in self.system_instructions:
-            result = token_counter.count_tokens(
-                inst.content,
-                content_type=ContentType.SYSTEM_PROMPT,
-                strategy=strategy
-            )
-            total += result.token_count
-
-        return total
-
-    def get_token_breakdown(
-        self,
-        token_counter: Optional[Any] = None
-    ) -> Dict[str, int]:
-        """
-        Get detailed token breakdown by element type.
-
-        Returns:
-            Dict with keys: plot_elements, character_contexts, user_requests,
-            system_instructions, total
-        """
-        if token_counter is None:
-            from app.services.token_management.token_counter import TokenCounter
-            token_counter = TokenCounter()
-
-        from app.services.token_management.token_counter import (
-            ContentType,
-            CountingStrategy
-        )
-
-        breakdown = {
-            "plot_elements": 0,
-            "character_contexts": 0,
-            "user_requests": 0,
-            "system_instructions": 0
-        }
-
-        # Count each collection
-        for element in self.plot_elements:
-            result = token_counter.count_tokens(
-                element.content,
-                ContentType.NARRATIVE,
-                CountingStrategy.EXACT
-            )
-            breakdown["plot_elements"] += result.token_count
-
-        for char in self.character_contexts:
-            char_text = self._format_character_for_counting(char)
-            result = token_counter.count_tokens(
-                char_text,
-                ContentType.CHARACTER_DESCRIPTION,
-                CountingStrategy.EXACT
-            )
-            breakdown["character_contexts"] += result.token_count
-
-        for req in self.user_requests:
-            result = token_counter.count_tokens(
-                req.content,
-                ContentType.METADATA,
-                CountingStrategy.EXACT
-            )
-            breakdown["user_requests"] += result.token_count
-
-        for inst in self.system_instructions:
-            result = token_counter.count_tokens(
-                inst.content,
-                ContentType.SYSTEM_PROMPT,
-                CountingStrategy.EXACT
-            )
-            breakdown["system_instructions"] += result.token_count
-
-        breakdown["total"] = sum(breakdown.values())
-
-        return breakdown
-
-    def _format_character_for_counting(self, char: CharacterContext) -> str:
-        """Format character context into text for token counting."""
-        parts = [f"Character: {char.character_name}"]
-
-        if char.current_state:
-            parts.append(f"State: {char.current_state}")
-        if char.goals:
-            parts.append(f"Goals: {', '.join(char.goals)}")
-        if char.recent_actions:
-            parts.append(f"Actions: {', '.join(char.recent_actions)}")
-        if char.memories:
-            parts.append(f"Memories: {', '.join(char.memories)}")
-        if char.personality_traits:
-            parts.append(f"Traits: {', '.join(char.personality_traits)}")
-        if char.relationships:
-            parts.append(f"Relationships: {char.relationships}")
-
-        return "; ".join(parts)
+# StructuredContextContainer has been removed in B4
+# Use RequestContext from app.models.request_context instead
 
 
 # Character Feedback Request/Response
@@ -509,25 +174,15 @@ class CharacterFeedbackRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
-    # DEPRECATED: Legacy structured context field - will be removed in B4
-    structured_context: Optional[StructuredContextContainer] = Field(
-        default=None,
-        description="DEPRECATED: Use request_context instead. Will be removed in B4."
-    )
 
     @model_validator(mode='before')
     @classmethod
     def validate_context_fields(cls, values):
-        """Handle backward compatibility for structured_context field."""
+        """Ensure request_context is provided."""
         if isinstance(values, dict):
-            # If structured_context is provided but request_context is not, use structured_context
-            if 'structured_context' in values and 'request_context' not in values:
-                # For backward compatibility during transition
-                pass  # Allow structured_context to be used
-            # Ensure at least one context field is provided
-            if not values.get('structured_context') and not values.get('request_context'):
-                raise ValueError("Either request_context or structured_context is required")
+            # Ensure request_context is provided
+            if not values.get('request_context'):
+                raise ValueError("request_context is required")
         return values
 
 
@@ -565,25 +220,15 @@ class RaterFeedbackRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
-    # DEPRECATED: Legacy structured context field - will be removed in B4
-    structured_context: Optional[StructuredContextContainer] = Field(
-        default=None,
-        description="DEPRECATED: Use request_context instead. Will be removed in B4."
-    )
 
     @model_validator(mode='before')
     @classmethod
     def validate_context_fields(cls, values):
-        """Handle backward compatibility for structured_context field."""
+        """Ensure request_context is provided."""
         if isinstance(values, dict):
-            # If structured_context is provided but request_context is not, use structured_context
-            if 'structured_context' in values and 'request_context' not in values:
-                # For backward compatibility during transition
-                pass  # Allow structured_context to be used
-            # Ensure at least one context field is provided
-            if not values.get('structured_context') and not values.get('request_context'):
-                raise ValueError("Either request_context or structured_context is required")
+            # Ensure request_context is provided
+            if not values.get('request_context'):
+                raise ValueError("request_context is required")
         return values
 
 
@@ -617,25 +262,15 @@ class GenerateChapterRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
-    # DEPRECATED: Legacy structured context field - will be removed in B4
-    structured_context: Optional[StructuredContextContainer] = Field(
-        default=None,
-        description="DEPRECATED: Use request_context instead. Will be removed in B4."
-    )
 
     @model_validator(mode='before')
     @classmethod
     def validate_context_fields(cls, values):
-        """Handle backward compatibility for structured_context field."""
+        """Ensure request_context is provided."""
         if isinstance(values, dict):
-            # If structured_context is provided but request_context is not, use structured_context
-            if 'structured_context' in values and 'request_context' not in values:
-                # For backward compatibility during transition
-                pass  # Allow structured_context to be used
-            # Ensure at least one context field is provided
-            if not values.get('structured_context') and not values.get('request_context'):
-                raise ValueError("Either request_context or structured_context is required")
+            # Ensure request_context is provided
+            if not values.get('request_context'):
+                raise ValueError("request_context is required")
         return values
 
 
@@ -666,25 +301,15 @@ class ModifyChapterRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
-    # DEPRECATED: Legacy structured context field - will be removed in B4
-    structured_context: Optional[StructuredContextContainer] = Field(
-        default=None,
-        description="DEPRECATED: Use request_context instead. Will be removed in B4."
-    )
 
     @model_validator(mode='before')
     @classmethod
     def validate_context_fields(cls, values):
-        """Handle backward compatibility for structured_context field."""
+        """Ensure request_context is provided."""
         if isinstance(values, dict):
-            # If structured_context is provided but request_context is not, use structured_context
-            if 'structured_context' in values and 'request_context' not in values:
-                # For backward compatibility during transition
-                pass  # Allow structured_context to be used
-            # Ensure at least one context field is provided
-            if not values.get('structured_context') and not values.get('request_context'):
-                raise ValueError("Either request_context or structured_context is required")
+            # Ensure request_context is provided
+            if not values.get('request_context'):
+                raise ValueError("request_context is required")
         return values
 
 
@@ -714,25 +339,15 @@ class EditorReviewRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
-    # DEPRECATED: Legacy structured context field - will be removed in B4
-    structured_context: Optional[StructuredContextContainer] = Field(
-        default=None,
-        description="DEPRECATED: Use request_context instead. Will be removed in B4."
-    )
 
     @model_validator(mode='before')
     @classmethod
     def validate_context_fields(cls, values):
-        """Handle backward compatibility for structured_context field."""
+        """Ensure request_context is provided."""
         if isinstance(values, dict):
-            # If structured_context is provided but request_context is not, use structured_context
-            if 'structured_context' in values and 'request_context' not in values:
-                # For backward compatibility during transition
-                pass  # Allow structured_context to be used
-            # Ensure at least one context field is provided
-            if not values.get('structured_context') and not values.get('request_context'):
-                raise ValueError("Either request_context or structured_context is required")
+            # Ensure request_context is provided
+            if not values.get('request_context'):
+                raise ValueError("request_context is required")
         return values
 
 
@@ -769,25 +384,15 @@ class FleshOutRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
-    # DEPRECATED: Legacy structured context field - will be removed in B4
-    structured_context: Optional[StructuredContextContainer] = Field(
-        default=None,
-        description="DEPRECATED: Use request_context instead. Will be removed in B4."
-    )
 
     @model_validator(mode='before')
     @classmethod
     def validate_context_fields(cls, values):
-        """Handle backward compatibility for structured_context field."""
+        """Ensure request_context is provided."""
         if isinstance(values, dict):
-            # If structured_context is provided but request_context is not, use structured_context
-            if 'structured_context' in values and 'request_context' not in values:
-                # For backward compatibility during transition
-                pass  # Allow structured_context to be used
-            # Ensure at least one context field is provided
-            if not values.get('structured_context') and not values.get('request_context'):
-                raise ValueError("Either request_context or structured_context is required")
+            # Ensure request_context is provided
+            if not values.get('request_context'):
+                raise ValueError("request_context is required")
         return values
 
 
@@ -822,25 +427,15 @@ class GenerateCharacterDetailsRequest(BaseModel):
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
-    
-    # DEPRECATED: Legacy structured context field - will be removed in B4
-    structured_context: Optional[StructuredContextContainer] = Field(
-        default=None,
-        description="DEPRECATED: Use request_context instead. Will be removed in B4."
-    )
 
     @model_validator(mode='before')
     @classmethod
     def validate_context_fields(cls, values):
-        """Handle backward compatibility for structured_context field."""
+        """Ensure request_context is provided."""
         if isinstance(values, dict):
-            # If structured_context is provided but request_context is not, use structured_context
-            if 'structured_context' in values and 'request_context' not in values:
-                # For backward compatibility during transition
-                pass  # Allow structured_context to be used
-            # Ensure at least one context field is provided
-            if not values.get('structured_context') and not values.get('request_context'):
-                raise ValueError("Either request_context or structured_context is required")
+            # Ensure request_context is provided
+            if not values.get('request_context'):
+                raise ValueError("request_context is required")
         return values
 
 
@@ -880,12 +475,6 @@ class RegenerateBioRequest(BaseModel):
     context_processing_config: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Configuration for context processing"
-    )
-    
-    # DEPRECATED: Legacy structured context field - will be removed in B4
-    structured_context: Optional[StructuredContextContainer] = Field(
-        default=None,
-        description="DEPRECATED: Use request_context instead. Will be removed in B4."
     )
 
 

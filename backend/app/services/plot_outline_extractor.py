@@ -10,7 +10,8 @@ from typing import List, Optional, Dict, Any
 import re
 import json
 
-from app.models.generation_models import PlotElement
+# Legacy import removed in B4 - PlotElement class removed
+# from app.models.generation_models import PlotElement
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class PlotOutlineExtractor:
         draft_outline_items: Optional[List[Dict[str, Any]]],
         chapter_number: int,
         story_context: Optional[Dict[str, Any]] = None
-    ) -> List[PlotElement]:
+    ) -> List[Dict[str, Any]]:  # TODO: Was List[PlotElement] - PlotElement removed in B4
         """
         Extract plot outline elements relevant to a specific chapter.
         
@@ -38,7 +39,7 @@ class PlotOutlineExtractor:
             story_context: Additional story context for better extraction
             
         Returns:
-            List of PlotElement objects with chapter-relevant plot information
+            List of Dict objects with chapter-relevant plot information (was PlotElement objects - removed in B4)
         """
         plot_elements = []
         
@@ -70,7 +71,7 @@ class PlotOutlineExtractor:
         self, 
         draft_items: List[Dict[str, Any]], 
         chapter_number: int
-    ) -> List[PlotElement]:
+    ) -> List[Dict[str, Any]]:  # TODO: Was List[PlotElement] - PlotElement removed in B4
         """Extract plot elements from structured draft outline items."""
         elements = []
         
@@ -78,13 +79,14 @@ class PlotOutlineExtractor:
             try:
                 # Check if this item is relevant to the current chapter
                 if self._is_item_relevant_to_chapter(item, chapter_number):
-                    element = PlotElement(
-                        id=f"outline_item_{item.get('id', 'unknown')}",
-                        type="chapter_outline",
-                        content=self._format_outline_item_content(item),
-                        priority=self._determine_item_priority(item, chapter_number),
-                        tags=self._extract_item_tags(item),
-                        metadata={
+                    # TODO: Was PlotElement object - now returning dict since PlotElement removed in B4
+                    element = {
+                        "id": f"outline_item_{item.get('id', 'unknown')}",
+                        "type": "chapter_outline",
+                        "content": self._format_outline_item_content(item),
+                        "priority": self._determine_item_priority(item, chapter_number),
+                        "tags": self._extract_item_tags(item),
+                        "metadata": {
                             "chapter_number": chapter_number,
                             "source": "draft_outline_item",
                             "item_id": item.get('id'),
@@ -92,7 +94,7 @@ class PlotOutlineExtractor:
                             "order": item.get('order', 0),
                             "outline_summary": item.get('description', '')[:200] + "..." if len(item.get('description', '')) > 200 else item.get('description', '')
                         }
-                    )
+                    }
                     elements.append(element)
                     
             except Exception as e:
@@ -106,7 +108,7 @@ class PlotOutlineExtractor:
         content: str, 
         chapter_number: int,
         story_context: Optional[Dict[str, Any]] = None
-    ) -> List[PlotElement]:
+    ) -> List[Dict[str, Any]]:  # TODO: Was List[PlotElement] - PlotElement removed in B4
         """Extract plot elements from free-form plot outline content."""
         elements = []
         
@@ -116,19 +118,20 @@ class PlotOutlineExtractor:
             
             for i, section in enumerate(sections):
                 if self._is_section_relevant_to_chapter(section, chapter_number):
-                    element = PlotElement(
-                        id=f"content_section_{i}",
-                        type="chapter_outline",
-                        content=section.strip(),
-                        priority=self._determine_content_priority(section, chapter_number),
-                        tags=self._extract_content_tags(section),
-                        metadata={
+                    # TODO: Was PlotElement object - now returning dict since PlotElement removed in B4
+                    element = {
+                        "id": f"content_section_{i}",
+                        "type": "chapter_outline",
+                        "content": section.strip(),
+                        "priority": self._determine_content_priority(section, chapter_number),
+                        "tags": self._extract_content_tags(section),
+                        "metadata": {
                             "chapter_number": chapter_number,
                             "source": "plot_outline_content",
                             "section_index": i,
                             "outline_summary": section[:200] + "..." if len(section) > 200 else section
                         }
-                    )
+                    }
                     elements.append(element)
                     
         except Exception as e:
@@ -300,7 +303,7 @@ class PlotOutlineExtractor:
         
         return tags
     
-    def _deduplicate_and_prioritize(self, elements: List[PlotElement]) -> List[PlotElement]:
+    def _deduplicate_and_prioritize(self, elements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:  # TODO: Was List[PlotElement] - PlotElement removed in B4
         """Remove duplicates and prioritize elements."""
         # Remove elements with very similar content
         unique_elements = []
@@ -308,11 +311,13 @@ class PlotOutlineExtractor:
         
         # Sort by priority (high first)
         priority_order = {"high": 0, "medium": 1, "low": 2}
-        elements.sort(key=lambda x: priority_order.get(x.priority, 3))
+        # TODO: Updated for dict access - was x.priority, now x["priority"]
+        elements.sort(key=lambda x: priority_order.get(x["priority"], 3))
         
         for element in elements:
             # Create a normalized version of content for comparison
-            normalized_content = re.sub(r'\s+', ' ', element.content.lower().strip())
+            # TODO: Updated for dict access - was element.content, now element["content"]
+            normalized_content = re.sub(r'\s+', ' ', element["content"].lower().strip())
             
             # Check for substantial overlap with existing elements
             is_duplicate = False
