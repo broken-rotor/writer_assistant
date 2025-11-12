@@ -380,57 +380,47 @@ def sample_modify_chapter_request():
 
 @pytest.fixture
 def sample_editor_review_request():
-    """Sample editor review request using structured context only"""
+    """Sample editor review request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are an editor specializing in prose quality and narrative consistency.",
+                main_suffix="Provide constructive suggestions for improving writing quality.",
+                assistant_prompt="Focus on prose quality, consistency, and narrative flow.",
+                editor_prompt="Review text for clarity, style, and structural improvements."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles. The atmosphere is dark and moody, with rain-soaked streets and shadowy crime scenes. The setting emphasizes the gritty, atmospheric nature of detective work."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective story involving crime scene investigation in atmospheric 1940s Los Angeles",
+            status="draft",
+            content="A story where Detective Chen methodically examines crime scenes, using analytical skills to uncover clues in the rain-soaked city."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_editor_007",
+            story_title="Rain and Investigation",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=350
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_chen",
+                name="Detective Chen",
+                basic_bio="A methodical and observant detective investigating cases in 1940s Los Angeles",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "Detective examining crime scene in the rain",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation", "weather"],
-                    "metadata": {"location": "crime_scene", "time": "night", "weather": "rain"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [
-                {
-                    "character_id": "detective_chen",
-                    "character_name": "Detective Chen",
-                    "current_state": {
-                        "emotion": "focused",
-                        "location": "crime_scene",
-                        "mental_state": "analytical"
-                    },
-                    "recent_actions": ["Examining crime scene"],
-                    "relationships": {},
-                    "goals": ["Investigate the case"],
-                    "memories": [],
-                    "personality_traits": ["methodical", "observant"]
-                }
-            ],
-            "user_requests": [],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are an editor. Provide constructive suggestions.",
-                    "scope": "global",
-                    "priority": "high"
-                },
-                {
-                    "type": "constraint",
-                    "content": "Focus on prose quality and consistency",
-                    "scope": "chapter",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "chapterToReview": "The rain fell hard on the city streets. Detective Chen examined the crime scene."
     }
 
