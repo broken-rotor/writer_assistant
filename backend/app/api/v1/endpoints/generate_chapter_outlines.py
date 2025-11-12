@@ -29,7 +29,7 @@ async def generate_chapter_outlines(request: ChapterOutlineRequest):
     """
     logger.info("Starting chapter outline generation")
     
-    if not request.request_context.story_outline.outline_summary.strip():
+    if not request.request_context.story_outline.summary.strip():
         raise HTTPException(status_code=400, detail="Story outline cannot be empty")
     
     try:
@@ -103,13 +103,10 @@ Respond ONLY with the JSON array, no additional text."""
         if request.request_context.characters:
             characters_list = []
             for char_details in request.request_context.characters:
-                char_info = f"- {char_details.character_name}"
+                char_info = f"- {char_details.name}"
                 if char_details.basic_bio:
                     char_info += f": {char_details.basic_bio}"
-                if char_details.personality:
-                    char_info += f" (Personality: {char_details.personality})"
-                if char_details.goals:
-                    char_info += f" (Goals: {char_details.goals})"
+                # Note: personality and goals fields don't exist in CharacterDetails model
                 characters_list.append(char_info)
             characters_info = f"""
 
@@ -120,13 +117,13 @@ CHARACTERS:
         story_context_info = ""
         if request.request_context.context_metadata.story_title:
             story_context_info += f"\nSTORY TITLE: {request.request_context.context_metadata.story_title}"
-        if request.request_context.worldbuilding.worldbuilding_details:
-            story_context_info += f"\nWORLDBUILDING: {request.request_context.worldbuilding.worldbuilding_details}"
+        if request.request_context.worldbuilding.content:
+            story_context_info += f"\nWORLDBUILDING: {request.request_context.worldbuilding.content}"
 
         user_prompt = f"""Please analyze this story outline and create a detailed chapter breakdown:
 
 STORY OUTLINE:
-{request.request_context.story_outline.outline_summary}{story_context_info}{characters_info}
+{request.request_context.story_outline.summary}{story_context_info}{characters_info}
 
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 
@@ -155,7 +152,7 @@ Create a chapter-by-chapter outline that breaks down this story into well-struct
             summary=summary,
             context_metadata={
                 "generation_timestamp": datetime.now(UTC).isoformat(),
-                "source_outline_length": len(request.story_outline),
+                "source_outline_length": len(request.request_context.story_outline.summary),
                 "generated_chapters": len(outline_items)
             }
         )

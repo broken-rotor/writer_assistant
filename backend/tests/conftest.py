@@ -635,53 +635,54 @@ def sample_legacy_context_request():
 
 @pytest.fixture
 def sample_chapter_outline_request():
-    """Sample chapter outline generation request"""
+    """Sample chapter outline generation request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant specializing in story structure.",
+                main_suffix="Create compelling chapter outlines with clear narrative progression.",
+                assistant_prompt="Focus on developing engaging plot points and character arcs.",
+                editor_prompt="Review chapter outlines for pacing and story coherence."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="1940s Los Angeles - a city of dreams and nightmares, where corruption runs deep and everyone has secrets. The noir atmosphere permeates every street corner."
+        ),
+        story_outline=StoryOutline(
+            summary="A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
+            status="draft",
+            content="Detective Sarah Chen receives a new murder case that initially appears straightforward but quickly reveals layers of corruption and personal connection to her past."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_outlines_003",
+            story_title="Shadows of the Past",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=2,
+            total_chapters=0,
+            total_word_count=0,
+            context_size_estimate=800
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_sarah_chen",
+                name="Detective Sarah Chen",
+                basic_bio="A hardboiled detective with a troubled past and a reputation for getting results. Cynical but determined to find justice.",
+                creation_source="user",
+                last_modified=datetime.now()
+            ),
+            CharacterDetails(
+                id="captain_rodriguez",
+                name="Captain Rodriguez",
+                basic_bio="Sarah's boss, a veteran cop trying to keep his department clean while dealing with political pressures.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "story_outline": "A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
-        "story_context": {
-            "title": "Shadows of the Past",
-            "worldbuilding": "1940s Los Angeles - a city of dreams and nightmares, where corruption runs deep and everyone has secrets.",
-            "characters": [
-                {
-                    "name": "Detective Sarah Chen",
-                    "basicBio": "A hardboiled detective with a troubled past and a reputation for getting results"
-                },
-                {
-                    "name": "Captain Rodriguez",
-                    "basicBio": "Sarah's boss, a veteran cop trying to keep his department clean"
-                }
-            ]
-        },
-        "character_contexts": [
-            {
-                "character_id": "detective_sarah_chen",
-                "character_name": "Detective Sarah Chen",
-                "current_state": {
-                    "emotion": "determined",
-                    "location": "police_station",
-                    "mental_state": "focused"
-                },
-                "recent_actions": ["Received new case", "Reviewing evidence"],
-                "relationships": {"captain": "professional_respect", "partner": "lost_previous_partner"},
-                "goals": ["Solve the murder case", "Find justice for victims", "Prove herself"],
-                "memories": ["Previous cases", "Lost partner", "Personal trauma"],
-                "personality_traits": ["cynical", "determined", "observant", "haunted"]
-            },
-            {
-                "character_id": "captain_rodriguez",
-                "character_name": "Captain Rodriguez",
-                "current_state": {
-                    "emotion": "concerned",
-                    "location": "police_station",
-                    "mental_state": "worried"
-                },
-                "recent_actions": ["Assigned case to Sarah", "Dealing with department politics"],
-                "relationships": {"sarah": "protective_mentor"},
-                "goals": ["Keep department clean", "Support his detectives", "Maintain order"],
-                "memories": ["Years of service", "Department corruption scandals"],
-                "personality_traits": ["experienced", "protective", "principled", "weary"]
-            }
-        ],
+        "request_context": request_context.model_dump(mode='json'),
         "generation_preferences": {
             "chapter_count_preference": "8-12",
             "pacing": "steady",
