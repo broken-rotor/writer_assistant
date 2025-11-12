@@ -93,6 +93,8 @@ async def generate_chapter(request: GenerateChapterRequest):
                     "contextMode": "structured",
                     "requestContextProvided": bool(
                         request.request_context),
+                    "structuredContextProvided": bool(
+                        request.structured_context),
                     "processingMode": context_result.processing_mode})
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
