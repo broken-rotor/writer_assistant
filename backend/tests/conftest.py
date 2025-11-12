@@ -338,65 +338,47 @@ def sample_generate_chapter_request():
 
 @pytest.fixture
 def sample_modify_chapter_request():
-    """Sample chapter modification request using structured context only"""
+    """Sample chapter modification request using new RequestContext format"""
+    request_context = RequestContext(
+        configuration=StoryConfiguration(
+            system_prompts=SystemPrompts(
+                main_prefix="You are a creative writing assistant.",
+                main_suffix="Maintain consistency and apply changes carefully.",
+                assistant_prompt="Provide helpful chapter modification suggestions.",
+                editor_prompt="Review and improve the chapter modifications."
+            )
+        ),
+        worldbuilding=WorldbuildingInfo(
+            content="A noir detective story set in 1940s Los Angeles with dark atmosphere and rain-soaked streets."
+        ),
+        story_outline=StoryOutline(
+            summary="Detective Chen investigates a murder case in 1940s Los Angeles",
+            status="draft",
+            content="The story follows Detective Chen as she examines crime scenes in the rain-soaked streets of Los Angeles."
+        ),
+        context_metadata=RequestContextMetadata(
+            story_id="noir_detective_001",
+            story_title="The Los Angeles Mystery",
+            version="1.0",
+            created_at=datetime.now(),
+            total_characters=1,
+            total_chapters=1,
+            total_word_count=1000,
+            context_size_estimate=500
+        ),
+        characters=[
+            CharacterDetails(
+                id="detective_chen",
+                name="Detective Chen",
+                basic_bio="An experienced detective working crime scenes in 1940s Los Angeles, methodical and observant.",
+                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ]
+    )
+    
     return {
-        "structured_context": {
-            "plot_elements": [
-                {
-                    "type": "scene",
-                    "content": "Detective examining crime scene in the rain",
-                    "priority": "high",
-                    "tags": ["current_scene", "investigation", "weather"],
-                    "metadata": {"location": "crime_scene", "time": "night", "weather": "rain"}
-                },
-                {
-                    "type": "setup",
-                    "content": "A noir detective story set in 1940s Los Angeles",
-                    "priority": "medium",
-                    "tags": ["setting", "genre"],
-                    "metadata": {"era": "1940s", "location": "los_angeles", "genre": "noir"}
-                }
-            ],
-            "character_contexts": [
-                {
-                    "character_id": "detective_chen",
-                    "character_name": "Detective Chen",
-                    "current_state": {
-                        "emotion": "focused",
-                        "location": "crime_scene",
-                        "mental_state": "analytical"
-                    },
-                    "recent_actions": ["Arrived at scene", "Examining evidence"],
-                    "relationships": {},
-                    "goals": ["Examine the crime scene thoroughly"],
-                    "memories": ["Previous crime scenes"],
-                    "personality_traits": ["experienced", "methodical", "observant"]
-                }
-            ],
-            "user_requests": [
-                {
-                    "type": "modification",
-                    "content": "Add more atmospheric details about the weather and setting",
-                    "priority": "high",
-                    "target": "current_chapter",
-                    "context": "enhancement"
-                }
-            ],
-            "system_instructions": [
-                {
-                    "type": "behavior",
-                    "content": "You are a creative writing assistant. Maintain consistency.",
-                    "scope": "global",
-                    "priority": "high"
-                },
-                {
-                    "type": "constraint",
-                    "content": "Apply changes carefully",
-                    "scope": "chapter",
-                    "priority": "high"
-                }
-            ]
-        },
+        "request_context": request_context.model_dump(mode='json'),
         "currentChapter": "The rain fell hard on the city streets. Detective Chen examined the crime scene with practiced eyes.",
         "userRequest": "Add more atmospheric details about the weather and setting"
     }
