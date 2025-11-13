@@ -1,0 +1,182 @@
+{
+  "endpoint": "POST /api/v1/modify-chapter",
+  "description": "Modify existing chapter content based on user instructions and feedback",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/modify-chapter",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "userRequest": "Add more tension to the scene where Aria faces the crystal guardian. Include more internal conflict and make the guardian's test more challenging.",
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Focus on enhancing dramatic tension while maintaining character consistency.",
+            "assistant_prompt": "Modify the content to improve pacing, tension, and emotional impact."
+          },
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person limited",
+            "target_audience": "young adult"
+          }
+        },
+        "worldbuilding": {
+          "content": "The Crystal Caverns test visitors through increasingly difficult trials that probe their deepest fears and motivations.",
+          "key_elements": [
+            {
+              "type": "location",
+              "name": "Crystal Caverns",
+              "description": "Ancient trial grounds with mystical guardians that test worthiness",
+              "importance": "high"
+            }
+          ]
+        },
+        "characters": [
+          {
+            "id": "char_aria_001",
+            "name": "Aria Moonwhisper",
+            "basic_bio": "A 19-year-old novice mage central to an ancient prophecy",
+            "personality": "Determined but struggles with self-doubt. Protective and compassionate.",
+            "fears": "Losing control of her magic, failing those who depend on her",
+            "current_state": {
+              "emotion": "anxious but determined",
+              "location": "Crystal Caverns trial chamber",
+              "health": "good",
+              "magical_energy": "building"
+            },
+            "goals": [
+              "Prove herself worthy to the guardian",
+              "Overcome her self-doubt",
+              "Claim the crystal shard"
+            ],
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "story_outline": {
+          "summary": "Aria faces the crystal guardian's trial",
+          "outline_items": [
+            {
+              "id": "outline_trial",
+              "type": "scene",
+              "title": "The Guardian's Trial",
+              "description": "Aria must prove her worthiness through a challenging magical trial",
+              "key_plot_items": [
+                "Guardian presents increasingly difficult challenges",
+                "Aria confronts her deepest fears and insecurities",
+                "She must make a crucial choice that reveals her true character"
+              ],
+              "involved_characters": ["Aria Moonwhisper"],
+              "status": "draft"
+            }
+          ]
+        },
+        "chapters": [
+          {
+            "id": "chapter_002",
+            "number": 2,
+            "title": "Into the Crystal Caverns",
+            "content": "Aria stood before the crystal guardian, a towering figure of living crystal and ancient magic. 'You seek the shard,' the guardian said simply. 'Very well. Touch the trial crystal and prove your worth.'\n\nAria approached the glowing crystal hesitantly. As her fingers made contact, visions flashed through her mind—images of her friends in danger, her village burning, her own magical power spiraling out of control.\n\n'I can do this,' she whispered, though her voice trembled. The guardian watched silently as she struggled with the visions, her magical energy fluctuating wildly.\n\nAfter what felt like hours, the visions faded. The guardian nodded slowly. 'You have shown courage, young mage. The shard is yours.'\n\nAria felt a surge of relief and accomplishment as the crystal shard materialized in her palm, glowing with warm, pure light.",
+            "plot_point": "Aria faces the guardian's trial and claims the first crystal shard",
+            "key_plot_items": [
+              "Aria meets the crystal guardian",
+              "She undergoes the trial by touching the crystal",
+              "Visions test her resolve and character",
+              "She successfully completes the trial",
+              "The guardian awards her the crystal shard"
+            ],
+            "word_count": 187,
+            "created": "2024-01-15T18:00:00Z",
+            "last_modified": "2024-01-15T18:30:00Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 1,
+          "total_chapters": 2,
+          "processing_hints": {
+            "priority_characters": ["Aria Moonwhisper"],
+            "current_arc": "trials_phase",
+            "narrative_focus": "tension and character development"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 3000,
+        "priority_filtering": true,
+        "character_focus": null,
+        "optimization_level": "moderate",
+        "preserve_recent_content": true,
+        "include_feedback_history": false,
+        "focus_on_current_chapter": true
+      }
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "phase": "analyzing",
+        "message": "Analyzing current chapter content and modification request...",
+        "progress": 25
+      },
+      {
+        "type": "status",
+        "phase": "modifying",
+        "message": "Applying modifications to enhance tension and conflict...",
+        "progress": 65
+      },
+      {
+        "type": "status",
+        "phase": "finalizing",
+        "message": "Finalizing modified chapter content...",
+        "progress": 90
+      },
+      {
+        "type": "result",
+        "data": {
+          "modifiedChapterText": "Aria stood before the crystal guardian, her heart hammering against her ribs as she took in the towering figure of living crystal and ancient magic. The guardian's faceted eyes seemed to pierce straight through to her soul, weighing and measuring her worth.\n\n'You seek the shard,' the guardian intoned, its voice like the grinding of stone against stone. 'Many have tried. Most have failed. Some have died. Do you still wish to proceed?'\n\nAria's mouth went dry, but she forced herself to nod. 'I do.'\n\n'Very well.' The guardian gestured to a jagged crystal formation that pulsed with ominous red light. 'Touch the trial crystal and face what lies within. But know this—the crystal will show you your deepest fears, your greatest failures, your darkest potential. It will test not just your courage, but your very soul. Are you prepared to see who you truly are?'\n\nAria's hands trembled as she approached the crystal. What if she wasn't strong enough? What if the prophecy was wrong? What if she was just a frightened girl pretending to be a hero?\n\n'I have to try,' she whispered, more to herself than to the guardian.\n\nThe moment her fingers touched the crystal's surface, agony lanced through her mind. Visions crashed over her like a tidal wave—her village burning while she stood frozen in terror, her friends screaming her name as shadow creatures dragged them into darkness, her own hands crackling with uncontrolled magic as she accidentally destroyed everything she touched.\n\n'No!' she gasped, trying to pull away, but the crystal held her fast. 'This isn't real!'\n\n'Isn't it?' the guardian's voice echoed in her mind. 'This is what awaits if you fail. This is what happens when power corrupts. Show me you are different. Show me you can choose sacrifice over safety, others over yourself.'\n\nThe visions shifted. Now she saw herself with the crystal shards, drunk on their power, her violet eyes blazing with cruel light as she ruled over a kingdom of fear. She saw Theron kneeling before her, broken and defeated. She saw Kira's lifeless body at her feet.\n\n'I won't become this!' Aria screamed, pouring all her will into rejecting the dark visions. 'I choose to protect, not to dominate!'\n\nThe crystal's grip loosened slightly, but the test wasn't over. A new vision formed—the Shadow Council had captured Kira and Theron. She could save them, but only by abandoning her quest for the remaining shards. The choice was hers: her friends' lives, or the fate of the realm.\n\nTears streamed down Aria's face as she wrestled with the impossible decision. Then, through her anguish, she heard Theron's voice: 'Sometimes the greatest courage is trusting others to be brave too.'\n\n'I trust them,' she whispered. 'I trust them to survive, to fight, to find another way. And I trust myself to find a path that saves everyone.'\n\nThe visions shattered like glass. Aria collapsed to her knees, gasping and shaking, but the crystal's malevolent glow had faded to a gentle blue light.\n\nThe guardian studied her for a long moment. 'You have faced your fears and chosen wisdom over easy answers. You have shown that power serves you, not the reverse. The shard is yours, young mage. Use it well.'\n\nAs the crystal shard materialized in her palm, warm and reassuring, Aria felt not just relief but a profound change within herself. She was no longer the frightened girl who had entered the caverns. She was becoming who she was meant to be.",
+          "wordCount": 612,
+          "modifications_applied": [
+            "Enhanced the guardian's intimidating presence and dialogue",
+            "Added more detailed description of Aria's fear and internal conflict",
+            "Expanded the trial to include multiple challenging visions",
+            "Introduced a moral dilemma requiring difficult choice",
+            "Increased the stakes and consequences of failure",
+            "Added more emotional depth to Aria's character development",
+            "Extended the scene length for better pacing and tension"
+          ],
+          "context_metadata": {
+            "original_word_count": 187,
+            "modified_word_count": 612,
+            "modification_type": "enhancement",
+            "focus_areas": ["tension", "internal_conflict", "character_development"],
+            "processing_time_ms": 3456
+          },
+          "metadata": {
+            "modifiedAt": "2024-01-15T20:30:00Z",
+            "userRequest": "Add more tension to the scene where Aria faces the crystal guardian",
+            "contextMode": "structured",
+            "requestContextProvided": true
+          }
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "userRequest describes the specific modifications to make",
+    "The current chapter content should be included in request_context.chapters",
+    "context_processing_config should focus on the current chapter",
+    "Response includes both the modified text and details about changes made",
+    "Word count comparison shows the extent of modifications",
+    "Useful for iterative chapter improvement and addressing feedback"
+  ]
+}

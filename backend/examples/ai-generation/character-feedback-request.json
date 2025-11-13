@@ -1,0 +1,190 @@
+{
+  "endpoint": "POST /api/v1/character-feedback",
+  "description": "Get character-specific feedback and suggestions for story content",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/character-feedback",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "characterName": "Aria Moonwhisper",
+      "plotPoint": "Aria must overcome her fear and self-doubt to successfully complete the crystal guardian's trial",
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Focus on authentic character development and emotional depth.",
+            "assistant_prompt": "Provide character-specific feedback that enhances authenticity and emotional resonance."
+          },
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person limited",
+            "target_audience": "young adult"
+          }
+        },
+        "worldbuilding": {
+          "content": "The Crystal Caverns are ancient underground chambers filled with magical crystals. They test visitors through mystical trials that reveal their true character.",
+          "key_elements": [
+            {
+              "type": "location",
+              "name": "Crystal Caverns",
+              "description": "Ancient trial grounds that test a person's worthiness through magical challenges",
+              "importance": "high"
+            }
+          ]
+        },
+        "characters": [
+          {
+            "id": "char_aria_001",
+            "name": "Aria Moonwhisper",
+            "basic_bio": "A 19-year-old novice mage discovering her role in an ancient prophecy",
+            "age": 19,
+            "personality": "Determined and compassionate, but struggles with self-doubt. Protective of friends and innocent people. Can be impulsive when others are threatened.",
+            "motivations": "To master her magical abilities, protect her friends, and fulfill the prophecy without losing herself to the crystal's power",
+            "fears": "Losing control of her magic, failing those who depend on her, becoming corrupted by the crystal shards' power",
+            "current_state": {
+              "emotion": "anxious but determined",
+              "location": "Crystal Caverns trial chamber",
+              "health": "good",
+              "magical_energy": "focused"
+            },
+            "recent_actions": [
+              "Entered the Crystal Caverns despite her fears",
+              "Faced the crystal guardian's initial challenge",
+              "Struggled with self-doubt during the trial"
+            ],
+            "goals": [
+              "Prove herself worthy to claim the crystal shard",
+              "Overcome her limiting self-doubt",
+              "Show courage in the face of the unknown"
+            ],
+            "memories": [
+              "Her parents' death in a Shadow Council attack",
+              "The moment she first touched a crystal and felt its power",
+              "Theron's words of encouragement before entering the caverns"
+            ],
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "story_outline": {
+          "summary": "Aria faces the crystal guardian's trial to prove her worthiness",
+          "content": "The trial tests not just magical ability, but character, courage, and selflessness",
+          "outline_items": [
+            {
+              "id": "outline_trial",
+              "type": "scene",
+              "title": "The Guardian's Trial",
+              "description": "Aria must face her deepest fears and prove her worthiness",
+              "key_plot_items": [
+                "Guardian presents the trial challenge",
+                "Aria confronts manifestations of her fears",
+                "She must choose between personal safety and helping others",
+                "Trial reveals her true character and potential"
+              ],
+              "involved_characters": ["Aria Moonwhisper"],
+              "status": "draft"
+            }
+          ]
+        },
+        "chapters": [
+          {
+            "id": "chapter_002",
+            "number": 2,
+            "title": "Into the Crystal Caverns",
+            "content": "Aria stood before the crystal guardian, her heart pounding as the ancient being's eyes seemed to peer into her very soul. 'You seek the shard,' the guardian intoned, 'but are you worthy of its power?' The trial chamber around them began to shift and change...",
+            "plot_point": "Aria faces the guardian's trial",
+            "word_count": 2847,
+            "created": "2024-01-15T18:00:00Z",
+            "last_modified": "2024-01-15T18:30:00Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 1,
+          "total_chapters": 2,
+          "processing_hints": {
+            "priority_characters": ["Aria Moonwhisper"],
+            "current_arc": "trials_phase",
+            "narrative_focus": "character development and internal conflict"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 3500,
+        "priority_filtering": true,
+        "character_focus": ["Aria Moonwhisper"],
+        "optimization_level": "light",
+        "preserve_recent_content": true,
+        "include_feedback_history": true,
+        "character_detail_level": "full"
+      }
+    }
+  },
+  "response_example": {
+    "character_name": "Aria Moonwhisper",
+    "feedback": {
+      "actions": [
+        "Take a deep breath and center herself before responding to the guardian",
+        "Reach out tentatively to touch one of the trial crystals",
+        "Step forward despite her trembling legs",
+        "Close her eyes and focus on her magical core",
+        "Speak with more confidence than she feels"
+      ],
+      "dialog": [
+        "\"I may not be the strongest mage, but I won't let fear stop me from protecting those I love.\"",
+        "\"The prophecy chose me for a reason, even if I don't understand it yet.\"",
+        "\"I've come too far to turn back now.\"",
+        "\"My power isn't just about magic—it's about the choices I make.\"",
+        "\"I accept your trial, Guardian. Test me as you will.\""
+      ],
+      "physical_sensations": [
+        "Her hands trembling slightly as magical energy builds within her",
+        "A warm tingling sensation spreading from her crystal pendant",
+        "Her violet eyes beginning to glow with inner light",
+        "The feeling of ancient magic pressing against her consciousness",
+        "Her heartbeat steadying as she finds her resolve"
+      ],
+      "emotions": [
+        "Initial fear giving way to determined resolve",
+        "A surge of protective instinct when thinking of her friends",
+        "Growing confidence as she connects with her magical abilities",
+        "Humility mixed with quiet strength",
+        "A sense of rightness about her destiny, despite the uncertainty"
+      ],
+      "internal_monologue": [
+        "This is it—the moment that will define whether I'm truly worthy of the prophecy.",
+        "I can feel the guardian testing not just my magic, but my heart.",
+        "Theron believed in me. Kira believes in me. Maybe it's time I believed in myself.",
+        "The crystal's power is overwhelming, but I won't let it consume me.",
+        "Whatever this trial brings, I'll face it as myself—flaws and all."
+      ]
+    },
+    "context_analysis": {
+      "character_consistency": "High - feedback aligns with Aria's established personality and growth arc",
+      "emotional_authenticity": "Strong - captures her internal struggle between fear and determination",
+      "plot_relevance": "Excellent - directly supports the trial scene and character development",
+      "character_voice": "Authentic - dialog reflects her age, background, and current emotional state"
+    },
+    "metadata": {
+      "generated_at": "2024-01-15T19:15:00Z",
+      "character_focus": "Aria Moonwhisper",
+      "scene_context": "Crystal guardian trial",
+      "feedback_categories": 5,
+      "total_suggestions": 25,
+      "processing_time_ms": 1847
+    }
+  },
+  "notes": [
+    "characterName must match a character in the request_context",
+    "plotPoint should describe the specific scene or situation for feedback",
+    "Feedback is tailored to the character's personality, current state, and goals",
+    "Response includes actions, dialog, sensations, emotions, and internal thoughts",
+    "context_processing_config should use character_focused settings",
+    "Useful for enhancing character authenticity and emotional depth"
+  ]
+}
