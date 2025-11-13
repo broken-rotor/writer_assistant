@@ -12,9 +12,9 @@ from app.api.v1.endpoints.modify_chapter import router as modify_chapter_router
 from app.api.v1.endpoints.editor_review import router as editor_review_router
 from app.api.v1.endpoints.flesh_out import router as flesh_out_router
 from app.api.v1.endpoints.generate_character_details import router as generate_character_details_router
-from app.api.v1.endpoints import regenerate_bio
-from app.api.v1.endpoints import generate_chapter_outlines
-from app.api.v1.endpoints import llm_chat
+from app.api.v1.endpoints.regenerate_bio import router as regenerate_bio_router
+from app.api.v1.endpoints.generate_chapter_outlines  import router as generate_chapter_outlines_router
+from app.api.v1.endpoints.llm_chat import router as llm_chat_router
 
 # Create main router
 router = APIRouter()
@@ -28,5 +28,5 @@ router.include_router(editor_review_router, tags=["ai-generation"])
 router.include_router(flesh_out_router, tags=["ai-generation"])
 router.include_router(generate_character_details_router, tags=["ai-generation"])
 router.include_router(generate_chapter_outlines.router, tags=["ai-generation"])
-router.include_router(regenerate_bio.router, tags=["ai-generation"])
-router.include_router(llm_chat.router, tags=["ai-generation"])
+router.include_router(regenerate_bio_router, tags=["ai-generation"])
+router.include_router(llm_chat_router, tags=["ai-generation"])
