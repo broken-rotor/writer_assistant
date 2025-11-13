@@ -69,6 +69,7 @@ from typing import Dict, List, Optional, Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import datetime
 from app.models.request_context import RequestContext
+from app.models.context_models import ContextProcessingConfig
 
 
 # System Prompts Configuration
@@ -170,7 +171,7 @@ class CharacterFeedbackRequest(BaseModel):
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
@@ -216,7 +217,7 @@ class RaterFeedbackRequest(BaseModel):
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
@@ -258,7 +259,7 @@ class GenerateChapterRequest(BaseModel):
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
@@ -297,7 +298,7 @@ class ModifyChapterRequest(BaseModel):
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
@@ -335,7 +336,7 @@ class EditorReviewRequest(BaseModel):
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
@@ -380,7 +381,7 @@ class FleshOutRequest(BaseModel):
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
@@ -423,7 +424,7 @@ class GenerateCharacterDetailsRequest(BaseModel):
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
@@ -472,7 +473,7 @@ class RegenerateBioRequest(BaseModel):
         default=None,
         description="Optional complete request context"
     )
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing"
     )

@@ -6,6 +6,7 @@ from typing import List, Optional, Literal, Dict, Any
 from pydantic import BaseModel, Field, model_validator
 from .generation_models import ConversationMessage, SystemPrompts
 from .request_context import RequestContext
+from .context_models import ContextProcessingConfig
 
 
 # Agent types for LLM chat
@@ -36,7 +37,7 @@ class LLMChatRequest(BaseModel):
     )
     
     # Optional processing configuration
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )

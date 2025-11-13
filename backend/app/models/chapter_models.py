@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Optional
 # Legacy import removed in B4 - CharacterContext class removed
 from app.models.generation_models import SystemPrompts
 from app.models.request_context import RequestContext
+from app.models.context_models import ContextProcessingConfig
 
 
 class ChapterOutlineRequest(BaseModel):
@@ -21,7 +22,7 @@ class ChapterOutlineRequest(BaseModel):
     )
     
     # Optional processing configuration
-    context_processing_config: Optional[Dict[str, Any]] = Field(
+    context_processing_config: Optional[ContextProcessingConfig] = Field(
         default=None,
         description="Configuration for context processing (summarization, filtering, etc.)"
     )
