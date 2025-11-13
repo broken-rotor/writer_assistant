@@ -107,7 +107,7 @@ class UnifiedContextProcessor:
     def process_generate_chapter_context(
         self,
         request_context: Optional[RequestContext],
-        context_processing_config: Optional[Dict[str, Any]] = None
+        context_processing_config: Optional[ContextProcessingConfig] = None
     ) -> UnifiedContextResult:
         """
         Process context for chapter generation with full narrative context assembly.
@@ -152,7 +152,7 @@ class UnifiedContextProcessor:
     def process_character_feedback_context(
         self,
         request_context: Optional[RequestContext],
-        context_processing_config: Optional[Dict[str, Any]] = None
+        context_processing_config: Optional[ContextProcessingConfig] = None
     ) -> UnifiedContextResult:
         """Process context for character feedback generation."""
         try:
