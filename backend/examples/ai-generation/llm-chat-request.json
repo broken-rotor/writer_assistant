@@ -1,0 +1,157 @@
+{
+  "endpoint": "POST /api/v1/chat/llm",
+  "description": "Direct LLM chat for interactive conversations with AI agents using SSE streaming",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/chat/llm",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "messages": [
+        {
+          "id": "msg_001",
+          "role": "user",
+          "content": "I'm working on a scene where Aria needs to show courage despite her fears. How can I make her internal struggle feel authentic while still showing her growth?",
+          "timestamp": "2024-01-15T20:00:00Z"
+        }
+      ],
+      "agent_type": "writer",
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Provide helpful writing advice that maintains story consistency and character authenticity.",
+            "assistant_prompt": "As the Writer Agent, offer creative guidance that enhances narrative quality and character development."
+          },
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person limited",
+            "target_audience": "young adult"
+          }
+        },
+        "worldbuilding": {
+          "content": "Eldoria is a magical realm where courage is tested through trials that reveal one's true character. The Crystal Caverns serve as ancient proving grounds.",
+          "key_elements": [
+            {
+              "type": "location",
+              "name": "Crystal Caverns",
+              "description": "Ancient trial grounds that test worthiness through magical challenges",
+              "importance": "high"
+            }
+          ]
+        },
+        "characters": [
+          {
+            "id": "char_aria_001",
+            "name": "Aria Moonwhisper",
+            "basic_bio": "A 19-year-old novice mage discovering her role in an ancient prophecy",
+            "age": 19,
+            "personality": "Determined and compassionate, but struggles with self-doubt. Protective of friends and innocent people.",
+            "motivations": "To master her magical abilities, protect her friends, and fulfill the prophecy",
+            "fears": "Losing control of her magic, failing those who depend on her, becoming corrupted by power",
+            "current_state": {
+              "emotion": "conflicted between fear and determination",
+              "location": "Crystal Caverns",
+              "health": "good",
+              "magical_energy": "building"
+            },
+            "goals": [
+              "Prove herself worthy in the guardian's trial",
+              "Overcome her self-doubt",
+              "Protect those she cares about"
+            ],
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "story_outline": {
+          "summary": "Aria faces trials that test her character and courage",
+          "content": "The story explores themes of self-discovery, courage, and the balance between power and responsibility",
+          "outline_items": [
+            {
+              "id": "outline_trial",
+              "type": "scene",
+              "title": "The Guardian's Trial",
+              "description": "Aria must prove her worthiness through courage and selflessness",
+              "key_plot_items": [
+                "Aria confronts her deepest fears",
+                "She must choose between safety and doing what's right",
+                "Her true character is revealed through her choices"
+              ],
+              "involved_characters": ["Aria Moonwhisper"],
+              "status": "draft"
+            }
+          ]
+        },
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 1,
+          "processing_hints": {
+            "priority_characters": ["Aria Moonwhisper"],
+            "current_arc": "character_development",
+            "narrative_focus": "internal conflict and growth"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 2000,
+        "priority_filtering": true,
+        "character_focus": ["Aria Moonwhisper"],
+        "optimization_level": "moderate",
+        "preserve_recent_content": true,
+        "include_feedback_history": false
+      },
+      "max_tokens": 1000,
+      "temperature": 0.8
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "message": "Processing conversation context...",
+        "progress": 30
+      },
+      {
+        "type": "status", 
+        "message": "Generating response...",
+        "progress": 70
+      },
+      {
+        "type": "result",
+        "data": {
+          "message": {
+            "id": "msg_002",
+            "role": "assistant",
+            "content": "Great question! Showing Aria's authentic internal struggle while demonstrating growth requires balancing vulnerability with strength. Here are some techniques:\n\n**Internal Conflict Techniques:**\n- Show her physical reactions (trembling hands, racing heart) alongside her determined actions\n- Use internal monologue to reveal her fears while her dialogue shows resolve\n- Create moments where she almost retreats but chooses to continue\n\n**Authentic Growth Moments:**\n- Have her acknowledge her fear rather than pretending it doesn't exist: \"I'm terrified, but I won't let that stop me\"\n- Show small victories building to larger ones - maybe she starts by taking one step forward despite shaking\n- Let her draw strength from her core values (protecting others) rather than suddenly becoming fearless\n\n**Specific to Aria's Character:**\nGiven her protective nature, you could have her think of Kira or other friends in danger, which transforms her fear into determination. Her self-doubt could manifest as \"What if I'm not strong enough?\" but then shift to \"I have to try, regardless.\"\n\nThe key is showing that courage isn't the absence of fear—it's acting despite fear. Aria can be afraid AND brave simultaneously, which makes her more relatable and her eventual success more meaningful.",
+            "timestamp": "2024-01-15T20:01:45Z"
+          },
+          "agent_type": "writer",
+          "metadata": {
+            "response_length": 1247,
+            "context_used": true,
+            "character_focus": "Aria Moonwhisper",
+            "advice_categories": ["character_development", "internal_conflict", "authentic_growth"],
+            "processing_time_ms": 2341
+          }
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "agent_type can be: 'writer', 'character', 'editor', or 'worldbuilding'",
+    "messages array contains the full conversation history",
+    "request_context provides story-specific context for better advice",
+    "context_processing_config should use memory_constrained settings for responsive chat",
+    "temperature controls creativity vs consistency (0.0-1.0)",
+    "max_tokens limits response length",
+    "Useful for getting writing advice, brainstorming, and creative guidance"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "endpoint": "GET /",
+  "description": "Root endpoint that returns API information and LLM status",
+  "request": {
+    "method": "GET",
+    "url": "/",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": null
+  },
+  "response_example": {
+    "message": "Writer Assistant API",
+    "version": "1.0.0",
+    "llm_status": "available"
+  },
+  "notes": [
+    "This endpoint requires no request body",
+    "llm_status can be: 'loading', 'available', 'not configured', or 'error: <message>'",
+    "Useful for checking API availability and version information"
+  ]
+}

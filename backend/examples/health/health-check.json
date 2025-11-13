@@ -1,0 +1,24 @@
+{
+  "endpoint": "GET /health",
+  "description": "Health check endpoint that returns server status and LLM availability",
+  "request": {
+    "method": "GET",
+    "url": "/health",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": null
+  },
+  "response_example": {
+    "status": "healthy",
+    "llm_available": true,
+    "llm_loading": false,
+    "llm_error": null
+  },
+  "notes": [
+    "This endpoint requires no request body",
+    "llm_available indicates if the LLM model is loaded and ready",
+    "llm_loading will be true during model initialization",
+    "llm_error will contain error message if model loading failed"
+  ]
+}

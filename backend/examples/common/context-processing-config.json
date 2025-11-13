@@ -1,0 +1,116 @@
+{
+  "description": "Context processing configuration examples for different scenarios",
+  "usage": "These configurations control how the RequestContext is processed and optimized for different endpoints",
+  "examples": {
+    "default_config": {
+      "description": "Standard configuration for most AI generation endpoints",
+      "config": {
+        "summarization_enabled": true,
+        "max_context_length": 4000,
+        "priority_filtering": true,
+        "character_focus": null,
+        "optimization_level": "moderate",
+        "preserve_recent_content": true,
+        "include_feedback_history": true
+      }
+    },
+    "character_focused_config": {
+      "description": "Configuration for character-specific endpoints like character-feedback",
+      "config": {
+        "summarization_enabled": true,
+        "max_context_length": 3500,
+        "priority_filtering": true,
+        "character_focus": ["Aria Moonwhisper"],
+        "optimization_level": "light",
+        "preserve_recent_content": true,
+        "include_feedback_history": true,
+        "character_detail_level": "full"
+      }
+    },
+    "chapter_generation_config": {
+      "description": "Configuration optimized for chapter generation with full context",
+      "config": {
+        "summarization_enabled": false,
+        "max_context_length": 6000,
+        "priority_filtering": false,
+        "character_focus": null,
+        "optimization_level": "none",
+        "preserve_recent_content": true,
+        "include_feedback_history": true,
+        "worldbuilding_detail_level": "full",
+        "outline_detail_level": "full"
+      }
+    },
+    "editor_review_config": {
+      "description": "Configuration for editor review focusing on recent content and feedback",
+      "config": {
+        "summarization_enabled": true,
+        "max_context_length": 3000,
+        "priority_filtering": true,
+        "character_focus": null,
+        "optimization_level": "moderate",
+        "preserve_recent_content": true,
+        "include_feedback_history": false,
+        "focus_on_current_chapter": true
+      }
+    },
+    "memory_constrained_config": {
+      "description": "Configuration for environments with limited context windows",
+      "config": {
+        "summarization_enabled": true,
+        "max_context_length": 2000,
+        "priority_filtering": true,
+        "character_focus": ["Aria Moonwhisper", "Theron Blackstone"],
+        "optimization_level": "aggressive",
+        "preserve_recent_content": true,
+        "include_feedback_history": false,
+        "worldbuilding_detail_level": "summary",
+        "outline_detail_level": "summary"
+      }
+    },
+    "high_quality_config": {
+      "description": "Configuration for maximum quality with generous context limits",
+      "config": {
+        "summarization_enabled": false,
+        "max_context_length": 8000,
+        "priority_filtering": false,
+        "character_focus": null,
+        "optimization_level": "none",
+        "preserve_recent_content": true,
+        "include_feedback_history": true,
+        "worldbuilding_detail_level": "full",
+        "outline_detail_level": "full",
+        "character_detail_level": "full"
+      }
+    }
+  },
+  "field_descriptions": {
+    "summarization_enabled": "Whether to summarize long content sections to fit within context limits",
+    "max_context_length": "Maximum number of tokens to include in the processed context",
+    "priority_filtering": "Whether to filter content based on priority levels (high, medium, low)",
+    "character_focus": "Array of character names to emphasize in context processing",
+    "optimization_level": "Level of context optimization: 'none', 'light', 'moderate', 'aggressive'",
+    "preserve_recent_content": "Whether to prioritize recent chapters and feedback over older content",
+    "include_feedback_history": "Whether to include character and rater feedback in the context",
+    "worldbuilding_detail_level": "Level of worldbuilding detail: 'summary', 'moderate', 'full'",
+    "outline_detail_level": "Level of story outline detail: 'summary', 'moderate', 'full'",
+    "character_detail_level": "Level of character information detail: 'basic', 'moderate', 'full'",
+    "focus_on_current_chapter": "Whether to emphasize the current chapter being worked on"
+  },
+  "optimization_levels": {
+    "none": "No optimization applied, include all available context",
+    "light": "Minimal optimization, remove only low-priority elements",
+    "moderate": "Balanced optimization, summarize medium-priority content",
+    "aggressive": "Heavy optimization, keep only high-priority content"
+  },
+  "usage_recommendations": {
+    "generate-chapter": "Use chapter_generation_config or high_quality_config for best results",
+    "modify-chapter": "Use default_config with focus_on_current_chapter enabled",
+    "character-feedback": "Use character_focused_config with specific character in character_focus",
+    "rater-feedback": "Use default_config or editor_review_config",
+    "editor-review": "Use editor_review_config for focused feedback",
+    "flesh-out": "Use default_config with moderate optimization",
+    "generate-character-details": "Use character_focused_config",
+    "llm-chat": "Use memory_constrained_config for responsive conversations"
+  }
+}

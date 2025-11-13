@@ -1,0 +1,39 @@
+{
+  "endpoint": "POST /api/v1/tokens/validate",
+  "description": "Validate whether texts fit within a specified token budget",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/tokens/validate",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "texts": [
+        "You are a skilled fantasy writer assistant helping to create 'The Crystal Prophecy' story. Focus on rich worldbuilding, character development, and engaging narrative flow.",
+        "Aria Moonwhisper discovers an ancient prophecy about crystal shards that could save or destroy Eldoria. She must gather allies while being pursued by the Shadow Council.",
+        "Generate the next chapter where Aria enters the Crystal Caverns and encounters the first guardian. Include dialogue with Theron about the prophecy's true meaning.",
+        "The caverns should be described with ethereal blue light, pulsing crystal walls, and an atmosphere of ancient magic. Show Aria's growing confidence in her abilities."
+      ],
+      "budget": 4096,
+      "strategy": "conservative"
+    }
+  },
+  "response_example": {
+    "success": true,
+    "fits_budget": true,
+    "total_tokens": 156,
+    "budget": 4096,
+    "utilization": 0.038,
+    "remaining_tokens": 3940,
+    "overflow_tokens": 0,
+    "strategy_used": "conservative"
+  },
+  "notes": [
+    "Uses conservative counting strategy by default for safety",
+    "Useful for pre-flight validation before sending to LLM",
+    "Budget planning for multi-part prompts",
+    "Ensuring content fits within context windows",
+    "utilization shows percentage of budget used (0.0 to 1.0+)",
+    "overflow_tokens shows how many tokens exceed budget (if any)"
+  ]
+}

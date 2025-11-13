@@ -1,0 +1,148 @@
+{
+  "endpoint": "POST /api/v1/tokens/count",
+  "description": "Count tokens for batch text inputs using different strategies and content types",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/tokens/count",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "texts": [
+        {
+          "text": "You are a skilled fantasy writer assistant. Help the user create compelling stories set in magical realms with rich worldbuilding and memorable characters.",
+          "content_type": "system_prompt"
+        },
+        {
+          "text": "Aria stepped through the shimmering portal, her heart racing as she entered the Crystal Caverns. The walls pulsed with an ethereal blue light, and she could feel the ancient magic thrumming through the air like a living thing.",
+          "content_type": "narrative"
+        },
+        {
+          "text": "\"The prophecy speaks of one who will unite the shards,\" Theron said gravely, his weathered hands tracing the ancient runes. \"But beware, young mage, for the Shadow Council seeks the same power for darker purposes.\"",
+          "content_type": "dialogue"
+        },
+        {
+          "text": "Aria Moonwhisper is a 19-year-old novice mage with untapped potential. She has long silver hair that seems to shimmer with inner light, violet eyes that glow when she uses magic, and a determined spirit that drives her to protect those she loves.",
+          "content_type": "character_description"
+        },
+        {
+          "text": "The Academy of Mystic Arts towers above the floating city of Aethermoor, its crystal spires reaching toward the twin moons. Students can be seen practicing levitation spells in the courtyard while professors debate magical theory in the grand library.",
+          "content_type": "scene_description"
+        },
+        {
+          "text": "I can feel the crystal's power calling to me, but something feels wrong. The magic is tainted somehow, darker than it should be. What if the prophecy is incomplete? What if I'm not the hero they think I am?",
+          "content_type": "internal_monologue"
+        }
+      ],
+      "strategy": "exact",
+      "include_metadata": true
+    }
+  },
+  "response_example": {
+    "success": true,
+    "results": [
+      {
+        "text": "You are a skilled fantasy writer assistant. Help the user create compelling stories set in magical realms with rich worldbuilding and memorable characters.",
+        "token_count": 28,
+        "content_type": "system_prompt",
+        "strategy": "exact",
+        "overhead_applied": 1.0,
+        "metadata": {
+          "character_count": 147,
+          "word_count": 24,
+          "estimated_tokens": 28,
+          "processing_time_ms": 2.1
+        }
+      },
+      {
+        "text": "Aria stepped through the shimmering portal, her heart racing as she entered the Crystal Caverns. The walls pulsed with an ethereal blue light, and she could feel the ancient magic thrumming through the air like a living thing.",
+        "token_count": 45,
+        "content_type": "narrative",
+        "strategy": "exact",
+        "overhead_applied": 1.0,
+        "metadata": {
+          "character_count": 208,
+          "word_count": 38,
+          "estimated_tokens": 45,
+          "processing_time_ms": 1.8
+        }
+      },
+      {
+        "text": "\"The prophecy speaks of one who will unite the shards,\" Theron said gravely, his weathered hands tracing the ancient runes. \"But beware, young mage, for the Shadow Council seeks the same power for darker purposes.\"",
+        "token_count": 42,
+        "content_type": "dialogue",
+        "strategy": "exact",
+        "overhead_applied": 1.0,
+        "metadata": {
+          "character_count": 207,
+          "word_count": 35,
+          "estimated_tokens": 42,
+          "processing_time_ms": 1.9
+        }
+      },
+      {
+        "text": "Aria Moonwhisper is a 19-year-old novice mage with untapped potential. She has long silver hair that seems to shimmer with inner light, violet eyes that glow when she uses magic, and a determined spirit that drives her to protect those she loves.",
+        "token_count": 48,
+        "content_type": "character_description",
+        "strategy": "exact",
+        "overhead_applied": 1.0,
+        "metadata": {
+          "character_count": 237,
+          "word_count": 42,
+          "estimated_tokens": 48,
+          "processing_time_ms": 2.0
+        }
+      },
+      {
+        "text": "The Academy of Mystic Arts towers above the floating city of Aethermoor, its crystal spires reaching toward the twin moons. Students can be seen practicing levitation spells in the courtyard while professors debate magical theory in the grand library.",
+        "token_count": 44,
+        "content_type": "scene_description",
+        "strategy": "exact",
+        "overhead_applied": 1.0,
+        "metadata": {
+          "character_count": 241,
+          "word_count": 39,
+          "estimated_tokens": 44,
+          "processing_time_ms": 1.7
+        }
+      },
+      {
+        "text": "I can feel the crystal's power calling to me, but something feels wrong. The magic is tainted somehow, darker than it should be. What if the prophecy is incomplete? What if I'm not the hero they think I am?",
+        "token_count": 43,
+        "content_type": "internal_monologue",
+        "strategy": "exact",
+        "overhead_applied": 1.0,
+        "metadata": {
+          "character_count": 203,
+          "word_count": 38,
+          "estimated_tokens": 43,
+          "processing_time_ms": 1.6
+        }
+      }
+    ],
+    "total_tokens": 250,
+    "total_texts": 6,
+    "strategy_used": "exact",
+    "processing_time_ms": 11.1,
+    "metadata": {
+      "total_characters": 1243,
+      "total_words": 216,
+      "average_tokens_per_text": 41.7,
+      "content_type_distribution": {
+        "system_prompt": 1,
+        "narrative": 1,
+        "dialogue": 1,
+        "character_description": 1,
+        "scene_description": 1,
+        "internal_monologue": 1
+      }
+    }
+  },
+  "notes": [
+    "The 'strategy' field supports: 'exact', 'estimated', 'conservative', 'optimistic'",
+    "Content types help optimize token counting for different text types",
+    "include_metadata=true provides detailed processing information",
+    "Batch processing is more efficient than individual requests",
+    "Maximum 50 texts per request, 100KB per text limit"
+  ]
+}
