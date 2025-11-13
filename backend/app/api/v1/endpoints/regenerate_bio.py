@@ -34,33 +34,34 @@ async def regenerate_bio(request: RegenerateBioRequest):
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character details...', 'progress': 20})}\n\n"
 
             # Build character details summary for context
+            character_info = request.character_info
             character_details = []
-            if request.name:
-                character_details.append(f"Name: {request.name}")
-            if request.sex:
-                character_details.append(f"Sex: {request.sex}")
-            if request.gender:
-                character_details.append(f"Gender: {request.gender}")
-            if request.sexualPreference:
+            if character_info.name:
+                character_details.append(f"Name: {character_info.name}")
+            if character_info.sex:
+                character_details.append(f"Sex: {character_info.sex}")
+            if character_info.gender:
+                character_details.append(f"Gender: {character_info.gender}")
+            if character_info.sexualPreference:
                 character_details.append(
-                    f"Sexual Preference: {request.sexualPreference}")
-            if request.age and request.age > 0:
-                character_details.append(f"Age: {request.age}")
-            if request.physicalAppearance:
+                    f"Sexual Preference: {character_info.sexualPreference}")
+            if character_info.age and character_info.age > 0:
+                character_details.append(f"Age: {character_info.age}")
+            if character_info.physicalAppearance:
                 character_details.append(
-                    f"Physical Appearance: {request.physicalAppearance}")
-            if request.usualClothing:
+                    f"Physical Appearance: {character_info.physicalAppearance}")
+            if character_info.usualClothing:
                 character_details.append(
-                    f"Usual Clothing: {request.usualClothing}")
-            if request.personality:
-                character_details.append(f"Personality: {request.personality}")
-            if request.motivations:
-                character_details.append(f"Motivations: {request.motivations}")
-            if request.fears:
-                character_details.append(f"Fears: {request.fears}")
-            if request.relationships:
+                    f"Usual Clothing: {character_info.usualClothing}")
+            if character_info.personality:
+                character_details.append(f"Personality: {character_info.personality}")
+            if character_info.motivations:
+                character_details.append(f"Motivations: {character_info.motivations}")
+            if character_info.fears:
+                character_details.append(f"Fears: {character_info.fears}")
+            if character_info.relationships:
                 character_details.append(
-                    f"Relationships: {request.relationships}")
+                    f"Relationships: {character_info.relationships}")
 
             character_summary = "\n".join(character_details)
 

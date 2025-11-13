@@ -529,17 +529,7 @@ export interface GenerateCharacterDetailsResponse {
 }
 
 export interface RegenerateBioRequest {
-  name: string;
-  sex?: string;
-  gender?: string;
-  sexualPreference?: string;
-  age?: number;
-  physicalAppearance?: string;
-  usualClothing?: string;
-  personality?: string;
-  motivations?: string;
-  fears?: string;
-  relationships?: string;
+  character_info: CharacterInfo;
   request_context?: RequestContext;
   context_processing_config?: Record<string, any>;
 }
