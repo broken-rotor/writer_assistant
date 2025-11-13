@@ -82,18 +82,18 @@ class SystemPrompts(BaseModel):
 
 # Character Models
 class CharacterInfo(BaseModel):
-    name: str
-    basicBio: str
-    sex: str = ""
-    gender: str = ""
-    sexualPreference: str = ""
-    age: int = 0
-    physicalAppearance: str = ""
-    usualClothing: str = ""
-    personality: str = ""
-    motivations: str = ""
-    fears: str = ""
-    relationships: str = ""
+    name: str = Field(description="Character name")
+    basicBio: str = Field(description="Character basic biography")
+    sex: str = Field(default="", description="Character sex")
+    gender: str = Field(default="", description="Character gender identity")
+    sexualPreference: str = Field(default="", description="Character sexual preference")
+    age: int = Field(default=0, description="Character age")
+    physicalAppearance: str = Field(default="", description="Character physical appearance")
+    usualClothing: str = Field(default="", description="Character usual clothing")
+    personality: str = Field(default="", description="Character personality traits")
+    motivations: str = Field(default="", description="Character motivations")
+    fears: str = Field(default="", description="Character fears")
+    relationships: str = Field(default="", description="Character relationships")
 
 
 class ChapterInfo(BaseModel):
@@ -450,23 +450,8 @@ class GenerateCharacterDetailsResponse(BaseModel):
 
 # Regenerate Bio Request/Response
 class RegenerateBioRequest(BaseModel):
-    # Character details to summarize into bio
-    name: str = Field(description="Character name")
-    sex: str = Field(default="", description="Character sex")
-    gender: str = Field(default="", description="Character gender identity")
-    sexualPreference: str = Field(default="",
-                                  description="Character sexual preference")
-    age: int = Field(default=0, description="Character age")
-    physicalAppearance: str = Field(
-        default="", description="Character physical appearance")
-    usualClothing: str = Field(default="",
-                               description="Character usual clothing")
-    personality: str = Field(default="",
-                             description="Character personality traits")
-    motivations: str = Field(default="", description="Character motivations")
-    fears: str = Field(default="", description="Character fears")
-    relationships: str = Field(default="",
-                               description="Character relationships")
+    # Character information to summarize into bio
+    character_info: CharacterInfo = Field(description="Character information to generate bio from")
 
     # Context fields (optional for bio regeneration)
     request_context: Optional[RequestContext] = Field(

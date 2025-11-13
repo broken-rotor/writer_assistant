@@ -9,6 +9,7 @@ import { PlotOutlineContextService } from './plot-outline-context.service';
 import {
   Story,
   Character,
+  CharacterInfo,
   Rater,
   GenerateChapterResponse,
   ModifyChapterRequest,
@@ -155,8 +156,10 @@ export class GenerationService {
     // Use the new RequestContext transformation
     const requestContext = transformToRequestContext(story);
 
-    const request: RegenerateBioRequest = {
+    // Create CharacterInfo from Character
+    const characterInfo: CharacterInfo = {
       name: character.name,
+      basicBio: character.basicBio,
       sex: character.sex,
       gender: character.gender,
       sexualPreference: character.sexualPreference,
@@ -166,7 +169,11 @@ export class GenerationService {
       personality: character.personality,
       motivations: character.motivations,
       fears: character.fears,
-      relationships: character.relationships,
+      relationships: character.relationships
+    };
+
+    const request: RegenerateBioRequest = {
+      character_info: characterInfo,
       request_context: requestContext
     };
 
