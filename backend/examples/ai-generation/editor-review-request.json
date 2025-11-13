@@ -1,0 +1,159 @@
+{
+  "endpoint": "POST /api/v1/editor-review",
+  "description": "Get comprehensive editorial review and feedback for story content",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/editor-review",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Provide professional editorial feedback focusing on narrative structure, pacing, and character development.",
+            "assistant_prompt": "As the Editor Agent, provide constructive feedback on story quality, consistency, and reader engagement."
+          },
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person limited",
+            "target_audience": "young adult"
+          }
+        },
+        "worldbuilding": {
+          "content": "Eldoria is a magical realm where floating cities drift among the clouds, powered by ancient crystal technology. The Crystal Caverns contain naturally occurring magical crystals protected by ancient guardians.",
+          "key_elements": [
+            {
+              "type": "location",
+              "name": "Crystal Caverns",
+              "description": "Ancient underground caverns with mystical guardians that test worthiness",
+              "importance": "high"
+            }
+          ]
+        },
+        "characters": [
+          {
+            "id": "char_aria_001",
+            "name": "Aria Moonwhisper",
+            "basic_bio": "A 19-year-old novice mage central to an ancient prophecy",
+            "personality": "Determined but struggles with self-doubt. Protective and compassionate.",
+            "motivations": "To master her magical abilities and fulfill the prophecy",
+            "fears": "Losing control of her magic, failing those who depend on her",
+            "current_state": {
+              "emotion": "determined but anxious",
+              "location": "Crystal Caverns",
+              "health": "good",
+              "magical_energy": "focused"
+            },
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "chapters": [
+          {
+            "id": "chapter_002",
+            "number": 2,
+            "title": "Into the Crystal Caverns",
+            "content": "Aria stood before the crystal guardian, her heart pounding as the ancient being's eyes seemed to peer into her very soul. The guardian's voice echoed through the chamber like grinding stone. 'You seek the shard,' it intoned, 'but are you worthy of its power?'\n\nThe trial chamber around them began to shift and change, crystalline walls rearranging themselves into new configurations. Aria felt a chill run down her spine as she realized this was no ordinary test.\n\n'I... I believe I am,' she managed to say, though her voice trembled slightly. 'The prophecy chose me for a reason.'\n\nThe guardian's faceted eyes seemed to gleam with ancient wisdom. 'Belief is not enough, young mage. You must prove it.' With a gesture of its crystalline hand, the chamber filled with swirling mists that began to take shape around Aria.\n\nSuddenly, she was no longer in the cavern but standing in her childhood village as it burned around her. The screams of her neighbors filled the air, and she could see dark figures moving through the smoke. Her parents' house was already engulfed in flames.\n\n'No!' she cried out, reaching toward the burning building. 'This isn't real!'\n\n'Isn't it?' the guardian's voice whispered in her mind. 'This is what awaits if you fail. This is the price of weakness.'\n\nAria closed her eyes, forcing herself to remember Theron's teachings. 'Fear is the enemy of clarity,' she whispered to herself. 'I won't let it control me.'\n\nWhen she opened her eyes, the vision had changed. Now she stood in a great hall where she sat upon a throne of crystal, her eyes blazing with power. Before her knelt her friends - Theron, Kira, and others - their faces filled with terror.\n\n'You could rule them all,' a voice whispered. 'The crystals could give you that power. Why settle for being their protector when you could be their master?'\n\nAria felt the temptation wash over her, the intoxicating promise of absolute power. For a moment, she imagined what it would be like to never feel helpless again, to never have to worry about failing those she loved because she would control everything.\n\nBut then she saw Kira's face, twisted with fear and betrayal, and her heart broke. 'No,' she said firmly. 'I won't become the very thing I'm fighting against. Power without compassion is just tyranny.'\n\nThe vision shattered like glass, and she was back in the trial chamber. The guardian studied her for a long moment, its ancient features unreadable.\n\n'You have faced temptation and chosen wisdom over power,' it said finally. 'You have shown that you understand the true burden of the crystals. The first shard is yours, Aria Moonwhisper. Use it well.'\n\nAs the crystal shard materialized in her palm, warm and pulsing with gentle light, Aria felt not just relief but a profound sense of responsibility. She was no longer just a frightened girl from a small village. She was becoming something more - someone who could bear the weight of destiny without being crushed by it.",
+            "plot_point": "Aria faces the guardian's trial and claims the first crystal shard",
+            "word_count": 547,
+            "created": "2024-01-15T18:00:00Z",
+            "last_modified": "2024-01-15T18:30:00Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 1,
+          "total_chapters": 2,
+          "processing_hints": {
+            "priority_characters": ["Aria Moonwhisper"],
+            "current_arc": "trials_phase",
+            "narrative_focus": "character development and moral choices"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 4000,
+        "priority_filtering": true,
+        "character_focus": null,
+        "optimization_level": "moderate",
+        "preserve_recent_content": true,
+        "include_feedback_history": true,
+        "editorial_focus": true
+      }
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "phase": "analyzing",
+        "message": "Analyzing story structure and content quality...",
+        "progress": 30
+      },
+      {
+        "type": "result",
+        "data": {
+          "editorial_review": {
+            "overall_assessment": {
+              "score": 8.2,
+              "summary": "Strong character development and moral complexity with effective use of trials and temptation. The pacing builds tension well, though some transitions could be smoother.",
+              "strengths": [
+                "Compelling character arc showing growth from fear to responsibility",
+                "Effective use of moral dilemmas to reveal character",
+                "Good balance of action and introspection",
+                "Strong thematic elements around power and responsibility"
+              ],
+              "areas_for_improvement": [
+                "Some dialogue feels slightly formal for a 19-year-old protagonist",
+                "The transition between visions could be smoother",
+                "More sensory details could enhance immersion"
+              ]
+            },
+            "structural_analysis": {
+              "pacing": {
+                "score": 7.8,
+                "feedback": "Good build-up of tension through the trial sequence. The pacing accelerates appropriately during the visions but could benefit from more breathing room between major revelations."
+              },
+              "character_development": {
+                "score": 9.1,
+                "feedback": "Excellent character growth arc. Aria's internal struggle feels authentic and her moral choices are well-motivated. The progression from fear to wisdom is compelling."
+              },
+              "dialogue": {
+                "score": 7.5,
+                "feedback": "Dialogue serves the story well but could be more age-appropriate for Aria. The guardian's speech is appropriately formal and ancient-sounding."
+              }
+            },
+            "specific_suggestions": [
+              {
+                "category": "dialogue",
+                "location": "Line: 'I... I believe I am'",
+                "suggestion": "Consider more colloquial language: 'I... I think so' or 'I hope I am' to better reflect her age and uncertainty",
+                "priority": "medium"
+              }
+            ]
+          },
+          "metadata": {
+            "review_completed_at": "2024-01-15T20:45:00Z",
+            "review_type": "comprehensive",
+            "processing_time_ms": 4231
+          }
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "Provides comprehensive editorial feedback on story structure and quality",
+    "Analyzes pacing, character development, dialogue, and plot progression",
+    "Includes specific suggestions with priority levels and locations",
+    "context_processing_config should use editorial_focus settings",
+    "Useful for getting professional-level feedback on story content"
+  ]
+}

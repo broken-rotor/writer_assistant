@@ -1,0 +1,113 @@
+{
+  "endpoint": "POST /api/v1/flesh-out",
+  "description": "Expand brief content or outlines into detailed, fully-developed text",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/flesh-out",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "briefContent": "Kira infiltrates the Shadow Council's fortress. She discovers their plan to corrupt the remaining crystal shards. She barely escapes with crucial information.",
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Expand brief content into rich, detailed narrative while maintaining story consistency.",
+            "assistant_prompt": "Transform outline points into engaging, fully-developed scenes with vivid descriptions and character development."
+          },
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person limited",
+            "target_audience": "young adult",
+            "expansion_level": "detailed"
+          }
+        },
+        "characters": [
+          {
+            "id": "char_kira_001",
+            "name": "Kira Swiftblade",
+            "basic_bio": "A 23-year-old rogue and scout, Aria's loyal friend and companion",
+            "personality": "Quick-witted, stealthy, fiercely loyal. Uses humor to mask deeper concerns. Excellent at reading people and situations.",
+            "motivations": "To protect Aria and help her succeed in the prophecy",
+            "fears": "Being unable to protect her friends, being discovered during missions",
+            "skills": ["stealth", "lockpicking", "acrobatics", "information gathering"],
+            "current_state": {
+              "emotion": "focused and determined",
+              "location": "approaching Shadow Council fortress",
+              "health": "good",
+              "equipment": "stealth gear, lockpicks, daggers"
+            },
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 1,
+          "processing_hints": {
+            "priority_characters": ["Kira Swiftblade"],
+            "current_arc": "intelligence_gathering",
+            "narrative_focus": "stealth action and discovery"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 3000,
+        "priority_filtering": true,
+        "character_focus": ["Kira Swiftblade"],
+        "optimization_level": "light",
+        "preserve_recent_content": true,
+        "expansion_focus": true
+      }
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "phase": "analyzing",
+        "message": "Analyzing brief content for expansion opportunities...",
+        "progress": 25
+      },
+      {
+        "type": "result",
+        "data": {
+          "fleshedOutText": "The Shadow Council's fortress loomed before Kira like a wound in reality itself, its twisted spires clawing at the perpetually dark sky of the Shadow Realm. She crouched behind a jagged outcropping of obsidian, her heart steady despite the oppressive atmosphere that seemed to drain hope from the very air.\n\n'Just another job,' she whispered to herself, though they both knew this was far from routine. The fortress was a maze of dark stone and corrupted crystal, its walls pulsing with malevolent energy that made her skin crawl.\n\nKira waited for the patrol of shadow wraiths to pass, their ethereal forms gliding silently along the ramparts. When the way was clear, she sprinted across the open ground, her soft-soled boots making no sound on the volcanic glass that served as the fortress's foundation.\n\nThe outer wall presented the first challenge. Unlike normal stone, this barrier was alive with dark magic, shifting and writhing as if it were made of liquid shadow. Kira pulled out a small vial of blessed silver dust—one of Theron's concoctions—and sprinkled it along the wall. Where the dust touched, the shadow-stone solidified just long enough for her to drive in her climbing spikes.\n\nThe ascent was treacherous. Twice the wall tried to engulf her spikes, and once a tendril of shadow wrapped around her ankle, nearly pulling her into the writhing mass. But Kira had been climbing since she could walk, and fear only sharpened her focus.\n\nInside the fortress, the air thrummed with dark power. Kira moved through corridors lit by sickly green flames, avoiding the regular patrols of corrupted guards. Her destination was the central tower, where intelligence suggested the Council held their most important meetings.\n\nThe tower's spiral staircase was a nightmare of shifting shadows and whispered threats, but Kira pressed on. At the top, she found what she was looking for: a chamber where three hooded figures stood around a table covered in crystal shards.\n\nBut these weren't the pure, clear crystals she knew from Eldoria. These shards pulsed with dark veins, their light twisted into something hungry and malevolent. As she watched from her hiding spot in the rafters, one of the Council members lifted a shard and spoke in a voice like grinding bone.\n\n'The corruption spreads faster than anticipated,' the figure said. 'Soon, every crystal in Eldoria will carry our taint. When the girl tries to use them, she'll become our greatest weapon instead of our greatest threat.'\n\nKira's blood ran cold. They weren't just trying to steal the crystals—they were poisoning them, turning Aria's own power against her. She had to get this information back to her friends, but first she needed to learn more.\n\nShe shifted position to hear better, but her foot slipped on the ancient beam. A small piece of wood fell, landing with a soft thud on the chamber floor.\n\nThe three figures froze. Then, as one, they turned their hooded faces upward.\n\n'We have a visitor,' one hissed.\n\nKira didn't wait to see what they would do. She dropped from the rafters, rolled to absorb the impact, and sprinted for the window. Behind her, she heard the Council members shouting orders, and the fortress began to come alive with the sound of pursuit.\n\nThe window led to a narrow ledge that ran around the tower's exterior. Kira ran along it without hesitation, her years of rooftop chases in Eldoria's cities serving her well. When she reached the tower's base, she leaped to the fortress wall, using her momentum to carry her over the battlements.\n\nThe drop to the ground was farther than she'd hoped, and she landed hard, rolling to distribute the impact. Pain shot through her shoulder, but she forced herself to keep moving. Behind her, the fortress erupted with activity as guards poured out to search for the intruder.\n\nKira ran into the twisted landscape of the Shadow Realm, using every trick she knew to lose her pursuers. She doubled back, climbed impossible surfaces, and even hid in a pool of liquid shadow that burned her skin but concealed her from the searching wraiths.\n\nBy the time she reached the dimensional rift that would take her back to Eldoria, she was exhausted, injured, and terrified. But she was alive, and more importantly, she carried information that could save them all.\n\nAs she stepped through the rift and felt the clean air of her own world fill her lungs, Kira allowed herself a grim smile. Aria needed to know what she'd discovered, and they needed to find a way to purify the crystals before it was too late.\n\nThe Shadow Council thought they were clever, but they'd underestimated the determination of a rogue who would do anything to protect her friends.",
+          "wordCount": 847,
+          "expansion_details": {
+            "original_length": 28,
+            "expanded_length": 847,
+            "expansion_ratio": 30.25,
+            "elements_added": [
+              "Detailed fortress description and atmosphere",
+              "Kira's infiltration techniques and skills",
+              "Specific discovery about crystal corruption",
+              "Tense escape sequence with multiple obstacles",
+              "Character development showing Kira's loyalty and determination"
+            ]
+          },
+          "metadata": {
+            "expanded_at": "2024-01-15T21:15:00Z",
+            "expansion_type": "scene_development",
+            "focus_character": "Kira Swiftblade",
+            "processing_time_ms": 2934
+          }
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "Transforms brief outlines into fully-developed narrative scenes",
+    "Maintains character consistency and story continuity",
+    "Adds rich descriptions, dialogue, and character development",
+    "context_processing_config should use expansion_focus settings",
+    "Useful for developing detailed scenes from plot outlines"
+  ]
+}

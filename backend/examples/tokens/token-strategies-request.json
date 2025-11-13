@@ -1,0 +1,156 @@
+{
+  "endpoint": "GET /api/v1/tokens/strategies",
+  "description": "Get available token counting strategies and their characteristics",
+  "request": {
+    "method": "GET",
+    "url": "/api/v1/tokens/strategies",
+    "headers": {
+      "Accept": "application/json"
+    }
+  },
+  "response_example": {
+    "strategies": [
+      {
+        "name": "exact",
+        "display_name": "Exact Count",
+        "description": "Precise token count using the actual tokenizer. Most accurate but slower.",
+        "characteristics": {
+          "accuracy": "highest",
+          "speed": "slowest",
+          "overhead": "none",
+          "use_case": "Final validation and critical measurements"
+        },
+        "typical_performance": {
+          "tokens_per_second": 15000,
+          "memory_usage": "low",
+          "cpu_usage": "moderate"
+        }
+      },
+      {
+        "name": "estimated",
+        "display_name": "Estimated Count",
+        "description": "Fast estimation using statistical approximation. Good balance of speed and accuracy.",
+        "characteristics": {
+          "accuracy": "high",
+          "speed": "fast",
+          "overhead": "small",
+          "use_case": "Real-time UI updates and quick validation"
+        },
+        "typical_performance": {
+          "tokens_per_second": 50000,
+          "memory_usage": "very_low",
+          "cpu_usage": "low"
+        },
+        "estimation_details": {
+          "method": "statistical_approximation",
+          "average_accuracy": "95-98%",
+          "overhead_tokens": 50,
+          "confidence_interval": "±2%"
+        }
+      },
+      {
+        "name": "conservative",
+        "display_name": "Conservative Count",
+        "description": "Adds safety buffer to estimated count. Ensures you stay within limits.",
+        "characteristics": {
+          "accuracy": "high_with_buffer",
+          "speed": "fast",
+          "overhead": "moderate",
+          "use_case": "Context budget management and safe planning"
+        },
+        "typical_performance": {
+          "tokens_per_second": 48000,
+          "memory_usage": "very_low",
+          "cpu_usage": "low"
+        },
+        "buffer_details": {
+          "base_method": "estimated",
+          "safety_buffer": "10-15%",
+          "minimum_buffer": 100,
+          "maximum_buffer": 500
+        }
+      },
+      {
+        "name": "optimistic",
+        "display_name": "Optimistic Count",
+        "description": "Reduces estimated count slightly. Maximizes available context space.",
+        "characteristics": {
+          "accuracy": "moderate",
+          "speed": "fastest",
+          "overhead": "negative",
+          "use_case": "Maximizing content when space is tight"
+        },
+        "typical_performance": {
+          "tokens_per_second": 52000,
+          "memory_usage": "very_low",
+          "cpu_usage": "very_low"
+        },
+        "optimization_details": {
+          "base_method": "estimated",
+          "reduction_factor": "5-8%",
+          "minimum_reduction": 25,
+          "maximum_reduction": 200,
+          "risk_level": "low"
+        }
+      }
+    ],
+    "recommendations": {
+      "real_time_ui": {
+        "primary": "estimated",
+        "fallback": "optimistic",
+        "reason": "Balance of speed and accuracy for responsive interfaces"
+      },
+      "context_planning": {
+        "primary": "conservative",
+        "fallback": "estimated",
+        "reason": "Safety buffer prevents context overflow errors"
+      },
+      "final_validation": {
+        "primary": "exact",
+        "fallback": "conservative",
+        "reason": "Highest accuracy for critical measurements"
+      }
+    },
+    "performance_comparison": {
+      "small_text": {
+        "text_size": "< 1000 characters",
+        "exact": "~0.1ms",
+        "estimated": "~0.02ms",
+        "conservative": "~0.02ms",
+        "optimistic": "~0.02ms"
+      },
+      "medium_text": {
+        "text_size": "1000-10000 characters", 
+        "exact": "~1.5ms",
+        "estimated": "~0.2ms",
+        "conservative": "~0.2ms",
+        "optimistic": "~0.2ms"
+      },
+      "large_text": {
+        "text_size": "> 10000 characters",
+        "exact": "~15ms",
+        "estimated": "~2ms",
+        "conservative": "~2ms",
+        "optimistic": "~2ms"
+      }
+    },
+    "metadata": {
+      "total_strategies": 4,
+      "default_strategy": "estimated",
+      "tokenizer_info": {
+        "model": "llama-cpp-python",
+        "vocabulary_size": 32000,
+        "supports_batch": true
+      },
+      "last_updated": "2024-01-15T22:00:00Z"
+    }
+  },
+  "notes": [
+    "This is a GET endpoint with no parameters required",
+    "Returns comprehensive information about available token counting strategies",
+    "Includes performance characteristics and use case recommendations",
+    "Accuracy percentages are typical values and may vary by content type",
+    "Performance timings are approximate and depend on system resources",
+    "Use this endpoint to choose the best strategy for your use case"
+  ]
+}

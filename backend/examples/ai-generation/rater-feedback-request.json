@@ -1,0 +1,183 @@
+{
+  "endpoint": "POST /api/v1/rater-feedback",
+  "description": "Get quality ratings and detailed feedback from specialized rater agents",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/rater-feedback",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Provide objective quality ratings and constructive feedback to improve story content.",
+            "assistant_prompt": "As the Rater Agent, evaluate content quality across multiple dimensions with specific scores and actionable feedback."
+          },
+          "raters": [
+            {
+              "id": "character_consistency",
+              "name": "Character Consistency Rater",
+              "system_prompt": "Evaluate how well characters maintain their established personalities, motivations, and speech patterns throughout the story.",
+              "enabled": true
+            },
+            {
+              "id": "plot_coherence",
+              "name": "Plot Coherence Rater", 
+              "system_prompt": "Assess the logical flow of events, cause-and-effect relationships, and overall plot structure.",
+              "enabled": true
+            },
+            {
+              "id": "world_building",
+              "name": "World Building Rater",
+              "system_prompt": "Evaluate the consistency and depth of world-building elements, magic systems, and setting details.",
+              "enabled": true
+            },
+            {
+              "id": "prose_quality",
+              "name": "Prose Quality Rater",
+              "system_prompt": "Rate the quality of writing style, sentence structure, word choice, and overall readability.",
+              "enabled": true
+            }
+          ]
+        },
+        "characters": [
+          {
+            "id": "char_aria_001",
+            "name": "Aria Moonwhisper",
+            "basic_bio": "A 19-year-old novice mage central to an ancient prophecy about crystal shards",
+            "personality": "Determined but struggles with self-doubt. Protective and compassionate. Can be impulsive when others are threatened.",
+            "motivations": "To master her magical abilities, protect her friends, and fulfill the prophecy without losing herself to power",
+            "fears": "Losing control of her magic, failing those who depend on her, becoming corrupted by the crystal shards' power",
+            "speech_patterns": "Speaks with determination but occasional uncertainty. Uses simple, direct language appropriate for her age.",
+            "current_state": {
+              "emotion": "determined but anxious about the trial",
+              "location": "Crystal Caverns trial chamber",
+              "health": "good",
+              "magical_energy": "focused and building"
+            },
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "chapters": [
+          {
+            "id": "chapter_002",
+            "number": 2,
+            "title": "Into the Crystal Caverns",
+            "content": "Aria stood before the crystal guardian, her heart hammering against her ribs. The towering figure of living crystal and ancient magic seemed to peer straight through to her soul with its faceted eyes.\n\n'You seek the shard,' the guardian intoned, its voice like the grinding of stone against stone. 'Many have tried. Most have failed. Some have died. Do you still wish to proceed?'\n\nAria's mouth went dry, but she forced herself to nod. 'I do. The prophecy chose me, and I won't run from my destiny.'\n\n'Very well.' The guardian gestured to a jagged crystal formation that pulsed with ominous red light. 'Touch the trial crystal and face what lies within. But know this—the crystal will show you your deepest fears, your greatest failures, your darkest potential. Are you prepared to see who you truly are?'\n\nAria's hands trembled as she approached the crystal. What if she wasn't strong enough? What if the prophecy was wrong? But she had come too far to turn back now.\n\n'I have to try,' she whispered, more to herself than to the guardian.\n\nThe moment her fingers touched the crystal's surface, agony lanced through her mind. Visions crashed over her like a tidal wave—her village burning while she stood frozen in terror, her friends screaming her name as shadow creatures dragged them into darkness, her own hands crackling with uncontrolled magic as she accidentally destroyed everything she touched.\n\n'This is what awaits if you fail,' the guardian's voice echoed in her mind. 'Show me you are different. Show me you can choose sacrifice over safety, others over yourself.'\n\nThe visions shifted. Now she saw herself with all the crystal shards, drunk on their power, her violet eyes blazing with cruel light as she ruled over a kingdom of fear. She saw Theron kneeling before her, broken and defeated. She saw Kira's lifeless body at her feet.\n\n'I won't become this!' Aria screamed, pouring all her will into rejecting the dark visions. 'I choose to protect, not to dominate!'\n\nThe crystal's grip loosened, but the test wasn't over. A final vision formed—the Shadow Council had captured Kira and Theron. She could save them, but only by abandoning her quest for the remaining shards. The choice was hers: her friends' lives, or the fate of the realm.\n\nTears streamed down Aria's face as she wrestled with the impossible decision. Then she heard Theron's voice in her memory: 'Sometimes the greatest courage is trusting others to be brave too.'\n\n'I trust them,' she whispered. 'I trust them to survive, to fight, to find another way. And I trust myself to find a path that saves everyone.'\n\nThe visions shattered like glass. Aria collapsed to her knees, gasping and shaking, but the crystal's malevolent glow had faded to a gentle blue light.\n\nThe guardian studied her for a long moment. 'You have faced your fears and chosen wisdom over easy answers. You have shown that power serves you, not the reverse. The shard is yours, young mage. Use it well.'\n\nAs the crystal shard materialized in her palm, warm and reassuring, Aria felt not just relief but a profound change within herself. She was no longer the frightened girl who had entered the caverns. She was becoming who she was meant to be.",
+            "plot_point": "Aria faces the guardian's trial and claims the first crystal shard",
+            "word_count": 612,
+            "created": "2024-01-15T18:00:00Z",
+            "last_modified": "2024-01-15T18:30:00Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 1,
+          "total_chapters": 2,
+          "processing_hints": {
+            "priority_characters": ["Aria Moonwhisper"],
+            "current_arc": "trials_phase",
+            "narrative_focus": "character development and moral choices"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 4500,
+        "priority_filtering": true,
+        "character_focus": null,
+        "optimization_level": "moderate",
+        "preserve_recent_content": true,
+        "include_feedback_history": false,
+        "rater_focus": true
+      }
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "phase": "initializing",
+        "message": "Initializing rater agents...",
+        "progress": 15
+      },
+      {
+        "type": "result",
+        "data": {
+          "rater_feedback": {
+            "overall_score": 8.4,
+            "overall_summary": "Strong character-driven scene with effective use of moral dilemmas and character growth. The trial structure provides good framework for development, though some areas could benefit from refinement.",
+            "individual_ratings": [
+              {
+                "rater_id": "character_consistency",
+                "rater_name": "Character Consistency Rater",
+                "score": 9.2,
+                "feedback": "Excellent character consistency. Aria's behavior throughout the trial aligns perfectly with her established personality - determined but self-doubting, protective of others, and morally grounded. Her speech patterns remain age-appropriate and authentic. The progression from fear to wisdom feels natural and earned.",
+                "specific_observations": [
+                  "Aria's initial trembling and self-doubt consistent with established character",
+                  "Her protective instincts driving moral choices aligns with personality",
+                  "Speech patterns remain authentic to a 19-year-old under stress",
+                  "Character growth feels organic rather than forced"
+                ],
+                "suggestions": [
+                  "Consider adding more of her impulsive tendencies when friends are threatened",
+                  "Could show more of her magical inexperience during the trial"
+                ]
+              },
+              {
+                "rater_id": "plot_coherence",
+                "rater_name": "Plot Coherence Rater",
+                "score": 8.7,
+                "feedback": "Strong plot coherence with clear cause-and-effect relationships. The trial structure is logical and the escalating challenges make sense. The moral dilemmas are well-integrated into the plot progression. The resolution feels earned based on Aria's choices.",
+                "specific_observations": [
+                  "Trial structure follows logical progression from fear to temptation to sacrifice",
+                  "Each vision builds on the previous one effectively",
+                  "Guardian's final judgment directly relates to Aria's demonstrated choices",
+                  "Stakes are clear and consequences feel real"
+                ],
+                "suggestions": [
+                  "Could benefit from more setup about what the trial specifically tests",
+                  "The transition between visions could be smoother"
+                ]
+              }
+            ],
+            "improvement_priorities": [
+              {
+                "priority": "high",
+                "area": "sensory_details",
+                "description": "Add more sensory details during vision transitions and cavern descriptions to enhance immersion"
+              },
+              {
+                "priority": "medium", 
+                "area": "pacing",
+                "description": "Smooth out transitions between different trial phases for better flow"
+              }
+            ]
+          },
+          "metadata": {
+            "rating_completed_at": "2024-01-15T21:00:00Z",
+            "raters_used": 4,
+            "total_criteria_evaluated": 16,
+            "content_word_count": 612,
+            "processing_time_ms": 3847
+          }
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "Provides detailed quality ratings across multiple dimensions",
+    "Each rater evaluates specific aspects (character, plot, world, prose)",
+    "Includes specific scores, observations, and improvement suggestions",
+    "context_processing_config should use rater_focus settings",
+    "Useful for objective quality assessment and targeted improvement guidance"
+  ]
+}

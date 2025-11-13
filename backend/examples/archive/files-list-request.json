@@ -1,0 +1,108 @@
+{
+  "endpoint": "GET /api/v1/archive/files",
+  "description": "List all archived story files with metadata and filtering options",
+  "request": {
+    "method": "GET",
+    "url": "/api/v1/archive/files?limit=20&offset=0&story_id=story_crystal_prophecy_001",
+    "headers": {
+      "Accept": "application/json"
+    },
+    "query_parameters": {
+      "limit": 20,
+      "offset": 0,
+      "story_id": "story_crystal_prophecy_001",
+      "file_type": null,
+      "date_from": null,
+      "date_to": null
+    }
+  },
+  "response_example": {
+    "files": [
+      {
+        "id": "file_001",
+        "filename": "crystal_prophecy_chapter_01.txt",
+        "story_id": "story_crystal_prophecy_001",
+        "story_title": "The Crystal Prophecy",
+        "file_type": "chapter",
+        "size_bytes": 15420,
+        "word_count": 2847,
+        "created_at": "2024-01-15T18:00:00Z",
+        "last_modified": "2024-01-15T18:30:00Z",
+        "metadata": {
+          "chapter_number": 1,
+          "chapter_title": "The Awakening",
+          "character_count": 3,
+          "plot_points": ["Aria discovers her magical abilities", "Meeting with Theron", "First vision of the prophecy"],
+          "tags": ["character_introduction", "prophecy_reveal", "magic_discovery"]
+        },
+        "content_preview": "Aria had always known she was different, but she never imagined how different until the night the crystals began to sing. The sound started as a whisper, barely audible above the wind that rattled her bedroom shutters..."
+      },
+      {
+        "id": "file_002", 
+        "filename": "crystal_prophecy_chapter_02.txt",
+        "story_id": "story_crystal_prophecy_001",
+        "story_title": "The Crystal Prophecy",
+        "file_type": "chapter",
+        "size_bytes": 18750,
+        "word_count": 3421,
+        "created_at": "2024-01-15T19:15:00Z",
+        "last_modified": "2024-01-15T20:45:00Z",
+        "metadata": {
+          "chapter_number": 2,
+          "chapter_title": "Into the Crystal Caverns",
+          "character_count": 2,
+          "plot_points": ["Journey to Crystal Caverns", "Meeting the guardian", "First trial completion"],
+          "tags": ["trial", "character_growth", "crystal_magic"]
+        },
+        "content_preview": "The Crystal Caverns stretched before them like the maw of some ancient beast, their walls glittering with veins of pure magical energy. Aria felt the crystals calling to her, their song growing stronger with each step..."
+      },
+      {
+        "id": "file_003",
+        "filename": "crystal_prophecy_characters.json",
+        "story_id": "story_crystal_prophecy_001", 
+        "story_title": "The Crystal Prophecy",
+        "file_type": "character_data",
+        "size_bytes": 8940,
+        "word_count": 1205,
+        "created_at": "2024-01-15T17:30:00Z",
+        "last_modified": "2024-01-15T21:00:00Z",
+        "metadata": {
+          "character_count": 4,
+          "main_characters": ["Aria Moonwhisper", "Theron Blackstone", "Kira Swiftblade"],
+          "supporting_characters": ["Lord Vex"],
+          "tags": ["character_profiles", "relationships", "backstories"]
+        },
+        "content_preview": "{\n  \"characters\": [\n    {\n      \"name\": \"Aria Moonwhisper\",\n      \"age\": 19,\n      \"role\": \"protagonist\",\n      \"personality\": \"Determined but struggles with self-doubt...\""
+      }
+    ],
+    "pagination": {
+      "total_files": 5,
+      "limit": 20,
+      "offset": 0,
+      "has_more": false
+    },
+    "summary": {
+      "total_stories": 1,
+      "total_size_bytes": 62190,
+      "total_word_count": 10863,
+      "file_types": {
+        "chapter": 2,
+        "character_data": 1,
+        "worldbuilding": 1,
+        "outline": 1
+      },
+      "date_range": {
+        "earliest": "2024-01-15T16:00:00Z",
+        "latest": "2024-01-15T21:00:00Z"
+      }
+    }
+  },
+  "notes": [
+    "This is a GET endpoint with query parameters",
+    "Supports pagination with limit and offset parameters",
+    "Can filter by story_id, file_type, and date ranges",
+    "Returns file metadata including word counts and content previews",
+    "Useful for browsing and managing archived story content",
+    "Content preview is truncated to first ~200 characters"
+  ]
+}
