@@ -1,0 +1,213 @@
+{
+  "endpoint": "POST /api/v1/generate-chapter",
+  "description": "Generate a complete chapter using LLM with structured context and SSE streaming",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/generate-chapter",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "plotPoint": "Aria enters the Crystal Caverns and encounters the first guardian, who tests her worthiness to claim the crystal shard",
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Maintain consistency with the established world of Eldoria and its characters. Focus on rich descriptions, emotional depth, and advancing the plot meaningfully.",
+            "assistant_prompt": "As the Writer Agent, create engaging narrative content that balances action, dialogue, and character development. Use vivid imagery and maintain the epic fantasy tone.",
+            "editor_prompt": "As the Editor Agent, provide constructive feedback on narrative flow, character consistency, pacing, and overall story quality."
+          },
+          "raters": [
+            {
+              "id": "character_consistency",
+              "name": "Character Consistency Rater",
+              "system_prompt": "Evaluate how well characters maintain their established personalities, motivations, and speech patterns.",
+              "enabled": true
+            }
+          ],
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person limited",
+            "target_audience": "young adult",
+            "chapter_length": "2500-3000 words"
+          }
+        },
+        "worldbuilding": {
+          "content": "Eldoria is a magical realm where floating cities drift among the clouds, powered by ancient crystal technology. The Crystal Caverns beneath Mount Aethermoor contain naturally occurring magical crystals and are protected by ancient guardians.",
+          "chat_history": [],
+          "key_elements": [
+            {
+              "type": "location",
+              "name": "Crystal Caverns",
+              "description": "Ancient underground caverns filled with naturally occurring magical crystals, protected by mystical guardians",
+              "importance": "high"
+            }
+          ]
+        },
+        "characters": [
+          {
+            "id": "char_aria_001",
+            "name": "Aria Moonwhisper",
+            "basic_bio": "A 19-year-old novice mage who discovers she is central to an ancient prophecy about crystal shards.",
+            "age": 19,
+            "physical_appearance": "Petite with long silver hair that shimmers with inner light, violet eyes that glow when using magic",
+            "personality": "Determined and compassionate, but struggles with self-doubt. Protective of friends.",
+            "current_state": {
+              "emotion": "nervous but determined",
+              "location": "entrance to Crystal Caverns",
+              "health": "good",
+              "magical_energy": "full"
+            },
+            "goals": [
+              "Prove herself worthy to the crystal guardian",
+              "Claim the first crystal shard",
+              "Overcome her self-doubt"
+            ],
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          },
+          {
+            "id": "char_theron_001",
+            "name": "Theron Blackstone",
+            "basic_bio": "A 45-year-old former court wizard who serves as Aria's mentor.",
+            "age": 45,
+            "physical_appearance": "Tall and lean with graying black hair, piercing green eyes, weathered hands",
+            "personality": "Wise and patient teacher, but haunted by past mistakes. Protective of Aria.",
+            "current_state": {
+              "emotion": "worried but supportive",
+              "location": "entrance to Crystal Caverns",
+              "health": "good",
+              "magical_energy": "conserving power"
+            },
+            "goals": [
+              "Guide Aria through the trial",
+              "Protect her from the cavern's dangers"
+            ],
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:25:45Z"
+          }
+        ],
+        "story_outline": {
+          "summary": "Aria must prove herself worthy to claim the first crystal shard from the Crystal Caverns.",
+          "status": "approved",
+          "content": "Chapter 2: Into the Crystal Caverns - Aria faces her first major test",
+          "outline_items": [
+            {
+              "id": "outline_002",
+              "type": "chapter",
+              "title": "Into the Crystal Caverns",
+              "description": "Aria's first major test as she enters the dangerous Crystal Caverns",
+              "key_plot_items": [
+                "Journey to the caverns beneath Mount Aethermoor",
+                "Encounter with the crystal guardian",
+                "Aria must prove her worth through a magical trial",
+                "Discovery of the first crystal shard"
+              ],
+              "order": 2,
+              "parent_id": null,
+              "involved_characters": ["Aria Moonwhisper", "Theron Blackstone"],
+              "status": "approved",
+              "word_count_estimate": 2800
+            }
+          ],
+          "rater_feedback": [],
+          "chat_history": []
+        },
+        "chapters": [
+          {
+            "id": "chapter_001",
+            "number": 1,
+            "title": "The Prophecy Revealed",
+            "content": "Aria discovered the ancient prophecy in the Academy's hidden archive and learned of her destiny to find the crystal shards before the Shadow Council could claim them.",
+            "plot_point": "Aria discovers the prophecy and accepts her destiny",
+            "word_count": 1247,
+            "created": "2024-01-15T12:00:00Z",
+            "last_modified": "2024-01-15T16:30:00Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "version": "1.2.0",
+          "created_at": "2024-01-15T10:00:00Z",
+          "total_characters": 2,
+          "total_chapters": 1,
+          "total_word_count": 1247,
+          "context_size_estimate": 4500,
+          "processing_hints": {
+            "priority_characters": ["Aria Moonwhisper", "Theron Blackstone"],
+            "current_arc": "trials_phase",
+            "tone_emphasis": "epic fantasy with coming-of-age elements",
+            "target_chapter_length": 2800
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": false,
+        "max_context_length": 6000,
+        "priority_filtering": false,
+        "character_focus": null,
+        "optimization_level": "none",
+        "preserve_recent_content": true,
+        "include_feedback_history": true,
+        "worldbuilding_detail_level": "full",
+        "outline_detail_level": "full"
+      }
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "phase": "context_processing",
+        "message": "Processing structured context and preparing prompts...",
+        "progress": 20
+      },
+      {
+        "type": "status", 
+        "phase": "generating",
+        "message": "Generating chapter content...",
+        "progress": 60
+      },
+      {
+        "type": "status",
+        "phase": "finalizing", 
+        "message": "Processing generated content...",
+        "progress": 90
+      },
+      {
+        "type": "result",
+        "data": {
+          "chapterText": "The entrance to the Crystal Caverns yawned before them like the mouth of some ancient beast, its depths shrouded in an ethereal blue mist that seemed to pulse with its own heartbeat...\n\n[Full chapter content would be generated here - approximately 2500-3000 words]",
+          "wordCount": 2847,
+          "context_metadata": {
+            "total_elements": 15,
+            "processing_applied": true,
+            "processing_mode": "structured",
+            "optimization_level": "none",
+            "processing_time_ms": 234.5
+          },
+          "metadata": {
+            "generatedAt": "2024-01-15T18:45:30Z",
+            "plotPoint": "Aria enters the Crystal Caverns and encounters the first guardian",
+            "contextMode": "structured",
+            "requestContextProvided": true,
+            "processingMode": "request_context"
+          }
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "The plotPoint field describes the main focus of the chapter to generate",
+    "request_context contains the complete story state and context",
+    "context_processing_config controls how the context is optimized",
+    "Response includes word count and processing metadata",
+    "Generated content maintains consistency with established characters and world"
+  ]
+}

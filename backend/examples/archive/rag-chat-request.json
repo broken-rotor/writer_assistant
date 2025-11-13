@@ -1,0 +1,70 @@
+{
+  "endpoint": "POST /api/v1/archive/rag/chat",
+  "description": "Have a conversational chat with the story archive using RAG",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/archive/rag/chat",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "messages": [
+        {
+          "role": "user",
+          "content": "Tell me about Aria Moonwhisper's character development throughout the stories."
+        },
+        {
+          "role": "assistant", 
+          "content": "Aria Moonwhisper undergoes significant growth throughout the archived stories. She begins as a hesitant novice mage at the Academy, unsure of her abilities and overwhelmed by the prophecy's implications. As she encounters various challenges, she develops greater confidence in her magical skills and learns to trust her instincts."
+        },
+        {
+          "role": "user",
+          "content": "What specific challenges helped shape her the most?"
+        }
+      ],
+      "max_context_chunks": 8,
+      "temperature": 0.8,
+      "conversation_id": "chat_aria_development_001"
+    }
+  },
+  "response_example": {
+    "response": {
+      "role": "assistant",
+      "content": "Based on the archived stories, several key challenges were pivotal in shaping Aria's character:\n\n**The Crystal Caverns Trial**: When Aria first entered the Crystal Caverns alone, she had to overcome her fear of the ancient magic and trust in her own abilities. This experience taught her that courage isn't the absence of fear, but acting despite it.\n\n**Confronting the Shadow Council**: Her first encounter with Lord Vex's agents forced her to make quick decisions under pressure and realize that the prophecy wasn't just about magical power, but about moral choices and protecting others.\n\n**The Mentor's Betrayal**: Learning about Theron's hidden past and his connection to the Shadow Council challenged her ability to trust and forced her to develop independent judgment rather than relying solely on authority figures.\n\n**Saving Kira**: When her friend was captured, Aria had to balance her personal feelings with the greater mission, learning that leadership sometimes requires difficult sacrifices.\n\nThese challenges transformed her from a reactive character who things happened to, into a proactive leader who shapes events around her."
+    },
+    "context_used": [
+      {
+        "file_name": "aria_character_arc.txt",
+        "chunk_text": "Aria's hands trembled as she approached the crystal formation, but she forced herself forward...",
+        "similarity_score": 0.94
+      },
+      {
+        "file_name": "shadow_council_encounter.txt",
+        "chunk_text": "The hooded figure stepped from the shadows, and Aria knew her peaceful days at the Academy were over...",
+        "similarity_score": 0.89
+      },
+      {
+        "file_name": "theron_revelation.txt",
+        "chunk_text": "The truth about her mentor hit Aria like a physical blow...",
+        "similarity_score": 0.86
+      }
+    ],
+    "conversation_id": "chat_aria_development_001",
+    "metadata": {
+      "chunks_retrieved": 8,
+      "chunks_used": 3,
+      "conversation_length": 3,
+      "total_context_tokens": 456,
+      "response_tokens": 234,
+      "processing_time_ms": 3124
+    }
+  },
+  "notes": [
+    "Maintains conversation context across multiple exchanges",
+    "conversation_id helps track related chat sessions",
+    "messages array includes full conversation history",
+    "Higher temperature allows for more creative responses",
+    "Context retrieval considers both current question and conversation history",
+    "Useful for exploring story themes and character development in depth"
+  ]
+}

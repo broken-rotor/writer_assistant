@@ -1,0 +1,57 @@
+{
+  "endpoint": "POST /api/v1/archive/search",
+  "description": "Search the story archive using semantic search to find relevant story sections",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/archive/search",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "query": "magical crystals with ancient power",
+      "max_results": 10,
+      "filter_file_name": null
+    }
+  },
+  "response_example": {
+    "query": "magical crystals with ancient power",
+    "results": [
+      {
+        "file_path": "/archive/stories/crystal_prophecy_v1.txt",
+        "file_name": "crystal_prophecy_v1.txt",
+        "matching_section": "The ancient crystals hummed with power that had been dormant for millennia. Each shard contained the essence of the old magic, capable of reshaping reality itself. The prophecy warned that only one pure of heart could unite them without being consumed by their overwhelming force.",
+        "chunk_index": 15,
+        "similarity_score": 0.89,
+        "char_start": 2847,
+        "char_end": 3134
+      },
+      {
+        "file_path": "/archive/stories/eldoria_chronicles.txt",
+        "file_name": "eldoria_chronicles.txt",
+        "matching_section": "The Crystal Caverns stretched deep beneath Mount Aethermoor, their walls lined with veins of pure magical crystal. Legend spoke of these formations as the heart of Eldoria's power, created when the first mages channeled their life force into the mountain itself.",
+        "chunk_index": 8,
+        "similarity_score": 0.82,
+        "char_start": 1456,
+        "char_end": 1698
+      },
+      {
+        "file_path": "/archive/stories/shadow_council_origins.txt",
+        "file_name": "shadow_council_origins.txt",
+        "matching_section": "Lord Vex discovered the forbidden texts that revealed the true nature of the crystal shards. Unlike the Academy's teachings, these ancient scrolls described the crystals as fragments of a primordial entity, each piece containing both creative and destructive potential.",
+        "chunk_index": 22,
+        "similarity_score": 0.78,
+        "char_start": 4123,
+        "char_end": 4387
+      }
+    ],
+    "total_results": 3
+  },
+  "notes": [
+    "Semantic search finds conceptually related content, not just keyword matches",
+    "similarity_score ranges from 0.0 to 1.0, higher is better",
+    "char_start and char_end indicate position in original file",
+    "filter_file_name can be used to search within specific files",
+    "max_results is capped at 50 per request",
+    "Requires ChromaDB to be configured (ARCHIVE_DB_PATH setting)"
+  ]
+}

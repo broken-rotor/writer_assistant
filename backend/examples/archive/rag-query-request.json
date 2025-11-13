@@ -1,0 +1,47 @@
+{
+  "endpoint": "POST /api/v1/archive/rag/query",
+  "description": "Ask questions about archived stories using RAG (Retrieval-Augmented Generation)",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/archive/rag/query",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "question": "What are the different types of magical crystals mentioned in the archived stories and what powers do they have?",
+      "max_context_chunks": 5,
+      "temperature": 0.7
+    }
+  },
+  "response_example": {
+    "question": "What are the different types of magical crystals mentioned in the archived stories and what powers do they have?",
+    "answer": "Based on the archived stories, there are several types of magical crystals with distinct powers:\n\n**Crystal Shards of the Prophecy**: These are fragments of an ancient primordial entity that contain both creative and destructive potential. They can reshape reality itself but require someone pure of heart to unite them safely.\n\n**Aethermoor Crystals**: Found in the Crystal Caverns beneath Mount Aethermoor, these formations are described as the heart of Eldoria's power. They were created when the first mages channeled their life force into the mountain and emit an ethereal blue light.\n\n**Shadow Crystals**: Mentioned in the Shadow Council texts, these are corrupted versions of regular crystals that have been tainted by dark magic. They amplify negative emotions and can be used to breach dimensional barriers.\n\n**Healing Crystals**: Smaller crystals used by Academy healers that can accelerate natural healing and purify magical ailments when properly attuned.\n\nEach type requires different methods of activation and carries varying degrees of risk to the user.",
+    "context_used": [
+      {
+        "file_name": "crystal_prophecy_v1.txt",
+        "chunk_text": "The ancient crystals hummed with power that had been dormant for millennia...",
+        "similarity_score": 0.91
+      },
+      {
+        "file_name": "eldoria_chronicles.txt", 
+        "chunk_text": "The Crystal Caverns stretched deep beneath Mount Aethermoor...",
+        "similarity_score": 0.87
+      }
+    ],
+    "metadata": {
+      "chunks_retrieved": 5,
+      "chunks_used": 2,
+      "total_context_tokens": 342,
+      "response_tokens": 187,
+      "processing_time_ms": 2847
+    }
+  },
+  "notes": [
+    "RAG combines semantic search with LLM generation for informed answers",
+    "max_context_chunks controls how many relevant passages to retrieve",
+    "temperature affects creativity vs accuracy of the generated response",
+    "context_used shows which archived content informed the answer",
+    "Requires both ChromaDB (archive) and LLM to be configured",
+    "Questions should be specific to get the most relevant context"
+  ]
+}
