@@ -113,6 +113,56 @@ Complex endpoints for story creation and editing:
 3. **Validate structure**: Ensure your modifications maintain the required field structure
 4. **Test with API**: Send requests to the running Writer Assistant server
 
+## Testing with the API Script
+
+A Python test script is provided to easily test any endpoint using the example files:
+
+### Setup
+```bash
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Usage
+```bash
+# Test a health endpoint
+python test_api.py health/health-check.json
+
+# Test token counting
+python test_api.py tokens/token-count-request.json
+
+# Test streaming AI generation (with custom timeout)
+python test_api.py ai-generation/generate-chapter-request.json --timeout 60
+
+# Test with custom server URL
+python test_api.py archive/search-request.json --base-url http://localhost:8000
+```
+
+### Features
+- **Automatic endpoint detection**: Recognizes streaming vs regular endpoints
+- **SSE streaming support**: Handles Server-Sent Events for AI generation endpoints
+- **Pretty output**: Formats responses with emojis and structured display
+- **Error handling**: Provides clear error messages and connection diagnostics
+- **Flexible configuration**: Supports custom base URLs and timeouts
+
+### Example Output
+```
+🧪 Testing API endpoint with: tokens/token-count-request.json
+================================================================================
+📍 Endpoint: POST /api/v1/tokens/count
+📝 Description: Count tokens for batch text inputs using different strategies
+🌊 Streaming: No
+
+🌐 Sending POST request to: http://localhost:8000/api/v1/tokens/count
+📨 Response received in 0.45s:
+🔢 Status Code: 200
+📄 Response Body: {
+  "success": true,
+  "total_tokens": 250,
+  ...
+}
+```
+
 ## Content Types for Token Counting
 
 When using token endpoints, specify appropriate content types:
