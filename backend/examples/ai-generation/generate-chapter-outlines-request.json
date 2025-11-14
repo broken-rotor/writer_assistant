@@ -1,0 +1,358 @@
+{
+  "endpoint": "POST /api/v1/generate-chapter-outlines",
+  "description": "Generate detailed chapter outlines and plot structures for story development",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/generate-chapter-outlines",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "numChapters": 5,
+      "startingChapter": 3,
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Create detailed chapter outlines that advance the plot while maintaining character development and story consistency.",
+            "assistant_prompt": "Generate compelling chapter outlines with clear plot progression, character arcs, and engaging story beats."
+          },
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person limited",
+            "target_audience": "young adult",
+            "outline_detail_level": "comprehensive"
+          }
+        },
+        "worldbuilding": {
+          "content": "Eldoria is a magical realm where floating cities drift among the clouds, powered by ancient crystal technology. The Crystal Caverns contain naturally occurring magical crystals protected by ancient guardians. The Shadow Council seeks to corrupt these crystals for dark purposes.",
+          "key_elements": [
+            {
+              "type": "location",
+              "name": "Sunken City of Aquatica",
+              "description": "An underwater ruins where the second crystal shard is hidden, guarded by water elementals",
+              "importance": "high"
+            },
+            {
+              "type": "organization",
+              "name": "Shadow Council",
+              "description": "Dark organization seeking to corrupt the crystal shards and use them to control Eldoria",
+              "importance": "high"
+            }
+          ]
+        },
+        "characters": [
+          {
+            "id": "char_aria_001",
+            "name": "Aria Moonwhisper",
+            "basic_bio": "A 19-year-old novice mage central to an ancient prophecy about crystal shards",
+            "personality": "Determined but struggles with self-doubt. Protective and compassionate.",
+            "motivations": "To master her magical abilities and fulfill the prophecy",
+            "fears": "Losing control of her magic, failing those who depend on her",
+            "current_state": {
+              "emotion": "confident after first trial success",
+              "location": "traveling toward Aquatica",
+              "health": "good",
+              "magical_energy": "growing stronger"
+            },
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          },
+          {
+            "id": "char_kira_001",
+            "name": "Kira Swiftblade",
+            "basic_bio": "A 23-year-old rogue and scout, Aria's loyal friend and companion",
+            "personality": "Quick-witted, stealthy, fiercely loyal. Uses humor to mask deeper concerns.",
+            "motivations": "To protect Aria and help her succeed in the prophecy",
+            "fears": "Being unable to protect her friends, being discovered during missions",
+            "current_state": {
+              "emotion": "alert and protective",
+              "location": "traveling with Aria",
+              "health": "excellent",
+              "equipment": "twin daggers, lockpicks, climbing gear"
+            },
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "story_outline": {
+          "main_plot": "Aria must collect five crystal shards to fulfill an ancient prophecy and prevent the Shadow Council from plunging Eldoria into darkness",
+          "current_arc": "The Trials of the Shards",
+          "completed_events": [
+            "Aria discovers her magical abilities",
+            "Meeting with mentor Theron Blackstone", 
+            "First crystal shard obtained from Crystal Caverns trial"
+          ],
+          "upcoming_events": [
+            "Journey to the Sunken City of Aquatica",
+            "Underwater trials and challenges",
+            "Confrontation with Shadow Council agents"
+          ]
+        },
+        "chapters": [
+          {
+            "id": "chapter_001",
+            "number": 1,
+            "title": "The Awakening",
+            "content": "Brief summary: Aria discovers her magical abilities when crystals begin singing to her.",
+            "plot_point": "Aria's magical awakening and first contact with the prophecy",
+            "word_count": 2847,
+            "created": "2024-01-15T17:00:00Z",
+            "last_modified": "2024-01-15T17:30:00Z"
+          },
+          {
+            "id": "chapter_002", 
+            "number": 2,
+            "title": "Into the Crystal Caverns",
+            "content": "Brief summary: Aria faces the guardian's trial and claims the first crystal shard.",
+            "plot_point": "First trial completion and character growth",
+            "word_count": 3421,
+            "created": "2024-01-15T18:00:00Z",
+            "last_modified": "2024-01-15T18:30:00Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 2,
+          "total_chapters": 2,
+          "processing_hints": {
+            "priority_characters": ["Aria Moonwhisper", "Kira Swiftblade"],
+            "current_arc": "trials_phase",
+            "narrative_focus": "plot progression and character development"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 4500,
+        "priority_filtering": true,
+        "character_focus": null,
+        "optimization_level": "moderate",
+        "preserve_recent_content": true,
+        "outline_generation_focus": true
+      }
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "phase": "analyzing",
+        "message": "Analyzing story context and plot progression...",
+        "progress": 20
+      },
+      {
+        "type": "status",
+        "phase": "planning",
+        "message": "Planning chapter structure and story beats...",
+        "progress": 45
+      },
+      {
+        "type": "result",
+        "data": {
+          "chapter_outlines": [
+            {
+              "chapter_number": 3,
+              "title": "The Journey to Aquatica",
+              "summary": "Aria and Kira begin their perilous journey to the Sunken City of Aquatica, where the second crystal shard awaits. They must navigate treacherous waters while being pursued by Shadow Council agents.",
+              "plot_points": [
+                "Departure from the Crystal Caverns with the first shard",
+                "Kira reveals intelligence about Shadow Council movements",
+                "First encounter with corrupted sea creatures",
+                "Discovery of an ancient map leading to Aquatica's entrance"
+              ],
+              "character_development": {
+                "aria_moonwhisper": "Gains confidence from her first trial success but struggles with the growing responsibility",
+                "kira_swiftblade": "Takes on more of a leadership role in planning and navigation"
+              },
+              "key_scenes": [
+                {
+                  "scene_title": "The Departure",
+                  "description": "Aria and Kira leave the Crystal Caverns, with Aria carrying her first crystal shard",
+                  "purpose": "Transition and character reflection"
+                },
+                {
+                  "scene_title": "Shadow Council Pursuit",
+                  "description": "The companions realize they're being followed by dark agents",
+                  "purpose": "Introduce ongoing threat and build tension"
+                },
+                {
+                  "scene_title": "The Ancient Map",
+                  "description": "Discovery of a hidden map that reveals the true entrance to Aquatica",
+                  "purpose": "Plot advancement and world-building"
+                }
+              ],
+              "estimated_word_count": 3200,
+              "themes": ["responsibility", "friendship", "perseverance"],
+              "conflicts": ["external: Shadow Council pursuit", "internal: Aria's growing burden"]
+            },
+            {
+              "chapter_number": 4,
+              "title": "Descent into the Depths",
+              "summary": "Aria and Kira discover the entrance to the Sunken City of Aquatica and must overcome underwater challenges to reach the city's heart where the second crystal shard is hidden.",
+              "plot_points": [
+                "Finding the magical breathing apparatus needed for underwater travel",
+                "First glimpse of the magnificent ruined city beneath the waves",
+                "Encounter with water elementals who test their worthiness",
+                "Navigation through the city's maze-like structure"
+              ],
+              "character_development": {
+                "aria_moonwhisper": "Learns to trust her instincts and magical abilities in an alien environment",
+                "kira_swiftblade": "Adapts her land-based skills to underwater challenges"
+              },
+              "key_scenes": [
+                {
+                  "scene_title": "The Breathing Ritual",
+                  "description": "Aria performs a complex spell to allow underwater breathing",
+                  "purpose": "Showcase magical growth and problem-solving"
+                },
+                {
+                  "scene_title": "City of Wonders",
+                  "description": "First exploration of the beautiful but dangerous sunken city",
+                  "purpose": "World-building and atmosphere"
+                },
+                {
+                  "scene_title": "The Water Guardians",
+                  "description": "Confrontation with elemental beings who guard the city's secrets",
+                  "purpose": "Action sequence and character testing"
+                }
+              ],
+              "estimated_word_count": 3500,
+              "themes": ["adaptation", "wonder", "respect for nature"],
+              "conflicts": ["environmental challenges", "guardian trials"]
+            },
+            {
+              "chapter_number": 5,
+              "title": "The Heart of Aquatica",
+              "summary": "In the deepest part of the sunken city, Aria faces the trial of the water crystal while Kira discovers disturbing evidence of Shadow Council infiltration.",
+              "plot_points": [
+                "Arrival at the crystal chamber in the city's heart",
+                "Aria's trial involving emotional and spiritual challenges",
+                "Kira's discovery of Shadow Council corruption in the city",
+                "The revelation that some water elementals have been turned"
+              ],
+              "character_development": {
+                "aria_moonwhisper": "Confronts her fears about her parents' death and her role in the prophecy",
+                "kira_swiftblade": "Takes initiative to investigate the corruption, showing growing independence"
+              },
+              "key_scenes": [
+                {
+                  "scene_title": "The Crystal's Test",
+                  "description": "Aria faces visions of her past and potential futures in the water crystal's trial",
+                  "purpose": "Character development and emotional climax"
+                },
+                {
+                  "scene_title": "Corruption Revealed",
+                  "description": "Kira uncovers evidence of Shadow Council influence in the city",
+                  "purpose": "Plot advancement and raising stakes"
+                },
+                {
+                  "scene_title": "The Shard's Power",
+                  "description": "Aria successfully claims the second crystal shard",
+                  "purpose": "Achievement and power progression"
+                }
+              ],
+              "estimated_word_count": 3800,
+              "themes": ["facing the past", "corruption vs purity", "inner strength"],
+              "conflicts": ["internal: confronting trauma", "external: corrupted guardians"]
+            },
+            {
+              "chapter_number": 6,
+              "title": "Escape from the Depths",
+              "summary": "With the second shard obtained, Aria and Kira must escape the collapsing city as Shadow Council forces launch a full assault on Aquatica.",
+              "plot_points": [
+                "The city begins to collapse due to the crystal's removal",
+                "Shadow Council forces attack with corrupted sea creatures",
+                "A desperate chase through the crumbling underwater city",
+                "Aria uses both crystal shards together for the first time"
+              ],
+              "character_development": {
+                "aria_moonwhisper": "Learns to combine the power of multiple shards and gains confidence in combat",
+                "kira_swiftblade": "Proves her tactical skills in coordinating their escape"
+              },
+              "key_scenes": [
+                {
+                  "scene_title": "The City Falls",
+                  "description": "Aquatica begins collapsing as ancient magic fails",
+                  "purpose": "Urgency and environmental danger"
+                },
+                {
+                  "scene_title": "Shadow Assault",
+                  "description": "Major battle with Shadow Council forces and corrupted creatures",
+                  "purpose": "Action climax and power demonstration"
+                },
+                {
+                  "scene_title": "Combined Power",
+                  "description": "Aria uses both crystal shards together to create a protective barrier",
+                  "purpose": "Power progression and teamwork"
+                }
+              ],
+              "estimated_word_count": 3600,
+              "themes": ["teamwork", "growing power", "sacrifice"],
+              "conflicts": ["environmental collapse", "Shadow Council assault"]
+            },
+            {
+              "chapter_number": 7,
+              "title": "Surface Revelations",
+              "summary": "Having escaped Aquatica, Aria and Kira surface to find the world above has changed. They learn disturbing news about the Shadow Council's growing influence.",
+              "plot_points": [
+                "Emergence from the underwater city to find the surface world altered",
+                "Meeting with Theron who brings dire news about Shadow Council advances",
+                "Discovery that the Council has been using their absence to spread corruption",
+                "Planning for the next phase of their quest with new urgency"
+              ],
+              "character_development": {
+                "aria_moonwhisper": "Realizes the true scope of her responsibility and the urgency of her mission",
+                "kira_swiftblade": "Takes on more strategic planning responsibilities"
+              },
+              "key_scenes": [
+                {
+                  "scene_title": "Changed World",
+                  "description": "The companions discover how much has changed during their underwater quest",
+                  "purpose": "Reveal consequences and raise stakes"
+                },
+                {
+                  "scene_title": "Theron's Warning",
+                  "description": "Reunion with their mentor brings troubling news",
+                  "purpose": "Information delivery and emotional reunion"
+                },
+                {
+                  "scene_title": "The Path Forward",
+                  "description": "Planning the next stage of their quest with new knowledge",
+                  "purpose": "Setup for future adventures and character bonding"
+                }
+              ],
+              "estimated_word_count": 3100,
+              "themes": ["consequences", "urgency", "growing responsibility"],
+              "conflicts": ["time pressure", "expanded threat scope"]
+            }
+          ],
+          "overall_arc_summary": "This five-chapter arc focuses on Aria and Kira's journey to obtain the second crystal shard from the Sunken City of Aquatica. The arc explores themes of growth, adaptation, and the increasing threat of the Shadow Council while developing both characters' abilities and relationship.",
+          "total_estimated_words": 17200,
+          "key_themes": ["personal growth", "environmental challenges", "corruption vs purity", "friendship"],
+          "major_plot_advancement": "Acquisition of second crystal shard, revelation of Shadow Council's growing power, character development in underwater environment"
+        },
+        "metadata": {
+          "generated_at": "2024-01-15T23:30:00Z",
+          "chapters_generated": 5,
+          "starting_chapter": 3,
+          "total_estimated_words": 17200,
+          "processing_time_ms": 5247
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "numChapters specifies how many chapter outlines to generate",
+    "startingChapter sets the chapter number to begin from",
+    "Generates detailed outlines with plot points, character development, and scene breakdowns",
+    "context_processing_config should use outline_generation_focus: true",
+    "Useful for planning story structure and maintaining plot consistency"
+  ]
+}
