@@ -15,7 +15,8 @@
           "system_prompts": {
             "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
             "main_suffix": "Create detailed chapter outlines that advance the plot while maintaining character development and story consistency.",
-            "assistant_prompt": "Generate compelling chapter outlines with clear plot progression, character arcs, and engaging story beats."
+            "assistant_prompt": "Generate compelling chapter outlines with clear plot progression, character arcs, and engaging story beats.",
+            "editor_prompt": ""
           },
           "generation_preferences": {
             "tone": "epic fantasy",
@@ -34,7 +35,7 @@
               "importance": "high"
             },
             {
-              "type": "organization",
+              "type": "politics",
               "name": "Shadow Council",
               "description": "Dark organization seeking to corrupt the crystal shards and use them to control Eldoria",
               "importance": "high"
@@ -78,18 +79,9 @@
           }
         ],
         "story_outline": {
-          "main_plot": "Aria must collect five crystal shards to fulfill an ancient prophecy and prevent the Shadow Council from plunging Eldoria into darkness",
-          "current_arc": "The Trials of the Shards",
-          "completed_events": [
-            "Aria discovers her magical abilities",
-            "Meeting with mentor Theron Blackstone", 
-            "First crystal shard obtained from Crystal Caverns trial"
-          ],
-          "upcoming_events": [
-            "Journey to the Sunken City of Aquatica",
-            "Underwater trials and challenges",
-            "Confrontation with Shadow Council agents"
-          ]
+          "summary": "Aria must is out on a quest",
+          "content": "Aria must collect five crystal shards to fulfill an ancient prophecy and prevent the Shadow Council from plunging Eldoria into darkness",
+          "status": "draft"
         },
         "chapters": [
           {
@@ -126,6 +118,7 @@
         }
       },
       "context_processing_config": {
+        "target_agent": "writer",
         "summarization_enabled": true,
         "max_context_length": 4500,
         "priority_filtering": true,

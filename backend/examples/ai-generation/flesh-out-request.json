@@ -8,13 +8,14 @@
       "Content-Type": "application/json"
     },
     "body": {
-      "briefContent": "Kira infiltrates the Shadow Council's fortress. She discovers their plan to corrupt the remaining crystal shards. She barely escapes with crucial information.",
+      "textToFleshOut": "Kira infiltrates the Shadow Council's fortress. She discovers their plan to corrupt the remaining crystal shards. She barely escapes with crucial information.",
       "request_context": {
         "configuration": {
           "system_prompts": {
             "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
             "main_suffix": "Expand brief content into rich, detailed narrative while maintaining story consistency.",
-            "assistant_prompt": "Transform outline points into engaging, fully-developed scenes with vivid descriptions and character development."
+            "assistant_prompt": "Transform outline points into engaging, fully-developed scenes with vivid descriptions and character development.",
+            "editor_prompt": ""
           },
           "generation_preferences": {
             "tone": "epic fantasy",
@@ -55,6 +56,7 @@
         }
       },
       "context_processing_config": {
+        "target_agent": "writer",
         "summarization_enabled": true,
         "max_context_length": 3000,
         "priority_filtering": true,

@@ -317,12 +317,13 @@ class RequestContextMetadata(BaseModel):
     """Metadata about the request context for processing optimization."""
     story_id: str = Field(description="Unique story identifier")
     story_title: str = Field(description="Story title")
-    version: str = Field(description="Context version")
-    created_at: datetime = Field(description="When the context was created")
-    total_characters: int = Field(description="Total number of characters")
-    total_chapters: int = Field(description="Total number of chapters")
-    total_word_count: int = Field(description="Total word count across all chapters")
-    context_size_estimate: int = Field(
+    version: Optional[str] = Field(None, description="Context version")
+    created_at: Optional[datetime] = Field(None, description="When the context was created")
+    total_characters: Optional[int] = Field(None, description="Total number of characters")
+    total_chapters: Optional[int] = Field(None, description="Total number of chapters")
+    total_word_count: Optional[int] = Field(None, description="Total word count across all chapters")
+    context_size_estimate: Optional[int] = Field(
+        None,
         description="Estimated token count for the entire context"
     )
     processing_hints: Dict[str, Any] = Field(
@@ -355,7 +356,8 @@ class RequestContext(BaseModel):
     )
     
     # === WORLDBUILDING ===
-    worldbuilding: WorldbuildingInfo = Field(
+    worldbuilding: Optional[WorldbuildingInfo] = Field(
+        None,
         description="Complete worldbuilding context and history"
     )
     
@@ -366,7 +368,8 @@ class RequestContext(BaseModel):
     )
     
     # === STORY STRUCTURE ===
-    story_outline: StoryOutline = Field(
+    story_outline: Optional[StoryOutline] = Field(
+        None,
         description="Complete story structure and outline"
     )
     
