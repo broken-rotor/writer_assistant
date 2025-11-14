@@ -1,0 +1,164 @@
+{
+  "endpoint": "POST /api/v1/generate-character-details",
+  "description": "Generate detailed character profiles, backgrounds, and development information",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/generate-character-details",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "characterName": "Theron Blackstone",
+      "detailType": "full_profile",
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Create rich, detailed character profiles that enhance story depth and authenticity.",
+            "assistant_prompt": "Generate comprehensive character details that are consistent with the established story world and character relationships."
+          },
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person limited",
+            "target_audience": "young adult",
+            "detail_level": "comprehensive"
+          }
+        },
+        "characters": [
+          {
+            "id": "char_theron_001",
+            "name": "Theron Blackstone",
+            "basic_bio": "A 45-year-old former court wizard who now serves as Aria's mentor",
+            "personality": "Wise and patient, but carries deep guilt from past failures. Protective of his students.",
+            "motivations": "To guide Aria safely through the prophecy and prevent past mistakes from repeating",
+            "fears": "Losing another student to the darkness, his past being discovered",
+            "current_state": {
+              "emotion": "concerned but determined",
+              "location": "Academy of Mages",
+              "health": "good",
+              "magical_energy": "experienced and controlled"
+            },
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 2,
+          "processing_hints": {
+            "priority_characters": ["Theron Blackstone"],
+            "current_arc": "character_development",
+            "narrative_focus": "backstory and relationships"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 3500,
+        "priority_filtering": true,
+        "character_focus": ["Theron Blackstone"],
+        "optimization_level": "moderate",
+        "preserve_recent_content": true,
+        "character_detail_level": "full"
+      }
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "phase": "analyzing",
+        "message": "Analyzing existing character information...",
+        "progress": 25
+      },
+      {
+        "type": "result",
+        "data": {
+          "character_details": {
+            "basic_information": {
+              "full_name": "Theron Blackstone",
+              "age": 45,
+              "occupation": "Former Court Wizard, Current Mentor",
+              "titles": ["Master of Crystal Arts", "Former Royal Advisor"],
+              "origin": "Born in the floating city of Aethermoor"
+            },
+            "physical_description": {
+              "height": "6'1\" (185 cm)",
+              "build": "Tall and lean, with the bearing of nobility",
+              "hair": "Salt-and-pepper beard, once-black hair now streaked with silver",
+              "eyes": "Deep amber eyes that seem to hold ancient wisdom and hidden pain",
+              "distinguishing_features": [
+                "Intricate crystal pendant that pulses with soft blue light",
+                "Scar across his left palm from a ritual gone wrong",
+                "Always wears dark robes with silver threading"
+              ]
+            },
+            "personality_profile": {
+              "core_traits": [
+                "Wise and patient teacher",
+                "Deeply protective of his students",
+                "Carries heavy guilt from past failures",
+                "Methodical and cautious in his approach"
+              ],
+              "strengths": [
+                "Vast knowledge of crystal magic and ancient lore",
+                "Exceptional ability to see potential in others",
+                "Strong moral compass despite past mistakes"
+              ],
+              "weaknesses": [
+                "Tendency to be overprotective",
+                "Struggles with self-forgiveness",
+                "Sometimes withholds important information 'for others' good'"
+              ]
+            },
+            "background_history": {
+              "childhood": "Born to a family of minor nobles in Aethermoor. Showed exceptional magical talent from age 7.",
+              "education": "Studied at the Academy of Mages from age 13-20. Graduated with highest honors in Crystal Manipulation.",
+              "court_wizard_years": "Appointed Royal Court Wizard at age 28. Served for 12 years as one of the most trusted advisors.",
+              "the_incident": "At age 40, made a critical error that led to a Shadow Council infiltration. Three people died, including Aria's parents.",
+              "current_role": "Now serves as a mentor, having found purpose in guiding the next generation of mages."
+            },
+            "magical_abilities": {
+              "specializations": [
+                "Crystal Magic - Master level",
+                "Defensive Wards - Expert level", 
+                "Ancient Lore - Master level"
+              ],
+              "signature_spells": [
+                "Crystal Shield - Creates impenetrable barriers of crystalline energy",
+                "Memory Crystal - Stores knowledge and experiences in crystal form",
+                "Truth Sight - Sees through illusions and deceptions"
+              ]
+            },
+            "relationships": {
+              "aria_moonwhisper": {
+                "relationship_type": "mentor_student",
+                "description": "Sees her as his chance for redemption. Deeply protective but struggles with how much truth to reveal.",
+                "secrets_kept": "His role in her parents' death, the full extent of the Shadow Council threat"
+              }
+            }
+          },
+          "metadata": {
+            "generated_at": "2024-01-15T22:30:00Z",
+            "character_name": "Theron Blackstone",
+            "detail_type": "full_profile",
+            "word_count": 1247,
+            "processing_time_ms": 4156
+          }
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "characterName must match a character in the request_context",
+    "detailType can be: 'full_profile', 'background', 'relationships', 'abilities'",
+    "Generates comprehensive character information including backstory and relationships",
+    "context_processing_config should use character_detail_level: 'full'",
+    "Useful for developing rich, detailed character profiles for storytelling"
+  ]
+}

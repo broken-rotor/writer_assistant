@@ -1,0 +1,139 @@
+{
+  "endpoint": "GET /api/v1/archive/stats",
+  "description": "Get comprehensive statistics about archived story content and usage",
+  "request": {
+    "method": "GET",
+    "url": "/api/v1/archive/stats",
+    "headers": {
+      "Accept": "application/json"
+    }
+  },
+  "response_example": {
+    "archive_statistics": {
+      "storage_stats": {
+        "total_files": 247,
+        "total_size_bytes": 15420847,
+        "total_size_human": "14.7 MB",
+        "total_word_count": 2847291,
+        "average_file_size_bytes": 62430,
+        "largest_file_size_bytes": 892456,
+        "smallest_file_size_bytes": 1247
+      },
+      "content_breakdown": {
+        "by_file_type": {
+          "chapter": {
+            "count": 156,
+            "total_size_bytes": 12847291,
+            "percentage": 83.3,
+            "average_word_count": 3247
+          },
+          "character_data": {
+            "count": 34,
+            "total_size_bytes": 1247856,
+            "percentage": 8.1,
+            "average_word_count": 892
+          },
+          "worldbuilding": {
+            "count": 28,
+            "total_size_bytes": 847291,
+            "percentage": 5.5,
+            "average_word_count": 1456
+          },
+          "outline": {
+            "count": 19,
+            "total_size_bytes": 347291,
+            "percentage": 2.3,
+            "average_word_count": 734
+          }
+        },
+        "by_story": {
+          "story_crystal_prophecy_001": {
+            "title": "The Crystal Prophecy",
+            "file_count": 87,
+            "total_size_bytes": 5847291,
+            "word_count": 1247856,
+            "last_updated": "2024-01-15T21:00:00Z",
+            "completion_percentage": 65.2
+          },
+          "story_shadow_realm_002": {
+            "title": "Shadows of the Forgotten Realm",
+            "file_count": 64,
+            "total_size_bytes": 4291847,
+            "word_count": 892456,
+            "last_updated": "2024-01-14T16:30:00Z",
+            "completion_percentage": 42.8
+          }
+        }
+      },
+      "usage_statistics": {
+        "search_queries": {
+          "total_queries_last_30_days": 1247,
+          "average_queries_per_day": 41.6,
+          "most_common_search_terms": [
+            "crystal magic",
+            "character development", 
+            "Shadow Council",
+            "prophecy",
+            "Aria Moonwhisper"
+          ],
+          "search_success_rate": 87.3
+        },
+        "rag_queries": {
+          "total_rag_queries_last_30_days": 456,
+          "average_response_time_ms": 847,
+          "successful_retrievals": 423,
+          "success_rate": 92.8,
+          "most_queried_topics": [
+            "character relationships",
+            "world building details",
+            "plot continuity",
+            "magic system rules"
+          ]
+        },
+        "file_access": {
+          "most_accessed_files": [
+            {
+              "filename": "crystal_prophecy_character_guide.json",
+              "access_count": 89,
+              "last_accessed": "2024-01-15T20:30:00Z"
+            },
+            {
+              "filename": "eldoria_world_guide.md",
+              "access_count": 67,
+              "last_accessed": "2024-01-15T18:45:00Z"
+            }
+          ],
+          "average_file_access_count": 12.4,
+          "files_never_accessed": 23
+        }
+      },
+      "system_health": {
+        "database_status": "healthy",
+        "last_backup": "2024-01-15T01:00:00Z",
+        "backup_size_mb": 18.9,
+        "storage_utilization": 23.4,
+        "estimated_storage_remaining": "76.6%",
+        "performance_metrics": {
+          "average_query_time_ms": 45,
+          "cache_hit_rate": 89.2,
+          "concurrent_users": 3,
+          "uptime_percentage": 99.7
+        }
+      }
+    },
+    "metadata": {
+      "generated_at": "2024-01-15T23:45:00Z",
+      "stats_version": "2.1",
+      "data_freshness": "real_time",
+      "computation_time_ms": 156
+    }
+  },
+  "notes": [
+    "This is a GET endpoint with no parameters required",
+    "Returns comprehensive statistics about archive content and usage",
+    "Includes storage, content breakdown, temporal trends, and usage patterns",
+    "Quality metrics help identify potential issues with archived content",
+    "System health information shows database and performance status",
+    "Useful for monitoring archive growth and optimizing storage usage"
+  ]
+}

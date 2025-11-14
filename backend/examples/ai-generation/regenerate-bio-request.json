@@ -1,0 +1,126 @@
+{
+  "endpoint": "POST /api/v1/regenerate-bio",
+  "description": "Generate or regenerate character biography summaries and profiles",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/regenerate-bio",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "characterName": "Kira Swiftblade",
+      "bioType": "comprehensive",
+      "request_context": {
+        "configuration": {
+          "system_prompts": {
+            "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
+            "main_suffix": "Create engaging character biographies that capture personality, background, and role in the story.",
+            "assistant_prompt": "Generate compelling character biographies that are concise yet comprehensive, highlighting key traits and story relevance."
+          },
+          "generation_preferences": {
+            "tone": "epic fantasy",
+            "perspective": "third person",
+            "target_audience": "young adult",
+            "bio_style": "narrative"
+          }
+        },
+        "characters": [
+          {
+            "id": "char_kira_001",
+            "name": "Kira Swiftblade",
+            "basic_bio": "A 23-year-old rogue and scout, Aria's loyal friend and companion",
+            "personality": "Quick-witted, stealthy, fiercely loyal. Uses humor to mask deeper concerns. Excellent at reading people and situations.",
+            "motivations": "To protect Aria and help her succeed in the prophecy",
+            "fears": "Being unable to protect her friends, being discovered during missions",
+            "skills": ["stealth", "lockpicking", "acrobatics", "information gathering", "dual-wielding daggers"],
+            "background": "Grew up as a street orphan in the lower districts of Aethermoor. Learned survival skills from necessity.",
+            "current_state": {
+              "emotion": "protective and alert",
+              "location": "traveling with Aria",
+              "health": "excellent",
+              "equipment": "twin daggers, lockpicks, climbing gear"
+            },
+            "is_hidden": false,
+            "creation_source": "user",
+            "last_modified": "2024-01-15T14:22:30Z"
+          }
+        ],
+        "context_metadata": {
+          "story_id": "story_crystal_prophecy_001",
+          "story_title": "The Crystal Prophecy",
+          "total_characters": 2,
+          "processing_hints": {
+            "priority_characters": ["Kira Swiftblade"],
+            "current_arc": "character_development",
+            "narrative_focus": "background and personality"
+          }
+        }
+      },
+      "context_processing_config": {
+        "summarization_enabled": true,
+        "max_context_length": 3000,
+        "priority_filtering": true,
+        "character_focus": ["Kira Swiftblade"],
+        "optimization_level": "light",
+        "preserve_recent_content": true,
+        "bio_generation_focus": true
+      }
+    }
+  },
+  "response_example": {
+    "note": "This endpoint returns Server-Sent Events (SSE) streaming response",
+    "streaming_events": [
+      {
+        "type": "status",
+        "phase": "analyzing",
+        "message": "Analyzing character information for biography generation...",
+        "progress": 30
+      },
+      {
+        "type": "result",
+        "data": {
+          "character_bio": {
+            "character_name": "Kira Swiftblade",
+            "bio_type": "comprehensive",
+            "biography": {
+              "summary": "Kira Swiftblade is a 23-year-old rogue whose quick wit and unwavering loyalty make her an invaluable companion to Aria Moonwhisper. Born into the harsh streets of Aethermoor's lower districts, she transformed from a desperate orphan into a skilled scout and protector.",
+              "background": "Abandoned as an infant in the sprawling lower districts of the floating city of Aethermoor, Kira learned early that survival meant being faster, smarter, and more resourceful than those around her. The streets became her teacher, and necessity her greatest motivator. By age twelve, she had mastered the art of moving unseen through the city's maze-like underbelly, picking locks with makeshift tools, and reading the intentions of strangers with uncanny accuracy.",
+              "personality": "Kira's personality is a carefully crafted blend of street-smart pragmatism and fierce loyalty. She uses humor as both a shield and a weapon, deflecting serious conversations with well-timed jokes while simultaneously disarming potential threats with her wit. Beneath her lighthearted exterior lies a deeply protective nature and an almost supernatural ability to read people's true intentions.",
+              "skills_and_abilities": "Kira's abilities were forged in the crucible of street survival and honed through years of practical application. Her stealth skills are legendary among those who know her reputation—she can move through a crowded marketplace or a guarded fortress with equal ease, leaving no trace of her passage. In combat, she favors speed and precision over brute force, wielding twin daggers with fluid grace.",
+              "role_in_story": "As Aria's closest friend and self-appointed guardian, Kira serves multiple crucial roles in the unfolding prophecy. She acts as the group's scout, using her skills to gather intelligence and identify dangers before they become threats. Her street-smart perspective often provides practical solutions to problems that magical thinking cannot solve.",
+              "character_arc": "Kira's journey throughout the story involves learning to balance her protective instincts with the need to allow Aria to grow into her destiny. Having spent years relying only on herself, she must learn to trust others and work as part of a team."
+            },
+            "key_traits": [
+              "Fiercely loyal to those she considers family",
+              "Uses humor to deflect serious emotions",
+              "Exceptional survival and stealth skills",
+              "Strong moral compass despite difficult background",
+              "Protective to the point of self-sacrifice"
+            ],
+            "notable_quotes": [
+              "\"I've survived this long by trusting my instincts, and they're telling me you're worth protecting.\"",
+              "\"Magic is impressive, but sometimes you just need someone who knows how to pick a lock.\"",
+              "\"I may not understand prophecies, but I understand friendship.\""
+            ]
+          },
+          "metadata": {
+            "generated_at": "2024-01-15T23:00:00Z",
+            "character_name": "Kira Swiftblade",
+            "bio_type": "comprehensive",
+            "word_count": 892,
+            "processing_time_ms": 3421
+          }
+        },
+        "status": "complete"
+      }
+    ]
+  },
+  "notes": [
+    "This endpoint uses Server-Sent Events (SSE) for streaming responses",
+    "characterName must match a character in the request_context",
+    "bioType can be: 'summary', 'comprehensive', 'background_focused', 'personality_focused'",
+    "Generates narrative-style biographies that capture character essence",
+    "context_processing_config should use bio_generation_focus: true",
+    "Useful for creating character summaries and reference materials"
+  ]
+}
