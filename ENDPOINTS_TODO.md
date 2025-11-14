@@ -7,7 +7,7 @@
 | /editor-review                      |  Yes     |  Yes          | ? using editor prompt?                   |
 | /flesh-out                          |  Yes     |  Too many     | ?                                        |
 | /generate-chapter                   |  Yes     |  Yes          | ?                                        |
-| /generate-chapter-outlines          |  Yes     |  No*          | Probably already in the requestcontext   |
+| /generate-chapter-outlines          |  Yes     |  No           | Backend OK                               |
 | /generate-character-details         |  Yes     |  Too many     | Extra characters field                   |
 | /chat/llm                           |  Yes     |  Yes?         | ?                                        |
 | /modify-chapter                     |  Yes     |  Yes          | ?                                        |

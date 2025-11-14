@@ -49,10 +49,6 @@ class StoryConfiguration(BaseModel):
         default_factory=list,
         description="List of configured rater agents"
     )
-    generation_preferences: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="User preferences for content generation"
-    )
 
 
 class ChatMessage(BaseModel):
@@ -69,28 +65,12 @@ class ChatMessage(BaseModel):
     )
 
 
-class WorldElement(BaseModel):
-    """Individual worldbuilding element."""
-    type: Literal[
-        "location", "culture", "magic_system", "history", "politics", "technology"
-    ] = Field(description="Type of worldbuilding element")
-    name: str = Field(description="Element name")
-    description: str = Field(description="Detailed description")
-    importance: Literal["high", "medium", "low"] = Field(
-        description="Importance level for context inclusion"
-    )
-
-
 class WorldbuildingInfo(BaseModel):
     """Complete worldbuilding context information."""
     content: str = Field(description="Main worldbuilding content")
     chat_history: List[ChatMessage] = Field(
         default_factory=list,
         description="Worldbuilding conversation history"
-    )
-    key_elements: List[WorldElement] = Field(
-        default_factory=list,
-        description="Extracted key world elements"
     )
 
 
@@ -117,6 +97,7 @@ class CharacterDetails(BaseModel):
     relationships: str = Field(default="", description="Relationships with other characters")
     
     # Story context
+    ## FIXME ##
     current_state: Dict[str, Any] = Field(
         default_factory=dict,
         description="Current emotional and physical state"
@@ -136,9 +117,6 @@ class CharacterDetails(BaseModel):
     
     # Metadata
     is_hidden: bool = Field(default=False, description="Whether character is hidden from UI")
-    creation_source: Literal["user", "ai_generated", "imported"] = Field(
-        description="How the character was created"
-    )
     last_modified: datetime = Field(description="When character was last modified")
 
 
@@ -163,13 +141,6 @@ class OutlineItem(BaseModel):
         default_factory=list,
         description="Character names/IDs involved in this item"
     )
-    status: Literal["draft", "reviewed", "approved"] = Field(
-        description="Review status of this outline item"
-    )
-    word_count_estimate: Optional[int] = Field(
-        None,
-        description="Estimated word count for this item"
-    )
 
 
 class OutlineFeedback(BaseModel):
@@ -189,10 +160,7 @@ class OutlineFeedback(BaseModel):
 
 class StoryOutline(BaseModel):
     """Complete story structure and outline information."""
-    summary: str = Field(description="Story summary")
-    status: Literal["draft", "under_review", "approved", "needs_revision"] = Field(
-        description="Overall outline status"
-    )
+    summary: Optional[str] = Field(None, description="Story summary")
     content: str = Field(description="Full outline text content")
     outline_items: List[OutlineItem] = Field(
         default_factory=list,
@@ -308,7 +276,6 @@ class ChapterDetails(BaseModel):
     )
     
     # Metadata
-    word_count: int = Field(description="Word count of the chapter")
     created: datetime = Field(description="When the chapter was created")
     last_modified: datetime = Field(description="When the chapter was last modified")
 
@@ -321,15 +288,6 @@ class RequestContextMetadata(BaseModel):
     created_at: Optional[datetime] = Field(None, description="When the context was created")
     total_characters: Optional[int] = Field(None, description="Total number of characters")
     total_chapters: Optional[int] = Field(None, description="Total number of chapters")
-    total_word_count: Optional[int] = Field(None, description="Total word count across all chapters")
-    context_size_estimate: Optional[int] = Field(
-        None,
-        description="Estimated token count for the entire context"
-    )
-    processing_hints: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Hints for backend processing optimization"
-    )
 
 
 class RequestContext(BaseModel):

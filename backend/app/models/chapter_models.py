@@ -54,5 +54,4 @@ class OutlineItem(BaseModel):
 class ChapterOutlineResponse(BaseModel):
     """Response model for chapter outline generation"""
     outline_items: List[OutlineItem]
-    summary: str
     context_metadata: Dict[str, Any] = Field(default_factory=dict)
