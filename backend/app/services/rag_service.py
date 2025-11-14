@@ -130,8 +130,7 @@ class RAGService:
 
             # Step 4: Generate answer using LLM
             logger.info(
-                f"Generating answer with {
-                    len(search_results)} context chunks")
+                f"Generating answer with {len(search_results)} context chunks")
             answer = self.llm.generate(
                 prompt=prompt,
                 max_tokens=max_tokens or 1024,
@@ -206,8 +205,7 @@ class RAGService:
             )
 
             logger.debug(
-                f"Query analysis: needs_full_doc={
-                    query_analysis.needs_full_document}, "
+                f"Query analysis: needs_full_doc={query_analysis.needs_full_document}, "
                 f"sources={query_analysis.specified_sources}"
             )
             logger.info("Analyzing query for retrieval strategy")
@@ -257,8 +255,7 @@ class RAGService:
                 # Query indicates need for full documents - retrieve chunks
                 # first, then full docs
                 logger.debug(
-                    f"Retrieving full documents based on query indicators: {
-                        query_analysis.detail_indicators}")
+                    f"Retrieving full documents based on query indicators: {query_analysis.detail_indicators}")
                 logger.info(
                     "Retrieving full documents based on query indicators")
                 search_results = self.archive_service.search(
@@ -282,18 +279,15 @@ class RAGService:
                             })
                             seen_files.add(result.file_path)
                             logger.debug(
-                                f"Retrieved full document: {
-                                    result.file_name}")
+                                f"Retrieved full document: {result.file_name}")
                             logger.info("Retrieved full document")
                         else:
                             logger.debug(
-                                f"Could not read content for: {
-                                    result.file_name}")
+                                f"Could not read content for: {result.file_name}")
                             logger.warning(
                                 "Could not read content for document")
                             retrieval_warnings.append(
-                                f"Document '{
-                                    result.file_name}' could not be read from the archive.")
+                                f"Document '{result.file_name}' could not be read from the archive.")
 
             else:
                 # Standard chunk-based retrieval
@@ -425,9 +419,7 @@ class RAGService:
             context_parts.append("=== RELEVANT EXCERPTS ===\n")
             for i, result in enumerate(search_results, 1):
                 context_parts.append(
-                    f"[Excerpt {i} from {
-                        result.file_name}]\n{
-                        result.chunk_text}\n"
+                    f"[Excerpt {i} from {result.file_name}]\n{result.chunk_text}\n"
                 )
 
         return "\n".join(context_parts) if context_parts else ""

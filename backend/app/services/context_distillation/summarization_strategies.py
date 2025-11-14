@@ -855,8 +855,7 @@ Preserve all unaddressed feedback in full detail. Compress repetitive or less im
         # Add context-specific information
         if context.get("unaddressed_count", 0) > 0:
             elements.append(
-                f"Unaddressed feedback count: {
-                    context['unaddressed_count']}")
+                f"Unaddressed feedback count: {context['unaddressed_count']}")
 
         return elements
 

@@ -202,15 +202,13 @@ class ContextDistiller:
         # Check rolling summary threshold
         if total_tokens >= self.config.rolling_summary_threshold:
             logger.info(
-                f"Rolling summary threshold reached: {total_tokens} >= {
-                    self.config.rolling_summary_threshold}")
+                f"Rolling summary threshold reached: {total_tokens} >= {self.config.rolling_summary_threshold}")
             return True, DistillationTrigger.TOKEN_THRESHOLD, None
 
         # Check emergency compression threshold
         if total_tokens >= self.config.emergency_compression_threshold:
             logger.warning(
-                f"Emergency compression threshold reached: {total_tokens} >= {
-                    self.config.emergency_compression_threshold}")
+                f"Emergency compression threshold reached: {total_tokens} >= {self.config.emergency_compression_threshold}")
             return True, DistillationTrigger.TOKEN_THRESHOLD, None
 
         # Check for layer overflow
@@ -423,8 +421,7 @@ class ContextDistiller:
             target_tokens = int(original_tokens * 0.5)
 
         logger.info(
-            f"Creating summary of {
-                len(summaries)} summaries: {original_tokens} -> {target_tokens} tokens")
+            f"Creating summary of {len(summaries)} summaries: {original_tokens} -> {target_tokens} tokens")
 
         # Use appropriate strategy for meta-summarization
         strategy = self._strategies.get(
