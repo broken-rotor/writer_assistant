@@ -18,7 +18,6 @@ class TestGenerateChapterOutlineEndpoint:
         
         # Check response structure
         assert "outline_items" in data
-        assert "summary" in data
         assert "context_metadata" in data
         
         # Check outline items
@@ -32,7 +31,6 @@ class TestGenerateChapterOutlineEndpoint:
         assert "description" in first_item
         assert "involved_characters" in first_item
         assert "order" in first_item
-        assert first_item["type"] == "chapter"
         assert first_item["status"] == "draft"
 
     def test_generate_chapter_outlines_response_structure(self, client, sample_chapter_outline_request):
@@ -49,18 +47,12 @@ class TestGenerateChapterOutlineEndpoint:
             assert isinstance(item["description"], str)
             assert isinstance(item["involved_characters"], list)
             assert isinstance(item["order"], int)
-            assert item["type"] == "chapter"
             assert item["status"] == "draft"
             
-        # Validate summary
-        assert isinstance(data["summary"], str)
-        assert len(data["summary"]) > 0
-        
         # Validate context metadata
         metadata = data["context_metadata"]
         assert isinstance(metadata, dict)
         assert "generation_timestamp" in metadata
-        assert "source_outline_length" in metadata
         assert "generated_chapters" in metadata
 
     def test_generate_chapter_outlines_with_character_contexts(self, client, sample_chapter_outline_request):
@@ -111,9 +103,7 @@ class TestGenerateChapterOutlineEndpoint:
         
         # Should generate outline items successfully
         assert len(data["outline_items"]) > 0
-        assert isinstance(data["summary"], str)
-        assert len(data["summary"]) > 0
-
+        
     def test_generate_chapter_outlines_without_system_prompts(self, client, sample_chapter_outline_request):
         """Test chapter outline generation without system prompts (backward compatibility)"""
         # Ensure no system_prompts field
@@ -168,7 +158,7 @@ class TestGenerateChapterOutlineEndpoint:
     def test_generate_chapter_outlines_empty_story_outline(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with empty story outline"""
         request = sample_chapter_outline_request.copy()
-        request["request_context"]["story_outline"]["summary"] = ""
+        request["request_context"]["story_outline"]["content"] = ""
         
         response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
@@ -178,7 +168,7 @@ class TestGenerateChapterOutlineEndpoint:
     def test_generate_chapter_outlines_whitespace_only_story_outline(self, client, sample_chapter_outline_request):
         """Test chapter outline generation with whitespace-only story outline"""
         request = sample_chapter_outline_request.copy()
-        request["request_context"]["story_outline"]["summary"] = "   \n\t   "
+        request["request_context"]["story_outline"]["content"] = "   \n\t   "
         
         response = client.post("/api/v1/generate-chapter-outlines", json=request)
         
@@ -211,19 +201,13 @@ class TestGenerateChapterOutlineEndpoint:
                 content="A simple detective story setting."
             ),
             story_outline=StoryOutline(
-                summary="A simple detective story about solving a murder case.",
-                status="draft",
                 content="A detective investigates a murder case."
             ),
             context_metadata=RequestContextMetadata(
                 story_id="minimal_detective_009",
                 story_title="Simple Detective Story",
                 version="1.0",
-                created_at=datetime.now(),
-                total_characters=0,
-                total_chapters=0,
-                total_word_count=0,
-                context_size_estimate=100
+                created_at=datetime.now()
             ),
             characters=[]
         )
@@ -239,7 +223,6 @@ class TestGenerateChapterOutlineEndpoint:
         
         # Should work with minimal request
         assert len(data["outline_items"]) > 0
-        assert isinstance(data["summary"], str)
 
     def test_generate_chapter_outlines_with_story_context_only(self, client):
         """Test chapter outline generation with story context but no character contexts"""
@@ -260,26 +243,19 @@ class TestGenerateChapterOutlineEndpoint:
                 content="1940s Los Angeles - a city of dreams and nightmares."
             ),
             story_outline=StoryOutline(
-                summary="A detective investigates a murder in 1940s Los Angeles.",
-                status="draft",
                 content="A detective investigates a murder case in the noir atmosphere of 1940s Los Angeles."
             ),
             context_metadata=RequestContextMetadata(
                 story_id="noir_story_context_010",
                 story_title="Noir Mystery",
                 version="1.0",
-                created_at=datetime.now(),
-                total_characters=1,
-                total_chapters=0,
-                total_word_count=0,
-                context_size_estimate=200
+                created_at=datetime.now()
             ),
             characters=[
                 CharacterDetails(
                     id="detective_smith",
                     name="Detective Smith",
                     basic_bio="A hardboiled detective",
-                    creation_source="user",
                     last_modified=datetime.now()
                 )
             ]
@@ -349,9 +325,7 @@ class TestGenerateChapterOutlineEndpoint:
         
         # Check metadata fields
         assert isinstance(metadata["generation_timestamp"], str)
-        assert isinstance(metadata["source_outline_length"], int)
         assert isinstance(metadata["generated_chapters"], int)
-        assert metadata["source_outline_length"] > 0
         assert metadata["generated_chapters"] > 0
         assert metadata["generated_chapters"] == len(data["outline_items"])
 

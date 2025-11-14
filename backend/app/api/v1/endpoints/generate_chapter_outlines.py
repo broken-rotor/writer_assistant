@@ -182,7 +182,6 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
                 
                 outline_item = OutlineItem(
                     id=f"chapter-{i+1}",
-                    type="chapter",
                     title=chapter_data.get("title", f"Chapter {i+1}"),
                     description=description,
                     key_plot_items=key_plot_items,
