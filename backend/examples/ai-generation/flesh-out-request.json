@@ -56,7 +56,6 @@
         }
       },
       "context_processing_config": {
-        "target_agent": "writer",
         "summarization_enabled": true,
         "max_context_length": 3000,
         "priority_filtering": true,

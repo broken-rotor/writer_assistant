@@ -91,10 +91,16 @@ class ContextManager:
     def process_context_for_agent(
         self,
         request_context: RequestContext,
-        config: ContextProcessingConfig
+        config: ContextProcessingConfig,
+        agent_type: AgentType
     ) -> Tuple[str, Dict[str, Any]]:
         """
         Process context container for a specific agent and phase.
+
+        Args:
+            request_context: The request context to process
+            config: Processing configuration
+            agent_type: Agent type for context filtering and formatting
 
         Returns:
             Tuple of (formatted_context_string, processing_metadata)
@@ -102,10 +108,10 @@ class ContextManager:
         try:
             # Convert RequestContext to StructuredContextContainer for backward compatibility
             context_container = self._convert_request_context_to_structured(request_context)
-            
+
             # Step 1: Filter collections for target agent
             relevant_collections = self._filter_elements_for_agent_and_phase(
-                context_container, config.target_agent
+                context_container, agent_type
             )
 
             # Step 2: Apply custom filters if provided
@@ -128,7 +134,7 @@ class ContextManager:
 
             # Step 6: Format for the target agent
             formatted_context = self.formatter.format_for_agent(
-                final_collections, config.target_agent
+                final_collections, agent_type
             )
 
             # Step 7: Generate processing metadata
@@ -146,19 +152,20 @@ class ContextManager:
                 filtered_count=filtered_count,
                 final_count=final_count,
                 was_summarized=was_summarized,
-                target_agent=config.target_agent
+                target_agent=agent_type
             )
 
             return formatted_context, metadata
 
         except Exception as e:
-            logger.error(f"Error processing context for agent {config.target_agent}: {str(e)}")
+            logger.error(f"Error processing context for agent {agent_type}: {str(e)}")
             raise
 
     def process_context_with_state(
         self,
         request_context: RequestContext,
         config: ContextProcessingConfig,
+        agent_type: AgentType,
         context_state: Optional[str] = None,
         story_id: Optional[str] = None
     ) -> Tuple[str, Dict[str, Any]]:
@@ -168,6 +175,7 @@ class ContextManager:
         Args:
             request_context: Request context to process
             config: Processing configuration
+            agent_type: Agent type for context filtering and formatting
             context_state: Optional serialized context state from client
             story_id: Optional story ID for new states
 
@@ -176,7 +184,7 @@ class ContextManager:
         """
         if not self.enable_session_persistence or not self.state_manager:
             # Fall back to regular processing
-            return self.process_context_for_agent(request_context, config)
+            return self.process_context_for_agent(request_context, config, agent_type)
 
         try:
             # Get or create state
@@ -201,11 +209,11 @@ class ContextManager:
                 )
 
             # Process context normally
-            formatted_context, metadata = self.process_context_for_agent(request_context, config)
+            formatted_context, metadata = self.process_context_for_agent(request_context, config, agent_type)
 
             # Update state with processing history
             processing_metadata = {
-                'agent_type': config.target_agent.value,
+                'agent_type': agent_type.value,
                 'token_count': metadata.get('final_token_count', 0),
                 'elements_processed': metadata.get('final_count', 0),
                 'was_summarized': metadata.get('was_summarized', False)
@@ -240,44 +248,46 @@ class ContextManager:
         except Exception as e:
             logger.error(f"Error processing context with state: {str(e)}")
             # Fall back to regular processing
-            return self.process_context_for_agent(request_context, config)
+            return self.process_context_for_agent(request_context, config, agent_type)
 
     def process_structured_context_for_agent(
         self,
         structured_context: Dict[str, Any],  # Was StructuredContextContainer - removed in B4
-        config: ContextProcessingConfig
+        config: ContextProcessingConfig,
+        agent_type: AgentType
     ) -> Tuple[str, Dict[str, Any]]:
         """
         Process structured context container for a specific agent and phase.
-        
+
         This method provides backward compatibility for code that still uses
         StructuredContextContainer instead of RequestContext.
-        
+
         Args:
             structured_context: The structured context container to process
             config: Processing configuration for the target agent
-            
+            agent_type: Agent type for context filtering and formatting
+
         Returns:
             Tuple of (formatted_context_string, metadata_dict)
         """
         try:
-            logger.debug(f"Processing structured context for agent {config.target_agent}")
-            
+            logger.debug(f"Processing structured context for agent {agent_type}")
+
             # Filter elements for the specific agent
             filtered_collections = self._filter_elements_for_agent_and_phase(
-                structured_context, config.target_agent
+                structured_context, agent_type
             )
-            
+
             # Apply token budget constraints
             final_collections, was_summarized = self._apply_token_budget(
                 filtered_collections, config.max_tokens, config.summarization_threshold
             )
-            
+
             # Format for the specific agent
             formatted_context = self.formatter.format_for_agent(
-                final_collections, config.target_agent
+                final_collections, agent_type
             )
-            
+
             # Generate processing metadata
             original_count = (
                 len(structured_context.plot_elements) +
@@ -287,20 +297,20 @@ class ContextManager:
             )
             filtered_count = sum(len(v) for v in filtered_collections.values())
             final_count = sum(len(v) for v in final_collections.values())
-            
+
             metadata = self._generate_processing_metadata(
                 original_count=original_count,
                 filtered_count=filtered_count,
                 final_count=final_count,
                 was_summarized=was_summarized,
-                target_agent=config.target_agent
+                target_agent=agent_type
             )
-            
-            logger.debug(f"Successfully processed structured context for {config.target_agent}")
+
+            logger.debug(f"Successfully processed structured context for {agent_type}")
             return formatted_context, metadata
-            
+
         except Exception as e:
-            logger.error(f"Error processing structured context for agent {config.target_agent}: {str(e)}")
+            logger.error(f"Error processing structured context for agent {agent_type}: {str(e)}")
             raise
 
     def _filter_elements_for_agent_and_phase(

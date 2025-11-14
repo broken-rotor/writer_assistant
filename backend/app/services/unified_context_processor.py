@@ -117,34 +117,32 @@ class UnifiedContextProcessor:
         """
         try:
             start_time = datetime.now()
-            
-            # Process the request context
-            processed_context = self._process_request_context(request_context)
-            
-            # Use context manager to format the context
-            formatted_context = self.context_manager.format_context_for_agent(
-                context_data=processed_context["context_data"],
-                agent_type=AgentType.CHAPTER_GENERATOR,
-                config=context_processing_config or {}
+
+            # Use context manager to process context for WRITER agent
+            config = context_processing_config or ContextProcessingConfig()
+            formatted_context, metadata = self.context_manager.process_context_for_agent(
+                request_context=request_context,
+                config=config,
+                agent_type=AgentType.WRITER
             )
-            
+
             # Parse into system prompt and user message
             system_prompt, user_message = self._parse_formatted_context(
-                formatted_context, 
-                AgentType.CHAPTER_GENERATOR,
+                formatted_context,
+                AgentType.WRITER,
                 "chapter_generation"
             )
-            
+
             processing_time = (datetime.now() - start_time).total_seconds()
-            
+
             return UnifiedContextResult(
                 system_prompt=system_prompt,
                 user_message=user_message,
-                context_metadata=processed_context["metadata"],
+                context_metadata=metadata,
                 processing_time=processing_time,
                 cache_hit=False
             )
-            
+
         except Exception as e:
             logger.error(f"Error processing chapter generation context: {str(e)}")
             return self._create_error_result(str(e))
@@ -157,31 +155,31 @@ class UnifiedContextProcessor:
         """Process context for character feedback generation."""
         try:
             start_time = datetime.now()
-            
-            processed_context = self._process_request_context(request_context)
-            
-            formatted_context = self.context_manager.format_context_for_agent(
-                context_data=processed_context["context_data"],
-                agent_type=AgentType.CHARACTER_FEEDBACK,
-                config=context_processing_config or {}
+
+            # Use context manager to process context for CHARACTER agent
+            config = context_processing_config or ContextProcessingConfig()
+            formatted_context, metadata = self.context_manager.process_context_for_agent(
+                request_context=request_context,
+                config=config,
+                agent_type=AgentType.CHARACTER
             )
-            
+
             system_prompt, user_message = self._parse_formatted_context(
                 formatted_context,
-                AgentType.CHARACTER_FEEDBACK,
+                AgentType.CHARACTER,
                 "character_feedback"
             )
-            
+
             processing_time = (datetime.now() - start_time).total_seconds()
-            
+
             return UnifiedContextResult(
                 system_prompt=system_prompt,
                 user_message=user_message,
-                context_metadata=processed_context["metadata"],
+                context_metadata=metadata,
                 processing_time=processing_time,
                 cache_hit=False
             )
-            
+
         except Exception as e:
             logger.error(f"Error processing character feedback context: {str(e)}")
             return self._create_error_result(str(e))
