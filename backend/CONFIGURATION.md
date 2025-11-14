@@ -705,15 +705,13 @@ manager = ContextManager()
 
 # Configure processing
 config = ContextProcessingConfig(
-    target_agent=AgentType.WRITER,
-    current_phase=ComposePhase.CHAPTER_DETAIL,
     max_tokens=8000,
     prioritize_recent=True
 )
 
-# Process context
+# Process context (agent type is specified by the endpoint)
 formatted_context, metadata = manager.process_context_for_agent(
-    context, config
+    context, config, agent_type=AgentType.WRITER
 )
 ```
 

@@ -78,10 +78,6 @@ class AgentType(str, Enum):
 class ContextProcessingConfig(BaseModel):
     """Configuration for how context should be processed and filtered."""
 
-    target_agent: AgentType = Field(
-        description="Target agent type for context processing"
-    )
-
     max_tokens: Optional[int] = Field(
         default=None,
         description="Maximum tokens allowed for context"
