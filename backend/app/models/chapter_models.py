@@ -41,7 +41,6 @@ class ChapterOutlineRequest(BaseModel):
 class OutlineItem(BaseModel):
     """Generated outline item"""
     id: str
-    type: str = "chapter"
     title: str
     description: str
     key_plot_items: List[str] = Field(default_factory=list, description="Key plot items that occur in this chapter")
@@ -54,5 +53,4 @@ class OutlineItem(BaseModel):
 class ChapterOutlineResponse(BaseModel):
     """Response model for chapter outline generation"""
     outline_items: List[OutlineItem]
-    summary: str
     context_metadata: Dict[str, Any] = Field(default_factory=dict)

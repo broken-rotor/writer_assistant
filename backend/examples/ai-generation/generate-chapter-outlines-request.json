@@ -8,8 +8,6 @@
       "Content-Type": "application/json"
     },
     "body": {
-      "numChapters": 5,
-      "startingChapter": 3,
       "request_context": {
         "configuration": {
           "system_prompts": {
@@ -17,30 +15,10 @@
             "main_suffix": "Create detailed chapter outlines that advance the plot while maintaining character development and story consistency.",
             "assistant_prompt": "Generate compelling chapter outlines with clear plot progression, character arcs, and engaging story beats.",
             "editor_prompt": ""
-          },
-          "generation_preferences": {
-            "tone": "epic fantasy",
-            "perspective": "third person limited",
-            "target_audience": "young adult",
-            "outline_detail_level": "comprehensive"
           }
         },
         "worldbuilding": {
-          "content": "Eldoria is a magical realm where floating cities drift among the clouds, powered by ancient crystal technology. The Crystal Caverns contain naturally occurring magical crystals protected by ancient guardians. The Shadow Council seeks to corrupt these crystals for dark purposes.",
-          "key_elements": [
-            {
-              "type": "location",
-              "name": "Sunken City of Aquatica",
-              "description": "An underwater ruins where the second crystal shard is hidden, guarded by water elementals",
-              "importance": "high"
-            },
-            {
-              "type": "politics",
-              "name": "Shadow Council",
-              "description": "Dark organization seeking to corrupt the crystal shards and use them to control Eldoria",
-              "importance": "high"
-            }
-          ]
+          "content": "Eldoria is a magical realm where floating cities drift among the clouds, powered by ancient crystal technology. The Crystal Caverns contain naturally occurring magical crystals protected by ancient guardians. The Shadow Council seeks to corrupt these crystals for dark purposes."
         },
         "characters": [
           {
@@ -57,7 +35,6 @@
               "magical_energy": "growing stronger"
             },
             "is_hidden": false,
-            "creation_source": "user",
             "last_modified": "2024-01-15T14:22:30Z"
           },
           {
@@ -74,47 +51,15 @@
               "equipment": "twin daggers, lockpicks, climbing gear"
             },
             "is_hidden": false,
-            "creation_source": "user",
             "last_modified": "2024-01-15T14:22:30Z"
           }
         ],
         "story_outline": {
-          "summary": "Aria must is out on a quest",
-          "content": "Aria must collect five crystal shards to fulfill an ancient prophecy and prevent the Shadow Council from plunging Eldoria into darkness",
-          "status": "draft"
+          "content": "Aria must collect five crystal shards to fulfill an ancient prophecy and prevent the Shadow Council from plunging Eldoria into darkness"
         },
-        "chapters": [
-          {
-            "id": "chapter_001",
-            "number": 1,
-            "title": "The Awakening",
-            "content": "Brief summary: Aria discovers her magical abilities when crystals begin singing to her.",
-            "plot_point": "Aria's magical awakening and first contact with the prophecy",
-            "word_count": 2847,
-            "created": "2024-01-15T17:00:00Z",
-            "last_modified": "2024-01-15T17:30:00Z"
-          },
-          {
-            "id": "chapter_002", 
-            "number": 2,
-            "title": "Into the Crystal Caverns",
-            "content": "Brief summary: Aria faces the guardian's trial and claims the first crystal shard.",
-            "plot_point": "First trial completion and character growth",
-            "word_count": 3421,
-            "created": "2024-01-15T18:00:00Z",
-            "last_modified": "2024-01-15T18:30:00Z"
-          }
-        ],
         "context_metadata": {
           "story_id": "story_crystal_prophecy_001",
-          "story_title": "The Crystal Prophecy",
-          "total_characters": 2,
-          "total_chapters": 2,
-          "processing_hints": {
-            "priority_characters": ["Aria Moonwhisper", "Kira Swiftblade"],
-            "current_arc": "trials_phase",
-            "narrative_focus": "plot progression and character development"
-          }
+          "story_title": "The Crystal Prophecy"
         }
       },
       "context_processing_config": {

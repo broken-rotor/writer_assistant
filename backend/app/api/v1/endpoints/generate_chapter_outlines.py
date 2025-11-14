@@ -29,7 +29,7 @@ async def generate_chapter_outlines(request: ChapterOutlineRequest):
     """
     logger.info("Starting chapter outline generation")
     
-    if not request.request_context.story_outline.summary.strip():
+    if not request.request_context.story_outline.content.strip():
         raise HTTPException(status_code=400, detail="Story outline cannot be empty")
     
     try:
@@ -121,7 +121,7 @@ Respond ONLY with the JSON array, no additional text."""
 
 {story_context_info}{characters_info}
 <STORY OUTLINE>
-{request.request_context.story_outline.summary}
+{request.request_context.story_outline.content}
 </STORY OUTLINE>
 
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
@@ -140,18 +140,15 @@ Create a chapter-by-chapter outline that breaks down this story into well-struct
         
         # Parse the response into structured outline items
         outline_items = _parse_chapter_outline_response(response)
-        
-        # Generate a summary
-        summary = f"Generated {len(outline_items)} chapters from story outline"
+        if not outline_items:
+            raise Exeption('Failed to parse JSON response from LLM')
         
         logger.info(f"Successfully generated {len(outline_items)} chapter outline items")
         
         return ChapterOutlineResponse(
             outline_items=outline_items,
-            summary=summary,
             context_metadata={
                 "generation_timestamp": datetime.now(UTC).isoformat(),
-                "source_outline_length": len(request.request_context.story_outline.summary),
                 "generated_chapters": len(outline_items)
             }
         )
@@ -185,7 +182,6 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
                 
                 outline_item = OutlineItem(
                     id=f"chapter-{i+1}",
-                    type="chapter",
                     title=chapter_data.get("title", f"Chapter {i+1}"),
                     description=description,
                     key_plot_items=key_plot_items,
@@ -203,109 +199,6 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
             logger.info(f"Successfully parsed {len(outline_items)} chapters from JSON response")
             return outline_items
     
-    logger.warning("Failed to parse JSON response. Falling back to text parsing.")
+    logger.error("Failed to parse JSON response. Falling back to text parsing.")
     
-    # Fallback to text parsing logic
-    outline_items = _parse_text_response(response)
-    
-    # If still no chapters were parsed, create a fallback structure
-    if not outline_items:
-        outline_items = _create_fallback_chapters(response)
-    
-    return outline_items
-
-def _parse_text_response(response: str) -> List[OutlineItem]:
-    """
-    Fallback text parsing for non-JSON responses.
-    """
-    outline_items = []
-    
-    # Split response into potential chapters
-    lines = response.strip().split('\n')
-    current_chapter = None
-    chapter_counter = 1
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-            
-        # Look for chapter headers (various formats)
-        if any(indicator in line.lower() for indicator in ['chapter', 'ch.', 'part']):
-            # Extract chapter title
-            title = line
-            # Clean up common prefixes
-            for prefix in ['Chapter', 'Ch.', 'Part', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '10.', '11.', '12.', '13.', '14.', '15.']:
-                if title.startswith(prefix):
-                    title = title[len(prefix):].strip()
-                    if title.startswith(':') or title.startswith('-'):
-                        title = title[1:].strip()
-                    break
-            
-            if current_chapter:
-                # Save previous chapter
-                outline_items.append(current_chapter)
-            
-            # Start new chapter
-            current_chapter = OutlineItem(
-                id=f"chapter-{chapter_counter}",
-                type="chapter",
-                title=title or f"Chapter {chapter_counter}",
-                description="",
-                key_plot_items=[],  # Empty for text parsing, will be populated from description
-                order=chapter_counter - 1,
-                status="draft",
-                involved_characters=[],  # Empty for text parsing
-                metadata={
-                    "created": datetime.utcnow().isoformat(),
-                    "lastModified": datetime.utcnow().isoformat()
-                }
-            )
-            chapter_counter += 1
-            
-        elif current_chapter and line:
-            # Add to current chapter description
-            if current_chapter.description:
-                current_chapter.description += " " + line
-            else:
-                current_chapter.description = line
-            
-            # Also add to key_plot_items for fallback compatibility
-            if line not in current_chapter.key_plot_items:
-                current_chapter.key_plot_items.append(line)
-    
-    # Don't forget the last chapter
-    if current_chapter:
-        outline_items.append(current_chapter)
-    
-    return outline_items
-
-def _create_fallback_chapters(content: str) -> List[OutlineItem]:
-    """
-    Create a basic chapter structure when parsing fails.
-    """
-    # Create 3 basic chapters as fallback
-    chapters = [
-        ("Beginning", "Introduction and setup of the story"),
-        ("Middle", "Development of conflict and rising action"),
-        ("End", "Climax and resolution")
-    ]
-    
-    outline_items = []
-    for i, (title, description) in enumerate(chapters):
-        outline_items.append(OutlineItem(
-            id=f"chapter-{i+1}",
-            type="chapter",
-            title=title,
-            description=description,
-            key_plot_items=[description],  # Use description as single plot item for fallback
-            order=i,
-            status="draft",
-            involved_characters=[],  # Empty for fallback chapters
-            metadata={
-                "created": datetime.utcnow().isoformat(),
-                "lastModified": datetime.utcnow().isoformat()
-            }
-        ))
-    
-    return outline_items
+    return None
