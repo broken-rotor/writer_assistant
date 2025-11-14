@@ -20,14 +20,6 @@ from app.models.context_models import (
     AgentType,
     ContextProcessingConfig
 )
-# Legacy structured context models removed in B4
-# from app.models.generation_models import (
-#     StructuredContextContainer,
-#     PlotElement,
-#     CharacterContext,
-#     UserRequest,
-#     SystemInstruction
-# )
 from app.models.request_context import RequestContext
 from app.services.token_management.token_counter import (
     TokenCounter,
@@ -353,57 +345,6 @@ class ContextManager:
 
         return filtered
 
-    # TODO: Remove - PlotElement class removed in B4
-    # def _is_plot_element_relevant(self, element: PlotElement, agent_type: AgentType) -> bool:
-    #     """Check if plot element is relevant for agent."""
-    #     # High priority elements always included
-    #     if element.priority == "high":
-    #         return True
-    #
-    #     # Medium priority included by default
-    #     if element.priority == "medium":
-    #         return True
-    #
-    #     # Low priority included for WRITER
-    #     if element.priority == "low" and agent_type == AgentType.WRITER:
-    #         return True
-    #
-    #     return False
-
-    # TODO: Remove - UserRequest class removed in B4
-    # def _is_user_request_relevant(self, request: UserRequest, agent_type: AgentType) -> bool:
-    #     """Check if user request is relevant for agent."""
-    #     # High priority requests always included
-    #     if request.priority == "high":
-    #         return True
-    #
-    #     # Medium priority for WRITER and EDITOR
-    #     if request.priority == "medium" and agent_type in [AgentType.WRITER, AgentType.EDITOR]:
-    #         return True
-    #
-    #     return False
-
-    # TODO: Remove - SystemInstruction class removed in B4
-    # def _is_system_instruction_relevant(self, instruction: SystemInstruction, agent_type: AgentType) -> bool:
-    #     """Check if system instruction is relevant for agent."""
-    #     # Global scope always included
-    #     if instruction.scope == "global":
-    #         return True
-    #
-    #     # Agent-specific scope filtering
-    #     scope_agent_map = {
-    #         "character": [AgentType.CHARACTER, AgentType.WRITER],
-    #         "scene": [AgentType.WRITER],
-    #         "chapter": [AgentType.WRITER, AgentType.EDITOR],
-    #         "story": [AgentType.WRITER, AgentType.RATER, AgentType.EDITOR]
-    #     }
-    #
-    #     relevant_agents = scope_agent_map.get(instruction.scope, [])
-    #     if agent_type in relevant_agents:
-    #         return True
-    #
-    #     return False
-
     def _apply_custom_filters(
         self,
         collections: Dict[str, List],
@@ -438,63 +379,6 @@ class ContextManager:
                 filtered["system_instructions"].append(inst)
 
         return filtered
-
-    # TODO: Remove - PlotElement class removed in B4
-    # def _passes_custom_filter_plot(self, element: PlotElement, filters: Dict[str, Any]) -> bool:
-    #     """Check if plot element passes custom filters."""
-    #     # Filter by tags
-    #     if 'required_tags' in filters:
-    #         if not any(tag in element.tags for tag in filters['required_tags']):
-    #             return False
-    #
-    #     if 'excluded_tags' in filters:
-    #         if any(tag in element.tags for tag in filters['excluded_tags']):
-    #             return False
-    #
-    #     # Filter by minimum priority
-    #     if 'min_priority' in filters:
-    #         priority_order = {"high": 3, "medium": 2, "low": 1}
-    #         if priority_order.get(element.priority, 0) < priority_order.get(filters['min_priority'], 0):
-    #             return False
-    #
-    #     # Filter by type
-    #     if 'allowed_types' in filters:
-    #         if element.type not in filters['allowed_types']:
-    #             return False
-    #
-    #     return True
-
-    # TODO: Remove - CharacterContext class removed in B4
-    # def _passes_custom_filter_character(self, char: CharacterContext, filters: Dict[str, Any]) -> bool:
-    #     """Check if character context passes custom filters."""
-    #     # Filter by character IDs
-    #     if 'character_ids' in filters:
-    #         if char.character_id not in filters['character_ids']:
-    #             return False
-    #
-    #     return True
-
-    # TODO: Remove - UserRequest class removed in B4
-    # def _passes_custom_filter_request(self, req: UserRequest, filters: Dict[str, Any]) -> bool:
-    #     """Check if user request passes custom filters."""
-    #     # Filter by minimum priority
-    #     if 'min_priority' in filters:
-    #         priority_order = {"high": 3, "medium": 2, "low": 1}
-    #         if priority_order.get(req.priority, 0) < priority_order.get(filters['min_priority'], 0):
-    #             return False
-    #
-    #     return True
-
-    # TODO: Remove - SystemInstruction class removed in B4
-    # def _passes_custom_filter_instruction(self, inst: SystemInstruction, filters: Dict[str, Any]) -> bool:
-    #     """Check if system instruction passes custom filters."""
-    #     # Filter by minimum priority
-    #     if 'min_priority' in filters:
-    #         priority_order = {"high": 3, "medium": 2, "low": 1}
-    #         if priority_order.get(inst.priority, 0) < priority_order.get(filters['min_priority'], 0):
-    #             return False
-    #
-    #     return True
 
     def _sort_elements_by_priority(
         self,
@@ -616,24 +500,6 @@ class ContextManager:
             total += result.token_count
 
         return total
-
-    # TODO: Remove - CharacterContext class removed in B4
-    # def _format_character_for_counting(self, char: CharacterContext) -> str:
-    #     """Format character context for token counting."""
-    #     parts = [f"Character: {char.character_name}"]
-    #     if char.current_state:
-    #         parts.append(f"State: {char.current_state}")
-    #     if char.goals:
-    #         parts.append(f"Goals: {', '.join(char.goals)}")
-    #     if char.recent_actions:
-    #         parts.append(f"Actions: {', '.join(char.recent_actions)}")
-    #     if char.memories:
-    #         parts.append(f"Memories: {', '.join(char.memories)}")
-    #     if char.personality_traits:
-    #         parts.append(f"Traits: {', '.join(char.personality_traits)}")
-    #     if char.relationships:
-    #         parts.append(f"Relationships: {char.relationships}")
-    #     return "; ".join(parts)
 
     def _trim_collections_by_priority(
         self,
@@ -808,20 +674,6 @@ class ContextManager:
                 sections.append(f"- [{req.type}] {req.content}")
 
         return "\n".join(sections)
-
-    # TODO: Remove - CharacterContext class removed in B4
-    # def _format_character_context(self, char: CharacterContext) -> str:
-    #     """Format a character context into a readable string."""
-    #     parts = []
-    #     if char.current_state:
-    #         parts.append(f"State: {char.current_state}")
-    #     if char.goals:
-    #         parts.append(f"Goals: {', '.join(char.goals)}")
-    #     if char.personality_traits:
-    #         parts.append(f"Traits: {', '.join(char.personality_traits)}")
-    #     if char.relationships:
-    #         parts.append(f"Relationships: {char.relationships}")
-    #     return "; ".join(parts)
 
     def _format_for_character(self, collections: Dict[str, List]) -> str:
         """Format context for Character agents using new model."""

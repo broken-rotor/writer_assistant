@@ -119,8 +119,7 @@ class TokenAllocator:
         self._reallocation_threshold = 0.8  # Trigger reallocation at 80% utilization
 
         logger.info(
-            f"TokenAllocator initialized with budget {total_budget}, mode {
-                mode.value}")
+            f"TokenAllocator initialized with budget {total_budget}, mode {mode.value}")
 
     def _initialize_allocations(self) -> Dict[LayerType, LayerAllocation]:
         """Initialize layer allocations based on hierarchy and budget."""
@@ -469,9 +468,7 @@ class TokenAllocator:
                     over_allocation.allocated_tokens += reallocation_amount
 
                     logger.info(
-                        f"Reallocated {reallocation_amount} tokens from {
-                            under_layer.value} to {
-                            over_layer.value}")
+                        f"Reallocated {reallocation_amount} tokens from {under_layer.value} to {over_layer.value}")
 
     def _check_reallocation_trigger(self):
         """Check if dynamic reallocation should be triggered."""
@@ -528,9 +525,7 @@ class TokenAllocator:
                 return True
             else:
                 logger.warning(
-                    f"Cannot release {tokens} tokens from {
-                        layer_type.value}, only {
-                        allocation.used_tokens} in use")
+                    f"Cannot release {tokens} tokens from {layer_type.value}, only {allocation.used_tokens} in use")
                 return False
 
         except Exception as e:
@@ -557,9 +552,7 @@ class TokenAllocator:
                 return True
             else:
                 logger.warning(
-                    f"Cannot reserve {tokens} tokens in {
-                        layer_type.value}, only {
-                        allocation.available_tokens} available")
+                    f"Cannot reserve {tokens} tokens in {layer_type.value}, only {allocation.available_tokens} available")
                 return False
 
         except Exception as e:
