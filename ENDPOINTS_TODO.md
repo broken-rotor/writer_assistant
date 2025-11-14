@@ -3,12 +3,13 @@
 
 | Endpoint                            | RqCtx    | Fields        | Works
 | ----------------------------------- | -------- | ------------- | ---------------------------------------- |
-| character_feedback_router           |  Yes     |  No           | Always uses characters[0]                |
-| generate_chapter_router             |  Yes     |  Yes          | ?                                        |
-| modify_chapter_router               |  Yes     |  Yes          | ?                                        |
-| editor_review_router                |  Yes     |  Yes          | ? using editor prompt?                   |
-| flesh_out_router                    |  Yes     |  Too many     | ?                                        |
-| generate_character_details_router   |  Yes     |  Too many     | Extra characters field                   |
-| generate_chapter_outlines_router    |  Yes     |  No*          | Probably already in the requestcontext   |
-| regenerate_bio.router               |  Yes     |  Yes          | ?                                        |
-| llm_chat.router                     |  Yes     |  Yes?         | ?                                        |
+| /character-feedback                 |  Yes     |  No           | Always uses characters[0]                |
+| /editor-review                      |  Yes     |  Yes          | ? using editor prompt?                   |
+| /flesh-out                          |  Yes     |  Too many     | ?                                        |
+| /generate-chapter                   |  Yes     |  Yes          | ?                                        |
+| /generate-chapter-outlines          |  Yes     |  No*          | Probably already in the requestcontext   |
+| /generate-character-details         |  Yes     |  Too many     | Extra characters field                   |
+| /chat/llm                           |  Yes     |  Yes?         | ?                                        |
+| /modify-chapter                     |  Yes     |  Yes          | ?                                        |
+| /rater-feedback                     |  Yes     |  Yes          | ?                                        |
+| /regenerate-bio                     |  Yes     |  Yes          | ?                                        |
