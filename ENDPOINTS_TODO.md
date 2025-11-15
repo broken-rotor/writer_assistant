@@ -12,4 +12,4 @@
 | /chat/llm                           |  Yes     |  Yes?         | ?                                        |
 | /modify-chapter                     |  Yes     |  Yes          | ?                                        |
 | /rater-feedback                     |  Yes     |  Yes          | ?                                        |
-| /regenerate-bio                     |  Yes     |  Yes          | ?                                        |
+| /regenerate-bio                     |  Yes     |  Yes          | Migrated                                 |
