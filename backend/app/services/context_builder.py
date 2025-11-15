@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from app.models.request_context import RequestContext
+from app.models.request_context import RequestContext, CharacterDetails, CharacterState
 from app.services.token_management import TokenCounter
 from app.core.config import settings
 
@@ -51,10 +51,10 @@ class ContextBuilder:
 
     def add_system_prompt(self, prompt: str):
         content = prompt
-        if self._request_context.configuration.main_prefix:
-            content = f"{self._request_context.configuration.main_prefix}\n{content}"
-        if self._request_context.configuration.main_suffix:
-            content = f"{content}\n{self._request_context.configuration.main_suffix}"
+        if self._request_context.configuration.system_prompts.main_prefix:
+            content = f"{self._request_context.configuration.system_prompts.main_prefix}\n{content}"
+        if self._request_context.configuration.system_prompts.main_suffix:
+            content = f"{content}\n{self._request_context.configuration.system_prompts.main_suffix}"
         content = content + '\n'
         self._elements.append(ContextItem(
             tag=None,
@@ -104,14 +104,14 @@ class ContextBuilder:
             self._elements.append(ContextItem(
                 tag='STORY_SUMMARY',
                 role=ContextRole.USER,
-                content=self._request_context.worldbuilding.summary,
+                content=self._request_context.story_outline.summary,
                 token_budget=2000,
                 summarization_strategy=SummarizationStrategy.SUMMARIZED))
         if self._request_context.story_outline and self._request_context.story_outline.content:
             self._elements.append(ContextItem(
                 tag='STORY_OUTLINE',
                 role=ContextRole.USER,
-                content=self._request_context.worldbuilding.content,
+                content=self._request_context.story_outline.content,
                 token_budget=2000,
                 summarization_strategy=SummarizationStrategy.LITERAL))
 
@@ -119,15 +119,15 @@ class ContextBuilder:
         def format_list(header: str, items: list[str]) -> str:
             return (f"  {header}:\n" + "".join([f"  - {i}\n" for i in items])) if items else ""
 
-        def format_character(c: CharacterDetails) -> str:
+        def format_character_state(c: CharacterState) -> str:
             content = ''.join([
                 format_list("Recent Actions", c.recent_actions),
                 format_list("Recent Dialog", c.recent_dialog),
-                format_list("Recent Physical Sensations", physicalSensations),
-                format_list("Recent Emotions", emotions),
-                format_list("Recent Internal Monologue/Thoughts", internalMonologue),
-                format_list("Current Goals", goals),
-                format_list("Memories", memories)
+                format_list("Recent Physical Sensations", c.physicalSensations),
+                format_list("Recent Emotions", c.emotions),
+                format_list("Recent Internal Monologue/Thoughts", c.internalMonologue),
+                format_list("Current Goals", c.goals),
+                format_list("Memories", c.memories)
             ])
             return f"- Name: {c.name}\n{content}" if content else ""
 
