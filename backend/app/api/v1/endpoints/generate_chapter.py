@@ -7,9 +7,9 @@ from app.models.generation_models import (
     GenerateChapterRequest,
     GenerateChapterResponse
 )
-from app.models.request_context import RequestContext
+from app.models.request_context import RequestContext, ChapterDetails
 from app.services.llm_inference import get_llm
-from app.services.unified_context_processor import get_unified_context_processor
+from app.services.context_builder import ContextBuilder
 from app.core.config import settings
 from datetime import datetime, UTC
 import logging
@@ -24,6 +24,11 @@ router = APIRouter()
 @router.post("/generate-chapter")
 async def generate_chapter(request: GenerateChapterRequest):
     """Generate a complete chapter using LLM with structured context and SSE streaming."""
+
+    def key_plot_items(chapter: ChapterDetails) -> str:
+        key_plot_items = [f"  - {i}\n" for i in chapter.key_plot_items]
+        return f"Key Plot Items:\n{key_plot_items}" if key_plot_items else ""
+
     llm = get_llm()
     if not llm:
         raise HTTPException(
@@ -32,32 +37,31 @@ async def generate_chapter(request: GenerateChapterRequest):
 
     async def generate_with_updates():
         try:
+            if request.chapter_number <= 0 or request.chapter_number > len(request.request_context.chapters):
+                raise ValueError("Invalid chapter number")
+            chapter = request.request_context.chapters[request.chapter_number-1]
+
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing structured context and preparing prompts...', 'progress': 20})}\n\n"
 
-            # Get unified context processor and process context
-            context_processor = get_unified_context_processor()
-            context_result = context_processor.process_generate_chapter_context(
-                request_context=request.request_context,
-                context_processing_config=request.context_processing_config
-            )
+            context_builder = ContextBuilder(request.request_context)
+            context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
+            context_builder.add_character_states()
+            context_builder.add_recent_story(include_up_to=chapter.number)
+            context_builder.add_agent_instruction(
+                f"Generate the {chapter.number}th chapter in story. Develop the following plot points and key elements in a way that is narratively consistent:\n"
+                f"Title: {chapter.title}\n" +
+                (f"Plot Point: {chapter.plot_point}\n" if chapter.plot_point else "") +
+                key_plot_items(chapter))
 
-            # Log context processing results
-            logger.info(f"Chapter generation context processed in {context_result.processing_time:.2f}s")
 
             # Phase 2: Generation
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating chapter content...', 'progress': 60})}\n\n"
-
-            # Prepare messages and generate
-            messages = [
-                {"role": "system", "content": context_result.system_prompt.strip()},
-                {"role": "user", "content": context_result.user_message.strip()}
-            ]
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating chapter content...', 'progress': 40})}\n\n"
 
             # Collect generated text from streaming
             response_text = ""
             for token in llm.chat_completion_stream(
-                messages,
+                context_builder.build_messages(),
                 max_tokens=settings.ENDPOINT_GENERATE_CHAPTER_MAX_TOKENS,
                 temperature=settings.ENDPOINT_GENERATE_CHAPTER_TEMPERATURE
             ):
@@ -75,20 +79,13 @@ async def generate_chapter(request: GenerateChapterRequest):
             result = GenerateChapterResponse(
                 chapterText=response_text.strip(),
                 wordCount=word_count,
-                context_metadata=context_result.context_metadata,
                 metadata={
-                    "generatedAt": datetime.now(UTC).isoformat(),
-                    "plotPoint": request.plotPoint,
-                    "contextMode": "structured",
-                    "requestContextProvided": bool(
-                        request.request_context),
-                    "structuredContextProvided": False,
-                    "processingMode": "request_context"})
+                    "generatedAt": datetime.now(UTC).isoformat()})
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in generate_chapter: {str(e)}")
+            logger.error(f"Error in generate_chapter", e)
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

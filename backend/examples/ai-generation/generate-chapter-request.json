@@ -8,7 +8,7 @@
       "Content-Type": "application/json"
     },
     "body": {
-      "plotPoint": "Aria enters the Crystal Caverns and encounters the first guardian, who tests her worthiness to claim the crystal shard",
+      "chapter_number": 1,
       "request_context": {
         "configuration": {
           "system_prompts": {
@@ -24,13 +24,7 @@
               "system_prompt": "Evaluate how well characters maintain their established personalities, motivations, and speech patterns.",
               "enabled": true
             }
-          ],
-          "generation_preferences": {
-            "tone": "epic fantasy",
-            "perspective": "third person limited",
-            "target_audience": "young adult",
-            "chapter_length": "2500-3000 words"
-          }
+          ]
         },
         "worldbuilding": {
           "content": "Eldoria is a magical realm where floating cities drift among the clouds, powered by ancient crystal technology. The Crystal Caverns beneath Mount Aethermoor contain naturally occurring magical crystals and are protected by ancient guardians.",
