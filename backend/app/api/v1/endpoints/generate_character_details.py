@@ -8,9 +8,9 @@ from app.models.generation_models import (
     GenerateCharacterDetailsResponse,
     CharacterInfo
 )
-from app.models.request_context import RequestContext
+from app.models.request_context import RequestContext, CharacterDetails
 from app.services.llm_inference import get_llm
-from app.services.unified_context_processor import get_unified_context_processor
+from app.services.context_builder import ContextBuilder
 from app.api.v1.endpoints.shared_utils import parse_json_response
 from app.core.config import settings
 import logging
@@ -25,6 +25,14 @@ router = APIRouter()
 @router.post("/generate-character-details")
 async def generate_character_details(request: GenerateCharacterDetailsRequest):
     """Generate detailed character information using LLM with structured context and SSE streaming."""
+    def get_character_details() -> CharacterDetails:
+        characters = [c for c in request.request_context.characters if c.name == request.character_name]
+        if not characters:
+            raise ValueError(f"Character {request.character_name} not found in request_context")
+        elif len(characters) > 1:
+            raise ValueError(f"Duplicate character name {request.character_name}")
+        return characters[0]
+
     llm = get_llm()
     if not llm:
         raise HTTPException(
@@ -33,52 +41,17 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
 
     async def generate_with_updates():
         try:
+            character_details = get_character_details()
+
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context...', 'progress': 20})}\n\n"
 
-            # Get unified context processor
-            context_processor = get_unified_context_processor()
-            
-            # Try to use character generation context processing if available
-            # Otherwise fall back to generic processing
-            try:
-                if hasattr(context_processor, 'process_character_generation_context'):
-                    context_result = context_processor.process_character_generation_context(
-                        request_context=request.request_context,
-                        basic_bio=request.basicBio,
-                        existing_characters=request.existingCharacters,
-                        context_processing_config=request.context_processing_config
-                    )
-                else:
-                    # Fallback: use character feedback context processing as it's similar
-                    context_result = context_processor.process_character_feedback_context(
-                        request_context=request.request_context,
-                        context_processing_config=request.context_processing_config
-                    )
-            except Exception as e:
-                logger.warning(f"Context processing failed, using fallback: {e}")
-                # Create a minimal fallback context result
-                from app.services.unified_context_processor import UnifiedContextResult
-                context_result = UnifiedContextResult(
-                    system_prompt="You are a character creator. Create detailed, believable characters.",
-                    user_message=f"Create a detailed character based on this bio: {request.basicBio}",
-                    processing_time=0.0,
-                    context_metadata={}
-                )
-
-            # Log context processing results
-            logger.info(f"Character generation context processed in {context_result.processing_time:.2f}s")
-
-            # Phase 2: Analyzing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing character bio and existing characters...', 'progress': 40})}\n\n"
-
-            # Phase 3: Generating
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating detailed character information...', 'progress': 70})}\n\n"
-
-            # Prepare JSON instruction and messages
-            json_instruction = '''
-
-Generate complete character details in JSON format:
+            context_builder = ContextBuilder(request.request_context)
+            context_builder.add_system_prompt(request.request_context.configuration.system_prompts.assistant_prompt)
+            context_builder.add_worldbuilding()
+            context_builder.add_characters(tag='OTHER_CHARACTERS', exclude_characters={request.character_name})
+            context_builder.add_characters(tag='CHARACTER_TO_GENERATE', include_characters={request.character_name})
+            agent_instruction = """Generate complete character details for {request.character_name} based on CHARACTER_TO_GENERATE. Respond in JSON format:
 {
   "name": "character name",
   "sex": "Male/Female/Other",
@@ -91,32 +64,30 @@ Generate complete character details in JSON format:
   "motivations": "what drives them",
   "fears": "what they fear",
   "relationships": "how they relate to others"
-}'''
+}"""
+            context_builder.add_agent_instruction(agent_instruction)
 
-            user_message = context_result.user_message + json_instruction
-            messages = [
-                {"role": "system", "content": context_result.system_prompt.strip()},
-                {"role": "user", "content": user_message.strip()}
-            ]
+            # Phase 2: Generating
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating detailed character information...', 'progress': 40})}\n\n"
 
             # Collect generated text from streaming
             response_text = ""
             for token in llm.chat_completion_stream(
-                    messages,
+                    context_builder.build_messages(),
                     max_tokens=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_MAX_TOKENS,
                     temperature=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_TEMPERATURE,
                     json_schema_class=CharacterInfo):
                 response_text += token
 
-            # Phase 4: Parsing
+            # Phase 3: Parsing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Processing character details...', 'progress': 90})}\n\n"
 
             parsed = parse_json_response(response_text)
-
             if parsed and 'name' in parsed:
+                basicBio = character_details.basic_bio or parsed.basicBio
                 character_info = CharacterInfo(
                     name=parsed.get('name', 'Character'),
-                    basicBio=request.basicBio,
+                    basicBio=basicBio,
                     sex=parsed.get('sex', ''),
                     gender=parsed.get('gender', ''),
                     sexualPreference=parsed.get('sexualPreference', ''),
@@ -135,42 +106,16 @@ Generate complete character details in JSON format:
                     relationships=parsed.get('relationships', '')
                 )
                 result = GenerateCharacterDetailsResponse(
-                    character_info=character_info,
-                    context_metadata=context_result.context_metadata
-                )
+                    character_info=character_info)
             else:
-                logger.warning(
+                logger.error(
                     "Failed to parse character JSON, using fallback")
-                # Extract name from basic bio or generate one
-                name_match = re.search(
-                    r'([A-Z][a-z]+ [A-Z][a-z]+)', request.basicBio)
-                name = name_match.group(1) if name_match else "Alex Morgan"
-
-                character_info = CharacterInfo(
-                    name=name,
-                    basicBio=request.basicBio,
-                    sex="",
-                    gender="",
-                    sexualPreference="",
-                    age=30,
-                    physicalAppearance=(
-                        "A person matching the description: "
-                        f"{request.basicBio[:100]}"),
-                    usualClothing="Practical, comfortable clothing",
-                    personality=request.basicBio,
-                    motivations="To achieve their goals",
-                    fears="Failure and loss",
-                    relationships="Building connections with others"
-                )
-                result = GenerateCharacterDetailsResponse(
-                    character_info=character_info,
-                    context_metadata=context_result.context_metadata
-                )
+                raise ValueError('Error parsing JSON output from LLM')
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in generate_character_details: {str(e)}")
+            logger.error("Error in generate_character_details:", e)
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

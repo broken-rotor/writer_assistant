@@ -503,13 +503,18 @@ def sample_generate_character_request():
             total_word_count=0,
             context_size_estimate=600
         ),
-        characters=[]  # Empty since we're generating new characters
+        characters=[
+            CharacterDetails(
+                id="char_john_doe_001",
+                name="John Doe",
+                basic_bio="A tough but fair detective with a mysterious past"
+            )
+        ]
     )
     
     return {
         "request_context": request_context.model_dump(mode='json'),
-        "basicBio": "A tough but fair detective with a mysterious past",
-        "existingCharacters": []
+        "character_name": "John Doe"
     }
 
 

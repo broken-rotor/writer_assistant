@@ -45,7 +45,7 @@ class TestGenerateCharacterDetailsEndpoint:
         # Verify we received status updates
         assert len(status_updates) > 0
         phases = [update['phase'] for update in status_updates]
-        expected_phases = ['context_processing', 'analyzing', 'generating', 'parsing']
+        expected_phases = ['context_processing', 'generating', 'parsing']
         for phase in expected_phases:
             assert phase in phases
 

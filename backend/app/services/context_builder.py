@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 from app.models.request_context import RequestContext, CharacterDetails, CharacterState
 from app.services.token_management import TokenCounter
@@ -81,8 +81,8 @@ class ContextBuilder:
                 token_budget=2000,
                 summarization_strategy=SummarizationStrategy.SUMMARIZED))
 
-    def add_characters(self):
-        def add_item(title, element) -> str:
+    def add_characters(self, tag: str='CHARACTERS', exclude_characters: Set[str]={}, include_characters: Set[str]={}):
+        def add_item(title: str, element) -> str:
             return f"  {title}: {element}\n" if element else ""
 
         def format_character(c: CharacterDetails) -> str:
@@ -102,10 +102,15 @@ class ContextBuilder:
             return f"- Name: {c.name}\n{content}" if content else ""
 
         if self._request_context.characters:
-            characters = '\n'.join([format_character(c)for c in self._request_context.characters if not c.is_hidden])
+            characters = '\n'.join(
+                [format_character(c)
+                 for c in self._request_context.characters
+                 if (not c.is_hidden and
+                     c.name not in exclude_characters and
+                     (not include_characters or c.name in include_characters))])
             if characters:
                 self._elements.append(ContextItem(
-                    tag='CHARACTERS',
+                    tag=tag,
                     role=ContextRole.USER,
                     content=characters,
                     token_budget=2000,
