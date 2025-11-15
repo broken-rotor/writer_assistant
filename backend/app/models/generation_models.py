@@ -426,25 +426,13 @@ class FleshOutResponse(BaseModel):
 
 # Generate Character Details Request/Response
 class GenerateCharacterDetailsRequest(BaseModel):
-    # Core request fields
-    basicBio: str = Field(
-        description="Basic biography or description of the character to generate details for")
-    existingCharacters: List[Dict[str, str]] = Field(
-        default_factory=list,
-        description="List of existing characters with name, basicBio, and relationships"
-    )
-
-    # Phase-specific fields
+    character_name: str = Field(description="Name of the character")
 
     # Request context fields (required)
     request_context: Optional[RequestContext] = Field(
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[ContextProcessingConfig] = Field(
-        default=None,
-        description="Configuration for context processing (summarization, filtering, etc.)"
-    )
 
     @model_validator(mode='before')
     @classmethod
