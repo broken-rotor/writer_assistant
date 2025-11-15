@@ -58,7 +58,6 @@ class TestGenerateCharacterDetailsEndpoint:
 
         # Check top-level structure
         assert "character_info" in final_data
-        assert "context_metadata" in final_data
 
         # Check character_info fields
         character_info = final_data["character_info"]

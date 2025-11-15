@@ -206,7 +206,6 @@ def sample_character_feedback_request():
         ),
         story_outline=StoryOutline(
             summary="Detective Sarah Chen investigates a murder case in 1940s Los Angeles",
-            status="draft",
             content="The story follows Detective Sarah Chen as she uncovers clues in a complex murder case."
         ),
         context_metadata=RequestContextMetadata(
@@ -216,15 +215,12 @@ def sample_character_feedback_request():
             created_at=datetime.now(),
             total_characters=1,
             total_chapters=1,
-            total_word_count=1000,
-            context_size_estimate=500
         ),
         characters=[
             CharacterDetails(
                 id="detective_sarah_chen",
                 name="Detective Sarah Chen",
                 basic_bio="A determined detective working alone in 1940s Los Angeles, haunted by her previous partner's death.",
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ]
@@ -264,7 +260,6 @@ def sample_rater_feedback_request():
         ),
         story_outline=StoryOutline(
             summary="Detective story involving investigation and discovery of crucial evidence",
-            status="draft",
             content="A story where the detective uncovers important clues that advance the investigation and reveal deeper mysteries."
         ),
         context_metadata=RequestContextMetadata(
@@ -274,15 +269,12 @@ def sample_rater_feedback_request():
             created_at=datetime.now(),
             total_characters=1,
             total_chapters=0,
-            total_word_count=0,
-            context_size_estimate=400
         ),
         characters=[
             CharacterDetails(
                 id="detective_investigator",
                 name="Detective",
                 basic_bio="A skilled detective investigating mysterious cases in 1940s Los Angeles",
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ]
@@ -312,7 +304,6 @@ def sample_generate_chapter_request():
         ),
         story_outline=StoryOutline(
             summary="Detective Sarah Chen investigates a murder case in 1940s Los Angeles",
-            status="draft",
             content="The story follows Detective Sarah Chen as she solves crimes in the dark streets of Los Angeles."
         ),
         context_metadata=RequestContextMetadata(
@@ -322,15 +313,12 @@ def sample_generate_chapter_request():
             created_at=datetime.now(),
             total_characters=1,
             total_chapters=1,
-            total_word_count=1200,
-            context_size_estimate=600
         ),
         characters=[
             CharacterDetails(
                 id="detective_sarah_chen",
                 name="Detective Sarah Chen",
                 basic_bio="A determined detective working crime scenes in 1940s Los Angeles, cynical but observant.",
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ],
@@ -370,7 +358,6 @@ def sample_modify_chapter_request():
         ),
         story_outline=StoryOutline(
             summary="Detective Chen investigates a murder case in 1940s Los Angeles",
-            status="draft",
             content="The story follows Detective Chen as she examines crime scenes in the rain-soaked streets of Los Angeles."
         ),
         context_metadata=RequestContextMetadata(
@@ -379,24 +366,31 @@ def sample_modify_chapter_request():
             version="1.0",
             created_at=datetime.now(),
             total_characters=1,
-            total_chapters=1,
-            total_word_count=1000,
-            context_size_estimate=500
+            total_chapters=1
         ),
         characters=[
             CharacterDetails(
                 id="detective_chen",
                 name="Detective Chen",
                 basic_bio="An experienced detective working crime scenes in 1940s Los Angeles, methodical and observant.",
-                creation_source="user",
+                last_modified=datetime.now()
+            )
+        ],
+        chapters=[
+            ChapterDetails(
+                id="chapter_1",
+                number=1,
+                title="The Crime Scene",
+                content="The rain fell hard on the city streets. Detective Chen examined the crime scene with practiced eyes.",
+                created=datetime.now(),
                 last_modified=datetime.now()
             )
         ]
     )
-    
+
     return {
         "request_context": request_context.model_dump(mode='json'),
-        "currentChapter": "The rain fell hard on the city streets. Detective Chen examined the crime scene with practiced eyes.",
+        "chapter_number": 1,
         "userRequest": "Add more atmospheric details about the weather and setting"
     }
 
@@ -418,7 +412,6 @@ def sample_editor_review_request():
         ),
         story_outline=StoryOutline(
             summary="Detective story involving crime scene investigation in atmospheric 1940s Los Angeles",
-            status="draft",
             content="A story where Detective Chen methodically examines crime scenes, using analytical skills to uncover clues in the rain-soaked city."
         ),
         context_metadata=RequestContextMetadata(
@@ -427,16 +420,13 @@ def sample_editor_review_request():
             version="1.0",
             created_at=datetime.now(),
             total_characters=1,
-            total_chapters=1,
-            total_word_count=150,
-            context_size_estimate=500
+            total_chapters=1
         ),
         characters=[
             CharacterDetails(
                 id="detective_chen",
                 name="Detective Chen",
                 basic_bio="A methodical and observant detective investigating cases in 1940s Los Angeles",
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ],
@@ -475,7 +465,6 @@ def sample_flesh_out_request():
         ),
         story_outline=StoryOutline(
             summary="Detective story involving mysterious evidence and corruption in 1940s Los Angeles",
-            status="draft",
             content="A story where the detective discovers crucial evidence that leads deeper into a web of mystery and corruption."
         ),
         context_metadata=RequestContextMetadata(
@@ -485,15 +474,12 @@ def sample_flesh_out_request():
             created_at=datetime.now(),
             total_characters=1,
             total_chapters=0,
-            total_word_count=0,
-            context_size_estimate=500
         ),
         characters=[
             CharacterDetails(
                 id="detective_protagonist",
                 name="Detective",
                 basic_bio="A seasoned detective investigating mysterious cases in 1940s Los Angeles",
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ]
@@ -523,7 +509,6 @@ def sample_generate_character_request():
         ),
         story_outline=StoryOutline(
             summary="Detective story involving corruption and mystery in 1940s Los Angeles",
-            status="draft",
             content="A story requiring a tough but fair detective character with a mysterious past to navigate the corrupt underworld."
         ),
         context_metadata=RequestContextMetadata(
@@ -533,8 +518,6 @@ def sample_generate_character_request():
             created_at=datetime.now(),
             total_characters=0,
             total_chapters=0,
-            total_word_count=0,
-            context_size_estimate=600
         ),
         characters=[
             CharacterDetails(
@@ -651,13 +634,11 @@ def sample_request_context():
                 recent_actions=["Arrived at scene", "Examining evidence", "Taking notes"],
                 goals=["Solve the murder case", "Find justice", "Protect the innocent"],
                 memories=["Previous partner's death", "Similar cases", "Training"],
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ],
         story_outline=StoryOutline(
             summary="A detective investigates a murder in 1940s Los Angeles, uncovering corruption and personal demons",
-            status="draft",
             content="Chapter 1: The Crime Scene - Detective arrives at a murder scene on a rainy night",
             outline_items=[
                 OutlineItem(
@@ -668,8 +649,7 @@ def sample_request_context():
                     key_plot_items=["Arrival at scene", "Initial investigation", "Discovery of key evidence"],
                     order=1,
                     involved_characters=["Detective Sarah Chen"],
-                    status="draft",
-                    word_count_estimate=2000
+                            word_count_estimate=2000
                 )
             ],
             rater_feedback=[
@@ -726,7 +706,6 @@ def sample_request_context():
                         selected=False
                     )
                 ],
-                word_count=156,
                 created=datetime.now(),
                 last_modified=datetime.now()
             )
@@ -738,8 +717,6 @@ def sample_request_context():
             created_at=datetime.now(),
             total_characters=1,
             total_chapters=1,
-            total_word_count=156,
-            context_size_estimate=2500,
             processing_hints={
                 "genre": "noir",
                 "style": "atmospheric",
@@ -797,7 +774,6 @@ def sample_chapter_outline_request():
         ),
         story_outline=StoryOutline(
             summary="A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
-            status="draft",
             content="Detective Sarah Chen receives a new murder case that initially appears straightforward but quickly reveals layers of corruption and personal connection to her past."
         ),
         context_metadata=RequestContextMetadata(
@@ -807,22 +783,18 @@ def sample_chapter_outline_request():
             created_at=datetime.now(),
             total_characters=2,
             total_chapters=0,
-            total_word_count=0,
-            context_size_estimate=800
         ),
         characters=[
             CharacterDetails(
                 id="detective_sarah_chen",
                 name="Detective Sarah Chen",
                 basic_bio="A hardboiled detective with a troubled past and a reputation for getting results. Cynical but determined to find justice.",
-                creation_source="user",
                 last_modified=datetime.now()
             ),
             CharacterDetails(
                 id="captain_rodriguez",
                 name="Captain Rodriguez",
                 basic_bio="Sarah's boss, a veteran cop trying to keep his department clean while dealing with political pressures.",
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ]
@@ -855,7 +827,6 @@ def sample_chapter_outline_request_with_system_prompts():
         ),
         story_outline=StoryOutline(
             summary="A noir detective story set in 1940s Los Angeles. Detective Sarah Chen investigates a mysterious murder that leads her into a web of corruption and deceit. As she follows the clues, she discovers that the case is connected to her own past and must confront her demons to solve it.",
-            status="draft",
             content="Detective Sarah Chen receives a new murder case that initially appears straightforward but quickly reveals layers of corruption and personal connection to her past."
         ),
         context_metadata=RequestContextMetadata(
@@ -865,15 +836,12 @@ def sample_chapter_outline_request_with_system_prompts():
             created_at=datetime.now(),
             total_characters=1,
             total_chapters=0,
-            total_word_count=0,
-            context_size_estimate=900
         ),
         characters=[
             CharacterDetails(
                 id="detective_sarah_chen",
                 name="Detective Sarah Chen",
                 basic_bio="A hardboiled detective with a troubled past and a reputation for getting results. Cynical but determined to find justice.",
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ]
