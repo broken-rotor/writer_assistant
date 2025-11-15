@@ -11,5 +11,5 @@
 | /generate-character-details         |  Yes     |  Yes          | Migrated                                 |
 | /chat/llm                           |  Yes     |  Yes?         | ?                                        |
 | /modify-chapter                     |  Yes     |  Yes          | ?                                        |
-| /rater-feedback                     |  Yes     |  Yes          | ?                                        |
+| /rater-feedback                     |  Yes     |  Yes          | Migrated                                 |
 | /regenerate-bio                     |  Yes     |  Yes          | Migrated                                 |
