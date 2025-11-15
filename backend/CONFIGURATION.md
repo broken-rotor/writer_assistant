@@ -151,29 +151,6 @@ The context system uses a layered approach with specific token allocations:
 | `CONTEXT_LAYER_D_TOKENS` | integer | `5000` | 500-10000 | Character/scene data layer | Character details and scene information (2-5k tokens) |
 | `CONTEXT_LAYER_E_TOKENS` | integer | `10000` | 1000-20000 | Plot/world summary layer | Plot summaries and world-building (5-10k tokens) |
 
-### Context Management Performance
-
-| Setting | Type | Default | Range | Description | Usage |
-|---------|------|---------|-------|-------------|-------|
-| `CONTEXT_SUMMARIZATION_THRESHOLD` | integer | `25000` | 1000-100000 | Token threshold for summarization | When context exceeds this, triggers summarization |
-| `CONTEXT_ASSEMBLY_TIMEOUT` | integer | `100` | 10-10000 | Context assembly timeout (ms) | Maximum time allowed for context assembly |
-
-### Context Management Features
-
-| Setting | Type | Default | Description | Usage |
-|---------|------|---------|-------------|-------|
-| `CONTEXT_ENABLE_RAG` | boolean | `True` | Enable RAG-based content retrieval | Enables semantic search and retrieval for context |
-| `CONTEXT_ENABLE_MONITORING` | boolean | `True` | Enable context analytics/monitoring | Tracks context usage and performance metrics |
-| `CONTEXT_ENABLE_CACHING` | boolean | `True` | Enable context assembly caching | Caches assembled contexts for performance |
-
-### Context Optimization Settings
-
-| Setting | Type | Default | Range | Description | Usage |
-|---------|------|---------|-------|-------------|-------|
-| `CONTEXT_MIN_PRIORITY_THRESHOLD` | float | `0.1` | 0.0-1.0 | Minimum priority for content inclusion | Content below this priority is excluded |
-| `CONTEXT_OVERFLOW_STRATEGY` | string | `reallocate` | - | Token overflow handling strategy | Options: reject, truncate, borrow, reallocate |
-| `CONTEXT_ALLOCATION_MODE` | string | `dynamic` | - | Token allocation mode | Options: static, dynamic, adaptive |
-
 ## Endpoint-Specific Generation Settings
 
 Each API endpoint can have customized generation parameters:
@@ -234,48 +211,6 @@ Each API endpoint can have customized generation parameters:
 | `ENDPOINT_ARCHIVE_SEARCH_TEMPERATURE` | float | `0.3` | 0.0-1.0 | Temperature for archive search | Low for consistent search results |
 | `ENDPOINT_ARCHIVE_SUMMARIZE_TEMPERATURE` | float | `0.4` | 0.0-1.0 | Temperature for archive summarization | Low for consistent summaries |
 
-## Context Processing Priority Settings
-
-### Content Type Priorities
-
-| Setting | Type | Default | Range | Description | Usage |
-|---------|------|---------|-------|-------------|-------|
-| `CONTEXT_PRIORITY_PLOT_HIGH` | float | `0.8` | 0.0-1.0 | Priority for high-priority plot elements | Critical plot points get high priority |
-| `CONTEXT_PRIORITY_PLOT_MEDIUM` | float | `0.5` | 0.0-1.0 | Priority for medium-priority plot elements | Standard plot elements |
-| `CONTEXT_PRIORITY_PLOT_LOW` | float | `0.2` | 0.0-1.0 | Priority for low-priority plot elements | Background plot information |
-| `CONTEXT_PRIORITY_CHARACTER` | float | `0.7` | 0.0-1.0 | Priority for character context | Character information priority |
-
-### User Request Priorities
-
-| Setting | Type | Default | Range | Description | Usage |
-|---------|------|---------|-------|-------------|-------|
-| `CONTEXT_PRIORITY_USER_HIGH` | float | `0.8` | 0.0-1.0 | Priority for high-priority user requests | Critical user instructions |
-| `CONTEXT_PRIORITY_USER_MEDIUM` | float | `0.5` | 0.0-1.0 | Priority for medium-priority user requests | Standard user requests |
-| `CONTEXT_PRIORITY_USER_LOW` | float | `0.2` | 0.0-1.0 | Priority for low-priority user requests | Optional user preferences |
-
-### System Instruction Priorities
-
-| Setting | Type | Default | Range | Description | Usage |
-|---------|------|---------|-------|-------------|-------|
-| `CONTEXT_PRIORITY_SYSTEM_HIGH` | float | `0.8` | 0.0-1.0 | Priority for high-priority system instructions | Core system behavior |
-| `CONTEXT_PRIORITY_SYSTEM_MEDIUM` | float | `0.5` | 0.0-1.0 | Priority for medium-priority system instructions | Standard system guidance |
-| `CONTEXT_PRIORITY_SYSTEM_LOW` | float | `0.2` | 0.0-1.0 | Priority for low-priority system instructions | Optional system hints |
-| `CONTEXT_HIGH_PRIORITY_THRESHOLD` | float | `0.7` | 0.0-1.0 | Threshold for high priority classification | Elements above this are high priority |
-
-## Context Adapter Priority Settings
-
-| Setting | Type | Default | Range | Description | Usage |
-|---------|------|---------|-------|-------------|-------|
-| `CONTEXT_ADAPTER_SYSTEM_PREFIX_PRIORITY` | float | `1.0` | 0.0-1.0 | Priority for system prompt prefix | Opening system instructions |
-| `CONTEXT_ADAPTER_SYSTEM_SUFFIX_PRIORITY` | float | `1.0` | 0.0-1.0 | Priority for system prompt suffix | Closing system instructions |
-| `CONTEXT_ADAPTER_WRITING_ASSISTANT_PRIORITY` | float | `0.8` | 0.0-1.0 | Priority for writing assistant prompt | Writing-specific instructions |
-| `CONTEXT_ADAPTER_WRITING_EDITOR_PRIORITY` | float | `0.8` | 0.0-1.0 | Priority for writing editor prompt | Editing-specific instructions |
-| `CONTEXT_ADAPTER_CHARACTER_PROMPT_PRIORITY` | float | `0.7` | 0.0-1.0 | Priority for character prompt | Character-specific instructions |
-| `CONTEXT_ADAPTER_RATER_PROMPT_PRIORITY` | float | `0.8` | 0.0-1.0 | Priority for rater prompt | Rating-specific instructions |
-| `CONTEXT_ADAPTER_EDITOR_PROMPT_PRIORITY` | float | `0.8` | 0.0-1.0 | Priority for editor prompt | Editor-specific instructions |
-| `CONTEXT_ADAPTER_INSTRUCTION_PRIORITY` | float | `0.9` | 0.0-1.0 | Priority for general instructions | General instruction priority |
-| `CONTEXT_ADAPTER_OUTPUT_PRIORITY` | float | `0.6` | 0.0-1.0 | Priority for output elements | Generated content priority |
-
 ## Context Distillation Temperature Settings
 
 These settings control the temperature used when summarizing different types of content:
@@ -297,30 +232,6 @@ These settings control the temperature used when summarizing different types of 
 |---------|------|---------|-------|-------------|-------|
 | `RAG_DEFAULT_TEMPERATURE` | float | `0.3` | 0.0-1.0 | Default temperature for RAG operations | Low for consistent retrieval |
 | `RAG_SUMMARIZATION_TEMPERATURE` | float | `0.4` | 0.0-1.0 | Temperature for RAG summarization | Slightly higher for summary variety |
-
-## Phase Validation Settings
-
-These settings control the validation logic for story phases:
-
-| Setting | Type | Default | Range | Description | Usage |
-|---------|------|---------|-------|-------------|-------|
-| `VALIDATION_PHASE_TRANSITION_THRESHOLD` | float | `0.7` | 0.0-1.0 | Threshold for valid phase transitions | Minimum score for phase advancement |
-| `VALIDATION_OUTLINE_MIN_WORD_RATIO` | float | `50.0` | 1.0-1000.0 | Minimum word count ratio for outlines | Outline length validation |
-| `VALIDATION_CHAPTER_MIN_WORD_RATIO` | float | `500.0` | 1.0-5000.0 | Minimum word count ratio for chapters | Chapter length validation |
-| `VALIDATION_SUMMARY_MIN_WORD_RATIO` | float | `200.0` | 1.0-2000.0 | Minimum word count ratio for summaries | Summary length validation |
-
-### Validation Scoring
-
-| Setting | Type | Default | Range | Description | Usage |
-|---------|------|---------|-------|-------------|-------|
-| `VALIDATION_CONFLICT_PRESENT_SCORE` | float | `1.0` | 0.0-1.0 | Score when conflict is present | Full score for conflict presence |
-| `VALIDATION_CONFLICT_ABSENT_SCORE` | float | `0.3` | 0.0-1.0 | Score when conflict is absent | Reduced score for missing conflict |
-| `VALIDATION_CHARACTERS_PRESENT_SCORE` | float | `1.0` | 0.0-1.0 | Score when characters are present | Full score for character presence |
-| `VALIDATION_CHARACTERS_ABSENT_SCORE` | float | `0.2` | 0.0-1.0 | Score when characters are absent | Low score for missing characters |
-| `VALIDATION_DIALOGUE_PRESENT_SCORE` | float | `1.0` | 0.0-1.0 | Score when dialogue is present | Full score for dialogue presence |
-| `VALIDATION_DIALOGUE_ABSENT_SCORE` | float | `0.7` | 0.0-1.0 | Score when dialogue is absent | Moderate score (dialogue optional) |
-| `VALIDATION_COMPLETION_SCORE` | float | `1.0` | 0.0-1.0 | Score for completion validation | Full score for completed content |
-| `VALIDATION_INCOMPLETE_SCORE` | float | `0.5` | 0.0-1.0 | Score for incomplete validation | Moderate score for incomplete content |
 
 ## Deployment Examples
 
@@ -737,32 +648,10 @@ For detailed information about the structured context system:
 
 ### Configuration Settings
 
-Context management is controlled by these settings (see Context Management Configuration section above):
+Context management is controlled by two settings (see Context Management Configuration section above):
 
 - `CONTEXT_MAX_TOKENS`: Maximum context window size (default: 32000)
 - `CONTEXT_BUFFER_TOKENS`: Reserved tokens for generation (default: 2000)
-- `CONTEXT_SUMMARIZATION_THRESHOLD`: Token threshold for summarization (default: 25000)
-- Priority settings for different content types
-
-### Best Practices
-
-1. **Use Appropriate Priorities**
-   - `"high"`: Critical information that must be included
-   - `"medium"`: Important but can be trimmed if needed
-   - `"low"`: Background information, first to be trimmed
-
-2. **Add Descriptive Tags**
-   - Use tags for filtering: `["current_scene", "conflict"]`
-   - Makes context easier to query and manage
-
-3. **Set Correct Scopes**
-   - `"global"`: Applies to all scenarios
-   - `"scene"`: Scene-specific instructions
-   - `"chapter"`: Chapter-level guidelines
-
-4. **Check Token Counts**
-   - Use `calculate_total_tokens()` before processing
-   - Ensure context fits within token budget
 
 ### Common Patterns
 
