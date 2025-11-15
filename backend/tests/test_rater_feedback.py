@@ -97,14 +97,34 @@ class TestRaterFeedbackEndpoint:
         opinion = result_event['data']["feedback"]["opinion"]
         assert len(opinion) > 0
 
-    def test_rater_feedback_missing_rater_prompt(self, client):
-        """Test rater feedback fails without rater prompt"""
+    def test_rater_feedback_missing_rater_name(self, client):
+        """Test rater feedback fails without rater name"""
+        from datetime import datetime
+        from app.models.request_context import RequestContext, StoryConfiguration, SystemPrompts, WorldbuildingInfo, StoryOutline, RequestContextMetadata
+
+        request_context = RequestContext(
+            configuration=StoryConfiguration(
+                system_prompts=SystemPrompts(
+                    main_prefix="Test",
+                    main_suffix="Test",
+                    assistant_prompt="Test",
+                    editor_prompt="Test"
+                )
+            ),
+            worldbuilding=WorldbuildingInfo(content="Test"),
+            story_outline=StoryOutline(summary="Test", status="draft", content="Test"),
+            context_metadata=RequestContextMetadata(
+                story_id="test",
+                story_title="Test",
+                version="1.0",
+                created_at=datetime.now()
+            )
+        )
+
         invalid_request = {
-            "systemPrompts": {"mainPrefix": "", "mainSuffix": ""},
-            "worldbuilding": "Test",
-            "storySummary": "Test",
-            "previousChapters": [],
+            "request_context": request_context.model_dump(mode='json'),
             "plotPoint": "Test"
+            # Missing raterName field
         }
         response = client.post("/api/v1/rater-feedback", json=invalid_request)
         assert response.status_code == 422
