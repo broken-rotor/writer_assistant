@@ -35,19 +35,19 @@ class ContextBuilder:
         self._elements: List[ContextItem] = []
         self._tokenizer: TokenCounter = TokenCounter(model_path=settings.MODEL_PATH)
 
-    def build_chat(self) -> List[Dict[str, str]]:
+    def build_messages(self) -> List[Dict[str, str]]:
         chat = []
         token_limit = 0
         token_count = 0
         for e in self._elements:
             token_limit += e.token_budget
             content, tokens = self._getContent(e, token_limit - token_count)
-            chat.append({'role': e.role, 'content': content})
+            chat.append({'role': e.role, 'content': content.strip()})
             token_count += tokens
         return chat
 
     def build_prompt(self) -> str:
-        return '\n'.join([e['content'] for e in self.build_chat()])
+        return '\n'.join([e['content'] for e in self.build_messages()])
 
     def add_system_prompt(self, prompt: str):
         content = prompt
@@ -63,7 +63,7 @@ class ContextBuilder:
             token_budget=2000,
             summarization_strategy=SummarizationStrategy.LITERAL))
 
-    def add_worldbbuilding(self):
+    def add_worldbuilding(self):
         if self._request_context.worldbuilding and self._request_context.worldbuilding.content:
             self._elements.append(ContextItem(
                 tag='WORLD_BUILDING',
@@ -100,13 +100,20 @@ class ContextBuilder:
                     summarization_strategy=SummarizationStrategy.SUMMARIZED))
 
     def add_story_outline(self):
+        if self._request_context.context_metadata.story_title:
+            self._elements.append(ContextItem(
+                tag='STORY_TITLE',
+                role=ContextRole.USER,
+                content=self._request_context.context_metadata.story_title,
+                token_budget=2000,
+                summarization_strategy=SummarizationStrategy.LITERAL))
         if self._request_context.story_outline and self._request_context.story_outline.summary:
             self._elements.append(ContextItem(
                 tag='STORY_SUMMARY',
                 role=ContextRole.USER,
                 content=self._request_context.story_outline.summary,
                 token_budget=2000,
-                summarization_strategy=SummarizationStrategy.SUMMARIZED))
+                summarization_strategy=SummarizationStrategy.LITERAL))
         if self._request_context.story_outline and self._request_context.story_outline.content:
             self._elements.append(ContextItem(
                 tag='STORY_OUTLINE',
@@ -171,7 +178,7 @@ class ContextBuilder:
 
     def _getContent(self, e: ContextItem, token_budget: int):
         content = f'<{e.tag}>\n{e.content}\n</{e.tag}>\n' if e.tag else e.content
-        token_count = self._tokenizer.count_tokens(content)
+        token_count = self._tokenizer.count_tokens(content).token_count
         if token_count <= token_budget:
             return content, token_count
         ## FIXME ##

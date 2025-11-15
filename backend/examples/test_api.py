@@ -28,7 +28,7 @@ from urllib3.util.retry import Retry
 class APITester:
     """Test client for Writer Assistant API endpoints."""
     
-    def __init__(self, base_url: str = "http://localhost:8000", timeout: int = 30):
+    def __init__(self, base_url: str = "http://localhost:8000", timeout: int = 60):
         """
         Initialize the API tester.
         
@@ -381,8 +381,8 @@ Examples:
     parser.add_argument(
         '--timeout',
         type=int,
-        default=30,
-        help='Request timeout in seconds (default: 30)'
+        default=60,
+        help='Request timeout in seconds (default: 60)'
     )
     
     args = parser.parse_args()

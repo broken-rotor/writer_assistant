@@ -25,7 +25,7 @@ from app.models.request_context import (
     StoryOutline,
     RequestContextMetadata
 )
-
+from app.services.token_management.token_counter import TokenCount, ContentType, CountingStrategy
 
 @pytest.fixture
 def minimal_request_context():
@@ -115,7 +115,13 @@ def mock_token_counter():
     """Create a mock TokenCounter."""
     mock_counter = MagicMock()
     # Return token count based on content length (simple approximation)
-    mock_counter.count_tokens.side_effect = lambda text: len(text.split())
+    mock_counter.count_tokens.side_effect = lambda text: TokenCount(
+        content=text,
+        token_count=len(text.split()),
+        content_type=ContentType.UNKNOWN,
+        strategy=CountingStrategy.EXACT,
+        overhead_applied=1.0,
+        metadata={})
     return mock_counter
 
 
@@ -176,14 +182,14 @@ class TestAddSystemPrompt:
 
 
 class TestAddWorldbuilding:
-    """Test add_worldbbuilding method."""
+    """Test add_worldbuilding method."""
 
     @patch('app.services.context_builder.TokenCounter')
     def test_add_worldbuilding_with_content(self, mock_token_counter_class, full_request_context):
         """Test adding worldbuilding when content exists."""
         builder = ContextBuilder(full_request_context)
 
-        builder.add_worldbbuilding()
+        builder.add_worldbuilding()
 
         assert len(builder._elements) == 1
         element = builder._elements[0]
@@ -198,7 +204,7 @@ class TestAddWorldbuilding:
         """Test adding worldbuilding when content doesn't exist."""
         builder = ContextBuilder(minimal_request_context)
 
-        builder.add_worldbbuilding()
+        builder.add_worldbuilding()
 
         assert len(builder._elements) == 0
 
@@ -267,13 +273,17 @@ class TestAddStoryOutline:
         # Note: There's a bug in the original code - it references worldbuilding instead of story_outline
         # The test will fail until the bug is fixed
         # Should create 2 elements: one for summary, one for content
-        assert len(builder._elements) == 2
+        assert len(builder._elements) == 3
 
         summary_element = builder._elements[0]
-        assert summary_element.tag == 'STORY_SUMMARY'
-        assert summary_element.summarization_strategy == SummarizationStrategy.SUMMARIZED
+        assert summary_element.tag == 'STORY_TITLE'
+        assert summary_element.summarization_strategy == SummarizationStrategy.LITERAL
 
-        outline_element = builder._elements[1]
+        summary_element = builder._elements[1]
+        assert summary_element.tag == 'STORY_SUMMARY'
+        assert summary_element.summarization_strategy == SummarizationStrategy.LITERAL
+
+        outline_element = builder._elements[2]
         assert outline_element.tag == 'STORY_OUTLINE'
         assert outline_element.summarization_strategy == SummarizationStrategy.LITERAL
 
@@ -284,7 +294,9 @@ class TestAddStoryOutline:
 
         builder.add_story_outline()
 
-        assert len(builder._elements) == 0
+        assert len(builder._elements) == 1
+        summary_element = builder._elements[0]
+        assert summary_element.tag == 'STORY_TITLE'
 
 
 class TestAddCharacterStates:
@@ -369,42 +381,42 @@ class TestAddChat:
         assert element.content == message
 
 
-class TestBuildChat:
-    """Test build_chat method."""
+class TestBuildMessages:
+    """Test build_messages method."""
 
     @patch('app.services.context_builder.TokenCounter')
-    def test_build_chat_empty(self, mock_token_counter_class, minimal_request_context, mock_token_counter):
+    def test_build_messages_empty(self, mock_token_counter_class, minimal_request_context, mock_token_counter):
         """Test building chat with no elements."""
         mock_token_counter_class.return_value = mock_token_counter
         builder = ContextBuilder(minimal_request_context)
 
-        chat = builder.build_chat()
+        chat = builder.build_messages()
 
         assert chat == []
 
     @patch('app.services.context_builder.TokenCounter')
-    def test_build_chat_single_element(self, mock_token_counter_class, minimal_request_context, mock_token_counter):
+    def test_build_messages_single_element(self, mock_token_counter_class, minimal_request_context, mock_token_counter):
         """Test building chat with single element."""
         mock_token_counter_class.return_value = mock_token_counter
         builder = ContextBuilder(minimal_request_context)
         builder.add_system_prompt("Write a story.")
 
-        chat = builder.build_chat()
+        chat = builder.build_messages()
 
         assert len(chat) == 1
         assert chat[0]['role'] == ContextRole.SYSTEM
         assert 'content' in chat[0]
 
     @patch('app.services.context_builder.TokenCounter')
-    def test_build_chat_multiple_elements(self, mock_token_counter_class, full_request_context, mock_token_counter):
+    def test_build_messages_multiple_elements(self, mock_token_counter_class, full_request_context, mock_token_counter):
         """Test building chat with multiple elements."""
         mock_token_counter_class.return_value = mock_token_counter
         builder = ContextBuilder(full_request_context)
         builder.add_system_prompt("Write a story.")
-        builder.add_worldbbuilding()
+        builder.add_worldbuilding()
         builder.add_characters()
 
-        chat = builder.build_chat()
+        chat = builder.build_messages()
 
         assert len(chat) == 3
         assert chat[0]['role'] == ContextRole.SYSTEM
@@ -412,14 +424,14 @@ class TestBuildChat:
         assert chat[2]['role'] == ContextRole.USER
 
     @patch('app.services.context_builder.TokenCounter')
-    def test_build_chat_respects_token_budget(self, mock_token_counter_class, minimal_request_context, mock_token_counter):
-        """Test that build_chat respects token budgets."""
+    def test_build_messages_respects_token_budget(self, mock_token_counter_class, minimal_request_context, mock_token_counter):
+        """Test that build_messages respects token budgets."""
         mock_token_counter_class.return_value = mock_token_counter
         builder = ContextBuilder(minimal_request_context)
         builder.add_system_prompt("System prompt.")
         builder.add_agent_instruction("Agent instruction.")
 
-        chat = builder.build_chat()
+        chat = builder.build_messages()
 
         # Verify that chat was built
         assert len(chat) == 2
@@ -512,25 +524,21 @@ class TestGetContent:
         assert token_count == 2
 
     @patch('app.services.context_builder.TokenCounter')
-    def test_get_content_exceeds_budget_literal(self, mock_token_counter_class, minimal_request_context):
+    def test_get_content_exceeds_budget_literal(self, mock_token_counter_class, minimal_request_context, mock_token_counter):
         """Test _getContent raises error when budget exceeded with LITERAL strategy."""
-        # Create a mock that returns a large token count
-        mock_counter = MagicMock()
-        mock_counter.count_tokens.return_value = 200
-        mock_token_counter_class.return_value = mock_counter
-
+        mock_token_counter_class.return_value = mock_token_counter
         builder = ContextBuilder(minimal_request_context)
 
         element = ContextItem(
             tag='TEST',
             role=ContextRole.USER,
             content="Very long content that exceeds budget",
-            token_budget=50,
+            token_budget=5,
             summarization_strategy=SummarizationStrategy.LITERAL
         )
 
         with pytest.raises(ValueError, match="Token budget exceeded"):
-            builder._getContent(element, 50)
+            builder._getContent(element, 5)
 
 
 class TestIntegration:
@@ -544,13 +552,13 @@ class TestIntegration:
 
         # Add all context elements
         builder.add_system_prompt("Write a noir detective story.")
-        builder.add_worldbbuilding()
+        builder.add_worldbuilding()
         builder.add_characters()
         builder.add_story_outline()
         builder.add_agent_instruction("Generate Chapter 1.")
 
         # Build chat
-        chat = builder.build_chat()
+        chat = builder.build_messages()
 
         # Verify structure
         assert len(chat) > 0
@@ -573,7 +581,7 @@ class TestIntegration:
         builder.add_chat(ContextRole.ASSISTANT, "Noir fiction is characterized by dark themes...")
         builder.add_chat(ContextRole.USER, "Can you write me a noir story?")
 
-        chat = builder.build_chat()
+        chat = builder.build_messages()
 
         assert len(chat) == 4
         assert chat[0]['role'] == ContextRole.SYSTEM
@@ -599,11 +607,11 @@ class TestEdgeCases:
 
     @patch('app.services.context_builder.TokenCounter')
     def test_multiple_worldbuilding_calls(self, mock_token_counter_class, full_request_context):
-        """Test calling add_worldbbuilding multiple times."""
+        """Test calling add_worldbuilding multiple times."""
         builder = ContextBuilder(full_request_context)
 
-        builder.add_worldbbuilding()
-        builder.add_worldbbuilding()
+        builder.add_worldbuilding()
+        builder.add_worldbuilding()
 
         # Should add element each time
         assert len(builder._elements) == 2
