@@ -103,6 +103,15 @@ def mock_llm():
                 }
             ])
 
+        # Flesh out
+        elif "expand" in prompt.lower() or "flesh out" in prompt.lower():
+            text_to_expand = prompt.split("Text to expand:")[-1].strip() if "Text to expand:" in prompt else "the situation"
+            return f"""{text_to_expand}
+
+The atmosphere was thick with tension as the moment unfolded. Every sensory detail heightened the experience - the distant sound of traffic, the smell of rain on pavement, the cool metal of the detective's badge against her chest.
+
+What had seemed simple moments ago now revealed layers of complexity. The characters involved each brought their own perspectives, their own histories that colored how they perceived and reacted to events."""
+
         # Chapter generation or modification
         elif "chapter" in prompt.lower() or "write" in prompt.lower():
             # Check if this is a modification request (contains "Current chapter:")
@@ -130,15 +139,6 @@ def mock_llm():
 She knelt beside the evidence, her trained eye catching what others had missed. The implications were staggering - this case was about to break wide open.
 
 "We need to move fast," she said, her voice steady despite the adrenaline. The pieces were finally coming together, but time was running out."""
-
-        # Flesh out
-        elif "expand" in prompt.lower() or "flesh out" in prompt.lower():
-            text_to_expand = prompt.split("Text to expand:")[-1].strip() if "Text to expand:" in prompt else "the situation"
-            return f"""{text_to_expand}
-
-The atmosphere was thick with tension as the moment unfolded. Every sensory detail heightened the experience - the distant sound of traffic, the smell of rain on pavement, the cool metal of the detective's badge against her chest.
-
-What had seemed simple moments ago now revealed layers of complexity. The characters involved each brought their own perspectives, their own histories that colored how they perceived and reacted to events."""
 
         # Default
         else:
@@ -468,7 +468,8 @@ def sample_flesh_out_request():
     
     return {
         "request_context": request_context.model_dump(mode='json'),
-        "textToFleshOut": "The detective finds a mysterious photograph"
+        "request_type": "chapter",
+        "text_to_flesh_out": "The detective finds a mysterious photograph"
     }
 
 

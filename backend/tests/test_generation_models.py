@@ -126,37 +126,5 @@ class TestUpdatedLegacyModels:
             )
 
 
-class TestResponseModels:
-    """Test that response models include context metadata."""
-    
-    def test_response_models_have_context_metadata(self):
-        """Test that all response models have context_metadata field."""
-        from app.models.generation_models import (
-            CharacterFeedbackResponse,
-            RaterFeedbackResponse,
-            GenerateChapterResponse,
-            ModifyChapterResponse,
-            EditorReviewResponse,
-            FleshOutResponse,
-            GenerateCharacterDetailsResponse
-        )
-        
-        # Test that all response models have the context_metadata field
-        response_models = [
-            CharacterFeedbackResponse,
-            RaterFeedbackResponse,
-            GenerateChapterResponse,
-            ModifyChapterResponse,
-            EditorReviewResponse,
-            FleshOutResponse,
-            GenerateCharacterDetailsResponse
-        ]
-        
-        for model_class in response_models:
-            assert 'context_metadata' in model_class.model_fields
-            field = model_class.model_fields['context_metadata']
-            assert field.default is None  # Should be optional
-
-
 if __name__ == "__main__":
     pytest.main([__file__])

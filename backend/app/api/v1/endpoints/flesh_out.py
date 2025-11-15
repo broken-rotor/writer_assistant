@@ -43,7 +43,7 @@ async def flesh_out(request: FleshOutRequest):
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story_summary()
-            context_builder.add_agent_instruction(f"{agent_instructions[request.request_type]}: {request.text_to_flesh_out}")
+            context_builder.add_agent_instruction(f"{agent_instructions[request.request_type]}. Text to expand: {request.text_to_flesh_out}")
 
             # Phase 2: Expanding
             yield f"data: {json.dumps({'type': 'status', 'phase': 'expanding', 'message': 'Generating expanded content...', 'progress': 40})}\n\n"
