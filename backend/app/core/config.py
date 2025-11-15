@@ -48,7 +48,6 @@ class Settings(BaseSettings):
         default=2*(1024**3),
         description="LLM prefix cache size (bytes); 0 to disable.")
 
-
     # LLM Generation Settings
     LLM_TEMPERATURE: float = Field(
         default=0.7,
