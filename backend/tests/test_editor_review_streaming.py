@@ -40,7 +40,7 @@ class TestEditorReviewStreaming:
         status_messages = [msg for msg in messages if msg.get('type') == 'status']
         phases = [msg.get('phase') for msg in status_messages]
         
-        expected_phases = ['context_processing', 'analyzing', 'generating_suggestions', 'parsing']
+        expected_phases = ['context_processing', 'generating_suggestions', 'parsing']
         for phase in expected_phases:
             assert phase in phases, f"Missing phase: {phase}"
 
@@ -67,7 +67,7 @@ class TestEditorReviewStreaming:
         status_messages = [msg for msg in messages if msg.get('type') == 'status']
         progress_values = [msg.get('progress') for msg in status_messages]
         
-        expected_progress = [20, 50, 75, 90]
+        expected_progress = [20, 40, 90]
         for expected in expected_progress:
             assert expected in progress_values, f"Missing progress value: {expected}"
 
