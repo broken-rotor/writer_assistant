@@ -10,7 +10,7 @@ from app.models.generation_models import (
 )
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
-from app.services.unified_context_processor import get_unified_context_processor
+from app.services.context_builder import ContextBuilder
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
 from app.core.config import settings
 import logging
@@ -33,88 +33,56 @@ async def editor_review(request: EditorReviewRequest):
 
     async def generate_with_updates():
         try:
+            if request.chapter_number < 1 or request.chapter_number > len(request.request_context.chapters):
+                raise ValueError(f"Invalid chapter number {request.chapter_number}")
+            chapter = request.request_context.chapters[request.chapter_number-1]
+
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing chapter and story context...', 'progress': 20})}\n\n"
 
-            # Get unified context processor
-            context_processor = get_unified_context_processor()
+            context_builder = ContextBuilder(request.request_context)
+            context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.editor_prompt)
+            context_builder.add_character_states()
+            context_builder.add_recent_story(include_up_to=request.chapter_number)
+            context_builder.add_agent_instruction(f"""
+Review chapter {request.chapter_number} for clarity, style, and structural improvements.
 
-            # Try to use editor review context processing if available
-            # Otherwise fall back to generic processing
-            try:
-                if hasattr(context_processor, 'process_editor_review_context'):
-                    context_result = context_processor.process_editor_review_context(
-                        request_context=request.request_context,
-                        context_processing_config=request.context_processing_config
-                    )
-                else:
-                    # Fallback: use character feedback context processing as it's similar
-                    context_result = context_processor.process_character_feedback_context(
-                        request_context=request.request_context,
-                        context_processing_config=request.context_processing_config
-                    )
-            except Exception as e:
-                logger.warning(f"Context processing failed, using fallback: {e}")
-                # Create a minimal fallback context result
-                from app.services.unified_context_processor import UnifiedContextResult
-                context_result = UnifiedContextResult(
-                    system_prompt="You are an editor specializing in prose quality and narrative consistency. Provide constructive suggestions for improving writing quality.",
-                    user_message=f"Review this chapter for clarity, style, and structural improvements:\n\n{request.chapterToReview}",
-                    processing_time=0.0,
-                    context_metadata={}
-                )
+<CHAPTER_TO_REVIEW>
+Chapter {chapter.number}: {chapter.title}
 
-            # Log context processing results
-            logger.info(f"Editor review context processed in {context_result.processing_time:.2f}s")
-
-            # Phase 2: Analyzing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing chapter for narrative issues...', 'progress': 50})}\n\n"
-
-            # For editor review, we need to ensure the user message includes
-            # the chapter to review and JSON format instruction
-            chapter_review_content = f"""
-Chapter to review:
-{request.chapterToReview}
+{chapter.content}
+</CHAPTER_TO_REVIEW>
 
 Provide 4-6 suggestions in JSON format:
 {{
   "suggestions": [
     {{"issue": "brief issue description", "suggestion": "specific improvement suggestion", "priority": "high|medium|low"}}
   ]
-}}"""
+}}""")
 
-            # Combine context result with chapter review specific content
-            if "Chapter to review:" not in context_result.user_message:
-                user_message = context_result.user_message + chapter_review_content
-            else:
-                user_message = context_result.user_message
-
-            # Prepare messages for LLM
-            messages = [
-                {"role": "system", "content": context_result.system_prompt.strip()},
-                {"role": "user", "content": user_message.strip()}
-            ]
-
-            # Phase 3: Generating Suggestions
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 75})}\n\n"
+            # Phase 2: Generating Suggestions
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 40})}\n\n"
 
             # Generate editor review using streaming LLM
             response_text = ""
             for token in llm.chat_completion_stream(
-                messages,
+                context_builder.build_messages(),
                 max_tokens=settings.ENDPOINT_EDITOR_REVIEW_MAX_TOKENS,
                 temperature=settings.ENDPOINT_EDITOR_REVIEW_TEMPERATURE,
-                json_schema_class=EditorSuggestion
+                json_schema_class=EditorReviewResponse
             ):
                 response_text += token
                 # Optional: yield partial content updates (uncomment if desired)
                 # yield f"data: {json.dumps({'type': 'partial', 'content':
                 # token})}\n\n"
 
-            # Phase 4: Parsing
+            # Phase 3: Parsing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Processing editor suggestions...', 'progress': 90})}\n\n"
 
             parsed = parse_json_response(response_text)
+            if not parsed:
+                logger.debug(f"Failed to parse suggestions: {response_text}")
+                raise ValueError("Failed to parse JSON response from LLM")
 
             suggestions = []
             if parsed and 'suggestions' in parsed and isinstance(
@@ -128,35 +96,15 @@ Provide 4-6 suggestions in JSON format:
                             priority=s.get('priority', 'medium')
                         ))
 
-            if not suggestions:
-                logger.warning(
-                    "Failed to parse suggestions, using text fallback")
-                lines = parse_list_response(response_text, "all")
-                for i in range(0, min(len(lines), 6), 2):
-                    if i + 1 < len(lines):
-                        suggestions.append(EditorSuggestion(
-                            issue=lines[i][:100],
-                            suggestion=lines[i + 1][:200],
-                            priority="medium"
-                        ))
-
-            if not suggestions:
-                suggestions.append(
-                    EditorSuggestion(
-                        issue="General feedback",
-                        suggestion="The chapter shows promise and could be enhanced with more specific details.",
-                        priority="medium"))
-
             # Final result
             result = EditorReviewResponse(
-                suggestions=suggestions,
-                context_metadata=context_result.context_metadata
+                suggestions=suggestions
             )
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in editor_review: {str(e)}")
+            logger.error(f"Error in editor_review", e)
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

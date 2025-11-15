@@ -40,7 +40,7 @@ class TestEditorReviewStreaming:
         status_messages = [msg for msg in messages if msg.get('type') == 'status']
         phases = [msg.get('phase') for msg in status_messages]
         
-        expected_phases = ['context_processing', 'analyzing', 'generating_suggestions', 'parsing']
+        expected_phases = ['context_processing', 'generating_suggestions', 'parsing']
         for phase in expected_phases:
             assert phase in phases, f"Missing phase: {phase}"
 
@@ -67,7 +67,7 @@ class TestEditorReviewStreaming:
         status_messages = [msg for msg in messages if msg.get('type') == 'status']
         progress_values = [msg.get('progress') for msg in status_messages]
         
-        expected_progress = [20, 50, 75, 90]
+        expected_progress = [20, 40, 90]
         for expected in expected_progress:
             assert expected in progress_values, f"Missing progress value: {expected}"
 
@@ -145,12 +145,12 @@ class TestEditorReviewStreaming:
 
     def test_editor_review_streaming_error_handling(self, client):
         """Test streaming error handling"""
-        # Test with invalid request
+        # Test with invalid request (missing required fields)
         invalid_request = {
-            "chapterToReview": "",  # Empty chapter
-            "structured_context": None  # Invalid structured context
+            "chapter_number": 1
+            # Missing request_context
         }
-        
+
         response = client.post("/api/v1/editor-review", json=invalid_request)
         # Should return 422 for validation error, not streaming error
         assert response.status_code == 422

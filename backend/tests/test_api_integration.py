@@ -71,8 +71,31 @@ class TestAPIIntegration:
         chapter_data = extract_final_result_from_streaming_response(chapter_response)
         chapter_text = chapter_data["chapterText"]
 
+        # Add generated chapter to request context
+        # The request_context is already serialized in the fixture, so we need to deserialize it
+        from datetime import datetime
+        request_context_dict = sample_editor_review_request["request_context"]
+
+        # Add the generated chapter as chapter 1 (replacing the existing one)
+        now = datetime.now().isoformat()
+        request_context_dict["chapters"] = [
+            {
+                "id": "generated_chapter_1",
+                "number": 1,
+                "title": "Generated Chapter",
+                "content": chapter_text,
+                "created": now,
+                "last_modified": now
+            }
+        ]
+
+        # Update metadata
+        request_context_dict["context_metadata"]["total_chapters"] = 1
+
+        # Set chapter number to review
+        sample_editor_review_request["chapter_number"] = 1
+
         # Get editor review of the chapter
-        sample_editor_review_request["chapterToReview"] = chapter_text
         editor_response = client.post("/api/v1/editor-review", json=sample_editor_review_request)
         editor_data = extract_editor_review_result_from_streaming_response(editor_response)
         assert len(editor_data["suggestions"]) > 0

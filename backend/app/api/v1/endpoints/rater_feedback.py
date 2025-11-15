@@ -17,7 +17,7 @@ from app.models.streaming_models import (
     STREAMING_PHASES
 )
 from app.services.llm_inference import get_llm
-from app.services.unified_context_processor import get_unified_context_processor
+from app.services.context_builder import ContextBuilder
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
 from app.core.config import settings
 import logging
@@ -33,107 +33,63 @@ router = APIRouter()
 async def rater_feedback_stream(request: RaterFeedbackRequest):
     """Generate rater feedback with Server-Sent Events streaming for real-time progress updates."""
 
+    def get_rater_prompt() -> str:
+        raters = [r for r in request.request_context.configuration.raters
+                  if r.name==request.raterName and r.enabled]
+        if len(raters) == 0:
+            raise ValueError(f"Rater {request.raterName} not found in request_context")
+        elif len(raters) > 1:
+            raise ValueError(f"Duplicate rater name {request.raterName}")
+        return raters[0].system_prompt
+
+    llm = get_llm()
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM not initialized. Start server with --model-path")
+
     async def generate_with_updates():
         try:
+            raterPrompt = get_rater_prompt()
+
             # Phase 1: Context Processing
-            status_event = StreamingStatusEvent(
-                phase=StreamingPhase.CONTEXT_PROCESSING,
-                message=STREAMING_PHASES[StreamingPhase.CONTEXT_PROCESSING]["message"],
-                progress=STREAMING_PHASES[StreamingPhase.CONTEXT_PROCESSING]["progress"]
-            )
-            yield f"data: {status_event.model_dump_json()}\n\n"
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing chapter and story context...', 'progress': 20})}\n\n"
 
-            # Get unified context processor
-            context_processor = get_unified_context_processor()
-            
-            # Try to use rater feedback context processing if available
-            # Otherwise fall back to generic processing
-            try:
-                if hasattr(context_processor, 'process_rater_feedback_context'):
-                    context_result = context_processor.process_rater_feedback_context(
-                        request_context=request.request_context,
-                        rater_prompt=request.raterPrompt,
-                        plot_point=request.plotPoint,
-                        context_processing_config=request.context_processing_config
-                    )
-                else:
-                    # Fallback: use character feedback context processing as it's similar
-                    context_result = context_processor.process_character_feedback_context(
-                        request_context=request.request_context,
-                        context_processing_config=request.context_processing_config
-                    )
-            except Exception as e:
-                logger.warning(f"Context processing failed, using fallback: {e}")
-                # Create a minimal fallback context result
-                from app.services.unified_context_processor import UnifiedContextResult
-                context_result = UnifiedContextResult(
-                    system_prompt="You are a story quality rater. Provide constructive, detailed feedback on story elements.",
-                    user_message=f"Evaluate this plot point: {request.plotPoint}\n\nRater prompt: {request.raterPrompt}",
-                    processing_time=0.0,
-                    context_metadata={}
-                )
+            context_builder = ContextBuilder(request.request_context)
+            context_builder.add_long_term_elements("You are a story quality rater. Provide constructive, detailed feedback on story elements.")
+            context_builder.add_character_states()
+            context_builder.add_recent_story_summary()
+            context_builder.add_agent_instruction(f"""Your criteria to evaluate the text is: {raterPrompt}
 
-            # Log context processing results
-            logger.info(f"Rater feedback context processed in {context_result.processing_time:.2f}s")
+<TEXT_TO_EVALUATE>
+{request.plotPoint}
+</TEXT_TO_EVALUATE>
 
-            # Phase 2: Evaluating
-            status_event = StreamingStatusEvent(
-                phase=StreamingPhase.EVALUATING,
-                message=STREAMING_PHASES[StreamingPhase.EVALUATING]["message"],
-                progress=STREAMING_PHASES[StreamingPhase.EVALUATING]["progress"]
-            )
-            yield f"data: {status_event.model_dump_json()}\n\n"
-
-            # Phase 3: Generating Feedback
-            status_event = StreamingStatusEvent(
-                phase=StreamingPhase.GENERATING_FEEDBACK,
-                message=STREAMING_PHASES[StreamingPhase.GENERATING_FEEDBACK]["message"],
-                progress=STREAMING_PHASES[StreamingPhase.GENERATING_FEEDBACK]["progress"]
-            )
-            yield f"data: {status_event.model_dump_json()}\n\n"
-
-            # Prepare JSON instruction and messages
-            json_instruction = '''
 Provide feedback in JSON format:
-{
+{{
   "opinion": "Your overall opinion (2-3 sentences)",
   "suggestions": ["4-6 specific suggestions for improvement"]
-}'''
+}}
+""")
 
-            user_message = context_result.user_message + json_instruction
-            messages = [
-                {"role": "system", "content": context_result.system_prompt.strip()},
-                {"role": "user", "content": user_message.strip()}
-            ]
+            # Phase 2: Generating Suggestions
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 40})}\n\n"
 
-            # Get LLM instance
-            llm = get_llm()
-            if not llm:
-                error_event = StreamingErrorEvent(
-                    message="LLM not initialized. Start server with --model-path"
-                )
-                yield f"data: {error_event.model_dump_json()}\n\n"
-                return
-
-            # Generate rater feedback using streaming LLM
+            # Generate editor review using streaming LLM
             response_text = ""
-            for chunk in llm.chat_completion_stream(
-                messages,
+            for token in llm.chat_completion_stream(
+                context_builder.build_messages(),
                 max_tokens=settings.ENDPOINT_RATER_FEEDBACK_MAX_TOKENS,
                 temperature=settings.ENDPOINT_RATER_FEEDBACK_TEMPERATURE,
                 json_schema_class=RaterFeedback
             ):
-                response_text += chunk
-                # Small delay to prevent overwhelming the client
-                await asyncio.sleep(0.01)
+                response_text += token
+                # Optional: yield partial content updates (uncomment if desired)
+                # yield f"data: {json.dumps({'type': 'partial', 'content':
+                # token})}\n\n"
 
-            # Phase 4: Parsing
-            status_event = StreamingStatusEvent(
-                phase=StreamingPhase.PARSING,
-                message=STREAMING_PHASES[StreamingPhase.PARSING]["message"],
-                progress=STREAMING_PHASES[StreamingPhase.PARSING]["progress"]
-            )
-            yield f"data: {status_event.model_dump_json()}\n\n"
+            # Phase 3: Parsing
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Processing editor suggestions...', 'progress': 90})}\n\n"
 
             # Parse the response
             parsed = parse_json_response(response_text)
@@ -141,33 +97,21 @@ Provide feedback in JSON format:
             if parsed and 'opinion' in parsed and 'suggestions' in parsed:
                 feedback = RaterFeedback(**parsed)
             else:
-                logger.warning("Failed to parse JSON, using text fallback")
-                lines = parse_list_response(response_text, "all")
-                feedback = RaterFeedback(
-                    opinion=lines[0] if lines else "The plot point has potential.",
-                    suggestions=lines[1:5] if len(lines) > 1 else ["Consider adding more detail"]
-                )
+                logger.debug(f"Failed to parse JSON: {response_text}")
+                raise ValueError("Failed to parse JSON output from LLM")
 
             # Final result
             result = RaterFeedbackResponse(
-                raterName="Rater",
-                feedback=feedback,
-                context_metadata=context_result.context_metadata
+                raterName=request.raterName,
+                feedback=feedback
             )
 
             # Phase 5: Complete
-            result_event = StreamingResultEvent(
-                data=result.model_dump(),
-                status="complete"
-            )
-            yield f"data: {result_event.model_dump_json()}\n\n"
+            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in streaming rater_feedback: {str(e)}")
-            error_event = StreamingErrorEvent(
-                message=str(e)
-            )
-            yield f"data: {error_event.model_dump_json()}\n\n"
+            logger.error(f"Error in streaming rater_feedback", e)
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),
@@ -175,7 +119,5 @@ Provide feedback in JSON format:
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Cache-Control"
         }
     )

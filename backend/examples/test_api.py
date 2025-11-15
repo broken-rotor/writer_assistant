@@ -263,11 +263,14 @@ class APITester:
                 feedback = result_data['feedback']
                 for category, items in feedback.items():
                     if items:
-                        print(f"  {category.replace('_', ' ').title()}:")
-                        for item in items[:3]:  # Show first 3 items
-                            print(f"    • {item}")
-                        if len(items) > 3:
-                            print(f"    ... and {len(items) - 3} more")
+                        if type(items) == list:
+                            print(f"  {category.replace('_', ' ').title()}:")
+                            for item in items[:3]:  # Show first 3 items
+                                print(f"    • {item}")
+                            if len(items) > 3:
+                                print(f"    ... and {len(items) - 3} more")
+                        else:
+                            print(f"  {category.replace('_', ' ').title()}: {items}")
             
             elif 'message' in result_data:
                 message = result_data['message']

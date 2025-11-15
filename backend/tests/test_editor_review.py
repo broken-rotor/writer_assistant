@@ -99,13 +99,31 @@ class TestEditorReviewEndpoint:
         assert "suggestions" in data
 
     def test_editor_review_missing_chapter(self, client):
-        """Test editor review fails without chapter to review"""
+        """Test editor review fails without chapter_number"""
+        from app.models.request_context import RequestContext, StoryConfiguration, SystemPrompts, RequestContextMetadata
+        from datetime import datetime
+
+        # Create a minimal request_context without chapters
+        request_context = RequestContext(
+            configuration=StoryConfiguration(
+                system_prompts=SystemPrompts(
+                    main_prefix="Test",
+                    main_suffix="Test",
+                    assistant_prompt="Test",
+                    editor_prompt="Test"
+                )
+            ),
+            context_metadata=RequestContextMetadata(
+                story_id="test",
+                story_title="Test",
+                version="1.0",
+                created_at=datetime.now()
+            )
+        )
+
+        # Missing chapter_number field
         invalid_request = {
-            "systemPrompts": {"mainPrefix": "", "mainSuffix": ""},
-            "worldbuilding": "Test",
-            "storySummary": "Test",
-            "previousChapters": [],
-            "characters": []
+            "request_context": request_context.model_dump(mode='json')
         }
         response = client.post("/api/v1/editor-review", json=invalid_request)
         assert response.status_code == 422

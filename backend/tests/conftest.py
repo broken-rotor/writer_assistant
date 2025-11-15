@@ -240,6 +240,8 @@ def sample_character_feedback_request():
 @pytest.fixture
 def sample_rater_feedback_request():
     """Sample rater feedback request using new RequestContext format"""
+    from app.models.request_context import RaterConfig
+
     request_context = RequestContext(
         configuration=StoryConfiguration(
             system_prompts=SystemPrompts(
@@ -247,7 +249,15 @@ def sample_rater_feedback_request():
                 main_suffix="Provide constructive, detailed feedback on story elements.",
                 assistant_prompt="Focus on narrative flow, character consistency, and plot development.",
                 editor_prompt="Review feedback for clarity and actionable suggestions."
-            )
+            ),
+            raters=[
+                RaterConfig(
+                    id="rater_narrative_flow",
+                    name="Narrative Flow Rater",
+                    system_prompt="Evaluate the narrative flow and character consistency",
+                    enabled=True
+                )
+            ]
         ),
         worldbuilding=WorldbuildingInfo(
             content="A noir detective story set in 1940s Los Angeles. The atmosphere is dark and moody, with corruption and mystery permeating every corner of the city."
@@ -277,10 +287,10 @@ def sample_rater_feedback_request():
             )
         ]
     )
-    
+
     return {
         "request_context": request_context.model_dump(mode='json'),
-        "raterPrompt": "Evaluate the narrative flow and character consistency",
+        "raterName": "Narrative Flow Rater",
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 
@@ -417,9 +427,9 @@ def sample_editor_review_request():
             version="1.0",
             created_at=datetime.now(),
             total_characters=1,
-            total_chapters=0,
-            total_word_count=0,
-            context_size_estimate=350
+            total_chapters=1,
+            total_word_count=150,
+            context_size_estimate=500
         ),
         characters=[
             CharacterDetails(
@@ -429,12 +439,22 @@ def sample_editor_review_request():
                 creation_source="user",
                 last_modified=datetime.now()
             )
+        ],
+        chapters=[
+            ChapterDetails(
+                id="chapter_1",
+                number=1,
+                title="The Crime Scene",
+                content="The rain fell hard on the city streets. Detective Chen examined the crime scene.",
+                created=datetime.now(),
+                last_modified=datetime.now()
+            )
         ]
     )
-    
+
     return {
         "request_context": request_context.model_dump(mode='json'),
-        "chapterToReview": "The rain fell hard on the city streets. Detective Chen examined the crime scene."
+        "chapter_number": 1
     }
 
 

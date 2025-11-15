@@ -8,12 +8,15 @@
       "Content-Type": "application/json"
     },
     "body": {
+      "raterName": "Character Consistency Rater",
+      "plotPoint": "Aria faces the guardian's trial and claims the first crystal shard",
       "request_context": {
         "configuration": {
           "system_prompts": {
             "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
             "main_suffix": "Provide objective quality ratings and constructive feedback to improve story content.",
-            "assistant_prompt": "As the Rater Agent, evaluate content quality across multiple dimensions with specific scores and actionable feedback."
+            "assistant_prompt": "As the Rater Agent, evaluate content quality across multiple dimensions with specific scores and actionable feedback.",
+            "editor_prompt": ""
           },
           "raters": [
             {
