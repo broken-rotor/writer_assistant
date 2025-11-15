@@ -5,11 +5,12 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from app.models.generation_models import (
     FleshOutRequest,
-    FleshOutResponse
+    FleshOutResponse,
+    FleshOutType
 )
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
-from app.services.unified_context_processor import get_unified_context_processor
+from app.services.context_builder import ContextBuilder
 from app.core.config import settings
 from datetime import datetime, UTC
 import logging
@@ -29,75 +30,28 @@ async def flesh_out(request: FleshOutRequest):
         raise HTTPException(
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
-
+    agent_instructions: Dict[FleshOutType, str] = {
+        FleshOutType.WORLDBUILDING: "Expand the following text which is the world building of the story. Add relevant details while maintaining narrative consistency",
+        FleshOutType.CHAPTER: "Expand the following text which is a chapter of the story. Add relevant details while maintaining narrative consistency"
+    }
     async def generate_with_updates():
         try:
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing expansion context...', 'progress': 20})}\n\n"
 
-            # Get unified context processor
-            context_processor = get_unified_context_processor()
-            
-            # Try to use flesh out context processing if available
-            # Otherwise fall back to generic processing
-            try:
-                if hasattr(context_processor, 'process_flesh_out_context'):
-                    context_result = context_processor.process_flesh_out_context(
-                        request_context=request.request_context,
-                        outline_section=request.textToFleshOut,
-                        context_processing_config=request.context_processing_config
-                    )
-                else:
-                    # Fallback: use character feedback context processing as it's similar
-                    context_result = context_processor.process_character_feedback_context(
-                        request_context=request.request_context,
-                        context_processing_config=request.context_processing_config
-                    )
-            except Exception as e:
-                logger.warning(f"Context processing failed, using fallback: {e}")
-                # Create a minimal fallback context result
-                from app.services.unified_context_processor import UnifiedContextResult
-                context_result = UnifiedContextResult(
-                    system_prompt="You are a creative writing assistant. Expand text with relevant detail while maintaining narrative consistency.",
-                    user_message=f"Expand this text with atmospheric details: {request.textToFleshOut}",
-                    processing_time=0.0,
-                    context_metadata={}
-                )
+            context_builder = ContextBuilder(request.request_context)
+            context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
+            context_builder.add_character_states()
+            context_builder.add_recent_story_summary()
+            context_builder.add_agent_instruction(f"{agent_instructions[request.request_type]}. Text to expand: {request.text_to_flesh_out}")
 
-            # Log context processing results
-            logger.info(f"Flesh out context processed in {context_result.processing_time:.2f}s")
-
-            # Phase 2: Analyzing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing text for expansion opportunities...', 'progress': 40})}\n\n"
-
-            # For flesh out, we need to ensure the user message includes the text to expand
-            # if it's not already included in the structured context
-            expansion_content = f"""
-Context type: {request.context}
-
-Text to expand: {request.textToFleshOut}
-
-Provide a detailed, atmospheric expansion (200-400 words)."""
-
-            # Combine context result with expansion specific content
-            if "Text to expand:" not in context_result.user_message:
-                user_message = context_result.user_message + expansion_content
-            else:
-                user_message = context_result.user_message
-
-            # Phase 3: Expanding
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'expanding', 'message': 'Generating expanded content...', 'progress': 70})}\n\n"
-
-            # Prepare messages for LLM
-            messages = [
-                {"role": "system", "content": context_result.system_prompt.strip()},
-                {"role": "user", "content": user_message.strip()}
-            ]
+            # Phase 2: Expanding
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'expanding', 'message': 'Generating expanded content...', 'progress': 40})}\n\n"
 
             # Collect generated text from streaming
             response_text = ""
             for token in llm.chat_completion_stream(
-                messages,
+                context_builder.build_messages(),
                 max_tokens=settings.ENDPOINT_FLESH_OUT_MAX_TOKENS,
                 temperature=settings.ENDPOINT_FLESH_OUT_TEMPERATURE
             ):
@@ -106,31 +60,22 @@ Provide a detailed, atmospheric expansion (200-400 words)."""
                 # yield f"data: {json.dumps({'type': 'partial', 'content':
                 # token})}\n\n"
 
-            # Phase 4: Finalizing
+            # Phase 3: Finalizing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'finalizing', 'message': 'Finalizing expanded text...', 'progress': 90})}\n\n"
 
             # Final result
             result = FleshOutResponse(
                 fleshedOutText=response_text.strip(),
-                originalText=request.textToFleshOut,
-                context_metadata=context_result.context_metadata,
+                originalText=request.text_to_flesh_out,
                 metadata={
                     "expandedAt": datetime.now(UTC).isoformat(),
-                    "originalLength": len(
-                        request.textToFleshOut),
-                    "expandedLength": len(
-                        response_text.strip()),
-                    "contextType": request.context,
-                    "contextMode": "request_context",
-                    "requestContextProvided": bool(
-                        request.request_context),
-                    "structuredContextProvided": False,
-                    "processingMode": "unified"})
+                    "originalLength": len(request.text_to_flesh_out),
+                    "expandedLength": len(response_text.strip())})
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in flesh_out: {str(e)}")
+            logger.error(f"Error in flesh_out:", e)
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

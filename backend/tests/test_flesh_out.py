@@ -58,7 +58,7 @@ class TestFleshOutEndpoint:
 
     def test_flesh_out_includes_original_text(self, client, sample_flesh_out_request):
         """Test fleshed out text includes original"""
-        original = sample_flesh_out_request["textToFleshOut"]
+        original = sample_flesh_out_request["text_to_flesh_out"]
         response = client.post("/api/v1/flesh-out", json=sample_flesh_out_request)
         data = extract_final_result_from_streaming_response(response)
         fleshed_out = data["fleshedOutText"]
@@ -67,7 +67,7 @@ class TestFleshOutEndpoint:
 
     def test_flesh_out_returns_original_text(self, client, sample_flesh_out_request):
         """Test that original text is returned unchanged"""
-        original = sample_flesh_out_request["textToFleshOut"]
+        original = sample_flesh_out_request["text_to_flesh_out"]
         response = client.post("/api/v1/flesh-out", json=sample_flesh_out_request)
         data = extract_final_result_from_streaming_response(response)
         returned_original = data["originalText"]
@@ -76,14 +76,14 @@ class TestFleshOutEndpoint:
 
     def test_flesh_out_with_short_text(self, client, sample_flesh_out_request):
         """Test flesh out with very short text"""
-        sample_flesh_out_request["textToFleshOut"] = "The detective arrives."
+        sample_flesh_out_request["text_to_flesh_out"] = "The detective arrives."
         response = client.post("/api/v1/flesh-out", json=sample_flesh_out_request)
         assert response.status_code == 200
 
     def test_flesh_out_with_long_text(self, client, sample_flesh_out_request):
         """Test flesh out with longer text"""
         long_text = "The investigation begins. " * 20
-        sample_flesh_out_request["textToFleshOut"] = long_text
+        sample_flesh_out_request["text_to_flesh_out"] = long_text
         response = client.post("/api/v1/flesh-out", json=sample_flesh_out_request)
         assert response.status_code == 200
 

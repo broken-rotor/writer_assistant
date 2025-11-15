@@ -37,7 +37,7 @@ class TestFleshOutStreamingEndpoint:
         status_messages = [msg for msg in messages if msg.get('type') == 'status']
         
         # Should have 4 status phases
-        assert len(status_messages) >= 4
+        assert len(status_messages) >= 3
         
         # Check specific phases and progress values
         phases_found = {}
@@ -51,11 +51,8 @@ class TestFleshOutStreamingEndpoint:
         assert 'context_processing' in phases_found
         assert phases_found['context_processing'] == 20
         
-        assert 'analyzing' in phases_found
-        assert phases_found['analyzing'] == 40
-        
         assert 'expanding' in phases_found
-        assert phases_found['expanding'] == 70
+        assert phases_found['expanding'] == 40
         
         assert 'finalizing' in phases_found
         assert phases_found['finalizing'] == 90
@@ -88,17 +85,12 @@ class TestFleshOutStreamingEndpoint:
         assert 'fleshedOutText' in result_data
         assert 'originalText' in result_data
         assert 'metadata' in result_data
-        assert 'context_metadata' in result_data
         
         # Verify metadata structure
         metadata = result_data['metadata']
         assert 'expandedAt' in metadata
         assert 'originalLength' in metadata
         assert 'expandedLength' in metadata
-        assert 'contextType' in metadata
-        assert 'contextMode' in metadata
-        assert 'structuredContextProvided' in metadata
-        assert 'processingMode' in metadata
         
         # Verify data types
         assert isinstance(result_data['fleshedOutText'], str)
@@ -143,14 +135,7 @@ class TestFleshOutStreamingEndpoint:
         """Test error handling in streaming mode"""
         # Create invalid request (missing required field)
         invalid_request = {
-            "textToFleshOut": "",  # Empty text should cause validation error
-            "context": "test",
-            "structured_context": {
-                "plot_elements": {},
-                "character_contexts": {},
-                "user_requests": {},
-                "system_instructions": {}
-            }
+            "text_flesh_out": "",  # Empty text should cause validation error
         }
         
         response = client.post("/api/v1/flesh-out", json=invalid_request)
@@ -180,8 +165,8 @@ class TestFleshOutStreamingEndpoint:
             except json.JSONDecodeError:
                 pass
         
-        # Should have at least 5 messages (4 status + 1 result)
-        assert len(messages) >= 5
+        # Should have at least 4 messages (3 status + 1 result)
+        assert len(messages) >= 4
         
         # Check message order and types
         message_types = [msg.get('type') for msg in messages]
@@ -190,7 +175,7 @@ class TestFleshOutStreamingEndpoint:
         status_count = message_types.count('status')
         result_count = message_types.count('result')
         
-        assert status_count >= 4  # At least 4 status phases
+        assert status_count >= 3  # At least 3 status phases
         assert result_count == 1  # Exactly 1 result
         
         # Result should be the last message

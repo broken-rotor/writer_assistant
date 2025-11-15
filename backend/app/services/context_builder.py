@@ -29,7 +29,7 @@ class ContextItem:
     summarization_strategy: SummarizationStrategy = SummarizationStrategy.LITERAL
 
     def structured_content(self):
-        return f'<{self.tag}>\n{self.content}\n</{self.tag}>\n' if self.tag else self.content
+        return f'<{self.tag}>\n{self.content.strip()}\n</{self.tag}>\n' if self.tag else self.content
 
 
 class ContextBuilder:
@@ -51,6 +51,12 @@ class ContextBuilder:
 
     def build_prompt(self) -> str:
         return '\n'.join([e['content'] for e in self.build_messages()])
+
+    def add_long_term_elements(self, system_prompt: str):
+        self.add_system_prompt(system_prompt)
+        self.add_worldbuilding()
+        self.add_characters()
+        self.add_story_outline()
 
     def add_system_prompt(self, prompt: str):
         content = prompt
@@ -76,21 +82,24 @@ class ContextBuilder:
                 summarization_strategy=SummarizationStrategy.SUMMARIZED))
 
     def add_characters(self):
+        def add_item(title, element) -> str:
+            return f"  {title}: {element}\n" if element else ""
+
         def format_character(c: CharacterDetails) -> str:
-            return (
-                f"- Name: {c.name}\n"
-                f"  Basic Bio: {c.basic_bio}\n"
-                f"  Sex: {c.sex}\n"
-                f"  Gender: {c.gender}\n"
-                f"  Sexual Preference: {c.sexual_preference}\n"
-                f"  Age: {c.age}\n"
-                f"  Physical Appearance: {c.physical_appearance}\n"
-                f"  Usual Clothing: {c.usual_clothing}\n"
-                f"  Personality: {c.personality}\n"
-                f"  Motivations: {c.motivations}\n"
-                f"  Fears: {c.fears}\n"
-                f"  Relationships: {c.relationships}\n"
-            )
+            content = ''
+            content += add_item("Basic Bio", c.basic_bio)
+            content += add_item("Sex", c.sex)
+            content += add_item("Gender", c.gender)
+            content += add_item("Sexual Preference", c.sexual_preference)
+            content += add_item("Age", c.age)
+            content += add_item("Physical Appearance", c.physical_appearance)
+
+            content += add_item("Usual Clothing", c.usual_clothing)
+            content += add_item("Personality", c.personality)
+            content += add_item("Motivations", c.motivations)
+            content += add_item("Fears", c.fears)
+            content += add_item("Relationships", c.relationships)
+            return f"- Name: {c.name}\n{content}" if content else ""
 
         if self._request_context.characters:
             characters = '\n'.join([format_character(c)for c in self._request_context.characters if not c.is_hidden])
@@ -161,6 +170,17 @@ class ContextBuilder:
                 content=content,
                 token_budget=15000,
                 summarization_strategy=SummarizationStrategy.SUMMARY_AND_ROLLING_WINDOW))
+
+    def add_recent_story_summary(self):
+        ## FIXME ##
+        content = ''
+        if content:
+            self._elements.append(ContextItem(
+                tag='RECENT_STORY_SUMMARY',
+                role=ContextRole.USER,
+                content=content,
+                token_budget=5000,
+                summarization_strategy=SummarizationStrategy.SUMMARIZED))
 
     def add_agent_instruction(self, prompt: str):
         self._elements.append(ContextItem(
