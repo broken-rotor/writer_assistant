@@ -455,24 +455,15 @@ class GenerateCharacterDetailsResponse(BaseModel):
 
 # Regenerate Bio Request/Response
 class RegenerateBioRequest(BaseModel):
-    # Character information to summarize into bio
-    character_info: CharacterInfo = Field(description="Character information to generate bio from")
+    character_name: str = Field(description="Name of the character to regenerate the basic bio")
 
     # Context fields (optional for bio regeneration)
     request_context: Optional[RequestContext] = Field(
         default=None,
         description="Optional complete request context"
     )
-    context_processing_config: Optional[ContextProcessingConfig] = Field(
-        default=None,
-        description="Configuration for context processing"
-    )
 
 
 class RegenerateBioResponse(BaseModel):
     basicBio: str = Field(
         description="Generated bio summary from character details")
-    context_metadata: Optional[ContextMetadata] = Field(
-        None,
-        description="Metadata about how context was processed for this response"
-    )

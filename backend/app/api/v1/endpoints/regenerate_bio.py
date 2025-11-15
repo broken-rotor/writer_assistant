@@ -7,9 +7,9 @@ from app.models.generation_models import (
     RegenerateBioRequest,
     RegenerateBioResponse
 )
-from app.models.request_context import RequestContext
+from app.models.request_context import RequestContext, CharacterDetails
 from app.services.llm_inference import get_llm
-from app.services.unified_context_processor import get_unified_context_processor
+from app.services.context_builder import ContextBuilder
 from app.core.config import settings
 import logging
 import json
@@ -22,6 +22,15 @@ router = APIRouter()
 @router.post("/regenerate-bio")
 async def regenerate_bio(request: RegenerateBioRequest):
     """Regenerate character bio from detailed character information using LLM with SSE streaming."""
+
+    def get_character_details() -> CharacterDetails:
+        characters = [c for c in request.request_context.characters if c.name == request.character_name]
+        if not characters:
+            raise ValueError(f"Character {request.character_name} not found in request_context")
+        elif len(characters) > 1:
+            raise ValueError(f"Duplicate character name {request.character_name}")
+        return characters[0]
+
     llm = get_llm()
     if not llm:
         raise HTTPException(
@@ -30,71 +39,11 @@ async def regenerate_bio(request: RegenerateBioRequest):
 
     async def generate_with_updates():
         try:
+            character_details = get_character_details()
+
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character details...', 'progress': 20})}\n\n"
 
-            # Build character details summary for context
-            character_info = request.character_info
-            character_details = []
-            if character_info.name:
-                character_details.append(f"Name: {character_info.name}")
-            if character_info.sex:
-                character_details.append(f"Sex: {character_info.sex}")
-            if character_info.gender:
-                character_details.append(f"Gender: {character_info.gender}")
-            if character_info.sexualPreference:
-                character_details.append(
-                    f"Sexual Preference: {character_info.sexualPreference}")
-            if character_info.age and character_info.age > 0:
-                character_details.append(f"Age: {character_info.age}")
-            if character_info.physicalAppearance:
-                character_details.append(
-                    f"Physical Appearance: {character_info.physicalAppearance}")
-            if character_info.usualClothing:
-                character_details.append(
-                    f"Usual Clothing: {character_info.usualClothing}")
-            if character_info.personality:
-                character_details.append(f"Personality: {character_info.personality}")
-            if character_info.motivations:
-                character_details.append(f"Motivations: {character_info.motivations}")
-            if character_info.fears:
-                character_details.append(f"Fears: {character_info.fears}")
-            if character_info.relationships:
-                character_details.append(
-                    f"Relationships: {character_info.relationships}")
-
-            character_summary = "\n".join(character_details)
-
-            # Use context processor if request context is provided
-            context_result = None
-            if request.request_context:
-                context_processor = get_unified_context_processor()
-                context_result = context_processor.process_character_generation_context(
-                    request_context=request.request_context,
-                    basic_bio=character_summary,  # Use character details as "bio" for context
-                    existing_characters=[],  # Not needed for bio regeneration
-                    context_processing_config=request.context_processing_config,
-                    structured_context=request.structured_context
-                )
-
-                # Log context processing results
-                if context_result.optimization_applied:
-                    logger.info(
-                        f"Bio regeneration context processing applied ({context_result.processing_mode} mode): "
-                        f"{context_result.total_tokens} tokens, "
-                        f"compression ratio: {context_result.compression_ratio:.2f}")
-                else:
-                    logger.debug(
-                        f"No bio regeneration context optimization needed ({context_result.processing_mode} mode): "
-                        f"{context_result.total_tokens} tokens")
-
-            # Phase 2: Analyzing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing character details...', 'progress': 40})}\n\n"
-
-            # Phase 3: Generating
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating bio summary...', 'progress': 70})}\n\n"
-
-            # Prepare system prompt and user message
             system_prompt = """You are a skilled writer assistant specializing in character development. Your task is to create a concise, engaging character bio that captures the essence of a character based on their detailed attributes.
 
 Create a bio that:
@@ -105,39 +54,32 @@ Create a bio that:
 - Avoids listing attributes mechanically
 
 Focus on what makes this character unique and interesting."""
+            agent_instruction = "Based on the character details in CHARACTER_TO_GENERATE, create a concise and engaging bio. Please respond with just the bio text directly."
 
-            user_message = f"""Based on the following character details, create a concise and engaging bio:
+            context_builder = ContextBuilder(request.request_context)
+            context_builder.add_system_prompt(system_prompt)
+            context_builder.add_worldbuilding()
+            context_builder.add_characters(tag='OTHER_CHARACTERS', exclude_characters={request.character_name})
+            context_builder.add_characters(tag='CHARACTER_TO_GENERATE', include_characters={request.character_name})
+            context_builder.add_agent_instruction(agent_instruction)
 
-{character_summary}
-
-Please respond with just the bio text directly."""
-
-            # Use context result if available
-            if context_result:
-                system_prompt = context_result.system_prompt.strip()
-                user_message = context_result.user_message + \
-                    f"\n\n{user_message}"
-
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message.strip()}
-            ]
+            # Phase 2: Generating
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating bio summary...', 'progress': 40})}\n\n"
 
             # Collect generated text from streaming
             response_text = ""
             for token in llm.chat_completion_stream(
-                    messages,
+                    context_builder.build_messages(),
                     max_tokens=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_MAX_TOKENS,
                     temperature=settings.ENDPOINT_GENERATE_CHARACTER_DETAILS_TEMPERATURE):
                 response_text += token
             
-            # Phase 4: Processing
+            # Phase 3: Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'processing', 'message': 'Processing bio summary...', 'progress': 90})}\n\n"
             
             # Use the LLM response directly without any validation or fallback
             result = RegenerateBioResponse(
-                basicBio=response_text.strip(),
-                context_metadata=context_result.context_metadata if context_result else None
+                basicBio=response_text.strip()
             )
             
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
