@@ -11,6 +11,7 @@ from app.services.llm_inference import LLMInference
 from app.models.request_context import (
     RequestContext,
     CharacterDetails,
+    ChapterDetails,
     StoryOutline,
     WorldbuildingInfo,
     StoryConfiguration,
@@ -321,12 +322,23 @@ def sample_generate_chapter_request():
                 creation_source="user",
                 last_modified=datetime.now()
             )
+        ],
+        chapters=[
+            ChapterDetails(
+                id="chapter_1",
+                number=1,
+                title="The Crime Scene",
+                content="",
+                plot_point="The detective discovers a crucial clue at the crime scene",
+                created=datetime.now(),
+                last_modified=datetime.now()
+            )
         ]
     )
-    
+
     return {
-        "request_context": request_context.model_dump(mode='json'),
-        "plotPoint": "The detective discovers a crucial clue at the crime scene"
+        "chapter_number": 1,
+        "request_context": request_context.model_dump(mode='json')
     }
 
 
