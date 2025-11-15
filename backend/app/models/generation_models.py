@@ -273,20 +273,12 @@ class RaterFeedbackResponse(BaseModel):
 
 # Chapter Generation Request/Response
 class GenerateChapterRequest(BaseModel):
-    # Core request fields
-    plotPoint: str = Field(description="The plot point or scene to generate")
+    chapter_number: int = Field(description="Chapter number to generate")
 
-    # Phase-specific fields
-
-    # Request context fields (required)
     request_context: Optional[RequestContext] = Field(
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[ContextProcessingConfig] = Field(
-        default=None,
-        description="Configuration for context processing (summarization, filtering, etc.)"
-    )
 
     @model_validator(mode='before')
     @classmethod

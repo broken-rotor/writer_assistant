@@ -64,14 +64,10 @@ class TestGenerateChapterEndpoint:
         metadata = data["metadata"]
 
         assert "generatedAt" in metadata
-        assert "plotPoint" in metadata
-        assert "contextMode" in metadata
-        assert "processingMode" in metadata
-        assert metadata["contextMode"] == "structured"
 
     def test_generate_chapter_with_empty_plot_point(self, client, sample_generate_chapter_request):
         """Test chapter generation with empty plot point"""
-        sample_generate_chapter_request["plotPoint"] = ""
+        sample_generate_chapter_request["request_context"]["chapters"][0]["plot_point"] = ""
         response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
         data = extract_final_result_from_streaming_response(response)
         assert len(data["chapterText"]) > 0
@@ -102,12 +98,12 @@ class TestGenerateChapterEndpoint:
             "Focus on character emotions and environmental descriptions to enhance the scene."
         )
         sample_generate_chapter_request["request_context"]["worldbuilding"]["content"] = feedback_content
-        
+
         response = client.post("/api/v1/generate-chapter", json=sample_generate_chapter_request)
         data = extract_final_result_from_streaming_response(response)
-        # Verify that the response includes context metadata
+        # Verify that the response includes metadata
         metadata = data["metadata"]
-        assert "processingMode" in metadata
+        assert "generatedAt" in metadata
 
     def test_generate_chapter_word_count_accuracy(self, client, sample_generate_chapter_request):
         """Test that word count is reasonably accurate"""

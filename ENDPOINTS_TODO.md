@@ -6,7 +6,7 @@
 | /character-feedback                 |  Yes     |  No           | Always uses characters[0]                |
 | /editor-review                      |  Yes     |  Yes          | ? using editor prompt?                   |
 | /flesh-out                          |  Yes     |  Yes          | Migrated                                 |
-| /generate-chapter                   |  Yes     |  Yes          | ?                                        |
+| /generate-chapter                   |  Yes     |  Yes          | Migrated                                 |
 | /generate-chapter-outlines          |  Yes     |  No           | Migrated                                 |
 | /generate-character-details         |  Yes     |  Yes          | Migrated                                 |
 | /chat/llm                           |  Yes     |  Yes?         | ?                                        |

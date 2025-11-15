@@ -81,7 +81,7 @@ class ContextBuilder:
                 token_budget=2000,
                 summarization_strategy=SummarizationStrategy.SUMMARIZED))
 
-    def add_characters(self, tag: str='CHARACTERS', exclude_characters: Set[str]={}, include_characters: Set[str]={}):
+    def add_characters(self, tag: str = 'CHARACTERS', exclude_characters: Set[str] = {}, include_characters: Set[str] = {}):
         def add_item(title: str, element) -> str:
             return f"  {title}: {element}\n" if element else ""
 
@@ -165,7 +165,7 @@ class ContextBuilder:
                     token_budget=2000,
                     summarization_strategy=SummarizationStrategy.SUMMARIZED))
 
-    def add_recent_story(self):
+    def add_recent_story(self, include_up_to: Optional[int] = None):
         ## FIXME ##
         content = ''
         if content:

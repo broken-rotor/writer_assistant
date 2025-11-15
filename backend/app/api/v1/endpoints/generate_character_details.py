@@ -25,6 +25,7 @@ router = APIRouter()
 @router.post("/generate-character-details")
 async def generate_character_details(request: GenerateCharacterDetailsRequest):
     """Generate detailed character information using LLM with structured context and SSE streaming."""
+
     def get_character_details() -> CharacterDetails:
         characters = [c for c in request.request_context.characters if c.name == request.character_name]
         if not characters:
