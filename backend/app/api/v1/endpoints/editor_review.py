@@ -44,6 +44,10 @@ async def editor_review(request: EditorReviewRequest):
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.editor_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story(include_up_to=request.chapter_number)
+
+            # Phase 2: Analyzing
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'analyzing', 'message': 'Analyzing chapter for narrative issues...', 'progress': 50})}\n\n"
+
             context_builder.add_agent_instruction(f"""
 Review chapter {request.chapter_number} for clarity, style, and structural improvements.
 
@@ -60,8 +64,8 @@ Provide 4-6 suggestions in JSON format:
   ]
 }}""")
 
-            # Phase 2: Generating Suggestions
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 40})}\n\n"
+            # Phase 3: Generating Suggestions
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 75})}\n\n"
 
             # Generate editor review using streaming LLM
             response_text = ""

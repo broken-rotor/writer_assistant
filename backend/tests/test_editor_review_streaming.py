@@ -145,12 +145,12 @@ class TestEditorReviewStreaming:
 
     def test_editor_review_streaming_error_handling(self, client):
         """Test streaming error handling"""
-        # Test with invalid request
+        # Test with invalid request (missing required fields)
         invalid_request = {
-            "chapterToReview": "",  # Empty chapter
-            "structured_context": None  # Invalid structured context
+            "chapter_number": 1
+            # Missing request_context
         }
-        
+
         response = client.post("/api/v1/editor-review", json=invalid_request)
         # Should return 422 for validation error, not streaming error
         assert response.status_code == 422

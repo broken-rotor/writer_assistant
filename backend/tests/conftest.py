@@ -417,9 +417,9 @@ def sample_editor_review_request():
             version="1.0",
             created_at=datetime.now(),
             total_characters=1,
-            total_chapters=0,
-            total_word_count=0,
-            context_size_estimate=350
+            total_chapters=1,
+            total_word_count=150,
+            context_size_estimate=500
         ),
         characters=[
             CharacterDetails(
@@ -429,12 +429,22 @@ def sample_editor_review_request():
                 creation_source="user",
                 last_modified=datetime.now()
             )
+        ],
+        chapters=[
+            ChapterDetails(
+                id="chapter_1",
+                number=1,
+                title="The Crime Scene",
+                content="The rain fell hard on the city streets. Detective Chen examined the crime scene.",
+                created=datetime.now(),
+                last_modified=datetime.now()
+            )
         ]
     )
-    
+
     return {
         "request_context": request_context.model_dump(mode='json'),
-        "chapterToReview": "The rain fell hard on the city streets. Detective Chen examined the crime scene."
+        "chapter_number": 1
     }
 
 
