@@ -232,6 +232,7 @@ def sample_character_feedback_request():
     
     return {
         "request_context": request_context.model_dump(mode='json'),
+        "character_name": "Detective Sarah Chen",
         "plotPoint": "The detective discovers a crucial clue at the crime scene"
     }
 

@@ -4,6 +4,8 @@ Shared utility functions for AI generation endpoints.
 import json
 import re
 
+from app.models.request_context import RequestContext, CharacterDetails
+
 
 def parse_json_response(text: str) -> dict:
     """Try to extract JSON from LLM response"""
@@ -53,3 +55,11 @@ def parse_json_array_response(text: str) -> list:
             pass
 
     return None
+
+def get_character_details(request_context: RequestContext, character_name: str) -> CharacterDetails:
+    characters = [c for c in request_context.characters if c.name == character_name]
+    if not characters:
+        raise ValueError(f"Character {character_name} not found in request_context")
+    elif len(characters) > 1:
+        raise ValueError(f"Duplicate character name {character_name}")
+    return characters[0]

@@ -10,8 +10,8 @@ from app.models.generation_models import (
 )
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
-from app.services.unified_context_processor import get_unified_context_processor
-from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
+from app.services.context_builder import ContextBuilder
+from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response, get_character_details
 from app.core.config import settings
 import logging
 import json
@@ -35,52 +35,36 @@ async def character_feedback(request: CharacterFeedbackRequest):
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context and plot point...', 'progress': 25})}\n\n"
 
-            # Extract character name from request context
-            character_name = "Character"
-            if request.request_context and request.request_context.characters:
-                character_name = request.request_context.characters[0].name
+            character = get_character_details(request.request_context, request.character_name)
+            system_prompt = f"You're {character.name}, and will provide feedback of you're emotions and reactions to the user when requested."
 
-            # Get unified context processor
-            context_processor = get_unified_context_processor()
+            context_builder = ContextBuilder(request.request_context)
+            context_builder.add_long_term_elements(system_prompt)
+            context_builder.add_character_states()
+            context_builder.add_recent_story_summary()
+            context_builder.add_agent_instruction(
+                f"""Generate the reactions of {character.name} to the plot point that follow:
+<PLOT_POINT>
+{request.plotPoint}
+</PLOT_POINT>
 
-            # Process context using request context
-            context_result = context_processor.process_character_feedback_context(
-                request_context=request.request_context,
-                context_processing_config=request.context_processing_config
-            )
-
-            # Log context processing results
-            logger.info(f"Character feedback context processed in {context_result.processing_time:.2f}s")
-
-            # Phase 2: Generation
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': f'Generating {character_name} feedback...', 'progress': 65})}\n\n"
-
-            # For character feedback, we need to ensure the user message includes the JSON format instruction
-            # if it's not already included in the structured context
-            if not any(
-                    "JSON format" in context_result.user_message for _ in [1]):
-                json_instruction = f"""
 Respond in JSON format with exactly these keys:
 {{
-  "actions": ["3-5 physical actions {character_name} takes"],
-  "dialog": ["3-5 things {character_name} might say"],
-  "physicalSensations": ["3-5 physical sensations {character_name} experiences"],
-  "emotions": ["3-5 emotions {character_name} feels"],
-  "internalMonologue": ["3-5 thoughts in {character_name}'s mind"]
-}}"""
-                user_message = context_result.user_message + json_instruction
-            else:
-                user_message = context_result.user_message
+  "actions": ["3-5 physical actions {character.name} takes"],
+  "dialog": ["3-5 things {character.name} might say"],
+  "physicalSensations": ["3-5 physical sensations {character.name} experiences"],
+  "emotions": ["3-5 emotions {character.name} feels"],
+  "internalMonologue": ["3-5 thoughts in {character.name}'s mind"],
+  "goals": ["0-2 current immediate goals and objectives {character.name} has"],
+  "memories": ["0-3 Important memories affecting {character.name} current behavior and or relevant to their situation"]
+}}""")
 
-            # Prepare messages for LLM
-            messages = [
-                {"role": "system", "content": context_result.system_prompt.strip()},
-                {"role": "user", "content": user_message.strip()}
-            ]
+            # Phase 2: Generation
+            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': f'Generating {character.name} feedback...', 'progress': 40})}\n\n"
 
             # Generate character feedback using LLM
             response_text = llm.chat_completion(
-                messages,
+                context_builder.build_messages(),
                 max_tokens=settings.ENDPOINT_CHARACTER_FEEDBACK_MAX_TOKENS,
                 temperature=settings.ENDPOINT_CHARACTER_FEEDBACK_TEMPERATURE,
                 json_schema_class=CharacterFeedback
@@ -90,7 +74,6 @@ Respond in JSON format with exactly these keys:
             yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Parsing character feedback response...', 'progress': 90})}\n\n"
 
             parsed = parse_json_response(response_text)
-
             if parsed and all(
                 k in parsed for k in [
                     'actions',
@@ -100,30 +83,19 @@ Respond in JSON format with exactly these keys:
                     'internalMonologue']):
                 feedback = CharacterFeedback(**parsed)
             else:
-                logger.warning("Failed to parse JSON, using text fallback")
-                lines = parse_list_response(response_text, "all")
-                feedback = CharacterFeedback(
-                    actions=lines[0:3] if len(lines) > 0 else [
-                        f"{character_name} responds"],
-                    dialog=lines[3:6] if len(lines) > 3 else ["..."],
-                    physicalSensations=lines[6:9] if len(lines) > 6 else [
-                        "Feeling tense"],
-                    emotions=lines[9:12] if len(lines) > 9 else ["Anxious"],
-                    internalMonologue=lines[12:15] if len(
-                        lines) > 12 else ["What now?"]
-                )
+                logger.debug("Failed to parse JSON", response_text)
+                raise ValueError("Failed to parse JSON from the LLM")
 
             # Final result
             result = CharacterFeedbackResponse(
-                characterName=character_name,
-                feedback=feedback,
-                context_metadata=context_result.context_metadata
+                characterName=character.name,
+                feedback=feedback
             )
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in character_feedback: {str(e)}")
+            logger.error(f"Error in character_feedback", e)
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

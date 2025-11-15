@@ -147,4 +147,3 @@ class TestCharacterFeedbackEndpoint:
             result_data = result_messages[0].get('data', {})
             assert 'characterName' in result_data
             assert 'feedback' in result_data
-            assert 'context_metadata' in result_data
