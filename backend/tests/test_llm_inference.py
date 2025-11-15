@@ -34,6 +34,7 @@ class TestLLMInferenceConfig:
         assert config.repeat_penalty == 1.1
         assert config.verbose is False
         assert config.verbose_generation is False
+        assert config.cache_capacity == 0
 
     def test_config_custom_values(self):
         """Test custom configuration values"""
@@ -48,7 +49,8 @@ class TestLLMInferenceConfig:
             max_tokens=1024,
             repeat_penalty=1.2,
             verbose=True,
-            verbose_generation=True
+            verbose_generation=True,
+            cache_capacity=1024**3
         )
 
         assert config.model_path == "/custom/path.gguf"
@@ -62,6 +64,7 @@ class TestLLMInferenceConfig:
         assert config.repeat_penalty == 1.2
         assert config.verbose is True
         assert config.verbose_generation is True
+        assert config.cache_capacity == 1024**3
 
     def test_config_from_settings(self):
         """Test creating config from Settings object"""
@@ -77,6 +80,7 @@ class TestLLMInferenceConfig:
         mock_settings.LLM_REPEAT_PENALTY = 1.1
         mock_settings.LLM_VERBOSE = False
         mock_settings.LLM_VERBOSE_GENERATION = False
+        mock_settings.LLM_CACHE_CAPACITY = 1024**2
 
         config = LLMInferenceConfig.from_settings(mock_settings)
 
@@ -87,6 +91,7 @@ class TestLLMInferenceConfig:
         assert config.temperature == 0.8
         assert config.top_p == 0.95
         assert config.max_tokens == 2048
+        assert config.cache_capacity == 1024**2
 
     def test_config_from_settings_minimal(self):
         """Test config from settings with only MODEL_PATH"""
@@ -102,6 +107,7 @@ class TestLLMInferenceConfig:
         mock_settings.LLM_REPEAT_PENALTY = 1.1
         mock_settings.LLM_VERBOSE = False
         mock_settings.LLM_VERBOSE_GENERATION = False
+        mock_settings.LLM_CACHE_CAPACITY = 2 * 1024**3
 
         config = LLMInferenceConfig.from_settings(mock_settings)
 
@@ -134,6 +140,7 @@ class TestLLMInferenceConfig:
         mock_settings.LLM_REPEAT_PENALTY = 1.1
         mock_settings.LLM_VERBOSE = True
         mock_settings.LLM_VERBOSE_GENERATION = False
+        mock_settings.LLM_CACHE_CAPACITY = 2 * 1024**3
 
         config = LLMInferenceConfig.from_settings(mock_settings)
 
@@ -153,6 +160,7 @@ class TestLLMInferenceConfig:
         mock_settings.LLM_REPEAT_PENALTY = 1.1
         mock_settings.LLM_VERBOSE = False
         mock_settings.LLM_VERBOSE_GENERATION = True
+        mock_settings.LLM_CACHE_CAPACITY = 2 * 1024**3
 
         config = LLMInferenceConfig.from_settings(mock_settings)
 

@@ -8,11 +8,12 @@ from pathlib import Path
 from pydantic import BaseModel
 
 try:
-    from llama_cpp import Llama
+    from llama_cpp import Llama, LlamaRAMCache
     LLAMA_CPP_AVAILABLE = True
 except ImportError:
     LLAMA_CPP_AVAILABLE = False
     Llama = None
+    LlamaRAMCache = None
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,8 @@ class LLMInferenceConfig:
         max_tokens: int = 2048,
         repeat_penalty: float = 1.1,
         verbose: bool = False,
-        verbose_generation: bool = False
+        verbose_generation: bool = False,
+        cache_capacity: int = 0
     ):
         """
         Initialize LLM inference configuration.
@@ -49,6 +51,7 @@ class LLMInferenceConfig:
             repeat_penalty: Penalty for repeating tokens
             verbose: Enable verbose logging
             verbose_generation: Enable verbose logging of prompts, messages, and outputs
+            cache_capacity: RAM cache size (bytes)
         """
         self.model_path = model_path
         self.n_ctx = n_ctx
@@ -61,6 +64,7 @@ class LLMInferenceConfig:
         self.repeat_penalty = repeat_penalty
         self.verbose = verbose
         self.verbose_generation = verbose_generation
+        self.cache_capacity = cache_capacity
 
     @classmethod
     def from_settings(cls, settings) -> Optional["LLMInferenceConfig"]:
@@ -87,7 +91,8 @@ class LLMInferenceConfig:
             max_tokens=settings.LLM_MAX_TOKENS,
             repeat_penalty=settings.LLM_REPEAT_PENALTY,
             verbose=settings.LLM_VERBOSE,
-            verbose_generation=settings.LLM_VERBOSE_GENERATION
+            verbose_generation=settings.LLM_VERBOSE_GENERATION,
+            cache_capacity=settings.LLM_CACHE_CAPACITY
         )
 
 
@@ -140,6 +145,8 @@ class LLMInference:
                 n_threads=self.config.n_threads,
                 verbose=self.config.verbose
             )
+            if self.config.cache_capacity > 0:
+                self.model.set_cache(LlamaRAMCache(capacity_bytes=self.config.cache_capacity))
             logger.info("Model loaded successfully")
         except Exception as e:
             raise RuntimeError(f"Failed to load model: {str(e)}")

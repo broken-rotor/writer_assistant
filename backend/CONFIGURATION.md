@@ -109,6 +109,7 @@ export LLM_TOP_P=1.5          # Error: Must be <= 1.0
 | `LLM_N_CTX` | integer | `4096` | ≥1024 | Context window size for the LLM | Determines maximum tokens the model can process at once |
 | `LLM_N_GPU_LAYERS` | integer | `-1` | -1 to model layers | Number of GPU layers to use | -1=all layers on GPU, 0=CPU only, >0=specific layer count |
 | `LLM_N_THREADS` | integer | `None` | ≥1 | CPU threads for inference | None=auto-detect, otherwise specific thread count |
+| `LLM_CACHE_CAPACITY` | int | 2147483648 | - | LLM prefix cache size | LLM prefix cache size (bytes); -1 to disable |
 | `LLM_VERBOSE` | boolean | `False` | - | Enable verbose model logging | Shows detailed llama.cpp inference logs |
 | `LLM_VERBOSE_GENERATION` | boolean | `False` | - | Enable verbose logging of prompts/messages/outputs | Logs all prompts, messages, and generated outputs from the LLM |
 
