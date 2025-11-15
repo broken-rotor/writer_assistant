@@ -96,10 +96,7 @@ Respond ONLY with the JSON array, no additional text."""
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 
         context_builder = ContextBuilder(request_context=request.request_context)
-        context_builder.add_system_prompt(system_prompt)
-        context_builder.add_worldbuilding()
-        context_builder.add_characters()
-        context_builder.add_story_outline()
+        context_builder.add_long_term_elements(system_prompt)
         context_builder.add_agent_instruction(agent_prompt)
         
         # Generate the chapter outline

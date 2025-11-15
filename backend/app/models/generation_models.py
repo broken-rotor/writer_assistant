@@ -68,6 +68,7 @@ The `context_processing_config` field allows fine-tuned control over how context
 from typing import Dict, List, Optional, Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import datetime
+from enum import Enum
 from app.models.request_context import RequestContext
 from app.models.context_models import ContextProcessingConfig
 
@@ -388,26 +389,23 @@ class EditorReviewResponse(BaseModel):
         description="Metadata about how context was processed for this response"
     )
 
+class FleshOutType(str, Enum):
+    WORLDBUILDING = 'worldbuilding'
+    CHAPTER = 'chapter'
 
 # Flesh Out Request/Response (for plot points or worldbuilding)
 class FleshOutRequest(BaseModel):
-    # Core request fields
-    textToFleshOut: str = Field(
-        description="Text content to be expanded or fleshed out")
-    context: Optional[str] = Field(
-        default="", description="Additional context for the flesh out operation")
+    request_type: FleshOutType = Field(description="Type of freshout request.")
 
-    # Phase-specific fields
+    # Core request fields
+    text_to_flesh_out: str = Field(
+        description="Text content to be expanded or fleshed out")
 
     # Request context fields (required)
     request_context: Optional[RequestContext] = Field(
         default=None,
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[ContextProcessingConfig] = Field(
-        default=None,
-        description="Configuration for context processing (summarization, filtering, etc.)"
-    )
 
     @model_validator(mode='before')
     @classmethod
@@ -424,10 +422,6 @@ class FleshOutResponse(BaseModel):
     fleshedOutText: str
     originalText: str
     metadata: Dict[str, Any]
-    context_metadata: Optional[ContextMetadata] = Field(
-        None,
-        description="Metadata about how context was processed for this response"
-    )
 
 
 # Generate Character Details Request/Response
