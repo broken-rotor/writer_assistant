@@ -8,10 +8,10 @@ from app.models.generation_models import (
     GenerateCharacterDetailsResponse,
     CharacterInfo
 )
-from app.models.request_context import RequestContext, CharacterDetails
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
-from app.api.v1.endpoints.shared_utils import parse_json_response
+from app.api.v1.endpoints.shared_utils import parse_json_response, get_character_details
+
 from app.core.config import settings
 import logging
 import re
@@ -25,15 +25,6 @@ router = APIRouter()
 @router.post("/generate-character-details")
 async def generate_character_details(request: GenerateCharacterDetailsRequest):
     """Generate detailed character information using LLM with structured context and SSE streaming."""
-
-    def get_character_details() -> CharacterDetails:
-        characters = [c for c in request.request_context.characters if c.name == request.character_name]
-        if not characters:
-            raise ValueError(f"Character {request.character_name} not found in request_context")
-        elif len(characters) > 1:
-            raise ValueError(f"Duplicate character name {request.character_name}")
-        return characters[0]
-
     llm = get_llm()
     if not llm:
         raise HTTPException(
@@ -42,7 +33,7 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
 
     async def generate_with_updates():
         try:
-            character_details = get_character_details()
+            character_details = get_character_details(request.request_context, request.character_name)
 
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context...', 'progress': 20})}\n\n"

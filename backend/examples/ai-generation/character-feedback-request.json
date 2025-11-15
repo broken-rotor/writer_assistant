@@ -8,31 +8,19 @@
       "Content-Type": "application/json"
     },
     "body": {
-      "characterName": "Aria Moonwhisper",
+      "character_name": "Aria Moonwhisper",
       "plotPoint": "Aria must overcome her fear and self-doubt to successfully complete the crystal guardian's trial",
       "request_context": {
         "configuration": {
           "system_prompts": {
             "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
             "main_suffix": "Focus on authentic character development and emotional depth.",
-            "assistant_prompt": "Provide character-specific feedback that enhances authenticity and emotional resonance."
-          },
-          "generation_preferences": {
-            "tone": "epic fantasy",
-            "perspective": "third person limited",
-            "target_audience": "young adult"
+            "assistant_prompt": "Provide character-specific feedback that enhances authenticity and emotional resonance.",
+            "editor_prompt": ""
           }
         },
         "worldbuilding": {
-          "content": "The Crystal Caverns are ancient underground chambers filled with magical crystals. They test visitors through mystical trials that reveal their true character.",
-          "key_elements": [
-            {
-              "type": "location",
-              "name": "Crystal Caverns",
-              "description": "Ancient trial grounds that test a person's worthiness through magical challenges",
-              "importance": "high"
-            }
-          ]
+          "content": "The Crystal Caverns are ancient underground chambers filled with magical crystals. They test visitors through mystical trials that reveal their true character."
         },
         "characters": [
           {
@@ -84,6 +72,7 @@
                 "She must choose between personal safety and helping others",
                 "Trial reveals her true character and potential"
               ],
+              "order": 1,
               "involved_characters": ["Aria Moonwhisper"],
               "status": "draft"
             }
