@@ -98,7 +98,7 @@ class CharacterDetails(BaseModel):
     
     # Metadata
     is_hidden: bool = Field(default=False, description="Whether character is hidden from UI")
-    last_modified: datetime = Field(description="When character was last modified")
+    last_modified: Optional[datetime] = Field(None, description="When character was last modified")
 
 
 class CharacterState(BaseModel):
