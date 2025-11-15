@@ -44,6 +44,10 @@ class Settings(BaseSettings):
         default=None,
         description="Number of CPU threads (None = auto)"
     )
+    LLM_CACHE_CAPACITY: int = Field(
+        default=2*(1024**3),
+        description="LLM prefix cache size (bytes); 0 to disable.")
+
 
     # LLM Generation Settings
     LLM_TEMPERATURE: float = Field(
