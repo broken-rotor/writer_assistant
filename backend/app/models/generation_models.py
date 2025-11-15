@@ -213,30 +213,12 @@ class CharacterFeedbackResponse(BaseModel):
 # Rater Feedback Request/Response
 class RaterFeedbackRequest(BaseModel):
     # Core request fields
-    raterPrompt: str = Field(description="The rater's evaluation prompt")
+    raterName: str = Field(description="The rater's name")
     plotPoint: str = Field(description="The plot point or scene to evaluate")
 
-    # Phase-specific fields
-
-    # Request context fields (required)
-    request_context: Optional[RequestContext] = Field(
-        default=None,
+    request_context: RequestContext = Field(
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters")
-    context_processing_config: Optional[ContextProcessingConfig] = Field(
-        default=None,
-        description="Configuration for context processing (summarization, filtering, etc.)"
-    )
-
-    @model_validator(mode='before')
-    @classmethod
-    def validate_context_fields(cls, values):
-        """Ensure request_context is provided."""
-        if isinstance(values, dict):
-            # Ensure request_context is provided
-            if not values.get('request_context'):
-                raise ValueError("request_context is required")
-        return values
 
 
 class RaterFeedback(BaseModel):
