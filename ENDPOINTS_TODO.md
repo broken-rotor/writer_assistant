@@ -3,7 +3,7 @@
 
 | Endpoint                            | RqCtx    | Fields        | Works
 | ----------------------------------- | -------- | ------------- | ---------------------------------------- |
-| /character-feedback                 |  Yes     |  No           | Always uses characters[0]                |
+| /character-feedback                 |  Yes     |  No           | Migrated                                 |
 | /editor-review                      |  Yes     |  Yes          | ? using editor prompt?                   |
 | /flesh-out                          |  Yes     |  Yes          | Migrated                                 |
 | /generate-chapter                   |  Yes     |  Yes          | Migrated                                 |
