@@ -28,6 +28,9 @@ class ContextItem:
     token_budget: int
     summarization_strategy: SummarizationStrategy = SummarizationStrategy.LITERAL
 
+    def structured_content(self):
+        return f'<{self.tag}>\n{self.content}\n</{self.tag}>\n' if self.tag else self.content
+
 
 class ContextBuilder:
     def __init__(self, request_context: RequestContext):
@@ -177,7 +180,7 @@ class ContextBuilder:
             summarization_strategy=SummarizationStrategy.ROLLING_WINDOW))
 
     def _getContent(self, e: ContextItem, token_budget: int):
-        content = f'<{e.tag}>\n{e.content}\n</{e.tag}>\n' if e.tag else e.content
+        content = e.structured_content()
         token_count = self._tokenizer.count_tokens(content).token_count
         if token_count <= token_budget:
             return content, token_count
