@@ -96,15 +96,32 @@ class CharacterDetails(BaseModel):
     fears: str = Field(default="", description="Character fears and anxieties")
     relationships: str = Field(default="", description="Relationships with other characters")
     
-    # Story context
-    ## FIXME ##
-    current_state: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Current emotional and physical state"
-    )
+    # Metadata
+    is_hidden: bool = Field(default=False, description="Whether character is hidden from UI")
+    last_modified: datetime = Field(description="When character was last modified")
+
+
+class CharacterState(BaseModel):
+    name: str = Field(description="Character name")
     recent_actions: List[str] = Field(
         default_factory=list,
         description="Recent actions taken by the character"
+    )
+    recent_dialog: List[str] = Field(
+        default_factory=list,
+        description="Recent dialog by the character"
+    )
+    physicalSensations: List[str] = Field(
+        default_factory=list,
+        description="Recent physical sensations experienced by the character"
+    )
+    emotions: List[str] = Field(
+        default_factory=list,
+        description="Recent emotions experienced by the character"
+    )
+    internalMonologue: List[str] = Field(
+        default_factory=list,
+        description="Recent internal monologue by the character, what he thinks"
     )
     goals: List[str] = Field(
         default_factory=list,
@@ -114,10 +131,6 @@ class CharacterDetails(BaseModel):
         default_factory=list,
         description="Important memories affecting current behavior"
     )
-    
-    # Metadata
-    is_hidden: bool = Field(default=False, description="Whether character is hidden from UI")
-    last_modified: datetime = Field(description="When character was last modified")
 
 
 class OutlineItem(BaseModel):
@@ -322,7 +335,12 @@ class RequestContext(BaseModel):
     # === CHARACTERS ===
     characters: List[CharacterDetails] = Field(
         default_factory=list,
-        description="Complete character information and context"
+        description="Complete character foundational information"
+    )
+
+    character_states: List[CharacterState] = Field(
+        default_factory=list,
+        description="Current state of each character"
     )
     
     # === STORY STRUCTURE ===

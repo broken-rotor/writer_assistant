@@ -10,6 +10,7 @@ import logging
 from datetime import datetime, UTC
 
 from app.services.llm_inference import get_llm
+from app.services.context_builder import ContextBuilder
 from app.models.chapter_models import ChapterOutlineRequest, OutlineItem, ChapterOutlineResponse
 # Legacy import removed in B4 - CharacterContext class removed
 # from app.models.generation_models import CharacterContext
@@ -42,7 +43,8 @@ async def generate_chapter_outlines(request: ChapterOutlineRequest):
                 detail="LLM not initialized. Start server with --model-path")
         
         # Prepare the base system prompt
-        base_system_prompt = """You are an expert story structure analyst and chapter outline generator. Your task is to analyze a story outline and create a detailed chapter-by-chapter breakdown.
+        system_prompt = """You are an expert story structure analyst and chapter outline generator.
+Your task is to analyze a story outline and create a detailed chapter-by-chapter breakdown.
 
 Guidelines:
 1. Create 8-15 chapters based on the story outline complexity
@@ -89,51 +91,20 @@ Example format:
 ]
 
 Respond ONLY with the JSON array, no additional text."""
-
-        # Apply custom system prompts if provided
-        system_prompt = base_system_prompt
-        if request.request_context.configuration.system_prompts:
-            if request.request_context.configuration.system_prompts.main_prefix:
-                system_prompt = f"{request.request_context.configuration.system_prompts.main_prefix}\n\n{system_prompt}"
-            if request.request_context.configuration.system_prompts.main_suffix:
-                system_prompt = f"{system_prompt}\n\n{request.request_context.configuration.system_prompts.main_suffix}"
-
-        # Extract character information from RequestContext
-        characters_info = ""
-        if request.request_context.characters:
-            characters_list = []
-            for char_details in request.request_context.characters:
-                char_info = f"- {char_details.name}"
-                if char_details.basic_bio:
-                    char_info += f": {char_details.basic_bio}"
-                # Note: personality and goals fields don't exist in CharacterDetails model
-                characters_list.append(char_info)
-            characters_info = f"""\n<CHARACTERS>\n{chr(10).join(characters_list)}\n</CHARACTERS>"""
-
-        # Extract additional story context from RequestContext
-        story_context_info = ""
-        if request.request_context.context_metadata.story_title:
-            story_context_info += f"\n<STORY TITLE>\n{request.request_context.context_metadata.story_title}\n</STORY TITLE>"
-        if request.request_context.worldbuilding.content:
-            story_context_info += f"\n<WORLDBUILDING>\n{request.request_context.worldbuilding.content}\n<WORLDBUILDING>"
-
-        user_prompt = f"""Please analyze this story outline and create a detailed chapter breakdown:
-
-{story_context_info}{characters_info}
-<STORY OUTLINE>
-{request.request_context.story_outline.content}
-</STORY OUTLINE>
+        agent_prompt = f"""Please analyze the STORY_OUTLINE and create a detailed chapter breakdown:
 
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 
-        # Generate the chapter outline
-        messages = [
-            {"role": "system", "content": system_prompt.strip()},
-            {"role": "user", "content": user_prompt.strip()}
-        ]
+        context_builder = ContextBuilder(request_context=request.request_context)
+        context_builder.add_system_prompt(system_prompt)
+        context_builder.add_worldbuilding()
+        context_builder.add_characters()
+        context_builder.add_story_outline()
+        context_builder.add_agent_instruction(agent_prompt)
         
+        # Generate the chapter outline
         response = llm.chat_completion(
-            messages=messages,
+            messages=context_builder.build_messages(),
             max_tokens=2000,
             temperature=0.7
         )

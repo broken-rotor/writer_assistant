@@ -188,11 +188,34 @@ class CharacterFeedbackRequest(BaseModel):
 
 
 class CharacterFeedback(BaseModel):
-    actions: List[str]
-    dialog: List[str]
-    physicalSensations: List[str]
-    emotions: List[str]
-    internalMonologue: List[str]
+    actions: List[str] = Field(
+        default_factory=list,
+        description="Things the character does, actions taken"
+    )
+    dialog: List[str] = Field(
+        default_factory=list,
+        description="Things the character says"
+    )
+    physicalSensations: List[str] = Field(
+        default_factory=list,
+        description="Things the character physically experiences and reacts"
+    )
+    emotions: List[str] = Field(
+        default_factory=list,
+        description="Emotions experienced by the character, how he feels about the situation"
+    )
+    internalMonologue: List[str] = Field(
+        default_factory=list,
+        description="Internal monologue by the character, what he thinks and reflects about the situation"
+    )
+    goals: List[str] = Field(
+        default_factory=list,
+        description="Character's current goals and objectives"
+    )
+    memories: List[str] = Field(
+        default_factory=list,
+        description="Important memories affecting current behavior"
+    )
 
 
 class CharacterFeedbackResponse(BaseModel):
