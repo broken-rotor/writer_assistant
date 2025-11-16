@@ -17,7 +17,7 @@ from app.models.token_models import (
     TokenValidationResponse,
     ErrorResponse
 )
-from app.services.token_management import TokenCounter
+from app.services.token_counter import TokenCounter
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)

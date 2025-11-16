@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Union, Tuple, Any
 from enum import Enum
 from dataclasses import dataclass
 
-from ...utils.llama_tokenizer import LlamaTokenizer
+from ..utils.llama_tokenizer import LlamaTokenizer
 
 logger = logging.getLogger(__name__)
 

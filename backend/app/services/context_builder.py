@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Set
 
 from app.models.request_context import RequestContext, CharacterDetails, CharacterState
-from app.services.token_management import TokenCounter
+from app.services.token_counter import TokenCounter
 from app.core.config import settings
 
 
