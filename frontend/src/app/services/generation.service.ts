@@ -6,6 +6,7 @@ import { RequestConverterService } from './request-converter.service';
 import { RequestValidatorService } from './request-validator.service';
 import { RequestOptimizerService } from './request-optimizer.service';
 import { PlotOutlineContextService } from './plot-outline-context.service';
+import { transformToRequestContext } from '../utils/context-transformer';
 import {
   Story,
   Character,
@@ -39,7 +40,6 @@ import {
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';
 import { StructuredCharacter } from '../models/context-builder.model';
-import { transformToRequestContext } from '../utils/context-transformer';
 
 @Injectable({
   providedIn: 'root'
@@ -84,24 +84,44 @@ export class GenerationService {
     userRequest: string,
     onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
+    // Determine chapter number by finding the chapter that matches the current text
+    const chapterNumber = this.findChapterNumberByContent(story, currentChapterText);
+    
     const request: ModifyChapterRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix,
-        assistantPrompt: story.general.systemPrompts.assistantPrompt
-      },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      currentChapter: currentChapterText,
-      userRequest: userRequest
+      chapter_number: chapterNumber,
+      userRequest: userRequest,
+      request_context: transformToRequestContext(story)
     };
 
     return this.apiService.modifyChapter(request, onProgress);
+  }
+
+  /**
+   * Find the chapter number by matching the current chapter text with existing chapters
+   */
+  private findChapterNumberByContent(story: Story, currentChapterText: string): number {
+    if (!story.story?.chapters || story.story.chapters.length === 0) {
+      return 1; // Default to chapter 1 if no chapters exist
+    }
+
+    // Try to find exact match first
+    const exactMatch = story.story.chapters.find(ch => ch.content === currentChapterText);
+    if (exactMatch) {
+      return exactMatch.number;
+    }
+
+    // If no exact match, try to find by partial content match (first 500 characters)
+    const textStart = currentChapterText.substring(0, 500);
+    const partialMatch = story.story.chapters.find(ch => 
+      ch.content.substring(0, 500) === textStart
+    );
+    if (partialMatch) {
+      return partialMatch.number;
+    }
+
+    // If still no match, return the next chapter number
+    const maxChapterNumber = Math.max(...story.story.chapters.map(ch => ch.number));
+    return maxChapterNumber + 1;
   }
 
 
@@ -315,21 +335,13 @@ export class GenerationService {
     const defaultPrompt = 'Continue writing this chapter from where it left off, maintaining the same tone, style, and narrative flow.';
     const prompt = continuationPrompt || defaultPrompt;
     
+    // Determine chapter number by finding the chapter that matches the current text
+    const chapterNumber = this.findChapterNumberByContent(story, currentChapterContent);
+    
     const request: ModifyChapterRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix,
-        assistantPrompt: story.general.systemPrompts.assistantPrompt
-      },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      currentChapter: currentChapterContent,
-      userRequest: `${prompt}\n\nCurrent chapter content:\n${currentChapterContent}`
+      chapter_number: chapterNumber,
+      userRequest: `${prompt}\n\nCurrent chapter content:\n${currentChapterContent}`,
+      request_context: transformToRequestContext(story)
     };
 
     return this.apiService.modifyChapter(request, onProgress);
@@ -357,21 +369,13 @@ export class GenerationService {
       'Maintain the overall narrative flow while addressing the feedback points.'
     ].filter(line => line !== undefined).join('\n');
 
+    // Determine chapter number by finding the chapter that matches the current text
+    const chapterNumber = this.findChapterNumberByContent(story, currentChapterContent);
+    
     const request: ModifyChapterRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix,
-        assistantPrompt: story.general.systemPrompts.assistantPrompt
-      },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      currentChapter: currentChapterContent,
-      userRequest: incorporationPrompt
+      chapter_number: chapterNumber,
+      userRequest: incorporationPrompt,
+      request_context: transformToRequestContext(story)
     };
 
     return this.apiService.modifyChapter(request, onProgress);
@@ -416,22 +420,14 @@ export class GenerationService {
         'Maintain the overall narrative flow while addressing the feedback points.'
       ].filter(line => line !== undefined).join('\n');
 
+      // Determine chapter number by finding the chapter that matches the current text
+      const chapterNumber = this.findChapterNumberByContent(story, currentChapterContent);
+      
       // Build request using structured context
       const request: ModifyChapterRequest = {
-        systemPrompts: {
-          mainPrefix: systemPromptsResult.data!.mainPrefix,
-          mainSuffix: systemPromptsResult.data!.mainSuffix,
-          assistantPrompt: systemPromptsResult.data!.assistantPrompt
-        },
-        worldbuilding: worldbuildingResult.data!.content,
-        storySummary: storySummaryResult.data!.summary,
-        previousChapters: chaptersResult.data!.chapters.map(ch => ({
-          number: ch.number,
-          title: ch.title,
-          content: ch.content
-        })),
-        currentChapter: currentChapterContent,
-        userRequest: incorporationPrompt
+        chapter_number: chapterNumber,
+        userRequest: incorporationPrompt,
+        request_context: transformToRequestContext(story)
       };
 
       return this.apiService.modifyChapter(request, onProgress);
@@ -447,21 +443,13 @@ export class GenerationService {
     variationPrompt: string,
     onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
+    // Determine chapter number by finding the chapter that matches the current text
+    const chapterNumber = this.findChapterNumberByContent(story, baseChapterContent);
+    
     const request: ModifyChapterRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix,
-        assistantPrompt: story.general.systemPrompts.assistantPrompt
-      },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      currentChapter: baseChapterContent,
-      userRequest: `Create a variation of this chapter with the following changes: ${variationPrompt}\n\nBase chapter:\n${baseChapterContent}`
+      chapter_number: chapterNumber,
+      userRequest: `Create a variation of this chapter with the following changes: ${variationPrompt}\n\nBase chapter:\n${baseChapterContent}`,
+      request_context: transformToRequestContext(story)
     };
 
     return this.apiService.modifyChapter(request, onProgress);
@@ -475,21 +463,13 @@ export class GenerationService {
     refinementInstructions: string,
     onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
+    // Determine chapter number by finding the chapter that matches the current text
+    const chapterNumber = this.findChapterNumberByContent(story, fullChapterContent);
+    
     const request: ModifyChapterRequest = {
-      systemPrompts: {
-        mainPrefix: story.general.systemPrompts.mainPrefix,
-        mainSuffix: story.general.systemPrompts.mainSuffix,
-        assistantPrompt: story.general.systemPrompts.assistantPrompt
-      },
-      worldbuilding: story.general.worldbuilding,
-      storySummary: story.story.summary,
-      previousChapters: story.story.chapters.map(ch => ({
-        number: ch.number,
-        title: ch.title,
-        content: ch.content
-      })),
-      currentChapter: fullChapterContent,
-      userRequest: `Please refine this specific section of the chapter: "${sectionToRefine}"\n\nRefinement instructions: ${refinementInstructions}\n\nFull chapter context:\n${fullChapterContent}`
+      chapter_number: chapterNumber,
+      userRequest: `Please refine this specific section of the chapter: "${sectionToRefine}"\n\nRefinement instructions: ${refinementInstructions}\n\nFull chapter context:\n${fullChapterContent}`,
+      request_context: transformToRequestContext(story)
     };
 
     return this.apiService.modifyChapter(request, onProgress);
