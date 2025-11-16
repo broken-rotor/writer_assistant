@@ -36,16 +36,22 @@ async def regenerate_bio(request: RegenerateBioRequest):
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character details...', 'progress': 20})}\n\n"
 
-            system_prompt = """You are a skilled writer assistant specializing in character development. Your task is to create a concise, engaging character bio that captures the essence of a character based on their detailed attributes.
+            system_prompt = """You are a skilled writer assistant specializing in character development. Your task is to distill detailed character information into a concise, compelling bio that captures a character's essence.
 
 Create a bio that:
-- Is 2-4 sentences long
-- Captures the character's core personality and key traits
-- Mentions their most important motivations or defining characteristics
-- Flows naturally and reads like a compelling character introduction
-- Avoids listing attributes mechanically
+- **Length:** 2-4 sentences (aim for 3 as the sweet spot)
+- **Content:** Focus on the character's core personality, defining traits, and primary motivation
+- **Style:** Write in an engaging, natural voice - think book jacket or character introduction
+- **Approach:** Weave attributes into flowing prose rather than listing them mechanically
+- **Hook:** Lead with what makes this character distinctive and memorable
 
-Focus on what makes this character unique and interesting."""
+<EXAMPLES>
+Good: "Sarah Chen moves through life with the calculated precision of a chess master, always three steps ahead of everyone around her. But beneath her controlled exterior lies a desperate fear of losing control, born from a childhood she's spent decades trying to forget. Her brilliance has earned her respect; her emotional walls have earned her loneliness."
+
+Avoid: "Sarah is smart and calculating. She is afraid of losing control. She had a difficult childhood and now has trouble connecting with people."
+</EXAMPLES>
+
+Write a bio that makes the reader immediately understand and care about who this character is."""
             agent_instruction = "Based on the character details in CHARACTER_TO_GENERATE, create a concise and engaging bio. Please respond with just the bio text directly."
 
             context_builder = ContextBuilder(request.request_context)

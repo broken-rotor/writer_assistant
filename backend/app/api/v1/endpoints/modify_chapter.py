@@ -26,7 +26,7 @@ async def modify_chapter(request: ModifyChapterRequest):
 
     def key_plot_items(chapter: ChapterDetails) -> str:
         key_plot_items = [f"  - {i}\n" for i in chapter.key_plot_items]
-        return f"Key Plot Items:\n{key_plot_items}" if key_plot_items else ""
+        return f"**Key Plot Items:**\n{key_plot_items}" if key_plot_items else ""
 
     def get_incorporated_feedback(chapter: ChapterDetails) -> str:
         feedback_items = '\n'.join([f"- {i.source}: {i.content}"
@@ -53,15 +53,50 @@ async def modify_chapter(request: ModifyChapterRequest):
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story_summary()
-            context_builder.add_agent_instruction(
-                f"Modify the {chapter.number}th chapter in story according to the feedback provided in USER FEEDBACK, and INCORPORATED FEEDBACK sections.\n"
-                f"Title: {chapter.title}\n" +
-                (f"Plot Point: {chapter.plot_point}\n" if chapter.plot_point else "") +
-                key_plot_items(chapter) +
-            f"<CHAPTER TO MODIFY>\n{chapter.content}\n</CHAPTER TO MODIFY>\n" +
-            f"<USER REQUEST>{request.userRequest}</USER_REQUEST>\n" if request.userRequest else "" +
-            get_incorporated_feedback(chapter) +
-            f"Rewrite the chapter incorporating the requested changes while maintaining consistency with the story.")
+            agent_instruction = f"""
+Revise Chapter {chapter.number} based on the provided feedback and modification requests.
+
+<ORIGINAL_CHAPTER>
+**Title:** {chapter.title}
+{f"**Plot Point:** {chapter.plot_point}" if chapter.plot_point else ""}
+
+{key_plot_items(chapter)}
+
+**Current Chapter Text:**
+{chapter.content}
+</ORIGINAL_CHAPTER>
+
+<MODIFICATION_INSTRUCTIONS>
+{f"**Primary User Request:** {request.userRequest}" if request.userRequest else ""}
+
+{get_incorporated_feedback(chapter)}
+</MODIFICATION_INSTRUCTIONS>
+
+<REVISION_GUIDELINES>
+1. **Priority Order:**
+   - Address explicit user requests first
+   - Incorporate provided feedback where it improves the chapter
+   - Maintain narrative consistency throughout
+
+2. **Preservation:**
+   - Keep elements that work well and don't need changes
+   - Preserve character voices and established continuity
+   - Maintain the chapter's core plot progression
+
+3. **Integration:**
+   - Blend changes naturally into the existing narrative
+   - Ensure modified sections match the chapter's style and tone
+   - Keep pacing and structure coherent
+
+4. **Quality:**
+   - Make improvements beyond just addressing feedback where appropriate
+   - Ensure all changes enhance rather than dilute the story
+   - Maintain vivid, engaging prose throughout
+</REVISION_GUIDELINES>
+
+Rewrite the complete chapter incorporating these revisions while preserving its strengths.
+"""
+            context_builder.add_agent_instruction(agent_instruction)
 
             # Phase 2: Modifying
             yield f"data: {json.dumps({'type': 'status', 'phase': 'modifying', 'message': 'Rewriting chapter with requested changes...', 'progress': 40})}\n\n"

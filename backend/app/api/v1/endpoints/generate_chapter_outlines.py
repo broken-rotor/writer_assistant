@@ -43,23 +43,42 @@ async def generate_chapter_outlines(request: ChapterOutlineRequest):
                 detail="LLM not initialized. Start server with --model-path")
         
         # Prepare the base system prompt
-        system_prompt = """You are an expert story structure analyst and chapter outline generator.
-Your task is to analyze a story outline and create a detailed chapter-by-chapter breakdown.
+        system_prompt = """You are an expert story structure analyst and chapter outline generator with deep knowledge of narrative pacing, plot development, and three-act structure.
 
-Guidelines:
-1. Create 8-15 chapters based on the story outline complexity
-2. Each chapter should have a clear purpose and advance the plot
-3. Maintain proper story pacing and structure
-4. Include key plot points, character development, and conflicts
-5. Each chapter title should be engaging and descriptive
-6. Generate 3-5 specific key plot items for each chapter that advance the story
-7. Each plot item should be a concrete action, event, or revelation
-8. Identify which characters are involved in each chapter
+Your task is to analyze a story outline and create a detailed, well-paced chapter-by-chapter breakdown that transforms the outline into an actionable writing roadmap.
 
+<STRUCTURAL_PRINCIPLES>
+1. **Chapter Count:** Create 8-15 chapters based on story complexity
+   - Simple stories: 8-10 chapters
+   - Moderate complexity: 11-13 chapters
+   - Complex, multi-threaded stories: 14-15 chapters
+
+2. **Story Structure:** Ensure proper pacing across acts
+   - Act 1 (Setup): ~25% of chapters - introduce world, characters, inciting incident
+   - Act 2 (Confrontation): ~50% of chapters - rising action, complications, character development
+   - Act 3 (Resolution): ~25% of chapters - climax, falling action, resolution
+
+3. **Chapter Purpose:** Each chapter must serve clear narrative functions
+   - Advance plot OR develop character OR expand world (ideally multiple)
+   - Create momentum leading to the next chapter
+   - Have its own mini-arc (setup, development, hook/resolution)
+</STRUCTURAL_PRINCIPLES>
+
+<CONTENT_REQUIREMENTS>
+1. **Titles:** Create engaging, evocative titles that hint at chapter content without spoiling
+2. **Descriptions:** Write 2-4 sentence summaries that capture the chapter's narrative arc
+3. **Key Plot Items:** Generate 3-5 specific, concrete story beats per chapter
+   - Each should be an action, event, revelation, or turning point
+   - Should flow in logical sequence
+   - Should create cause-and-effect chains between chapters
+4. **Character Involvement:** Identify which characters appear/are relevant in each chapter
+</CONTENT_REQUIREMENTS>
+
+<OUTPUT_FORMAT>
 IMPORTANT: Format your response as a JSON array where each chapter is an object with these exact fields:
 {
   "title": "Chapter title (without 'Chapter X:' prefix)",
-  "description": "Brief 2-4 sentence summary of the chapter",
+  "description": "Brief 2-4 sentence summary capturing the chapter's arc and purpose",
   "key_plot_items": ["Specific plot item 1", "Specific plot item 2", "Specific plot item 3"],
   "involved_characters": ["character1", "character2", ...]
 }
@@ -68,7 +87,7 @@ Example format:
 [
   {
     "title": "The Mysterious Arrival",
-    "description": "A strange letter arrives that changes the protagonist's life forever.",
+    "description": "A strange letter arrives that changes the protagonist's life forever. As John reads the cryptic message, he realizes his past is not what he believed. The chapter ends with him making the fateful decision to investigate.",
     "key_plot_items": [
       "Protagonist receives an anonymous letter with cryptic instructions",
       "Letter mentions a family secret that was thought buried",
@@ -79,7 +98,7 @@ Example format:
   },
   {
     "title": "Secrets Revealed",
-    "description": "Hidden family truths come to light as the protagonist investigates.",
+    "description": "Hidden family truths come to light as the protagonist investigates. His mother's evasive answers only deepen the mystery, while old photographs reveal shocking connections. The arrival of Detective Smith suggests John isn't the only one interested in his father's past.",
     "key_plot_items": [
       "Protagonist confronts their mother about the letter",
       "Mother reveals the family has been hiding from dangerous people",
@@ -89,8 +108,9 @@ Example format:
     "involved_characters": ["John", "Sarah", "Detective Smith"]
   }
 ]
+</OUTPUT_FORMAT>
 
-Respond ONLY with the JSON array, no additional text."""
+Respond ONLY with the JSON array, no additional text before or after."""
         agent_prompt = f"""Please analyze the STORY_OUTLINE and create a detailed chapter breakdown:
 
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
