@@ -333,20 +333,9 @@ export interface GenerateChapterRequest {
 }
 
 export interface ModifyChapterRequest {
-  systemPrompts: {
-    mainPrefix: string;
-    mainSuffix: string;
-    assistantPrompt: string;
-  };
-  worldbuilding: string;
-  storySummary: string;
-  previousChapters: {
-    number: number;
-    title: string;
-    content: string;
-  }[];
-  currentChapter: string;
+  chapter_number: number;
   userRequest: string;
+  request_context: any; // RequestContext from context-transformer
 }
 
 export interface EditorReviewRequest {

@@ -218,16 +218,46 @@ describe('ApiService', () => {
   describe('modifyChapter', () => {
     it('should create an observable for SSE streaming chapter modification', () => {
       const request = {
-        systemPrompts: {
-          mainPrefix: '',
-          mainSuffix: '',
-          assistantPrompt: 'You are a writer'
-        },
-        worldbuilding: 'A fantasy world',
-        storySummary: 'A story',
-        previousChapters: [],
-        currentChapter: 'Original chapter text',
-        userRequest: 'Make it more exciting'
+        chapter_number: 1,
+        userRequest: 'Make it more exciting',
+        request_context: {
+          configuration: {
+            system_prompts: {
+              main_prefix: '',
+              main_suffix: '',
+              assistant_prompt: 'You are a writer',
+              editor_prompt: ''
+            },
+            raters: [],
+            generation_preferences: {}
+          },
+          worldbuilding: {
+            content: 'A fantasy world',
+            chat_history: [],
+            key_elements: []
+          },
+          characters: [],
+          story_outline: {
+            summary: 'A story',
+            status: 'draft',
+            content: '',
+            outline_items: [],
+            rater_feedback: [],
+            chat_history: []
+          },
+          chapters: [],
+          context_metadata: {
+            story_id: 'test-story',
+            story_title: 'Test Story',
+            version: '1.0',
+            created_at: new Date().toISOString(),
+            total_characters: 0,
+            total_chapters: 0,
+            total_word_count: 0,
+            context_size_estimate: 0,
+            processing_hints: {}
+          }
+        }
       };
 
       const mockResponse = {
@@ -262,16 +292,46 @@ describe('ApiService', () => {
 
     it('should handle progress updates when provided', () => {
       const request = {
-        systemPrompts: {
-          mainPrefix: '',
-          mainSuffix: '',
-          assistantPrompt: 'You are a writer'
-        },
-        worldbuilding: 'A fantasy world',
-        storySummary: 'A story',
-        previousChapters: [],
-        currentChapter: 'Original chapter text',
-        userRequest: 'Make it more exciting'
+        chapter_number: 1,
+        userRequest: 'Make it more exciting',
+        request_context: {
+          configuration: {
+            system_prompts: {
+              main_prefix: '',
+              main_suffix: '',
+              assistant_prompt: 'You are a writer',
+              editor_prompt: ''
+            },
+            raters: [],
+            generation_preferences: {}
+          },
+          worldbuilding: {
+            content: 'A fantasy world',
+            chat_history: [],
+            key_elements: []
+          },
+          characters: [],
+          story_outline: {
+            summary: 'A story',
+            status: 'draft',
+            content: '',
+            outline_items: [],
+            rater_feedback: [],
+            chat_history: []
+          },
+          chapters: [],
+          context_metadata: {
+            story_id: 'test-story',
+            story_title: 'Test Story',
+            version: '1.0',
+            created_at: new Date().toISOString(),
+            total_characters: 0,
+            total_chapters: 0,
+            total_word_count: 0,
+            context_size_estimate: 0,
+            processing_hints: {}
+          }
+        }
       };
 
       const progressCallback = jasmine.createSpy('onProgress');

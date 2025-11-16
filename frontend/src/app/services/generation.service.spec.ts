@@ -428,8 +428,22 @@ describe('GenerationService', () => {
   });
 
   describe('modifyChapter', () => {
-    it('should build request with chapter text and user request', (done) => {
+    it('should build request with chapter number, user request, and request context', (done) => {
       const mockStory = createMockStory();
+      // Add a chapter to the story so the method can find it
+      mockStory.story.chapters = [{
+        id: 'chapter-1',
+        number: 1,
+        title: 'Chapter 1',
+        content: 'Original text',
+        incorporatedFeedback: [],
+        metadata: {
+          created: new Date(),
+          lastModified: new Date(),
+          wordCount: 20
+        }
+      }];
+      
       const mockResponse = {
         modifiedChapter: 'Modified chapter text',
         modifiedChapterText: 'Modified chapter text',
@@ -443,8 +457,9 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.modifyChapter).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            currentChapter: 'Original text',
-            userRequest: 'Make it exciting'
+            chapter_number: 1,
+            userRequest: 'Make it exciting',
+            request_context: jasmine.any(Object)
           }),
           undefined
         );
