@@ -39,23 +39,13 @@ class TokenCounter:
         if not content:
             return 0
 
-        if not use_tokenizer or not self.tokenizer.is_ready():
+        if not self.tokenizer.is_ready():
             raise ValueError("Tokenizer not available")
 
         return self.tokenizer.count_tokens(content)
 
     def count_tokens_batch(self, contents: List[str]) -> List[int]:
-        if content_types is None:
-            content_types = [None] * len(contents)
-        elif len(content_types) != len(contents):
-            raise ValueError("content_types length must match contents length")
-
-        results = []
-        for content, content_type in zip(contents, content_types):
-            result = self.count_tokens(content, content_type, strategy)
-            results.append(result)
-
-        return results
+        results = [self.count_tokens(content) for content in contents]
 
     def validate_token_budget(self, contents: List[str], budget: int) -> Dict[str, Any]:
         """
@@ -64,13 +54,13 @@ class TokenCounter:
         Args:
             contents: List of text contents to validate
             budget: Maximum token budget
-            strategy: Counting strategy to use
+            strategy: Counting strategy to use (for compatibility, currently ignored)
 
         Returns:
             Dictionary with validation results
         """
-        results = self.count_tokens_batch(contents, strategy=strategy)
-        total_tokens = sum(r.token_count for r in results)
+        results = self.count_tokens_batch(contents)
+        total_tokens = sum(results)
 
         fits_budget = total_tokens <= budget
         utilization = total_tokens / budget if budget > 0 else float('inf')
@@ -82,6 +72,5 @@ class TokenCounter:
             "utilization": utilization,
             "remaining_tokens": max(0, budget - total_tokens),
             "overflow_tokens": max(0, total_tokens - budget),
-            "content_count": len(contents),
-            "strategy_used": strategy.value
+            "content_count": len(contents)
         }

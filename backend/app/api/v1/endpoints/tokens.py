@@ -109,58 +109,20 @@ async def count_tokens(
         content_types = [item.content_type for item in request.texts]
 
         # Process batch token counting
-        results = token_counter.count_tokens_batch(
-            contents=texts,
-            content_types=content_types,
-            strategy=request.strategy
-        )
+        results = token_counter.count_tokens_batch(texts)
 
         # Build response items
         response_items = []
         for i, result in enumerate(results):
             item = TokenCountResultItem(
-                text=result.content,
-                token_count=result.token_count,
-                content_type=result.content_type,
-                strategy=result.strategy,
-                overhead_applied=result.overhead_applied,
-                metadata=result.metadata if request.include_metadata else None
+                text=texts[i],
+                token_count=result
             )
             response_items.append(item)
 
-        # Calculate summary statistics
-        total_tokens = sum(r.token_count for r in results)
-        total_chars = sum(len(r.content) for r in results)
-
-        summary = {
-            "total_texts": len(results),
-            "total_tokens": total_tokens,
-            "total_characters": total_chars,
-            "avg_tokens_per_text": total_tokens / len(results) if results else 0,
-            "avg_chars_per_text": total_chars / len(results) if results else 0,
-            "avg_tokens_per_char": total_tokens / total_chars if total_chars > 0 else 0,
-            "strategy_used": request.strategy.value,
-            "tokenizer_ready": token_counter.tokenizer.is_ready()
-        }
-
-        # Add content type distribution if metadata requested
-        if request.include_metadata:
-            type_counts = {}
-            for result in results:
-                content_type = result.content_type
-                type_counts[content_type.value] = type_counts.get(content_type.value, 0) + 1
-
-            summary["content_type_distribution"] = {
-                content_type: count / len(results)
-                for content_type, count in type_counts.items()
-            }
-
-        logger.info(f"Successfully processed {len(results)} texts, total tokens: {total_tokens}")
-
         return TokenCountResponse(
             success=True,
-            results=response_items,
-            summary=summary
+            results=response_items
         )
 
     except ValueError as e:
@@ -234,8 +196,7 @@ async def validate_token_budget(
         # Validate token budget using the service
         validation_result = token_counter.validate_token_budget(
             contents=request.texts,
-            budget=request.budget,
-            strategy=request.strategy
+            budget=request.budget
         )
 
         logger.info(f"Validation result: {validation_result['fits_budget']}, "
@@ -248,8 +209,7 @@ async def validate_token_budget(
             budget=validation_result["budget"],
             utilization=validation_result["utilization"],
             remaining_tokens=validation_result["remaining_tokens"],
-            overflow_tokens=validation_result["overflow_tokens"],
-            strategy_used=request.strategy
+            overflow_tokens=validation_result["overflow_tokens"]
         )
 
     except ValueError as e:
@@ -260,130 +220,6 @@ async def validate_token_budget(
         )
     except Exception as e:
         logger.error(f"Unexpected error in budget validation: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"success": False, "error": "Internal server error"}
-        )
-
-
-@router.get(
-    "/strategies",
-    response_model=Dict[str, Any],
-    summary="Get available counting strategies and token limits",
-    description="""
-    Get information about available token counting strategies, content types, and system token limits.
-
-    Returns:
-    - Available counting strategies with descriptions
-    - Available content types with descriptions
-    - System token limits and context window sizes
-    - Default configurations and overhead multipliers
-    """,
-    tags=["tokens"]
-)
-async def get_strategies() -> Dict[str, Any]:
-    """
-    Get available counting strategies, content types, and system token limits.
-
-    Returns:
-        Dictionary with available strategies, content types, and token limits
-    """
-    try:
-        strategies = {
-            "exact": {
-                "description": "Precise token count using tokenizer",
-                "overhead": 1.0,
-                "use_case": "When you need exact token counts"
-            },
-            "estimated": {
-                "description": "Fast estimation with small overhead",
-                "overhead": 1.1,
-                "use_case": "For quick estimates with slight safety margin"
-            },
-            "conservative": {
-                "description": "Higher overhead for safety",
-                "overhead": 1.25,
-                "use_case": "When you want to ensure you don't exceed limits"
-            },
-            "optimistic": {
-                "description": "Lower overhead for efficiency",
-                "overhead": 0.95,
-                "use_case": "When you want to maximize content within limits"
-            }
-        }
-
-        content_types = {
-            "narrative": {
-                "description": "Story narrative content",
-                "multiplier": 1.0
-            },
-            "dialogue": {
-                "description": "Character dialogue",
-                "multiplier": 1.05
-            },
-            "system_prompt": {
-                "description": "System instructions and prompts",
-                "multiplier": 1.15
-            },
-            "character_description": {
-                "description": "Character descriptions",
-                "multiplier": 1.0
-            },
-            "scene_description": {
-                "description": "Scene and setting descriptions",
-                "multiplier": 1.0
-            },
-            "internal_monologue": {
-                "description": "Character thoughts",
-                "multiplier": 1.0
-            },
-            "metadata": {
-                "description": "Structured metadata",
-                "multiplier": 1.2
-            },
-            "unknown": {
-                "description": "Auto-detected content type",
-                "multiplier": 1.1
-            }
-        }
-
-        # Expose system token limits for frontend use
-        token_limits = {
-            "llm_context_window": settings.LLM_N_CTX,
-            "llm_max_generation": settings.LLM_MAX_TOKENS,
-            "context_management": {
-                "max_context_tokens": settings.CONTEXT_MAX_TOKENS,
-                "buffer_tokens": settings.CONTEXT_BUFFER_TOKENS,
-                "layer_limits": {
-                    "system_instructions": settings.CONTEXT_LAYER_A_TOKENS,
-                    "immediate_instructions": settings.CONTEXT_LAYER_B_TOKENS,
-                    "recent_story": settings.CONTEXT_LAYER_C_TOKENS,
-                    "character_scene_data": settings.CONTEXT_LAYER_D_TOKENS,
-                    "plot_world_summary": settings.CONTEXT_LAYER_E_TOKENS
-                }
-            },
-            "recommended_limits": {
-                "system_prompt_prefix": settings.CONTEXT_LAYER_A_TOKENS // 4,  # ~500 tokens
-                "system_prompt_suffix": settings.CONTEXT_LAYER_A_TOKENS // 4,  # ~500 tokens
-                "writing_assistant_prompt": settings.CONTEXT_LAYER_A_TOKENS // 2,  # ~1000 tokens
-                "writing_editor_prompt": settings.CONTEXT_LAYER_A_TOKENS // 2   # ~1000 tokens
-            }
-        }
-
-        return {
-            "success": True,
-            "strategies": strategies,
-            "content_types": content_types,
-            "token_limits": token_limits,
-            "default_strategy": "exact",
-            "batch_limits": {
-                "max_texts_per_request": 50,
-                "max_text_size_bytes": 100000
-            }
-        }
-
-    except Exception as e:
-        logger.error(f"Error getting strategies: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"success": False, "error": "Internal server error"}

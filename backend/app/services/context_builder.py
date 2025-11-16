@@ -206,7 +206,7 @@ class ContextBuilder:
 
     def _getContent(self, e: ContextItem, token_budget: int):
         content = e.structured_content()
-        token_count = self._tokenizer.count_tokens(content).token_count
+        token_count = self._tokenizer.count_tokens(content)
         if token_count <= token_budget:
             return content, token_count
         ## FIXME ##
