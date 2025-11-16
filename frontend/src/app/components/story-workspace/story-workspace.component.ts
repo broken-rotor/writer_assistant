@@ -1025,6 +1025,20 @@ Provide actionable insights and creative suggestions to enhance this plot point.
   }
 
   /**
+   * Save chapter changes from the chapter editor
+   */
+  onSaveChapter(updatedChapter: Chapter): void {
+    if (!this.story) return;
+
+    // Find the chapter in the story's chapters array and update it
+    const chapterIndex = this.story.story.chapters.findIndex(ch => ch.id === updatedChapter.id);
+    if (chapterIndex !== -1) {
+      this.story.story.chapters[chapterIndex] = updatedChapter;
+      this.storyService.saveStory(this.story);
+    }
+  }
+
+  /**
    * Return from chapter editor to main workspace
    */
   onBackFromChapterEditor(): void {

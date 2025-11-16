@@ -7,7 +7,8 @@ import {
   StructuredRaterFeedbackRequest,
   StructuredRaterFeedbackResponse,
   StructuredGenerateChapterResponse,
-  StructuredEditorReviewRequest
+  StructuredEditorReviewRequest,
+  StructuredEditorReviewResponse
 } from '../models/structured-request.model';
 import { CharacterFeedbackRequest } from './api.service';
 import { transformToRequestContext } from '../utils/context-transformer';
@@ -156,9 +157,9 @@ describe('ApiService', () => {
   });
 
   describe('generateChapter', () => {
-    it('should send POST request to generate-chapter endpoint', () => {
+    it('should create an observable for SSE streaming chapter generation', () => {
       const request: BackendGenerateChapterRequest = {
-        plotPoint: 'The hero enters the dungeon',
+        chapter_number: 1,
         request_context: {
           configuration: {
             system_prompts: {
@@ -196,22 +197,28 @@ describe('ApiService', () => {
             context_size_estimate: 0,
             processing_hints: {}
           }
-        },
-        context_processing_config: {}
+        }
       };
 
       const mockResponse: StructuredGenerateChapterResponse = {
         chapterText: 'The hero stepped into the dark dungeon...'
       };
 
+      // Mock the SSE streaming service to avoid real fetch calls
+      const mockSSEService = jasmine.createSpyObj('SSEStreamingService', ['createSSEObservable']);
+      mockSSEService.createSSEObservable.and.returnValue(of(mockResponse));
+
+      // Replace the service's SSE streaming service with our mock
+      (service as any).sseStreamingService = mockSSEService;
+
       service.generateChapter(request).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/generate-chapter`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(request);
-      req.flush(mockResponse);
+      expect(mockSSEService.createSSEObservable).toHaveBeenCalledWith(
+        `${baseUrl}/generate-chapter`,
+        request
+      );
     });
   });
 
@@ -378,12 +385,33 @@ describe('ApiService', () => {
         chapterToReview: 'Chapter text to review'
       };
 
-      const observable = service.requestEditorReview(request);
-      expect(observable).toBeDefined();
-      expect(observable.subscribe).toBeDefined();
-      
-      // Note: Full SSE testing would require mocking fetch API
-      // This test verifies the method returns an Observable
+      const mockResponse: StructuredEditorReviewResponse = {
+        overallAssessment: 'Good chapter',
+        suggestions: [
+          {
+            issue: 'Weak opening',
+            suggestion: 'Start with action',
+            priority: 'medium',
+            selected: false
+          }
+        ]
+      };
+
+      // Mock the SSE streaming service to avoid real fetch calls
+      const mockSSEService = jasmine.createSpyObj('SSEStreamingService', ['createSSEObservable']);
+      mockSSEService.createSSEObservable.and.returnValue(of(mockResponse));
+
+      // Replace the service's SSE streaming service with our mock
+      (service as any).sseStreamingService = mockSSEService;
+
+      service.requestEditorReview(request).subscribe(response => {
+        expect(response).toEqual(mockResponse);
+      });
+
+      expect(mockSSEService.createSSEObservable).toHaveBeenCalledWith(
+        `${baseUrl}/editor-review`,
+        request
+      );
     });
   });
 

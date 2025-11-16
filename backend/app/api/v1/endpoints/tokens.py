@@ -18,7 +18,6 @@ from app.models.token_models import (
     ErrorResponse
 )
 from app.services.token_counter import TokenCounter
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ router = APIRouter()
 
 def get_token_counter() -> TokenCounter:
     """Dependency to get TokenCounter instance."""
-    return TokenCounter(model_path=settings.MODEL_PATH)
+    return TokenCounter()
 
 
 @router.post(
@@ -69,16 +68,12 @@ def get_token_counter() -> TokenCounter:
     {
         "texts": [
             {
-                "text": "You are a helpful writing assistant.",
-                "content_type": "system_prompt"
+                "text": "You are a helpful writing assistant."
             },
             {
-                "text": "Once upon a time, in a distant kingdom...",
-                "content_type": "narrative"
+                "text": "Once upon a time, in a distant kingdom..."
             }
-        ],
-        "strategy": "exact",
-        "include_metadata": true
+        ]
     }
     ```
     """,
@@ -106,7 +101,6 @@ async def count_tokens(
 
         # Prepare inputs for batch processing
         texts = [item.text for item in request.texts]
-        content_types = [item.content_type for item in request.texts]
 
         # Process batch token counting
         results = token_counter.count_tokens_batch(texts)
@@ -126,13 +120,13 @@ async def count_tokens(
         )
 
     except ValueError as e:
-        logger.error(f"Validation error in token counting: {e}")
+        logger.error(f"Validation error in token counting", e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"success": False, "error": str(e)}
         )
     except Exception as e:
-        logger.error(f"Unexpected error in token counting: {e}")
+        logger.error(f"Unexpected error in token counting", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"success": False, "error": "Internal server error"}
@@ -213,13 +207,13 @@ async def validate_token_budget(
         )
 
     except ValueError as e:
-        logger.error(f"Validation error in budget validation: {e}")
+        logger.error(f"Validation error in budget validation", e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"success": False, "error": str(e)}
         )
     except Exception as e:
-        logger.error(f"Unexpected error in budget validation: {e}")
+        logger.error(f"Unexpected error in budget validation", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"success": False, "error": "Internal server error"}

@@ -22,18 +22,17 @@ class TokenCounter:
     storytelling system, with support for different content types and counting strategies.
     """
 
-    def __init__(self, tokenizer: Optional[LlamaTokenizer] = None, model_path: Optional[str] = None):
+    def __init__(self, tokenizer: Optional[LlamaTokenizer] = None):
         """
         Initialize the TokenCounter.
 
         Args:
             tokenizer: LlamaTokenizer instance. If None, will create or get singleton.
-            model_path: Path to model file for tokenizer initialization.
         """
         if tokenizer is not None:
             self.tokenizer = tokenizer
         else:
-            self.tokenizer = LlamaTokenizer.get_instance(model_path)
+            self.tokenizer = LlamaTokenizer.get_instance()
 
     def count_tokens(self, content: str) -> int:
         if not content:
@@ -45,7 +44,7 @@ class TokenCounter:
         return self.tokenizer.count_tokens(content)
 
     def count_tokens_batch(self, contents: List[str]) -> List[int]:
-        results = [self.count_tokens(content) for content in contents]
+        return [self.count_tokens(content) for content in contents]
 
     def validate_token_budget(self, contents: List[str], budget: int) -> Dict[str, Any]:
         """
