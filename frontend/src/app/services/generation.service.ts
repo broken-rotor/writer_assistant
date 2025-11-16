@@ -33,7 +33,6 @@ import {
   BackendGenerateChapterRequest
 } from '../models/story.model';
 import {
-  StructuredCharacterFeedbackRequest,
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackResponse,
   StructuredGenerateChapterResponse,
