@@ -156,9 +156,9 @@ describe('ApiService', () => {
   });
 
   describe('generateChapter', () => {
-    it('should send POST request to generate-chapter endpoint', () => {
+    it('should create an observable for SSE streaming chapter generation', () => {
       const request: BackendGenerateChapterRequest = {
-        plotPoint: 'The hero enters the dungeon',
+        chapter_number: 1,
         request_context: {
           configuration: {
             system_prompts: {
@@ -196,22 +196,18 @@ describe('ApiService', () => {
             context_size_estimate: 0,
             processing_hints: {}
           }
-        },
-        context_processing_config: {}
+        }
       };
 
       const mockResponse: StructuredGenerateChapterResponse = {
         chapterText: 'The hero stepped into the dark dungeon...'
       };
 
+      // Note: This now uses SSE streaming service, not direct HTTP POST
+      // The actual SSE behavior should be tested in sse-streaming.service.spec.ts
       service.generateChapter(request).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
-
-      const req = httpMock.expectOne(`${baseUrl}/generate-chapter`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(request);
-      req.flush(mockResponse);
     });
   });
 

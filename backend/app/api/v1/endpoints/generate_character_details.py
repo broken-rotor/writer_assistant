@@ -48,10 +48,11 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
 
 <CHARACTER_DEVELOPMENT_PRINCIPLES>
 1. **Consistency First:** Build on existing character information - expand and detail, don't contradict
-2. **Depth Over Breadth:** Create a few rich, specific details rather than many shallow ones
-3. **Internal Logic:** Ensure all aspects of the character fit together coherently
-4. **Story Integration:** Consider how this character fits into the world and story context
-5. **Authenticity:** Create a believable, three-dimensional person with strengths and flaws
+2. **Key Elements:** Ensure key elements in the bio are reflected in the detailed descriptions
+3. **Depth Over Breadth:** Create a few rich, specific details rather than many shallow ones
+4. **Internal Logic:** Ensure all aspects of the character fit together coherently
+5. **Story Integration:** Consider how this character fits into the world and story context
+6. **Authenticity:** Create a believable, three-dimensional person with strengths and flaws
 </CHARACTER_DEVELOPMENT_PRINCIPLES>
 
 <FIELD_GUIDANCE>
@@ -70,7 +71,7 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
 </CONTEXT_AWARENESS>
 
 <OUTPUT_FORMAT>
-Respond in JSON format with these exact fields:
+Respond ONLY in JSON format with these exact fields (and no extra escaping):
 {{
   "name": "character name",
   "sex": "Male/Female/Other",

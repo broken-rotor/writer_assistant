@@ -61,12 +61,12 @@ export class GenerationService {
    * Generate chapter using ContextBuilderService
    * This is the new structured approach that replaces manual context building
    */
-  generateChapter(story: Story, plotPoint: string, incorporatedFeedback: FeedbackItem[] = []): Observable<GenerateChapterResponse> {
+  generateChapter(story: Story, chapterNumber: number, incorporatedFeedback: FeedbackItem[] = []): Observable<GenerateChapterResponse> {
     try {
       // Convert to backend-compatible format using the same approach as generateChapterFromOutline
       const backendRequest = this.convertToBackendGenerateChapterRequestGeneral(
-        story, 
-        plotPoint, 
+        story,
+        chapterNumber,
         incorporatedFeedback
       );
 
@@ -266,35 +266,20 @@ export class GenerationService {
   }
 
   /**
-   * Convert story and plot point to backend-compatible request format for general chapter generation
+   * Convert story and chapter number to backend-compatible request format for general chapter generation
    */
   private convertToBackendGenerateChapterRequestGeneral(
     story: Story,
-    plotPoint: string,
+    chapterNumber: number,
     _incorporatedFeedback: FeedbackItem[] = []
   ): BackendGenerateChapterRequest {
     // Use the new RequestContext transformation
     const requestContext = transformToRequestContext(story);
 
-    // Create context processing config
-    const contextProcessingConfig = {
-      story_context: {
-        title: story.general.title,
-        worldbuilding: story.general.worldbuilding,
-        summary: story.story.summary,
-        previous_chapters: story.story.chapters.map(ch => ({
-          number: ch.number,
-          title: ch.title,
-          content: ch.content
-        }))
-      }
-    };
-
     // Create backend-compatible request
     return {
-      plotPoint: plotPoint,
-      request_context: requestContext,
-      context_processing_config: contextProcessingConfig
+      chapter_number: chapterNumber,
+      request_context: requestContext
     };
   }
 
@@ -802,15 +787,15 @@ ${story.plotOutline.content}`;
    */
   generateChapterStructuredNew(
     story: Story,
-    plotPoint: string,
+    chapterNumber: number,
     incorporatedFeedback: FeedbackItem[] = [],
     _options: { validate?: boolean; optimize?: boolean } = {}
   ): Observable<StructuredGenerateChapterResponse> {
     try {
       // Convert to backend-compatible format using the same approach as generateChapter
       const backendRequest = this.convertToBackendGenerateChapterRequestGeneral(
-        story, 
-        plotPoint, 
+        story,
+        chapterNumber,
         incorporatedFeedback
       );
 

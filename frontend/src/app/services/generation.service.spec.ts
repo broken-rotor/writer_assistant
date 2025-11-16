@@ -224,7 +224,7 @@ describe('GenerationService', () => {
   describe('generateChapter', () => {
     it('should build structured request and call API', (done) => {
       const mockStory = createMockStory();
-      const plotPoint = 'The hero enters the dungeon';
+      const chapterNumber = 1;
 
       const mockResponse: StructuredGenerateChapterResponse = {
         chapterText: 'The hero stepped into the dark dungeon...'
@@ -283,11 +283,11 @@ describe('GenerationService', () => {
 
       apiServiceSpy.generateChapter.and.returnValue(of(mockResponse));
 
-      service.generateChapter(mockStory, plotPoint).subscribe(response => {
+      service.generateChapter(mockStory, chapterNumber).subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.generateChapter).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotPoint: 'The hero enters the dungeon',
+            chapter_number: 1,
             request_context: jasmine.any(Object)
           })
         );
@@ -410,9 +410,9 @@ describe('GenerationService', () => {
       });
 
       apiServiceSpy.generateChapter.and.returnValue(of(mockResponse));
-      const plotPoint = "Test plot point";
+      const chapterNumber = 1;
 
-      service.generateChapter(mockStory, plotPoint).subscribe(() => {
+      service.generateChapter(mockStory, chapterNumber).subscribe(() => {
         const callArgs = apiServiceSpy.generateChapter.calls.mostRecent().args[0];
         expect(callArgs.request_context).toBeDefined();
         done();

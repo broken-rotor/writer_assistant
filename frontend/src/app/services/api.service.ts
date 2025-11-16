@@ -363,9 +363,12 @@ export class ApiService {
     });
   }
 
-  // Chapter Generation
+  // Chapter Generation (SSE Streaming)
   generateChapter(request: BackendGenerateChapterRequest): Observable<StructuredGenerateChapterResponse> {
-    return this.http.post<StructuredGenerateChapterResponse>(`${this.baseUrl}/generate-chapter`, request);
+    return this.sseStreamingService.createSSEObservable<StructuredGenerateChapterResponse>(
+      `${this.baseUrl}/generate-chapter`,
+      request
+    );
   }
 
   // Editor Review (Legacy)

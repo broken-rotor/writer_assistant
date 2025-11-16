@@ -515,6 +515,7 @@
     [chapter]="currentEditingChapter"
     [story]="story"
     (backToList)="onBackFromChapterEditor()"
+    (saveChapter)="onSaveChapter($event)"
     class="chapter-editor-modal">
   </app-chapter-editor>
 </div>

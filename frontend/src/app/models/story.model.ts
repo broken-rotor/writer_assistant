@@ -384,9 +384,8 @@ export interface BackendEditorReviewResponse {
 }
 
 export interface BackendGenerateChapterRequest {
-  plotPoint: string;
+  chapter_number: number;
   request_context: RequestContext;
-  context_processing_config?: Record<string, any>;
 }
 
 export enum FleshOutType {

@@ -36,8 +36,7 @@ def mock_tokenizer():
     class MockLlamaTokenizer:
         """Mock tokenizer that uses simple character-based token estimation"""
 
-        def __init__(self, model_path=None, **kwargs):
-            self.model_path = model_path
+        def __init__(self):
             self._ready = True
 
         def encode(self, text: str) -> List[int]:
@@ -63,11 +62,6 @@ def mock_tokenizer():
             """Count tokens for multiple texts"""
             return [self.count_tokens(text) for text in texts]
 
-        def estimate_tokens(self, text: str, overhead_factor: float = 1.1) -> int:
-            """Estimate with overhead"""
-            base_count = self.count_tokens(text)
-            return int(base_count * overhead_factor)
-
         def truncate_to_tokens(self, text: str, max_tokens: int) -> str:
             """Truncate text to max tokens"""
             if not text:
@@ -83,18 +77,10 @@ def mock_tokenizer():
             """Check if tokenizer is ready"""
             return self._ready
 
-        def get_model_info(self):
-            """Get model info"""
-            return {
-                "model_path": self.model_path,
-                "model_loaded": True,
-                "llama_cpp_available": True
-            }
-
         @classmethod
-        def get_instance(cls, model_path=None, **kwargs):
+        def get_instance(cls):
             """Get singleton instance"""
-            return cls(model_path, **kwargs)
+            return cls()
 
     # Patch LlamaTokenizer class
     with patch('app.utils.llama_tokenizer.LlamaTokenizer', MockLlamaTokenizer):

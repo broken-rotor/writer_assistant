@@ -4,7 +4,6 @@ from typing import Dict, List, Optional, Set
 
 from app.models.request_context import RequestContext, CharacterDetails, CharacterState
 from app.services.token_counter import TokenCounter
-from app.core.config import settings
 
 
 class ContextRole(str, Enum):
@@ -36,7 +35,7 @@ class ContextBuilder:
     def __init__(self, request_context: RequestContext):
         self._request_context: RequestContext = request_context
         self._elements: List[ContextItem] = []
-        self._tokenizer: TokenCounter = TokenCounter(model_path=settings.MODEL_PATH)
+        self._tokenizer: TokenCounter = TokenCounter()
 
     def build_messages(self) -> List[Dict[str, str]]:
         chat = []
