@@ -31,9 +31,61 @@ async def flesh_out(request: FleshOutRequest):
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
     agent_instructions: Dict[FleshOutType, str] = {
-        FleshOutType.WORLDBUILDING: "Expand the following text which is the world building of the story. Add relevant details while maintaining narrative consistency",
-        FleshOutType.CHAPTER: "Expand the following text which is a chapter of the story. Add relevant details while maintaining narrative consistency"
+        FleshOutType.WORLDBUILDING: """Expand and enrich the provided worldbuilding text with additional depth and detail.
+
+<EXPANSION_APPROACH>
+- Add concrete, specific details that make the world feel more real and lived-in
+- Include sensory descriptions (sights, sounds, smells, textures, atmosphere)
+- Develop cultural, historical, or social context where appropriate
+- Introduce relevant world rules, customs, or unique elements
+- Maintain consistency with established facts and tone
+</EXPANSION_APPROACH>
+
+<WHAT_TO_ADD>
+- Vivid descriptive details that create mental imagery
+- Contextual information that enriches understanding
+- Logical extensions of existing concepts
+- Interesting specifics that add flavor without overwhelming
+</WHAT_TO_ADD>
+
+<WHAT_TO_AVOID>
+- Don't contradict existing information
+- Don't add irrelevant tangents
+- Don't over-explain obvious points
+- Don't change the fundamental nature of what's described
+</WHAT_TO_AVOID>
+
+Aim to roughly double the length while maintaining quality and relevance. Focus on depth over breadth.""",
+
+        FleshOutType.CHAPTER: """Expand the provided chapter text with additional narrative depth, detail, and richness.
+
+<EXPANSION_APPROACH>
+- Develop scenes with more vivid description and sensory detail
+- Expand dialogue with more natural conversation and character voice
+- Add internal character thoughts and emotional reactions
+- Include setting details that establish atmosphere and mood
+- Develop action sequences with clearer choreography and pacing
+</EXPANSION_APPROACH>
+
+<WHAT_TO_ADD>
+- Sensory details that immerse the reader
+- Character body language, expressions, and small actions
+- Environmental details that set the scene
+- Subtext in dialogue and character interactions
+- Transitional moments between major beats
+</WHAT_TO_ADD>
+
+<WHAT_TO_AVOID>
+- Don't add new plot points or major story changes
+- Don't alter character motivations or behaviors
+- Don't introduce new characters without cause
+- Don't slow pacing with irrelevant details
+- Don't change the chapter's fundamental arc
+</WHAT_TO_AVOID>
+
+Aim to expand by 50-100% while preserving the original's core narrative and maintaining consistent quality."""
     }
+
     async def generate_with_updates():
         try:
             # Phase 1: Context Processing

@@ -35,8 +35,17 @@ def mock_llm():
 
     # Mock generate method with intelligent responses
     def generate_side_effect(prompt, **kwargs):
+        # Flesh out (check early to avoid false matches with other patterns)
+        if "text to expand:" in prompt.lower():
+            text_to_expand = prompt.split("Text to expand:")[-1].strip() if "Text to expand:" in prompt else "the situation"
+            return f"""{text_to_expand}
+
+The atmosphere was thick with tension as the moment unfolded. Every sensory detail heightened the experience - the distant sound of traffic, the smell of rain on pavement, the cool metal of the detective's badge against her chest.
+
+What had seemed simple moments ago now revealed layers of complexity. The characters involved each brought their own perspectives, their own histories that colored how they perceived and reacted to events."""
+
         # Character feedback - return JSON
-        if "embodying" in prompt.lower() or "character" in prompt.lower() and "actions" in prompt:
+        elif "embodying" in prompt.lower() or ("character" in prompt.lower() and "actions" in prompt and "dialog" in prompt):
             return json.dumps({
                 "actions": ["Takes a deep breath", "Looks around carefully", "Steps forward"],
                 "dialog": ["This changes everything", "I need to think", "What now?"],
@@ -104,36 +113,31 @@ def mock_llm():
                 }
             ])
 
-        # Flesh out
-        elif "expand" in prompt.lower() or "flesh out" in prompt.lower():
-            text_to_expand = prompt.split("Text to expand:")[-1].strip() if "Text to expand:" in prompt else "the situation"
-            return f"""{text_to_expand}
+        # Chapter modification (check before general chapter/flesh out)
+        elif "<ORIGINAL_CHAPTER>" in prompt and "<MODIFICATION_INSTRUCTIONS>" in prompt:
+            # Extract the current chapter text from the new prompt format
+            try:
+                start_marker = "**Current Chapter Text:**"
+                end_marker = "</ORIGINAL_CHAPTER>"
 
-The atmosphere was thick with tension as the moment unfolded. Every sensory detail heightened the experience - the distant sound of traffic, the smell of rain on pavement, the cool metal of the detective's badge against her chest.
+                if start_marker in prompt and end_marker in prompt:
+                    start_idx = prompt.find(start_marker) + len(start_marker)
+                    end_idx = prompt.find(end_marker)
+                    original_chapter = prompt[start_idx:end_idx].strip()
+                    # Return the original chapter with some modifications
+                    return f"{original_chapter}\n\n[Chapter has been revised based on the provided feedback and modification requests]"
+            except:
+                pass
 
-What had seemed simple moments ago now revealed layers of complexity. The characters involved each brought their own perspectives, their own histories that colored how they perceived and reacted to events."""
+            # Fallback to default chapter
+            return """The rain fell hard on the city streets as Detective Chen examined the scene. Every detail mattered now.
 
-        # Chapter generation or modification
+She knelt beside the evidence, her trained eye catching what others had missed. The implications were staggering - this case was about to break wide open.
+
+"We need to move fast," she said, her voice steady despite the adrenaline. The pieces were finally coming together, but time was running out."""
+
+        # Chapter generation
         elif "chapter" in prompt.lower() or "write" in prompt.lower():
-            # Check if this is a modification request (contains "Current chapter:")
-            if "Current chapter:" in prompt and "modification request:" in prompt.lower():
-                # Extract the current chapter text
-                lines = prompt.split('\n')
-                current_chapter_start = -1
-                current_chapter_end = -1
-                
-                for i, line in enumerate(lines):
-                    if "Current chapter:" in line:
-                        current_chapter_start = i + 1
-                    elif current_chapter_start != -1 and ("User's modification request:" in line or "modification request:" in line.lower()):
-                        current_chapter_end = i
-                        break
-                
-                if current_chapter_start != -1 and current_chapter_end != -1:
-                    original_chapter = '\n'.join(lines[current_chapter_start:current_chapter_end]).strip()
-                    # Return the original chapter with some modifications to simulate LLM processing
-                    return f"{original_chapter}\n\n[Modified based on user request]"
-                
             # Default chapter generation
             return """The rain fell hard on the city streets as Detective Chen examined the scene. Every detail mattered now.
 

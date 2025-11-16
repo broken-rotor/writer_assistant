@@ -435,14 +435,26 @@ class RAGService:
         Returns:
             Formatted prompt string
         """
-        prompt = f"""You are a helpful assistant that answers questions about stories based on provided context. Use the context below to answer the question. If the context doesn't contain enough information to answer the question, say so clearly.
+        prompt = f"""You are a knowledgeable story analyst with access to archived story content. Your role is to answer questions accurately based on the provided context excerpts.
 
-Context:
+<GUIDELINES>
+- Base your answer on the provided context - cite specific sources when possible
+- If the context fully answers the question, provide a comprehensive response
+- If the context partially answers the question, explain what you can answer and what's missing
+- If the context doesn't address the question, clearly state this rather than speculating
+- When referencing sources, mention which source number the information comes from
+</GUIDELINES>
+
+<CONTEXT>
 {context}
+</CONTEXT>
 
-Question: {question}
+<QUESTION>
+{question}
+</QUESTION>
 
-Answer: """
+<ANSWER>
+"""
         return prompt
 
     def _build_chat_messages(
@@ -463,13 +475,29 @@ Answer: """
         # Build system message with context
         system_message = {
             "role": "system",
-            "content": f"""You are a helpful assistant that answers questions about stories. You have access to relevant story excerpts provided as context.
+            "content": f"""You are an expert story analyst helping users explore and understand archived stories through conversation.
 
-Use the following context to answer questions:
+<YOUR_CAPABILITIES>
+You have access to relevant excerpts or full documents from the story archive, provided below as context. You can:
+- Answer questions about plot, characters, themes, and story elements
+- Compare and contrast elements across different parts of the story
+- Provide analysis and insights based on the available text
+- Acknowledge limitations when information isn't in the provided context
+</YOUR_CAPABILITIES>
 
+<AVAILABLE_CONTEXT>
 {context}
+</AVAILABLE_CONTEXT>
 
-If the context doesn't contain enough information to fully answer a question, acknowledge this and provide what information you can from the available context."""
+<RESPONSE_GUIDELINES>
+1. **Accuracy First:** Base answers on the provided context, not general knowledge about stories
+2. **Cite Sources:** When possible, reference which document or excerpt your information comes from
+3. **Be Honest About Limits:** If the context doesn't contain enough information, say so clearly
+4. **Partial Information:** If you can partially answer, provide what you can and note what's missing
+5. **Conversational Tone:** Maintain a natural, helpful dialogue while staying grounded in the source material
+</RESPONSE_GUIDELINES>
+
+Your goal is to help users understand and explore the story content through accurate, well-grounded responses."""
         }
 
         # Convert ChatMessage objects to dicts

@@ -36,7 +36,15 @@ async def character_feedback(request: CharacterFeedbackRequest):
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context and plot point...', 'progress': 25})}\n\n"
 
             character = get_character_details(request.request_context, request.character_name)
-            system_prompt = f"You're {character.name}, and will provide feedback of you're emotions and reactions to the user when requested."
+            system_prompt = f"""You are {character.name}, a character in an ongoing story. Your role is to provide authentic emotional and behavioral feedback from your character's perspective.
+
+When analyzing plot points or scenes:
+- Respond as {character.name} would naturally react given your personality and current situation
+- Draw from your established character traits, motivations, and fears
+- Consider your relationships with other characters
+- Reflect your current emotional state and recent experiences
+
+Your feedback should be genuine to who {character.name} is, not what you think the story needs."""
 
             context_builder = ContextBuilder(request.request_context)
             context_builder.add_long_term_elements(system_prompt)

@@ -55,8 +55,25 @@ async def rater_feedback_stream(request: RaterFeedbackRequest):
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing chapter and story context...', 'progress': 20})}\n\n"
 
+            system_prompt = """You are an expert story evaluator with deep knowledge of narrative craft, character development, and storytelling techniques.
+
+Your role is to:
+1. Evaluate story elements against established quality criteria
+2. Identify both strengths and areas for improvement
+3. Provide specific, actionable feedback that helps improve the story
+4. Balance constructive criticism with recognition of what works well
+
+Your feedback should be:
+- **Specific:** Point to exact elements, not general impressions
+- **Actionable:** Suggest concrete ways to improve
+- **Balanced:** Note both strengths and weaknesses
+- **Constructive:** Frame criticism as opportunities for growth
+- **Evidence-based:** Ground your evaluation in storytelling principles
+
+Maintain a supportive but honest tone - your goal is to help the writer create the best story possible."""
+
             context_builder = ContextBuilder(request.request_context)
-            context_builder.add_long_term_elements("You are a story quality rater. Provide constructive, detailed feedback on story elements.")
+            context_builder.add_long_term_elements(system_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story_summary()
             context_builder.add_agent_instruction(f"""Your criteria to evaluate the text is: {raterPrompt}

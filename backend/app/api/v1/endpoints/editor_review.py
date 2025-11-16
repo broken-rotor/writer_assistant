@@ -44,8 +44,18 @@ async def editor_review(request: EditorReviewRequest):
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.editor_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story(include_up_to=request.chapter_number)
-            context_builder.add_agent_instruction(f"""
-Review chapter {request.chapter_number} for clarity, style, and structural improvements.
+            agent_instruction = f"""
+Review Chapter {request.chapter_number} for narrative quality and provide actionable improvement suggestions.
+
+<EVALUATION_CRITERIA>
+Focus on these aspects (in priority order):
+1. **Narrative Consistency:** Does the chapter align with established plot, character behavior, and world rules?
+2. **Pacing & Structure:** Does the chapter flow well? Are scenes properly balanced?
+3. **Character Voice:** Do characters speak and act consistently with their established personalities?
+4. **Show vs Tell:** Is the writing vivid and immersive, or overly expository?
+5. **Clarity:** Is the prose clear and easy to follow?
+6. **Style & Polish:** Are there opportunities to enhance the writing quality?
+</EVALUATION_CRITERIA>
 
 <CHAPTER_TO_REVIEW>
 Chapter {chapter.number}: {chapter.title}
@@ -53,12 +63,24 @@ Chapter {chapter.number}: {chapter.title}
 {chapter.content}
 </CHAPTER_TO_REVIEW>
 
-Provide 4-6 suggestions in JSON format:
+<PRIORITY_GUIDELINES>
+- HIGH: Issues that break narrative consistency, confuse readers, or significantly harm pacing
+- MEDIUM: Opportunities to enhance character voice, improve flow, or strengthen scenes
+- LOW: Minor style improvements, word choice refinements, polish suggestions
+</PRIORITY_GUIDELINES>
+
+<OUTPUT_FORMAT>
+Provide 4-6 specific, actionable suggestions in JSON format:
 {{
   "suggestions": [
-    {{"issue": "brief issue description", "suggestion": "specific improvement suggestion", "priority": "high|medium|low"}}
+    {{"issue": "brief issue description", "suggestion": "specific improvement with example if possible", "priority": "high|medium|low"}}
   ]
-}}""")
+}}
+</OUTPUT_FORMAT>
+
+Note: Focus on constructive improvements, not just criticism. Each suggestion should include a specific way to improve.
+"""
+            context_builder.add_agent_instruction(agent_instruction)
 
             # Phase 2: Generating Suggestions
             yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 40})}\n\n"

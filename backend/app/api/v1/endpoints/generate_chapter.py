@@ -27,7 +27,7 @@ async def generate_chapter(request: GenerateChapterRequest):
 
     def key_plot_items(chapter: ChapterDetails) -> str:
         key_plot_items = [f"  - {i}\n" for i in chapter.key_plot_items]
-        return f"Key Plot Items:\n{key_plot_items}" if key_plot_items else ""
+        return f"**Key Plot Items to Include:**\n{key_plot_items}" if key_plot_items else ""
 
     llm = get_llm()
     if not llm:
@@ -48,11 +48,35 @@ async def generate_chapter(request: GenerateChapterRequest):
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story(include_up_to=chapter.number)
-            context_builder.add_agent_instruction(
-                f"Generate the {chapter.number}th chapter in story. Develop the following plot points and key elements in a way that is narratively consistent:\n"
-                f"Title: {chapter.title}\n" +
-                (f"Plot Point: {chapter.plot_point}\n" if chapter.plot_point else "") +
-                key_plot_items(chapter))
+
+            agent_instruction = f"""
+Write Chapter {chapter.number} of the story, maintaining consistency with the established narrative, characters, and world.
+
+<CHAPTER_REQUIREMENTS>
+**Title:** {chapter.title}
+{f"**Overall Plot Point:** {chapter.plot_point}" if chapter.plot_point else ""}
+
+{key_plot_items(chapter)}
+</CHAPTER_REQUIREMENTS>
+
+<WRITING_GUIDELINES>
+1. **Narrative Consistency:** Align with established character voices, world rules, and ongoing plot threads
+2. **Scene Structure:** Use clear scene breaks, vivid settings, and purposeful pacing
+3. **Character Behavior:** Ensure characters act consistently with their personalities and motivations
+4. **Show Don't Tell:** Prefer action and dialogue over exposition when possible
+5. **Pacing:** Balance action, dialogue, description, and reflection appropriately
+6. **Chapter Arc:** Give this chapter its own beginning, development, and conclusion while advancing the larger story
+</WRITING_GUIDELINES>
+
+<CONTEXT_AWARENESS>
+- Review recent story events and character states to ensure continuity
+- Reference worldbuilding details where relevant
+- Build naturally on previous chapters' events and emotional arcs
+</CONTEXT_AWARENESS>
+
+Write the complete chapter now, developing the required plot elements in a narratively compelling way.
+"""
+            context_builder.add_agent_instruction(agent_instruction)
 
             # Phase 2: Generation
             yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating chapter content...', 'progress': 40})}\n\n"
