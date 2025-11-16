@@ -183,7 +183,7 @@
             <label for="character-basic-bio">Basic Bio (user-provided)</label>
             <textarea id="character-basic-bio" [(ngModel)]="editingCharacter.basicBio" placeholder="A curious journalist who..." rows="4"></textarea>
             <div class="button-group">
-              <button class="secondary-button" (click)="generateCharacterDetails()">Generate from Bio</button>
+              <button class="secondary-button" (click)="generateCharacterDetails()" [disabled]="isGenerateCharacterDetailsDisabled">Generate from Bio</button>
               <button class="secondary-button" (click)="regenerateBio()">Regenerate Bio</button>
             </div>
           </div>

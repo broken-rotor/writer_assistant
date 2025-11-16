@@ -344,18 +344,21 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.storyService.saveStory(this.story);
   }
 
+  get isGenerateCharacterDetailsDisabled(): boolean {
+    return !this.story || !this.editingCharacter || !this.editingCharacter.name || !this.editingCharacter.basicBio;
+  }
+
   generateCharacterDetails() {
-    if (!this.story || !this.editingCharacter || !this.editingCharacter.basicBio) {
-      alert('Please enter a basic bio first');
-      return;
-    }
+    if (!this.story || !this.editingCharacter) return;
+    
+    // Save the character to the story BEFORE making the API call so it's included in RequestContext
+    this.saveCharacter();
 
     this.loadingService.show('Generating character details...', 'generate-character');
 
     this.generationService.generateCharacterDetails(
       this.story,
-      this.editingCharacter.basicBio,
-      this.activeCharacters,
+      this.editingCharacter.name,
       (update) => {
         // Update loading with progress, phase, and message
         this.loadingService.updateProgress(update.progress, update.message, update.phase);
@@ -378,6 +381,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           this.editingCharacter.motivations = characterInfo.motivations;
           this.editingCharacter.fears = characterInfo.fears;
           this.editingCharacter.relationships = characterInfo.relationships;
+          
+          // Save the character to the story so it's included in RequestContext
+          this.saveCharacter();
         },
         error: (err) => {
           console.error('Error generating character details:', err);
@@ -403,6 +409,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Save the character to the story BEFORE making the API call so it's included in RequestContext
+    this.saveCharacter();
+
     this.loadingService.show('Regenerating bio summary...', 'regenerate-bio');
 
     this.generationService.regenerateBio(
@@ -419,6 +428,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         next: (response) => {
           // Update the basic bio with the generated summary
           this.editingCharacter.basicBio = response.basicBio;
+          
+          // Save the character to the story so the updated bio is persisted
+          this.saveCharacter();
         },
         error: (err) => {
           console.error('Error regenerating bio:', err);

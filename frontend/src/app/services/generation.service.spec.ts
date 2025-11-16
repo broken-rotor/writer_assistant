@@ -520,28 +520,8 @@ describe('GenerationService', () => {
   });
 
   describe('generateCharacterDetails', () => {
-    it('should build request with basic bio and existing characters', (done) => {
+    it('should build request with character name', (done) => {
       const mockStory = createMockStory();
-      const existingCharacter: Character = {
-        id: 'char-1',
-        name: 'Existing Character',
-        basicBio: 'A hero',
-        sex: 'Male',
-        gender: 'Male',
-        sexualPreference: 'Heterosexual',
-        age: 30,
-        physicalAppearance: 'Tall',
-        usualClothing: 'Armor',
-        personality: 'Brave',
-        motivations: 'Justice',
-        fears: 'Failure',
-        relationships: 'None',
-        isHidden: false,
-        metadata: {
-          creationSource: 'user',
-          lastModified: new Date()
-        }
-      };
 
       const mockResponse = {
         character_info: {
@@ -562,16 +542,11 @@ describe('GenerationService', () => {
 
       apiServiceSpy.generateCharacterDetails.and.returnValue(of(mockResponse));
 
-      service.generateCharacterDetails(mockStory, 'A smart mage', [existingCharacter]).subscribe(response => {
+      service.generateCharacterDetails(mockStory, 'Gandalf').subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.generateCharacterDetails).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            basicBio: 'A smart mage',
-            existingCharacters: jasmine.arrayContaining([
-              jasmine.objectContaining({
-                name: 'Existing Character'
-              })
-            ])
+            character_name: 'Gandalf'
           }),
           undefined // onProgress callback parameter
         );
