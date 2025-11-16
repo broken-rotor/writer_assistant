@@ -113,13 +113,7 @@ Respond ONLY in JSON format with these exact fields (and no extra escaping):
                     sex=parsed.get('sex', ''),
                     gender=parsed.get('gender', ''),
                     sexualPreference=parsed.get('sexualPreference', ''),
-                    age=int(
-                        parsed.get(
-                            'age',
-                            30)) if str(
-                        parsed.get(
-                            'age',
-                            '')).isdigit() else 30,
+                    age=int(parsed.get('age', 30)) if str(parsed.get('age','')).isdigit() else 30,
                     physicalAppearance=parsed.get('physicalAppearance', ''),
                     usualClothing=parsed.get('usualClothing', ''),
                     personality=parsed.get('personality', ''),
@@ -130,14 +124,13 @@ Respond ONLY in JSON format with these exact fields (and no extra escaping):
                 result = GenerateCharacterDetailsResponse(
                     character_info=character_info)
             else:
-                logger.error(
-                    "Failed to parse character JSON, using fallback")
+                logger.error("Failed to parse character JSON")
                 raise ValueError('Error parsing JSON output from LLM')
 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error("Error in generate_character_details:", e)
+            logger.error("Error in generate_character_details", e)
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(
