@@ -9,7 +9,7 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator
 
 
-from app.services.token_management import ContentType, CountingStrategy
+from app.services.token_counter import ContentType, CountingStrategy
 
 
 class TokenCountRequestItem(BaseModel):

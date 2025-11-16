@@ -25,7 +25,7 @@ from app.models.request_context import (
     StoryOutline,
     RequestContextMetadata
 )
-from app.services.token_management.token_counter import TokenCount, ContentType, CountingStrategy
+from app.services.token_counter import TokenCount, ContentType, CountingStrategy
 
 @pytest.fixture
 def minimal_request_context():
