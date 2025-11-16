@@ -161,12 +161,9 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.requestCharacterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotContext: jasmine.objectContaining({
-              plotPoint: 'Enter dungeon'
-            }),
-            character: jasmine.objectContaining({
-              name: 'Test Character'
-            })
+            character_name: 'Test Character',
+            plotPoint: 'Enter dungeon',
+            request_context: jasmine.any(Object)
           })
         );
         done();
