@@ -25,7 +25,6 @@ from app.models.request_context import (
     StoryOutline,
     RequestContextMetadata
 )
-from app.services.token_counter import TokenCount, ContentType, CountingStrategy
 
 @pytest.fixture
 def minimal_request_context():
@@ -115,13 +114,7 @@ def mock_token_counter():
     """Create a mock TokenCounter."""
     mock_counter = MagicMock()
     # Return token count based on content length (simple approximation)
-    mock_counter.count_tokens.side_effect = lambda text: TokenCount(
-        content=text,
-        token_count=len(text.split()),
-        content_type=ContentType.UNKNOWN,
-        strategy=CountingStrategy.EXACT,
-        overhead_applied=1.0,
-        metadata={})
+    mock_counter.count_tokens.side_effect = lambda text: len(text.split())
     return mock_counter
 
 
