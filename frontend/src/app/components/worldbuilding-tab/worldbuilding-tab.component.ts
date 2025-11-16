@@ -96,8 +96,11 @@ export class WorldbuildingTabComponent implements OnInit, OnDestroy {
     const subscription = this.generationService.fleshOut(
       this.story,
       this.story.general.worldbuilding,
-      'worldbuilding expansion',
-      FleshOutType.WORLDBUILDING
+      FleshOutType.WORLDBUILDING,
+      (update) => {
+        // Update loading message with progress
+        this.loadingService.show(`${update.message}`, 'flesh-worldbuilding');
+      }
     ).subscribe({
       next: (response: any) => {
         if (this.story) {

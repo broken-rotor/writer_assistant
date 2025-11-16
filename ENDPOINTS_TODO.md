@@ -5,7 +5,7 @@
 | ----------------------------------- | -------- | ------------- | ---------------------------------------- |
 | /character-feedback                 |  Yes     |  Yes          | Migrated                                 |
 | /editor-review                      |  Yes     |  Yes          | Migrated                                 |
-| /flesh-out                          |  Yes     |  Yes          | Migrated                                 |
+| /flesh-out                          |  Yes     |  Yes          | Works                                    |
 | /generate-chapter                   |  Yes     |  Yes          | Migrated                                 |
 | /generate-chapter-outlines          |  Yes     |  Yes          | Migrated                                 |
 | /generate-character-details         |  Yes     |  Yes          | Migrated                                 |

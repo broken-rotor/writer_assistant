@@ -388,11 +388,10 @@ describe('ApiService', () => {
   });
 
   describe('fleshOut', () => {
-    it('should send POST request to flesh-out endpoint', () => {
+    it('should use SSE streaming service for flesh-out', () => {
       const request = {
         request_type: FleshOutType.WORLDBUILDING,
-        textToFleshOut: 'The hero is brave',
-        context: 'character description',
+        text_to_flesh_out: 'The hero is brave',
         request_context: {
           configuration: {
             system_prompts: {
@@ -437,13 +436,27 @@ describe('ApiService', () => {
         fleshedOutText: 'The hero is brave, standing tall in the face of danger...'
       };
 
-      service.fleshOut(request).subscribe(response => {
+      // Mock the SSE streaming service
+      const mockSSEService = jasmine.createSpyObj('SSEStreamingService', ['createSSEObservable']);
+      mockSSEService.createSSEObservable.and.returnValue(of(mockResponse));
+
+      // Replace the service's SSE streaming service with our mock
+      (service as any).sseStreamingService = mockSSEService;
+
+      const mockOnProgress = jasmine.createSpy('onProgress');
+
+      service.fleshOut(request, mockOnProgress).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/flesh-out`);
-      expect(req.request.method).toBe('POST');
-      req.flush(mockResponse);
+      expect(mockSSEService.createSSEObservable).toHaveBeenCalledWith(
+        `${baseUrl}/flesh-out`,
+        request,
+        jasmine.objectContaining({
+          onProgress: jasmine.any(Function),
+          onError: jasmine.any(Function)
+        })
+      );
     });
   });
 
