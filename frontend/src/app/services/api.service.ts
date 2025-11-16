@@ -67,9 +67,21 @@ export class ApiService {
     );
   }
 
-  // Flesh Out Plot Point / Worldbuilding
-  fleshOut(request: FleshOutRequest): Observable<FleshOutResponse> {
-    return this.http.post<FleshOutResponse>(`${this.baseUrl}/flesh-out`, request);
+  // Flesh Out Plot Point / Worldbuilding - now with SSE streaming
+  fleshOut(
+    request: FleshOutRequest,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
+  ): Observable<FleshOutResponse> {
+    return this.sseStreamingService.createSSEObservable<FleshOutResponse>(
+      `${this.baseUrl}/flesh-out`,
+      request,
+      {
+        onProgress: onProgress,
+        onError: (error) => {
+          console.error('Flesh out streaming error:', error);
+        }
+      }
+    );
   }
 
   // Generate Character Details - now with SSE streaming

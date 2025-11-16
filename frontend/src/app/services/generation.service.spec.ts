@@ -505,14 +505,14 @@ describe('GenerationService', () => {
 
       apiServiceSpy.fleshOut.and.returnValue(of(mockResponse));
 
-      service.fleshOut(mockStory, 'Short text', 'plot_outline', FleshOutType.WORLDBUILDING).subscribe(response => {
+      service.fleshOut(mockStory, 'Short text', FleshOutType.WORLDBUILDING).subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.fleshOut).toHaveBeenCalledWith(
           jasmine.objectContaining({
             request_type: FleshOutType.WORLDBUILDING,
-            textToFleshOut: 'Short text',
-            context: 'plot_outline'
-          })
+            text_to_flesh_out: 'Short text'
+          }),
+          undefined // Optional progress callback
         );
         done();
       });

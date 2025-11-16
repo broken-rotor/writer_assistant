@@ -396,10 +396,8 @@ export enum FleshOutType {
 
 export interface FleshOutRequest {
   request_type: FleshOutType;
-  textToFleshOut: string;
-  context?: string;
+  text_to_flesh_out: string;
   request_context: RequestContext;
-  context_processing_config?: Record<string, any>;
 }
 
 // Structured Context Models

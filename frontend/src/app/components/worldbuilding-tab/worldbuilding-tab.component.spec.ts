@@ -217,8 +217,8 @@ describe('WorldbuildingTabComponent', () => {
     expect(mockGenerationService.fleshOut).toHaveBeenCalledWith(
       component.story!,
       'Test worldbuilding content',
-      'worldbuilding expansion',
-      FleshOutType.WORLDBUILDING
+      FleshOutType.WORLDBUILDING,
+      jasmine.any(Function) // Progress callback
     );
   });
 

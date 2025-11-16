@@ -130,20 +130,19 @@ export class GenerationService {
   fleshOut(
     story: Story,
     textToFleshOut: string,
-    context: string,
-    requestType: FleshOutType
+    requestType: FleshOutType,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
   ): Observable<FleshOutResponse> {
     // Use the new RequestContext transformation
     const requestContext = transformToRequestContext(story);
 
     const request: FleshOutRequest = {
       request_type: requestType,
-      textToFleshOut: textToFleshOut,
-      context: context,
+      text_to_flesh_out: textToFleshOut,
       request_context: requestContext
     };
 
-    return this.apiService.fleshOut(request);
+    return this.apiService.fleshOut(request, onProgress);
   }
 
   // Generate Character Details
