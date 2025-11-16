@@ -345,10 +345,13 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   generateCharacterDetails() {
-    if (!this.story || !this.editingCharacter || !this.editingCharacter.name) {
-      alert('Please enter a character name first');
+    if (!this.story || !this.editingCharacter || !this.editingCharacter.name || !this.editingCharacter.basicBio) {
+      alert('Please enter both character name and basic bio first');
       return;
     }
+
+    // Save the character to the story BEFORE making the API call so it's included in RequestContext
+    this.saveCharacter();
 
     this.loadingService.show('Generating character details...', 'generate-character');
 
@@ -377,6 +380,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
           this.editingCharacter.motivations = characterInfo.motivations;
           this.editingCharacter.fears = characterInfo.fears;
           this.editingCharacter.relationships = characterInfo.relationships;
+          
+          // Save the character to the story so it's included in RequestContext
+          this.saveCharacter();
         },
         error: (err) => {
           console.error('Error generating character details:', err);
@@ -402,6 +408,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Save the character to the story BEFORE making the API call so it's included in RequestContext
+    this.saveCharacter();
+
     this.loadingService.show('Regenerating bio summary...', 'regenerate-bio');
 
     this.generationService.regenerateBio(
@@ -418,6 +427,9 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
         next: (response) => {
           // Update the basic bio with the generated summary
           this.editingCharacter.basicBio = response.basicBio;
+          
+          // Save the character to the story so the updated bio is persisted
+          this.saveCharacter();
         },
         error: (err) => {
           console.error('Error regenerating bio:', err);
