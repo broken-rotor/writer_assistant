@@ -161,12 +161,9 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.requestCharacterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            plotContext: jasmine.objectContaining({
-              plotPoint: 'Enter dungeon'
-            }),
-            character: jasmine.objectContaining({
-              name: 'Test Character'
-            })
+            character_name: 'Test Character',
+            plotPoint: 'Enter dungeon',
+            request_context: jasmine.any(Object)
           })
         );
         done();
@@ -175,7 +172,7 @@ describe('GenerationService', () => {
   });
 
   describe('requestRaterFeedback', () => {
-    it('should build structured request with complete context and call API', (done) => {
+    it('should use transformToRequestContext and call API with new format', (done) => {
       const mockStory = createMockStory();
       const mockRater: Rater = {
         id: 'rater-1',
@@ -205,71 +202,6 @@ describe('GenerationService', () => {
         }
       };
 
-      // Configure context builder spy methods to return successful responses
-      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
-        success: true,
-        data: {
-          mainPrefix: 'System prefix',
-          mainSuffix: 'System suffix',
-          assistantPrompt: 'Assistant prompt'
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
-
-      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
-        success: true,
-        data: {
-          content: 'Test worldbuilding',
-          isValid: true,
-          wordCount: 2,
-          lastUpdated: new Date()
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
-
-      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
-        success: true,
-        data: {
-          summary: 'Test story summary',
-          isValid: true,
-          wordCount: 3,
-          lastUpdated: new Date()
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
-
-      contextBuilderSpy.buildChaptersContext.and.returnValue({
-        success: true,
-        data: {
-          chapters: [],
-          totalChapters: 0,
-          totalWordCount: 0,
-          lastUpdated: new Date()
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
-
-      contextBuilderSpy.buildCharacterContext.and.returnValue({
-        success: true,
-        data: {
-          characters: [],
-          totalCharacters: 0,
-          visibleCharacters: 0,
-          lastUpdated: new Date()
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
-
       // Mock streaming response
       apiServiceSpy.streamRaterFeedback.and.returnValue(of(
         { type: 'result', data: mockResponse }
@@ -279,12 +211,15 @@ describe('GenerationService', () => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.streamRaterFeedback).toHaveBeenCalledWith(
           jasmine.objectContaining({
+            raterName: 'Pacing Rater',
             plotPoint: 'Enter dungeon',
-            raterPrompt: 'Evaluate pacing',
-            structured_context: jasmine.objectContaining({
-              plotContext: jasmine.objectContaining({
-                plotPoint: 'Enter dungeon'
-              })
+            request_context: jasmine.objectContaining({
+              configuration: jasmine.any(Object),
+              worldbuilding: jasmine.any(Object),
+              characters: jasmine.any(Array),
+              story_outline: jasmine.any(Object),
+              chapters: jasmine.any(Array),
+              context_metadata: jasmine.any(Object)
             })
           })
         );
