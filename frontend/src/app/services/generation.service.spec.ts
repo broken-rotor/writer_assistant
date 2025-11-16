@@ -5,7 +5,7 @@ import { ApiService } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
 import { TokenCountingService } from './token-counting.service';
 import { RequestConverterService } from './request-converter.service';
-import { RequestValidatorService } from './request-validator.service';
+
 import { RequestOptimizerService } from './request-optimizer.service';
 import { Story, Character, Rater } from '../models/story.model';
 import { 
@@ -19,7 +19,7 @@ describe('GenerationService', () => {
   let service: GenerationService;
   let apiServiceSpy: jasmine.SpyObj<ApiService>;
   let contextBuilderSpy: jasmine.SpyObj<ContextBuilderService>;
-  let requestValidatorSpy: jasmine.SpyObj<RequestValidatorService>;  // eslint-disable-line @typescript-eslint/no-unused-vars
+
   let requestOptimizerSpy: jasmine.SpyObj<RequestOptimizerService>;  // eslint-disable-line @typescript-eslint/no-unused-vars
 
   beforeEach(() => {
@@ -56,11 +56,7 @@ describe('GenerationService', () => {
       'convertToStructured'
     ]);
 
-    const requestValidatorSpyObj = jasmine.createSpyObj('RequestValidatorService', [
-      'validateCharacterFeedbackRequest',
-      'validateRaterFeedbackRequest',
-      'validateEditorReviewRequest'
-    ]);
+
 
     const requestOptimizerSpyObj = jasmine.createSpyObj('RequestOptimizerService', [
       'optimizeCharacterFeedbackRequest',
@@ -68,10 +64,7 @@ describe('GenerationService', () => {
       'optimizeEditorReviewRequest'
     ]);
 
-    // Set up default validation responses
-    requestValidatorSpyObj.validateCharacterFeedbackRequest.and.returnValue({ isValid: true, errors: [] });
-    requestValidatorSpyObj.validateRaterFeedbackRequest.and.returnValue({ isValid: true, errors: [] });
-    requestValidatorSpyObj.validateEditorReviewRequest.and.returnValue({ isValid: true, errors: [] });
+
 
     // Set up default optimization responses (pass through unchanged)
     requestOptimizerSpyObj.optimizeCharacterFeedbackRequest.and.callFake((req: any) => ({ optimizedRequest: req }));
@@ -86,7 +79,7 @@ describe('GenerationService', () => {
         { provide: ContextBuilderService, useValue: contextBuilderSpyObj },
         { provide: TokenCountingService, useValue: tokenCountingSpy },
         { provide: RequestConverterService, useValue: requestConverterSpy },
-        { provide: RequestValidatorService, useValue: requestValidatorSpyObj },
+
         { provide: RequestOptimizerService, useValue: requestOptimizerSpyObj }
       ]
     });
@@ -94,7 +87,7 @@ describe('GenerationService', () => {
     service = TestBed.inject(GenerationService);
     apiServiceSpy = TestBed.inject(ApiService) as jasmine.SpyObj<ApiService>;
     contextBuilderSpy = TestBed.inject(ContextBuilderService) as jasmine.SpyObj<ContextBuilderService>;
-    requestValidatorSpy = TestBed.inject(RequestValidatorService) as jasmine.SpyObj<RequestValidatorService>;
+
     requestOptimizerSpy = TestBed.inject(RequestOptimizerService) as jasmine.SpyObj<RequestOptimizerService>;
   });
 

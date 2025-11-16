@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 import { ApiService, CharacterFeedbackRequest } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
 import { RequestConverterService } from './request-converter.service';
-import { RequestValidatorService } from './request-validator.service';
+
 import { RequestOptimizerService } from './request-optimizer.service';
 import { PlotOutlineContextService } from './plot-outline-context.service';
 import { transformToRequestContext } from '../utils/context-transformer';
@@ -47,7 +47,7 @@ export class GenerationService {
   private apiService = inject(ApiService);
   private contextBuilderService = inject(ContextBuilderService);
   private requestConverterService = inject(RequestConverterService);
-  private requestValidatorService = inject(RequestValidatorService);
+
   private requestOptimizerService = inject(RequestOptimizerService);
   private plotOutlineContextService = inject(PlotOutlineContextService);
 
