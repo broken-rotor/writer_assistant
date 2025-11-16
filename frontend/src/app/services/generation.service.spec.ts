@@ -562,16 +562,11 @@ describe('GenerationService', () => {
 
       apiServiceSpy.generateCharacterDetails.and.returnValue(of(mockResponse));
 
-      service.generateCharacterDetails(mockStory, 'A smart mage', [existingCharacter]).subscribe(response => {
+      service.generateCharacterDetails(mockStory, 'Gandalf').subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.generateCharacterDetails).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            basicBio: 'A smart mage',
-            existingCharacters: jasmine.arrayContaining([
-              jasmine.objectContaining({
-                name: 'Existing Character'
-              })
-            ])
+            character_name: 'Gandalf'
           }),
           undefined // onProgress callback parameter
         );

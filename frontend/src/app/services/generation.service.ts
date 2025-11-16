@@ -11,7 +11,6 @@ import { transformToRequestContext } from '../utils/context-transformer';
 import {
   Story,
   Character,
-  CharacterInfo,
   Rater,
   GenerateChapterResponse,
   ModifyChapterRequest,
@@ -148,20 +147,14 @@ export class GenerationService {
   // Generate Character Details
   generateCharacterDetails(
     story: Story,
-    basicBio: string,
-    existingCharacters: Character[],
+    characterName: string,
     onProgress?: (update: { phase: string; message: string; progress: number }) => void
   ): Observable<GenerateCharacterDetailsResponse> {
     // Use the new RequestContext transformation
     const requestContext = transformToRequestContext(story);
 
     const request: GenerateCharacterDetailsRequest = {
-      basicBio: basicBio,
-      existingCharacters: existingCharacters.map(c => ({
-        name: c.name,
-        basicBio: c.basicBio,
-        relationships: c.relationships
-      })),
+      character_name: characterName,
       request_context: requestContext
     };
 
@@ -177,24 +170,8 @@ export class GenerationService {
     // Use the new RequestContext transformation
     const requestContext = transformToRequestContext(story);
 
-    // Create CharacterInfo from Character
-    const characterInfo: CharacterInfo = {
-      name: character.name,
-      basicBio: character.basicBio,
-      sex: character.sex,
-      gender: character.gender,
-      sexualPreference: character.sexualPreference,
-      age: character.age,
-      physicalAppearance: character.physicalAppearance,
-      usualClothing: character.usualClothing,
-      personality: character.personality,
-      motivations: character.motivations,
-      fears: character.fears,
-      relationships: character.relationships
-    };
-
     const request: RegenerateBioRequest = {
-      character_info: characterInfo,
+      character_name: character.name,
       request_context: requestContext
     };
 
@@ -205,19 +182,14 @@ export class GenerationService {
   regenerateRelationships(
     story: Story,
     character: Character,
-    otherCharacters: Character[]
+    _otherCharacters: Character[]
   ): Observable<GenerateCharacterDetailsResponse> {
     // Use the new RequestContext transformation
     const requestContext = transformToRequestContext(story);
 
     // Use the same endpoint but we'll only extract the relationships field
     const request: GenerateCharacterDetailsRequest = {
-      basicBio: character.basicBio,
-      existingCharacters: otherCharacters.map(c => ({
-        name: c.name,
-        basicBio: c.basicBio,
-        relationships: c.relationships
-      })),
+      character_name: character.name,
       request_context: requestContext
     };
 

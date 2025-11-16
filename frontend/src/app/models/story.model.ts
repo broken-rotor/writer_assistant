@@ -462,14 +462,8 @@ export interface StructuredContextContainer {
 }
 
 export interface GenerateCharacterDetailsRequest {
-  basicBio: string;
-  existingCharacters: {
-    name: string;
-    basicBio: string;
-    relationships: string;
-  }[];
+  character_name: string;
   request_context: RequestContext;
-  context_processing_config?: Record<string, any>;
 }
 
 // API Response types
@@ -537,9 +531,8 @@ export interface GenerateCharacterDetailsResponse {
 }
 
 export interface RegenerateBioRequest {
-  character_info: CharacterInfo;
-  request_context?: RequestContext;
-  context_processing_config?: Record<string, any>;
+  character_name: string;
+  request_context: RequestContext;
 }
 
 export interface RegenerateBioResponse {

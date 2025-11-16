@@ -463,8 +463,7 @@ describe('ApiService', () => {
   describe('generateCharacterDetails', () => {
     it('should use SSE streaming service for character details generation', () => {
       const request = {
-        basicBio: 'A brave knight',
-        existingCharacters: [],
+        character_name: 'Sir Galahad',
         request_context: {
           configuration: {
             system_prompts: {

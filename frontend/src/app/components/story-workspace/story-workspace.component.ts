@@ -345,8 +345,8 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   generateCharacterDetails() {
-    if (!this.story || !this.editingCharacter || !this.editingCharacter.basicBio) {
-      alert('Please enter a basic bio first');
+    if (!this.story || !this.editingCharacter || !this.editingCharacter.name) {
+      alert('Please enter a character name first');
       return;
     }
 
@@ -354,8 +354,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
 
     this.generationService.generateCharacterDetails(
       this.story,
-      this.editingCharacter.basicBio,
-      this.activeCharacters,
+      this.editingCharacter.name,
       (update) => {
         // Update loading with progress, phase, and message
         this.loadingService.updateProgress(update.progress, update.message, update.phase);
