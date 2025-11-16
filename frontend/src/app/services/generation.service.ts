@@ -899,7 +899,7 @@ ${story.plotOutline.content}`;
   // ============================================================================
 
   /**
-   * Generate chapter outline from story outline
+   * Generate chapter outline from story outline using RequestContext API
    */
   generateChapterOutlinesFromStoryOutline(
     story: Story,
@@ -911,22 +911,26 @@ ${story.plotOutline.content}`;
         throw new Error('Story outline is required for chapter outline generation');
       }
 
-      // Prepare the request
+      // Use the existing transformToRequestContext utility to generate context
+      const requestContext = transformToRequestContext(story);
+      
+      // Update the story outline content in the request context
+      if (requestContext.story_outline) {
+        requestContext.story_outline.content = storyOutline;
+      } else {
+        requestContext.story_outline = {
+          summary: story.story?.summary || '',
+          status: 'draft',
+          content: storyOutline,
+          outline_items: [],
+          rater_feedback: [],
+          chat_history: []
+        };
+      }
+
+      // Prepare the request using the new RequestContext structure
       const request: ChapterOutlineGenerationRequest = {
-        story_outline: storyOutline,
-        story_context: {
-          title: story.general.title,
-          worldbuilding: story.general.worldbuilding,
-          characters: Array.from(story.characters.values()).map(char => ({
-            name: char.name,
-            basicBio: char.basicBio
-          }))
-        },
-        character_contexts: this.convertCharactersToCharacterContexts(story.characters),
-        generation_preferences: {
-          // Add any generation preferences here
-        },
-        system_prompts: story.general.systemPrompts
+        request_context: requestContext
       };
 
       return this.apiService.generateChapterOutlines(request);

@@ -601,21 +601,17 @@ export type LLMChatStreamMessage = LLMChatStreamStatus | LLMChatStreamResult | L
 // ============================================================================
 
 /**
- * Request model for chapter outline generation
+ * Request model for chapter outline generation (Updated to use RequestContext)
  */
 export interface ChapterOutlineGenerationRequest {
-  story_outline: string;
-  story_context?: Record<string, any>;
-  character_contexts?: CharacterContext[];
-  generation_preferences?: Record<string, any>;
-  system_prompts?: SystemPrompts;
+  request_context: RequestContext;
+  context_processing_config?: any; // Optional processing configuration
 }
 
 /**
- * Response model for chapter outline generation
+ * Response model for chapter outline generation (Updated to match backend)
  */
 export interface ChapterOutlineGenerationResponse {
   outline_items: OutlineItem[];
-  summary: string;
   context_metadata?: Record<string, any>;
 }
