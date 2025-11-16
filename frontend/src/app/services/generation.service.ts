@@ -38,7 +38,6 @@ import {
   StructuredGenerateChapterResponse,
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';
-import { StructuredCharacter } from '../models/context-builder.model';
 import { BackendEditorReviewRequest, BackendEditorReviewResponse } from '../models/story.model';
 
 @Injectable({
