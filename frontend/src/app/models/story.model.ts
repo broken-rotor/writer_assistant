@@ -389,7 +389,13 @@ export interface BackendGenerateChapterRequest {
   context_processing_config?: Record<string, any>;
 }
 
+export enum FleshOutType {
+  WORLDBUILDING = 'worldbuilding',
+  CHAPTER = 'chapter'
+}
+
 export interface FleshOutRequest {
+  request_type: FleshOutType;
   textToFleshOut: string;
   context?: string;
   request_context: RequestContext;
