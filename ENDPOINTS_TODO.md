@@ -10,6 +10,6 @@
 | /generate-chapter-outlines          |  Yes     |  No           | Migrated                                 |
 | /generate-character-details         |  Yes     |  Yes          | Migrated                                 |
 | /chat/llm                           |  Yes     |  Yes?         | ?                                        |
-| /modify-chapter                     |  Yes     |  Yes          | ?                                        |
+| /modify-chapter                     |  Yes     |  Yes          | Migrated                                 |
 | /rater-feedback                     |  Yes     |  Yes          | Migrated                                 |
 | /regenerate-bio                     |  Yes     |  Yes          | Migrated                                 |

@@ -54,7 +54,6 @@ async def generate_chapter(request: GenerateChapterRequest):
                 (f"Plot Point: {chapter.plot_point}\n" if chapter.plot_point else "") +
                 key_plot_items(chapter))
 
-
             # Phase 2: Generation
             yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating chapter content...', 'progress': 40})}\n\n"
 

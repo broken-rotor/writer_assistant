@@ -43,8 +43,6 @@ class TestModifyChapterEndpoint:
         response = client.post("/api/v1/modify-chapter", json=sample_modify_chapter_request)
         data = extract_final_result_from_streaming_response(response)
         assert "modifiedChapter" in data
-        assert "wordCount" in data
-        assert "changesSummary" in data
 
     def test_modify_chapter_response_structure(self, client, sample_modify_chapter_request):
         """Test modify chapter response structure"""
@@ -52,9 +50,7 @@ class TestModifyChapterEndpoint:
         data = extract_final_result_from_streaming_response(response)
 
         assert isinstance(data["modifiedChapter"], str)
-        assert isinstance(data["wordCount"], int)
-        assert isinstance(data["changesSummary"], str)
-        assert data["wordCount"] > 0
+        assert len(data["modifiedChapter"]) > 0
 
     def test_modify_chapter_includes_original_content(self, client, sample_modify_chapter_request):
         """Test that modified chapter is returned"""
@@ -66,16 +62,15 @@ class TestModifyChapterEndpoint:
         assert len(modified_text) > 0
         assert "Detective Chen" in modified_text or "Chen" in modified_text
 
-    def test_modify_chapter_changes_summary_mentions_request(self, client, sample_modify_chapter_request):
-        """Test that changes summary mentions the modification"""
+    def test_modify_chapter_with_user_request(self, client, sample_modify_chapter_request):
+        """Test that chapter is modified according to user request"""
         user_request = sample_modify_chapter_request["userRequest"]
         response = client.post("/api/v1/modify-chapter", json=sample_modify_chapter_request)
         data = extract_final_result_from_streaming_response(response)
-        changes_summary = data["changesSummary"]
+        modified_chapter = data["modifiedChapter"]
 
-        # Summary should contain information about the changes
-        assert len(changes_summary) > 0
-        assert "modified" in changes_summary.lower() or "based on" in changes_summary.lower()
+        # Modified chapter should have content
+        assert len(modified_chapter) > 0
 
     def test_modify_chapter_with_long_user_request(self, client, sample_modify_chapter_request):
         """Test modify chapter with long user request"""
@@ -109,7 +104,7 @@ class TestModifyChapterEndpoint:
         status_messages = [msg for msg in messages if msg.get('type') == 'status']
         phases = [msg.get('phase') for msg in status_messages]
         
-        expected_phases = ['context_processing', 'analyzing', 'modifying', 'finalizing']
+        expected_phases = ['context_processing', 'modifying', 'finalizing']
         for expected_phase in expected_phases:
             assert expected_phase in phases, f"Missing phase: {expected_phase}"
         

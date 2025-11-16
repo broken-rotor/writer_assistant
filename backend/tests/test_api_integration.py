@@ -112,8 +112,10 @@ class TestAPIIntegration:
         chapter_data = extract_final_result_from_streaming_response(chapter_response)
         chapter_text = chapter_data["chapterText"]
 
-        # Modify the chapter
-        sample_modify_chapter_request["currentChapter"] = chapter_text
+        # Modify the chapter - update the chapter content in request_context
+        from datetime import datetime
+        sample_modify_chapter_request["request_context"]["chapters"][0]["content"] = chapter_text
+        sample_modify_chapter_request["request_context"]["chapters"][0]["last_modified"] = datetime.now().isoformat()
         modify_response = client.post("/api/v1/modify-chapter", json=sample_modify_chapter_request)
         modify_data = extract_final_result_from_streaming_response(modify_response)
         assert chapter_text in modify_data["modifiedChapter"]

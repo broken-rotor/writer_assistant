@@ -44,7 +44,6 @@ def sample_streaming_request():
         ),
         story_outline=StoryOutline(
             summary="A hero's journey through a mysterious world filled with secrets",
-            status="draft",
             content="The story follows a hero who discovers hidden doors and magical secrets."
         ),
         context_metadata=RequestContextMetadata(
@@ -53,16 +52,13 @@ def sample_streaming_request():
             version="1.0",
             created_at=datetime.now(),
             total_characters=1,
-            total_chapters=1,
-            total_word_count=800,
-            context_size_estimate=400
+            total_chapters=1
         ),
         characters=[
             CharacterDetails(
                 id="hero_character",
                 name="The Hero",
                 basic_bio="A brave adventurer seeking hidden truths and magical secrets.",
-                creation_source="user",
                 last_modified=datetime.now()
             )
         ]
@@ -84,8 +80,7 @@ def test_streaming_endpoint_exists(client):
 
 
 @patch('app.services.llm_inference.get_llm')
-@patch('app.services.unified_context_processor.get_unified_context_processor')
-def test_streaming_rater_feedback_success(mock_context_processor, mock_get_llm, client, sample_streaming_request):
+def test_streaming_rater_feedback_success(mock_get_llm, client, sample_streaming_request):
     """Test successful streaming rater feedback generation."""
     # Mock LLM
     mock_llm = Mock()
@@ -97,18 +92,6 @@ def test_streaming_rater_feedback_success(mock_context_processor, mock_get_llm, 
         ' "Describe the door\'s appearance"]}'
     ]
     mock_get_llm.return_value = mock_llm
-    
-    # Mock context processor
-    mock_processor = Mock()
-    mock_context_result = Mock()
-    mock_context_result.system_prompt = "You are a story critic."
-    mock_context_result.user_message = "Evaluate this plot point: The hero discovers a hidden door."
-    mock_context_result.context_metadata = {"tokens": 100}
-    mock_context_result.optimization_applied = False
-    mock_context_result.processing_mode = "structured"
-    mock_context_result.total_tokens = 100
-    mock_processor.process_rater_feedback_context.return_value = mock_context_result
-    mock_context_processor.return_value = mock_processor
     
     # Make streaming request
     response = client.post("/api/v1/rater-feedback", json=sample_streaming_request)

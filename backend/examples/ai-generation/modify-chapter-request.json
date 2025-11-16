@@ -8,18 +8,15 @@
       "Content-Type": "application/json"
     },
     "body": {
+      "chapter_number": 1,
       "userRequest": "Add more tension to the scene where Aria faces the crystal guardian. Include more internal conflict and make the guardian's test more challenging.",
       "request_context": {
         "configuration": {
           "system_prompts": {
             "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
             "main_suffix": "Focus on enhancing dramatic tension while maintaining character consistency.",
-            "assistant_prompt": "Modify the content to improve pacing, tension, and emotional impact."
-          },
-          "generation_preferences": {
-            "tone": "epic fantasy",
-            "perspective": "third person limited",
-            "target_audience": "young adult"
+            "assistant_prompt": "Modify the content to improve pacing, tension, and emotional impact.",
+            "editor_prompt": ""
           }
         },
         "worldbuilding": {
@@ -58,12 +55,14 @@
         ],
         "story_outline": {
           "summary": "Aria faces the crystal guardian's trial",
+          "content": "Aria faces the crystal guardian's trial",
           "outline_items": [
             {
               "id": "outline_trial",
               "type": "scene",
               "title": "The Guardian's Trial",
               "description": "Aria must prove her worthiness through a challenging magical trial",
+              "order": 1,
               "key_plot_items": [
                 "Guardian presents increasingly difficult challenges",
                 "Aria confronts her deepest fears and insecurities",
@@ -77,7 +76,7 @@
         "chapters": [
           {
             "id": "chapter_002",
-            "number": 2,
+            "number": 1,
             "title": "Into the Crystal Caverns",
             "content": "Aria stood before the crystal guardian, a towering figure of living crystal and ancient magic. 'You seek the shard,' the guardian said simply. 'Very well. Touch the trial crystal and prove your worth.'\n\nAria approached the glowing crystal hesitantly. As her fingers made contact, visions flashed through her mind—images of her friends in danger, her village burning, her own magical power spiraling out of control.\n\n'I can do this,' she whispered, though her voice trembled. The guardian watched silently as she struggled with the visions, her magical energy fluctuating wildly.\n\nAfter what felt like hours, the visions faded. The guardian nodded slowly. 'You have shown courage, young mage. The shard is yours.'\n\nAria felt a surge of relief and accomplishment as the crystal shard materialized in her palm, glowing with warm, pure light.",
             "plot_point": "Aria faces the guardian's trial and claims the first crystal shard",
