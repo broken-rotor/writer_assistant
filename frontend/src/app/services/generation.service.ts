@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService, CharacterFeedbackRequest } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
 import { RequestConverterService } from './request-converter.service';
@@ -32,13 +33,14 @@ import {
   BackendGenerateChapterRequest
 } from '../models/story.model';
 import {
-  StructuredEditorReviewRequest,
+  StructuredCharacterFeedbackRequest,
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackResponse,
   StructuredGenerateChapterResponse,
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';
 import { StructuredCharacter } from '../models/context-builder.model';
+import { BackendEditorReviewRequest, BackendEditorReviewResponse } from '../models/story.model';
 
 @Injectable({
   providedIn: 'root'
@@ -850,7 +852,7 @@ ${story.plotOutline.content}`;
   }
 
   /**
-   * Request editor review using structured context
+   * Request editor review using RequestContext API
    */
   requestEditorReview(
     story: Story,
@@ -858,81 +860,65 @@ ${story.plotOutline.content}`;
     options: { validate?: boolean; optimize?: boolean } = {}
   ): Observable<StructuredEditorReviewResponse> {
     try {
-      // Build structured request using ContextBuilderService
-      const systemPromptsResult = this.contextBuilderService.buildSystemPromptsContext(story);
-      const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
-      const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
-      const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
-      const charactersResult = this.contextBuilderService.buildCharacterContext(story);
+      // Use transformToRequestContext utility to generate context
+      const requestContext = transformToRequestContext(story);
 
-      // Check if context building was successful
-      if (!systemPromptsResult.success || !worldbuildingResult.success || 
-          !storySummaryResult.success || !chaptersResult.success || !charactersResult.success) {
-        throw new Error('Failed to build required context for structured editor review request');
+      // Determine chapter number by matching chapterText with story chapters
+      let chapterNumber = 1; // Default to 1 if not found
+      if (story.story?.chapters) {
+        const matchingChapter = story.story.chapters.find(chapter => 
+          chapter.content.trim() === chapterText.trim()
+        );
+        if (matchingChapter) {
+          chapterNumber = matchingChapter.number;
+        } else {
+          // If exact match not found, try to find by partial content match
+          const partialMatch = story.story.chapters.find(chapter => 
+            chapter.content.includes(chapterText.substring(0, Math.min(100, chapterText.length)))
+          );
+          if (partialMatch) {
+            chapterNumber = partialMatch.number;
+          }
+        }
       }
 
-      // Build structured request
-      let structuredRequest: StructuredEditorReviewRequest = {
-        systemPrompts: {
-          mainPrefix: systemPromptsResult.data!.mainPrefix,
-          mainSuffix: systemPromptsResult.data!.mainSuffix,
-          editorPrompt: systemPromptsResult.data!.assistantPrompt
-        },
-        worldbuilding: {
-          content: worldbuildingResult.data!.content,
-          lastModified: new Date(),
-          wordCount: worldbuildingResult.data!.content.split(/\s+/).length
-        },
-        storySummary: {
-          summary: storySummaryResult.data!.summary,
-          lastModified: new Date(),
-          wordCount: storySummaryResult.data!.summary.split(/\s+/).length
-        },
-        previousChapters: chaptersResult.data!.chapters.map(ch => ({
-          number: ch.number,
-          title: ch.title,
-          content: ch.content,
-          wordCount: ch.content.split(/\s+/).length
-        })),
-        characters: charactersResult.data!.characters.map((c: StructuredCharacter) => ({
-          name: c.name,
-          basicBio: c.basicBio,
-          sex: c.sex,
-          gender: c.gender,
-          sexualPreference: c.sexualPreference,
-          age: c.age,
-          physicalAppearance: c.physicalAppearance,
-          usualClothing: c.usualClothing,
-          personality: c.personality,
-          motivations: c.motivations,
-          fears: c.fears,
-          relationships: c.relationships,
-          isHidden: c.isHidden
-        })),
-        chapterToReview: chapterText,
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
-        }
+      // Create new request format
+      const request: BackendEditorReviewRequest = {
+        chapter_number: chapterNumber,
+        request_context: requestContext
       };
 
-      // Validate request if requested
+      // Note: Validation and optimization options are maintained for backward compatibility
+      // but are not currently implemented for the new RequestContext format
       if (options.validate !== false) {
-        const validationResult = this.requestValidatorService.validateEditorReviewRequest(structuredRequest);
-        if (!validationResult.isValid) {
-          throw new Error(`Request validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
-        }
+        // TODO: Implement validation for RequestContext format if needed
+        console.warn('Validation not yet implemented for RequestContext format');
       }
 
-      // Optimize request if requested
       if (options.optimize !== false) {
-        const optimizationResult = this.requestOptimizerService.optimizeEditorReviewRequest(structuredRequest);
-        structuredRequest = optimizationResult.optimizedRequest;
+        // TODO: Implement optimization for RequestContext format if needed
+        console.warn('Optimization not yet implemented for RequestContext format');
       }
 
-      return this.apiService.requestEditorReview(structuredRequest);
+      // Call new API method and transform response to maintain compatibility
+      return this.apiService.requestEditorReviewWithContext(request).pipe(
+        map((backendResponse: BackendEditorReviewResponse): StructuredEditorReviewResponse => ({
+          overallAssessment: `Editor review for chapter ${chapterNumber}`, // Provide default assessment
+          suggestions: backendResponse.suggestions.map(suggestion => ({
+            issue: suggestion.issue,
+            suggestion: suggestion.suggestion,
+            priority: suggestion.priority as 'high' | 'medium' | 'low',
+            selected: false // Default to not selected
+          })),
+          metadata: {
+            requestId: `editor_review_${chapterNumber}_${Date.now()}`,
+            processingTime: 0,
+            optimizationsApplied: []
+          }
+        }))
+      );
     } catch (error) {
-      throw new Error(`Failed to request structured editor review: ${error}`);
+      throw new Error(`Failed to request editor review: ${error}`);
     }
   }
 

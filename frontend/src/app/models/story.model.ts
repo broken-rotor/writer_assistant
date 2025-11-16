@@ -368,6 +368,21 @@ export interface EditorReviewRequest {
   chapterToReview: string;
 }
 
+export interface BackendEditorReviewRequest {
+  chapter_number: number;
+  request_context: RequestContext;
+}
+
+export interface BackendEditorSuggestion {
+  issue: string;
+  suggestion: string;
+  priority: string; // "high", "medium", "low"
+}
+
+export interface BackendEditorReviewResponse {
+  suggestions: BackendEditorSuggestion[];
+}
+
 export interface BackendGenerateChapterRequest {
   plotPoint: string;
   request_context: RequestContext;
