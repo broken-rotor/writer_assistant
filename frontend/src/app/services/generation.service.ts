@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiService } from './api.service';
+import { ApiService, CharacterFeedbackRequest } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
 import { RequestConverterService } from './request-converter.service';
 import { RequestValidatorService } from './request-validator.service';
@@ -31,7 +31,6 @@ import {
   BackendGenerateChapterRequest
 } from '../models/story.model';
 import {
-  StructuredCharacterFeedbackRequest,
   StructuredEditorReviewRequest,
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackResponse,
@@ -755,7 +754,7 @@ ${story.plotOutline.content}`;
   // ============================================================================
 
   /**
-   * Request character feedback using structured context
+   * Request character feedback using RequestContext API
    */
   requestCharacterFeedback(
     story: Story,
@@ -764,83 +763,31 @@ ${story.plotOutline.content}`;
     options: { validate?: boolean; optimize?: boolean } = {}
   ): Observable<StructuredCharacterFeedbackResponse> {
     try {
-      // Build structured request using ContextBuilderService
-      const systemPromptsResult = this.contextBuilderService.buildSystemPromptsContext(story);
-      const worldbuildingResult = this.contextBuilderService.buildWorldbuildingContext(story);
-      const storySummaryResult = this.contextBuilderService.buildStorySummaryContext(story);
-      const chaptersResult = this.contextBuilderService.buildChaptersContext(story);
+      // Use transformToRequestContext utility to generate context
+      const request_context = transformToRequestContext(story);
 
-      // Check if context building was successful
-      if (!systemPromptsResult.success || !worldbuildingResult.success || 
-          !storySummaryResult.success || !chaptersResult.success) {
-        throw new Error('Failed to build required context for structured character feedback request');
-      }
-
-      // Build structured request
-      let structuredRequest: StructuredCharacterFeedbackRequest = {
-        systemPrompts: {
-          mainPrefix: systemPromptsResult.data!.mainPrefix,
-          mainSuffix: systemPromptsResult.data!.mainSuffix
-        },
-        worldbuilding: {
-          content: worldbuildingResult.data!.content,
-          lastModified: new Date(),
-          wordCount: worldbuildingResult.data!.content.split(/\s+/).length
-        },
-        storySummary: {
-          summary: storySummaryResult.data!.summary,
-          lastModified: new Date(),
-          wordCount: storySummaryResult.data!.summary.split(/\s+/).length
-        },
-        previousChapters: chaptersResult.data!.chapters.map(ch => ({
-          number: ch.number,
-          title: ch.title,
-          content: ch.content,
-          wordCount: ch.content.split(/\s+/).length
-        })),
-        character: {
-          name: character.name,
-          basicBio: character.basicBio,
-          sex: character.sex,
-          gender: character.gender,
-          sexualPreference: character.sexualPreference,
-          age: character.age,
-          physicalAppearance: character.physicalAppearance,
-          usualClothing: character.usualClothing,
-          personality: character.personality,
-          motivations: character.motivations,
-          fears: character.fears,
-          relationships: character.relationships,
-          isHidden: character.isHidden
-        },
-        plotContext: {
-          plotPoint: plotPoint,
-          plotOutline: story.plotOutline?.content,
-          plotOutlineStatus: story.plotOutline?.status
-        },
-        requestMetadata: {
-          timestamp: new Date(),
-          requestSource: 'generation_service_structured'
-        }
+      // Build new request format
+      const request: CharacterFeedbackRequest = {
+        character_name: character.name,
+        plotPoint: plotPoint,
+        request_context: request_context
       };
 
-      // Validate request if requested
+      // Note: Validation and optimization options are maintained for backward compatibility
+      // but are currently not implemented for the new RequestContext format
       if (options.validate !== false) {
-        const validationResult = this.requestValidatorService.validateCharacterFeedbackRequest(structuredRequest);
-        if (!validationResult.isValid) {
-          throw new Error(`Request validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
-        }
+        // TODO: Implement validation for RequestContext format if needed
+        console.log('Validation option noted but not implemented for RequestContext format');
       }
 
-      // Optimize request if requested
       if (options.optimize !== false) {
-        const optimizationResult = this.requestOptimizerService.optimizeCharacterFeedbackRequest(structuredRequest);
-        structuredRequest = optimizationResult.optimizedRequest;
+        // TODO: Implement optimization for RequestContext format if needed
+        console.log('Optimization option noted but not implemented for RequestContext format');
       }
 
-      return this.apiService.requestCharacterFeedback(structuredRequest);
+      return this.apiService.requestCharacterFeedback(request);
     } catch (error) {
-      throw new Error(`Failed to request structured character feedback: ${error}`);
+      throw new Error(`Failed to request character feedback: ${error}`);
     }
   }
 

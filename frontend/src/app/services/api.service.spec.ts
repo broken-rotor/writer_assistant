@@ -3,13 +3,14 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { of, Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
-  StructuredCharacterFeedbackRequest,
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackRequest,
   StructuredRaterFeedbackResponse,
   StructuredGenerateChapterResponse,
   StructuredEditorReviewRequest
 } from '../models/structured-request.model';
+import { CharacterFeedbackRequest } from './api.service';
+import { transformToRequestContext } from '../utils/context-transformer';
 import { BackendGenerateChapterRequest } from '../models/story.model';
 import { TokenStrategiesResponse } from '../models/token-limits.model';
 
@@ -36,36 +37,48 @@ describe('ApiService', () => {
   });
 
   describe('requestCharacterFeedback', () => {
-    it('should send POST request to character-feedback/structured endpoint', () => {
-      const request: StructuredCharacterFeedbackRequest = {
-        systemPrompts: {
-          mainPrefix: '',
-          mainSuffix: ''
+    it('should send POST request to character-feedback endpoint', () => {
+      // Create a minimal mock story for the transformer
+      const mockStory = {
+        id: 'test-story',
+        general: {
+          title: 'Test Story',
+          systemPrompts: {
+            mainPrefix: 'Test prefix',
+            mainSuffix: 'Test suffix',
+            assistantPrompt: '',
+            editorPrompt: ''
+          },
+          worldbuilding: 'A fantasy world'
         },
-        worldbuilding: {
-          content: 'A fantasy world'
+        characters: new Map(),
+        raters: new Map(),
+        story: {
+          summary: 'A story',
+          chapters: []
         },
-        storySummary: {
-          summary: 'A story'
+        plotOutline: {
+          content: '',
+          status: 'draft' as const,
+          chatHistory: [],
+          raterFeedback: new Map(),
+          metadata: {
+            created: new Date(),
+            lastModified: new Date(),
+            version: 1
+          }
         },
-        previousChapters: [],
-        character: {
-          name: 'Test Character',
-          basicBio: 'A hero',
-          sex: 'Male',
-          gender: 'Male',
-          sexualPreference: 'Heterosexual',
-          age: 30,
-          physicalAppearance: 'Tall',
-          usualClothing: 'Armor',
-          personality: 'Brave',
-          motivations: 'Justice',
-          fears: 'Failure',
-          relationships: 'None'
-        },
-        plotContext: {
-          plotPoint: 'The hero enters the dungeon'
+        metadata: {
+          version: '1.0',
+          created: new Date(),
+          lastModified: new Date()
         }
+      };
+
+      const request: CharacterFeedbackRequest = {
+        character_name: 'Test Character',
+        plotPoint: 'The hero enters the dungeon',
+        request_context: transformToRequestContext(mockStory)
       };
 
       const mockResponse: StructuredCharacterFeedbackResponse = {
@@ -83,7 +96,7 @@ describe('ApiService', () => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/character-feedback/structured`);
+      const req = httpMock.expectOne(`${baseUrl}/character-feedback`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(request);
       req.flush(mockResponse);

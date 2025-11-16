@@ -22,7 +22,6 @@ import {
   BackendGenerateChapterRequest
 } from '../models/story.model';
 import {
-  StructuredCharacterFeedbackRequest,
   StructuredRaterFeedbackRequest,
   StructuredEditorReviewRequest,
   StructuredCharacterFeedbackResponse,
@@ -31,6 +30,14 @@ import {
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';
 import { TokenStrategiesResponse } from '../models/token-limits.model';
+import { RequestContext } from '../utils/context-transformer';
+
+// New RequestContext-based request interfaces
+export interface CharacterFeedbackRequest {
+  character_name: string;
+  plotPoint: string;
+  request_context: RequestContext;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -234,9 +241,9 @@ export class ApiService {
   // NEW STRUCTURED REQUEST METHODS (WRI-72)
   // ============================================================================
 
-  // Character Feedback
-  requestCharacterFeedback(request: StructuredCharacterFeedbackRequest): Observable<StructuredCharacterFeedbackResponse> {
-    return this.http.post<StructuredCharacterFeedbackResponse>(`${this.baseUrl}/character-feedback/structured`, request);
+  // Character Feedback - Updated to use RequestContext API
+  requestCharacterFeedback(request: CharacterFeedbackRequest): Observable<StructuredCharacterFeedbackResponse> {
+    return this.http.post<StructuredCharacterFeedbackResponse>(`${this.baseUrl}/character-feedback`, request);
   }
 
   // Rater Feedback (now uses streaming internally)
