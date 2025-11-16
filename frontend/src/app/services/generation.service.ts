@@ -18,6 +18,7 @@ import {
   ModifyChapterResponse,
   FleshOutRequest,
   FleshOutResponse,
+  FleshOutType,
   GenerateCharacterDetailsRequest,
   GenerateCharacterDetailsResponse,
   RegenerateBioRequest,
@@ -129,12 +130,14 @@ export class GenerationService {
   fleshOut(
     story: Story,
     textToFleshOut: string,
-    context: string
+    context: string,
+    requestType: FleshOutType
   ): Observable<FleshOutResponse> {
     // Use the new RequestContext transformation
     const requestContext = transformToRequestContext(story);
 
     const request: FleshOutRequest = {
+      request_type: requestType,
       textToFleshOut: textToFleshOut,
       context: context,
       request_context: requestContext

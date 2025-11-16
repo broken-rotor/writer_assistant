@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Story, ChatMessage } from '../../models/story.model';
+import { Story, ChatMessage, FleshOutType } from '../../models/story.model';
 import { TokenCounterComponent } from '../token-counter/token-counter.component';
 import { TokenCounterData, TokenCounterDisplayMode } from '../../models/token-counter.model';
 import { WorldbuildingChatComponent } from '../worldbuilding-chat/worldbuilding-chat.component';
@@ -96,7 +96,8 @@ export class WorldbuildingTabComponent implements OnInit, OnDestroy {
     const subscription = this.generationService.fleshOut(
       this.story,
       this.story.general.worldbuilding,
-      'worldbuilding expansion'
+      'worldbuilding expansion',
+      FleshOutType.WORLDBUILDING
     ).subscribe({
       next: (response: any) => {
         if (this.story) {

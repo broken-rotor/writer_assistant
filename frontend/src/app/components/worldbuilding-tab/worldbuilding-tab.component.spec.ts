@@ -7,7 +7,7 @@ import { ToastService } from '../../services/toast.service';
 import { LoadingService } from '../../services/loading.service';
 import { GenerationService } from '../../services/generation.service';
 import { ConversationService } from '../../services/conversation.service';
-import { Story } from '../../models/story.model';
+import { Story, FleshOutType } from '../../models/story.model';
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import { TokenCountResultItem, ContentType, CountingStrategy } from '../../models/token.model';
 
@@ -217,7 +217,8 @@ describe('WorldbuildingTabComponent', () => {
     expect(mockGenerationService.fleshOut).toHaveBeenCalledWith(
       component.story!,
       'Test worldbuilding content',
-      'worldbuilding expansion'
+      'worldbuilding expansion',
+      FleshOutType.WORLDBUILDING
     );
   });
 

@@ -7,7 +7,7 @@ import { TokenCountingService } from './token-counting.service';
 import { RequestConverterService } from './request-converter.service';
 
 import { RequestOptimizerService } from './request-optimizer.service';
-import { Story, Character, Rater } from '../models/story.model';
+import { Story, Character, Rater, FleshOutType } from '../models/story.model';
 import { 
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackResponse,
@@ -505,10 +505,11 @@ describe('GenerationService', () => {
 
       apiServiceSpy.fleshOut.and.returnValue(of(mockResponse));
 
-      service.fleshOut(mockStory, 'Short text', 'plot_outline').subscribe(response => {
+      service.fleshOut(mockStory, 'Short text', 'plot_outline', FleshOutType.WORLDBUILDING).subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.fleshOut).toHaveBeenCalledWith(
           jasmine.objectContaining({
+            request_type: FleshOutType.WORLDBUILDING,
             textToFleshOut: 'Short text',
             context: 'plot_outline'
           })

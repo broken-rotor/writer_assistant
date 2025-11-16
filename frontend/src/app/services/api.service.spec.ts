@@ -11,7 +11,7 @@ import {
 } from '../models/structured-request.model';
 import { CharacterFeedbackRequest } from './api.service';
 import { transformToRequestContext } from '../utils/context-transformer';
-import { BackendGenerateChapterRequest } from '../models/story.model';
+import { BackendGenerateChapterRequest, FleshOutType } from '../models/story.model';
 import { TokenStrategiesResponse } from '../models/token-limits.model';
 
 describe('ApiService', () => {
@@ -390,6 +390,7 @@ describe('ApiService', () => {
   describe('fleshOut', () => {
     it('should send POST request to flesh-out endpoint', () => {
       const request = {
+        request_type: FleshOutType.WORLDBUILDING,
         textToFleshOut: 'The hero is brave',
         context: 'character description',
         request_context: {
