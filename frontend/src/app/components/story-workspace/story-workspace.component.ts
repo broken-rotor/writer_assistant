@@ -344,12 +344,13 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     this.storyService.saveStory(this.story);
   }
 
-  generateCharacterDetails() {
-    if (!this.story || !this.editingCharacter || !this.editingCharacter.name || !this.editingCharacter.basicBio) {
-      alert('Please enter both character name and basic bio first');
-      return;
-    }
+  get isGenerateCharacterDetailsDisabled(): boolean {
+    return !this.story || !this.editingCharacter || !this.editingCharacter.name || !this.editingCharacter.basicBio;
+  }
 
+  generateCharacterDetails() {
+    if (!this.story || !this.editingCharacter) return;
+    
     // Save the character to the story BEFORE making the API call so it's included in RequestContext
     this.saveCharacter();
 
