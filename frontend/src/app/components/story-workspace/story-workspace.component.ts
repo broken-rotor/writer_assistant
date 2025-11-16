@@ -23,7 +23,7 @@ import {
   RecoveryAction
 } from '../../constants/token-limits.constants';
 import { PlotOutlineTabComponent } from '../plot-outline-tab/plot-outline-tab.component';
-import { FeedbackSidebarComponent, FeedbackSidebarConfig } from '../feedback-sidebar/feedback-sidebar.component';
+
 import { FeedbackService } from '../../services/feedback.service';
 import { ContextBuilderService } from '../../services/context-builder.service';
 import { WorldbuildingTabComponent } from '../worldbuilding-tab/worldbuilding-tab.component';
@@ -40,7 +40,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlineTabComponent, FeedbackSidebarComponent, WorldbuildingTabComponent, ChapterEditorComponent, MatIconModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlineTabComponent, WorldbuildingTabComponent, ChapterEditorComponent, MatIconModule],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
@@ -82,9 +82,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   isTokenLimitsRetrying = false;
   isTokenLimitsFallbackMode = false;
 
-  // Feedback sidebar state
-  showFeedbackSidebar = false;
-  feedbackSidebarConfig: FeedbackSidebarConfig | null = null;
+
 
   private destroy$ = new Subject<void>();
 
