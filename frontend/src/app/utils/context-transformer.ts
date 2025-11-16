@@ -180,6 +180,24 @@ export interface RequestContext {
 // ============================================================================
 
 /**
+ * Helper function to safely convert a date value to ISO string
+ * Handles both Date objects and ISO string values (from localStorage)
+ */
+function toISOString(dateValue: Date | string): string {
+  if (!dateValue) {
+    return new Date().toISOString();
+  }
+  if (typeof dateValue === 'string') {
+    return dateValue; // Already an ISO string
+  }
+  if (dateValue instanceof Date) {
+    return dateValue.toISOString();
+  }
+  // Fallback: try to parse and convert
+  return new Date(dateValue).toISOString();
+}
+
+/**
  * Transform Story model to RequestContext format
  */
 export function transformToRequestContext(
@@ -207,7 +225,7 @@ export function transformToRequestContext(
         id: msg.id,
         type: msg.type,
         content: msg.content,
-        timestamp: msg.timestamp.toISOString(),
+        timestamp: toISOString(msg.timestamp),
         author: msg.author
       })),
       key_elements: []
@@ -232,7 +250,7 @@ export function transformToRequestContext(
       memories: char.fears ? [`Fears: ${char.fears}`] : [],
       is_hidden: char.isHidden,
       creation_source: char.metadata.creationSource,
-      last_modified: char.metadata.lastModified.toISOString()
+      last_modified: toISOString(char.metadata.lastModified)
     })),
     story_outline: {
       summary: story.story?.summary || '',
@@ -244,14 +262,14 @@ export function transformToRequestContext(
         rater_name: feedback.raterName,
         feedback: feedback.feedback,
         status: feedback.status,
-        timestamp: feedback.timestamp.toISOString(),
+        timestamp: toISOString(feedback.timestamp),
         user_response: feedback.userResponse
       })),
       chat_history: (story.plotOutline?.chatHistory || []).map(msg => ({
         id: msg.id,
         type: msg.type,
         content: msg.content,
-        timestamp: msg.timestamp.toISOString(),
+        timestamp: toISOString(msg.timestamp),
         author: msg.author
       }))
     },
@@ -275,8 +293,8 @@ export function transformToRequestContext(
       rater_feedback: [],
       editor_suggestions: [],
       word_count: chapter.metadata.wordCount,
-      created: chapter.metadata.created.toISOString(),
-      last_modified: chapter.metadata.lastModified.toISOString()
+      created: toISOString(chapter.metadata.created),
+      last_modified: toISOString(chapter.metadata.lastModified)
     })),
     context_metadata: {
       story_id: story.id,
