@@ -22,24 +22,12 @@
           "system_prompts": {
             "main_prefix": "You are a skilled fantasy writer assistant working on 'The Crystal Prophecy' story.",
             "main_suffix": "Provide helpful writing advice that maintains story consistency and character authenticity.",
-            "assistant_prompt": "As the Writer Agent, offer creative guidance that enhances narrative quality and character development."
-          },
-          "generation_preferences": {
-            "tone": "epic fantasy",
-            "perspective": "third person limited",
-            "target_audience": "young adult"
+            "assistant_prompt": "As the Writer Agent, offer creative guidance that enhances narrative quality and character development.",
+            "editor_prompt": ""
           }
         },
         "worldbuilding": {
-          "content": "Eldoria is a magical realm where courage is tested through trials that reveal one's true character. The Crystal Caverns serve as ancient proving grounds.",
-          "key_elements": [
-            {
-              "type": "location",
-              "name": "Crystal Caverns",
-              "description": "Ancient trial grounds that test worthiness through magical challenges",
-              "importance": "high"
-            }
-          ]
+          "content": "Eldoria is a magical realm where courage is tested through trials that reveal one's true character. The Crystal Caverns serve as ancient proving grounds."
         },
         "characters": [
           {
@@ -74,6 +62,7 @@
               "id": "outline_trial",
               "type": "scene",
               "title": "The Guardian's Trial",
+              "order": 1,
               "description": "Aria must prove her worthiness through courage and selflessness",
               "key_plot_items": [
                 "Aria confronts her deepest fears",
@@ -95,15 +84,6 @@
             "narrative_focus": "internal conflict and growth"
           }
         }
-      },
-      "context_processing_config": {
-        "summarization_enabled": true,
-        "max_context_length": 2000,
-        "priority_filtering": true,
-        "character_focus": ["Aria Moonwhisper"],
-        "optimization_level": "moderate",
-        "preserve_recent_content": true,
-        "include_feedback_history": false
       },
       "max_tokens": 1000,
       "temperature": 0.8

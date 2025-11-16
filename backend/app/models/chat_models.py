@@ -1,27 +1,14 @@
 """
 Pydantic models for LLM chat API requests and responses.
-Separate from RAG chat functionality.
 """
-from typing import List, Optional, Literal, Dict, Any
-from pydantic import BaseModel, Field, model_validator
-from .generation_models import ConversationMessage, SystemPrompts
+from typing import List, Optional, Literal
+from pydantic import BaseModel, Field
+from .generation_models import ConversationMessage
 from .request_context import RequestContext
-from .context_models import ContextProcessingConfig
 
 
 # Agent types for LLM chat
 AgentType = Literal['writer', 'character', 'editor', 'worldbuilding']
-
-
-class ChatComposeContext(BaseModel):
-    """Context for compose system chat."""
-    story_context: Dict[str, Any]  # Flexible story context
-    chapter_draft: Optional[str] = None
-    conversation_branch_id: Optional[str] = None
-    # Worldbuilding-specific context
-    worldbuilding_topic: Optional[str] = None
-    worldbuilding_state: Optional[str] = None
-    accumulated_worldbuilding: Optional[str] = None
 
 
 class LLMChatRequest(BaseModel):
@@ -29,17 +16,9 @@ class LLMChatRequest(BaseModel):
     messages: List[ConversationMessage]
     agent_type: AgentType
     
-    # Unified context field (replaces individual context fields)
-    request_context: Optional[RequestContext] = Field(
-        default=None,
+    request_context: RequestContext = Field(
         description="Complete request context with story configuration, worldbuilding, "
                     "characters, outline, and chapters"
-    )
-    
-    # Optional processing configuration
-    context_processing_config: Optional[ContextProcessingConfig] = Field(
-        default=None,
-        description="Configuration for context processing (summarization, filtering, etc.)"
     )
     
     # Optional parameters for chat behavior
@@ -50,5 +29,3 @@ class LLMChatRequest(BaseModel):
 class LLMChatResponse(BaseModel):
     """Response model for LLM chat."""
     message: ConversationMessage
-    agent_type: AgentType
-    metadata: Dict[str, Any]
