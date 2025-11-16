@@ -11,8 +11,7 @@ import { Story, Character, Rater } from '../models/story.model';
 import { 
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackResponse,
-  StructuredGenerateChapterResponse,
-  StructuredEditorReviewResponse
+  StructuredGenerateChapterResponse
 } from '../models/structured-request.model';
 import { of } from 'rxjs';
 
@@ -30,6 +29,7 @@ describe('GenerationService', () => {
       'generateChapter',
       'modifyChapter',
       'requestEditorReview',
+      'requestEditorReviewWithContext',
       'fleshOut',
       'generateCharacterDetails'
     ]);
@@ -469,85 +469,33 @@ describe('GenerationService', () => {
   });
 
   describe('requestEditorReview', () => {
-    it('should build structured request with chapter and call API', (done) => {
+    it('should use RequestContext API and transform response', (done) => {
       const mockStory = createMockStory();
-      const mockResponse: StructuredEditorReviewResponse = {
-        overallAssessment: 'Good chapter',
-        suggestions: []
+      const mockBackendResponse = {
+        suggestions: [
+          {
+            issue: 'Test issue',
+            suggestion: 'Test suggestion',
+            priority: 'high'
+          }
+        ]
       };
 
-      // Configure context builder spy methods to return successful responses
-      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
-        success: true,
-        data: {
-          mainPrefix: 'System prefix',
-          mainSuffix: 'System suffix',
-          assistantPrompt: 'Assistant prompt'
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
 
-      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
-        success: true,
-        data: {
-          content: 'Test worldbuilding',
-          isValid: true,
-          wordCount: 2,
-          lastUpdated: new Date()
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
 
-      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
-        success: true,
-        data: {
-          summary: 'Test story summary',
-          isValid: true,
-          wordCount: 3,
-          lastUpdated: new Date()
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
-
-      contextBuilderSpy.buildChaptersContext.and.returnValue({
-        success: true,
-        data: {
-          chapters: [],
-          totalChapters: 0,
-          totalWordCount: 0,
-          lastUpdated: new Date()
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
-
-      contextBuilderSpy.buildCharacterContext.and.returnValue({
-        success: true,
-        data: {
-          characters: [],
-          totalCharacters: 0,
-          visibleCharacters: 0,
-          lastUpdated: new Date()
-        },
-        errors: undefined,
-        warnings: undefined,
-        fromCache: false
-      });
-
-      apiServiceSpy.requestEditorReview.and.returnValue(of(mockResponse));
+      apiServiceSpy.requestEditorReviewWithContext.and.returnValue(of(mockBackendResponse));
 
       service.requestEditorReview(mockStory, 'Chapter text').subscribe(response => {
-        expect(response).toEqual(mockResponse);
-        expect(apiServiceSpy.requestEditorReview).toHaveBeenCalledWith(
+        expect(response.overallAssessment).toEqual('Editor review for chapter 1');
+        expect(response.suggestions.length).toBe(1);
+        expect(response.suggestions[0].issue).toBe('Test issue');
+        expect(response.suggestions[0].suggestion).toBe('Test suggestion');
+        expect(response.suggestions[0].priority).toBe('high');
+        expect(response.suggestions[0].selected).toBe(false);
+        expect(apiServiceSpy.requestEditorReviewWithContext).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            chapterToReview: 'Chapter text'
+            chapter_number: 1,
+            request_context: jasmine.any(Object)
           })
         );
         done();

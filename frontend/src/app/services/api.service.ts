@@ -19,7 +19,9 @@ import {
   ChapterOutlineGenerationRequest,
   ChapterOutlineGenerationResponse,
   // Backend request interfaces
-  BackendGenerateChapterRequest
+  BackendGenerateChapterRequest,
+  BackendEditorReviewRequest,
+  BackendEditorReviewResponse
 } from '../models/story.model';
 import {
   StructuredRaterFeedbackRequest,
@@ -354,9 +356,17 @@ export class ApiService {
     return this.http.post<StructuredGenerateChapterResponse>(`${this.baseUrl}/generate-chapter`, request);
   }
 
-  // Editor Review
+  // Editor Review (Legacy)
   requestEditorReview(request: StructuredEditorReviewRequest): Observable<StructuredEditorReviewResponse> {
     return this.sseStreamingService.createSSEObservable<StructuredEditorReviewResponse>(
+      `${this.baseUrl}/editor-review`,
+      request
+    );
+  }
+
+  // Editor Review (New RequestContext API)
+  requestEditorReviewWithContext(request: BackendEditorReviewRequest): Observable<BackendEditorReviewResponse> {
+    return this.sseStreamingService.createSSEObservable<BackendEditorReviewResponse>(
       `${this.baseUrl}/editor-review`,
       request
     );
