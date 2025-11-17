@@ -1776,10 +1776,13 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 8px;
 
   .chapter-editor-modal {
-    width: 95vw;
-    height: 95vh;
+    width: min(95vw, 1400px);
+    height: min(95vh, 900px);
+    max-width: 95vw;
+    max-height: 95vh;
     background: white;
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -1800,8 +1803,33 @@ button {
 }
 
 // Responsive adjustments for chapter editor modal
+@media (max-width: 1200px) {
+  .chapter-editor-overlay {
+    .chapter-editor-modal {
+      width: 98vw;
+      height: 98vh;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .chapter-editor-overlay {
+    padding: 4px;
+    
+    .chapter-editor-modal {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .chapter-editor-overlay {
+    padding: 0;
+    
     .chapter-editor-modal {
       width: 100vw;
       height: 100vh;

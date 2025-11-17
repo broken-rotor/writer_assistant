@@ -17,7 +17,7 @@ import {
   Story
 } from '../../models/story.model';
 import { ChapterEditorService, ChapterEditingState } from '../../services/chapter-editor.service';
-import { FeedbackIntegrationComponent, FeedbackAction } from '../feedback-integration/feedback-integration.component';
+import { FeedbackIntegrationComponent, FeedbackAction, FeedbackRequest } from '../feedback-integration/feedback-integration.component';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
 
 @Component({
@@ -158,14 +158,18 @@ export class ChapterEditorComponent implements OnInit, OnDestroy {
       });
   }
 
-  onGetFeedback(feedbackType: 'character' | 'rater' | 'both'): void {
+  onGetFeedback(request: FeedbackRequest): void {
     if (!this.story) return;
 
-    if (feedbackType === 'character' || feedbackType === 'both') {
+    if (request.type === 'character' || request.type === 'both') {
+      // TODO: Handle character-specific feedback when characterId is provided
       this.chapterEditorService.getCharacterFeedback(this.story)
         .subscribe({
           next: (feedback) => {
-            this.snackBar.open(`Got feedback from ${feedback.length} characters`, 'Close', {
+            const message = request.type === 'character' && 'characterId' in request && request.characterId
+              ? `Got feedback from selected character`
+              : `Got feedback from ${feedback.length} characters`;
+            this.snackBar.open(message, 'Close', {
               duration: 3000,
               panelClass: ['success-snackbar']
             });
@@ -176,7 +180,7 @@ export class ChapterEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    if (feedbackType === 'rater' || feedbackType === 'both') {
+    if (request.type === 'rater' || request.type === 'both') {
       this.chapterEditorService.getRaterFeedback(this.story)
         .subscribe({
           next: (feedback) => {

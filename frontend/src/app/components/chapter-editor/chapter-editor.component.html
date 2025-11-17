@@ -264,6 +264,7 @@
         [isLoading]="state.isGettingFeedback"
         [disabled]="disabled || isAnyOperationInProgress()"
         [showGetFeedbackButton]="canGetFeedback()"
+        [story]="story"
         (getFeedback)="onGetFeedback($event)"
         (applyFeedback)="onApplyFeedback($event)"
         (clearFeedback)="onClearFeedback()"
