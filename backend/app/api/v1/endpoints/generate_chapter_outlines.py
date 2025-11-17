@@ -11,9 +11,8 @@ from datetime import datetime, UTC
 
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
+from app.services.token_counter import TokenCounter
 from app.models.chapter_models import ChapterOutlineRequest, OutlineItem, ChapterOutlineResponse
-# Legacy import removed in B4 - CharacterContext class removed
-# from app.models.generation_models import CharacterContext
 from app.api.v1.endpoints.shared_utils import parse_json_array_response
 
 logger = logging.getLogger(__name__)
@@ -28,20 +27,20 @@ async def generate_chapter_outlines(request: ChapterOutlineRequest):
     This endpoint analyzes the provided story outline and generates a detailed
     chapter-by-chapter breakdown that can be used in the chapter development phase.
     """
+    # Initialize LLM service
+    llm = get_llm()
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM not initialized. Start server with --model-path")
+    token_counter = TokenCounter(llm)
+
     logger.info("Starting chapter outline generation")
     
     if not request.request_context.story_outline.content.strip():
         raise HTTPException(status_code=400, detail="Story outline cannot be empty")
     
     try:
-        
-        # Initialize LLM service
-        llm = get_llm()
-        if not llm:
-            raise HTTPException(
-                status_code=503,
-                detail="LLM not initialized. Start server with --model-path")
-        
         # Prepare the base system prompt
         system_prompt = """You are an expert story structure analyst and chapter outline generator with deep knowledge of narrative pacing, plot development, and three-act structure.
 
@@ -115,7 +114,7 @@ Respond ONLY with the JSON array, no additional text before or after."""
 
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 
-        context_builder = ContextBuilder(request_context=request.request_context)
+        context_builder = ContextBuilder(request.request_context, token_counter)
         context_builder.add_long_term_elements(system_prompt)
         context_builder.add_agent_instruction(agent_prompt)
         

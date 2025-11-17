@@ -10,6 +10,7 @@ from app.models.generation_models import (
 )
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
+from app.services.token_counter import TokenCounter
 from app.api.v1.endpoints.shared_utils import parse_json_response, get_character_details
 
 from app.core.config import settings
@@ -30,6 +31,7 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
         raise HTTPException(
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
+    token_counter = TokenCounter(llm)
 
     async def generate_with_updates():
         try:
@@ -38,7 +40,7 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context...', 'progress': 20})}\n\n"
 
-            context_builder = ContextBuilder(request.request_context)
+            context_builder = ContextBuilder(request.request_context, token_counter)
             context_builder.add_system_prompt(request.request_context.configuration.system_prompts.assistant_prompt)
             context_builder.add_worldbuilding()
             context_builder.add_characters(tag='OTHER_CHARACTERS', exclude_characters={request.character_name})

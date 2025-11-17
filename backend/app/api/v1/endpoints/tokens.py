@@ -7,7 +7,7 @@ supporting batch processing, content type detection, and budget validation.
 
 import logging
 from typing import Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, status
 
 from app.models.token_models import (
     TokenCountRequest,
@@ -22,11 +22,6 @@ from app.services.token_counter import TokenCounter
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-def get_token_counter() -> TokenCounter:
-    """Dependency to get TokenCounter instance."""
-    return TokenCounter()
 
 
 @router.post(
@@ -79,10 +74,7 @@ def get_token_counter() -> TokenCounter:
     """,
     tags=["tokens"]
 )
-async def count_tokens(
-    request: TokenCountRequest,
-    token_counter: TokenCounter = Depends(get_token_counter)
-) -> TokenCountResponse:
+async def count_tokens(request: TokenCountRequest) -> TokenCountResponse:
     """
     Count tokens for batch text inputs.
 
@@ -96,6 +88,13 @@ async def count_tokens(
     Raises:
         HTTPException: For validation errors or processing failures
     """
+    llm = get_llm()
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM not initialized. Start server with --model-path")
+    token_counter = TokenCounter(llm)
+
     try:
         logger.info(f"Processing token count request for {len(request.texts)} texts")
 
@@ -167,10 +166,7 @@ async def count_tokens(
     """,
     tags=["tokens"]
 )
-async def validate_token_budget(
-    request: TokenValidationRequest,
-    token_counter: TokenCounter = Depends(get_token_counter)
-) -> TokenValidationResponse:
+async def validate_token_budget(request: TokenValidationRequest) -> TokenValidationResponse:
     """
     Validate texts against a token budget.
 
@@ -184,6 +180,13 @@ async def validate_token_budget(
     Raises:
         HTTPException: For validation errors or processing failures
     """
+    llm = get_llm()
+    if not llm:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM not initialized. Start server with --model-path")
+    token_counter = TokenCounter(llm)
+
     try:
         logger.info(f"Validating {len(request.texts)} texts against budget of {request.budget}")
 
