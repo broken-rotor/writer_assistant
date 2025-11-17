@@ -5,7 +5,6 @@ import {
   Chapter, 
   CharacterFeedback,
   CharacterFeedbackResponse, 
-  RaterFeedback,
   RaterFeedbackResponse, 
   GenerateChapterResponse,
   ModifyChapterResponse,
