@@ -6,9 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { 
   CharacterFeedbackResponse, 
-  RaterFeedbackResponse
+  RaterFeedbackResponse,
+  Story,
+  Character
 } from '../../models/story.model';
 
 export interface FeedbackAction {
@@ -17,6 +22,21 @@ export interface FeedbackAction {
   source: string;
   content: string;
 }
+
+export interface CharacterFeedbackRequest {
+  type: 'character';
+  characterId?: string; // If specified, get feedback from specific character
+}
+
+export interface RaterFeedbackRequest {
+  type: 'rater';
+}
+
+export interface AllFeedbackRequest {
+  type: 'both';
+}
+
+export type FeedbackRequest = CharacterFeedbackRequest | RaterFeedbackRequest | AllFeedbackRequest;
 
 @Component({
   selector: 'app-feedback-integration',
@@ -28,7 +48,10 @@ export interface FeedbackAction {
     MatIconModule,
     MatChipsModule,
     MatExpansionModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatTooltipModule
   ],
   templateUrl: './feedback-integration.component.html',
   styleUrls: ['./feedback-integration.component.scss']
@@ -39,12 +62,15 @@ export class FeedbackIntegrationComponent implements OnInit {
   @Input() isLoading = false;
   @Input() showGetFeedbackButton = true;
   @Input() disabled = false;
+  @Input() story: Story | null = null;
 
-  @Output() getFeedback = new EventEmitter<'character' | 'rater' | 'both'>();
+  @Output() getFeedback = new EventEmitter<FeedbackRequest>();
   @Output() applyFeedback = new EventEmitter<FeedbackAction>();
   @Output() clearFeedback = new EventEmitter<void>();
 
   expandedPanels = new Set<string>();
+  selectedCharacterId: string | null = null;
+  showCharacterSelection = false;
 
   ngOnInit(): void {
     // Auto-expand first panel if there's feedback
@@ -56,15 +82,41 @@ export class FeedbackIntegrationComponent implements OnInit {
   }
 
   onGetCharacterFeedback(): void {
-    this.getFeedback.emit('character');
+    if (this.selectedCharacterId) {
+      this.getFeedback.emit({ type: 'character', characterId: this.selectedCharacterId });
+    } else {
+      this.getFeedback.emit({ type: 'character' });
+    }
   }
 
   onGetRaterFeedback(): void {
-    this.getFeedback.emit('rater');
+    this.getFeedback.emit({ type: 'rater' });
   }
 
   onGetAllFeedback(): void {
-    this.getFeedback.emit('both');
+    this.getFeedback.emit({ type: 'both' });
+  }
+
+  onToggleCharacterSelection(): void {
+    this.showCharacterSelection = !this.showCharacterSelection;
+    if (!this.showCharacterSelection) {
+      this.selectedCharacterId = null;
+    }
+  }
+
+  onSelectCharacter(characterId: string): void {
+    this.selectedCharacterId = characterId;
+  }
+
+  getAvailableCharacters(): Character[] {
+    if (!this.story) return [];
+    return Array.from(this.story.characters.values()).filter(char => !char.isHidden);
+  }
+
+  getSelectedCharacterName(): string {
+    if (!this.selectedCharacterId || !this.story) return '';
+    const character = this.story.characters.get(this.selectedCharacterId);
+    return character ? character.name : '';
   }
 
   onApplyCharacterFeedback(feedback: CharacterFeedbackResponse, feedbackType: keyof CharacterFeedbackResponse['feedback'], item: string): void {

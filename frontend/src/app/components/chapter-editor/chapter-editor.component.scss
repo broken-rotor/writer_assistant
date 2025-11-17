@@ -189,7 +189,7 @@
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
-      min-width: 400px;
+      min-width: 350px;
 
       .chat-card {
         mat-card-header {
@@ -449,6 +449,43 @@
             }
           }
         }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .chapter-editor {
+    .editor-header {
+      padding: 8px 12px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+
+      .header-left {
+        .chapter-info {
+          h2 {
+            font-size: 1.1em;
+          }
+        }
+      }
+
+      .header-actions {
+        align-self: stretch;
+        
+        .save-button {
+          width: 100%;
+        }
+      }
+    }
+
+    .editor-content {
+      padding: 8px;
+      gap: 8px;
+
+      .tools-panel {
+        min-width: auto;
+        max-height: 400px;
       }
     }
   }

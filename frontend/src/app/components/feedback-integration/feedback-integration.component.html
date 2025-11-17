@@ -13,16 +13,48 @@
       </span>
     </div>
     <div class="feedback-actions" *ngIf="showGetFeedbackButton">
-      <button 
-        mat-raised-button 
-        color="primary" 
-        (click)="onGetCharacterFeedback()"
-        [disabled]="isLoading || disabled"
-        class="feedback-button">
-        <mat-icon>people</mat-icon>
-        <span *ngIf="!isLoading">Get Character Feedback</span>
-        <span *ngIf="isLoading">Getting Feedback...</span>
-      </button>
+      <div class="character-feedback-section">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="onGetCharacterFeedback()"
+          [disabled]="isLoading || disabled"
+          class="feedback-button">
+          <mat-icon>people</mat-icon>
+          <span *ngIf="!isLoading">Get Character Feedback</span>
+          <span *ngIf="isLoading">Getting Feedback...</span>
+        </button>
+        
+        <button 
+          mat-icon-button 
+          (click)="onToggleCharacterSelection()"
+          [disabled]="isLoading || disabled || getAvailableCharacters().length === 0"
+          class="character-selection-toggle"
+          matTooltip="Select specific character">
+          <mat-icon>{{ showCharacterSelection ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+        
+        <div class="character-selection" *ngIf="showCharacterSelection && getAvailableCharacters().length > 0">
+          <mat-form-field appearance="outline" class="character-select">
+            <mat-label>Select Character</mat-label>
+            <mat-select 
+              [(value)]="selectedCharacterId" 
+              (selectionChange)="onSelectCharacter($event.value)">
+              <mat-option [value]="null">All Characters</mat-option>
+              <mat-option 
+                *ngFor="let character of getAvailableCharacters()" 
+                [value]="character.id">
+                {{ character.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <div class="selected-character-info" *ngIf="selectedCharacterId">
+            <mat-icon>person</mat-icon>
+            <span>{{ getSelectedCharacterName() }}</span>
+          </div>
+        </div>
+      </div>
       
       <button 
         mat-raised-button 

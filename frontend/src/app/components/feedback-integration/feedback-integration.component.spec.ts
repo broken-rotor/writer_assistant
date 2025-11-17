@@ -59,7 +59,7 @@ describe('FeedbackIntegrationComponent', () => {
     
     component.onGetCharacterFeedback();
     
-    expect(component.getFeedback.emit).toHaveBeenCalledWith('character');
+    expect(component.getFeedback.emit).toHaveBeenCalledWith({ type: 'character' });
   });
 
   it('should emit getFeedback for rater feedback', () => {
@@ -67,7 +67,7 @@ describe('FeedbackIntegrationComponent', () => {
     
     component.onGetRaterFeedback();
     
-    expect(component.getFeedback.emit).toHaveBeenCalledWith('rater');
+    expect(component.getFeedback.emit).toHaveBeenCalledWith({ type: 'rater' });
   });
 
   it('should emit getFeedback for all feedback', () => {
@@ -75,7 +75,7 @@ describe('FeedbackIntegrationComponent', () => {
     
     component.onGetAllFeedback();
     
-    expect(component.getFeedback.emit).toHaveBeenCalledWith('both');
+    expect(component.getFeedback.emit).toHaveBeenCalledWith({ type: 'both' });
   });
 
   it('should emit applyFeedback for character feedback', () => {

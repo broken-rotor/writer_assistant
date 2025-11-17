@@ -3,7 +3,9 @@ import { BehaviorSubject, Observable, Subject, throwError, forkJoin } from 'rxjs
 import { catchError, finalize, map } from 'rxjs/operators';
 import { 
   Chapter, 
+  CharacterFeedback,
   CharacterFeedbackResponse, 
+  RaterFeedback,
   RaterFeedbackResponse, 
   GenerateChapterResponse,
   ModifyChapterResponse,
@@ -57,11 +59,14 @@ export class ChapterEditorService {
    * Initialize chapter editing for a specific chapter
    */
   initializeChapterEditing(chapter: Chapter): void {
+    // Load existing feedback from the chapter's incorporatedFeedback
+    const existingFeedback = this.loadFeedbackFromChapter(chapter);
+    
     this.updateState({
       currentChapter: { ...chapter },
       chatHistory: [],
-      characterFeedback: [],
-      raterFeedback: [],
+      characterFeedback: existingFeedback.characterFeedback,
+      raterFeedback: existingFeedback.raterFeedback,
       userGuidance: '',
       hasUnsavedChanges: false
     });
@@ -314,6 +319,10 @@ export class ChapterEditorService {
           characterName: response.characterName || 'Unknown',
           feedback: response.feedback || 'No feedback provided'
         }));
+        
+        // Save feedback to chapter's incorporatedFeedback
+        this.saveFeedbackToChapter(characterFeedback, 'character');
+        
         this.updateState({ characterFeedback });
         return characterFeedback;
       }),
@@ -363,6 +372,10 @@ export class ChapterEditorService {
           raterName: response.raterName || 'Unknown',
           feedback: response.feedback || 'No feedback provided'
         }));
+        
+        // Save feedback to chapter's incorporatedFeedback
+        this.saveFeedbackToChapter(raterFeedback, 'rater');
+        
         this.updateState({ raterFeedback });
         return raterFeedback;
       }),
@@ -475,6 +488,199 @@ export class ChapterEditorService {
       userGuidance: '',
       hasUnsavedChanges: false
     });
+  }
+
+  /**
+   * Load existing feedback from chapter's incorporatedFeedback
+   */
+  private loadFeedbackFromChapter(chapter: Chapter): { characterFeedback: CharacterFeedbackResponse[], raterFeedback: RaterFeedbackResponse[] } {
+    const characterFeedbackMap = new Map<string, CharacterFeedback>();
+    const raterFeedbackMap = new Map<string, { opinion: string, suggestions: { issue: string; suggestion: string; priority: 'high' | 'medium' | 'low' }[] }>();
+
+    // Process incorporated feedback items
+    chapter.incorporatedFeedback.forEach(item => {
+      if (['action', 'dialog', 'sensation', 'emotion', 'thought'].includes(item.type)) {
+        // Character feedback
+        if (!characterFeedbackMap.has(item.source)) {
+          characterFeedbackMap.set(item.source, {
+            characterName: item.source,
+            actions: [],
+            dialog: [],
+            physicalSensations: [],
+            emotions: [],
+            internalMonologue: []
+          });
+        }
+        
+        const feedback = characterFeedbackMap.get(item.source)!;
+        switch (item.type) {
+          case 'action':
+            feedback.actions.push(item.content);
+            break;
+          case 'dialog':
+            feedback.dialog.push(item.content);
+            break;
+          case 'sensation':
+            feedback.physicalSensations.push(item.content);
+            break;
+          case 'emotion':
+            feedback.emotions.push(item.content);
+            break;
+          case 'thought':
+            feedback.internalMonologue.push(item.content);
+            break;
+        }
+      } else if (item.type === 'suggestion') {
+        // Rater feedback
+        if (!raterFeedbackMap.has(item.source)) {
+          raterFeedbackMap.set(item.source, {
+            opinion: '',
+            suggestions: []
+          });
+        }
+        
+        const feedback = raterFeedbackMap.get(item.source)!;
+        // Distinguish between opinion and suggestions based on content length or other criteria
+        if (item.content.length > 200 && feedback.opinion === '') {
+          feedback.opinion = item.content;
+        } else {
+          feedback.suggestions.push({
+            issue: 'General feedback',
+            suggestion: item.content,
+            priority: 'medium' as const
+          });
+        }
+      }
+    });
+
+    // Convert maps to response arrays
+    const characterFeedback: CharacterFeedbackResponse[] = Array.from(characterFeedbackMap.entries()).map(([name, feedback]) => ({
+      characterName: name,
+      feedback
+    }));
+
+    const raterFeedback: RaterFeedbackResponse[] = Array.from(raterFeedbackMap.entries()).map(([name, feedback]) => ({
+      raterName: name,
+      feedback
+    }));
+
+    return { characterFeedback, raterFeedback };
+  }
+
+  /**
+   * Save feedback to chapter's incorporatedFeedback array
+   */
+  private saveFeedbackToChapter(feedback: CharacterFeedbackResponse[] | RaterFeedbackResponse[], type: 'character' | 'rater'): void {
+    const currentState = this.stateSubject.value;
+    if (!currentState.currentChapter) return;
+
+    const newFeedbackItems: FeedbackItem[] = [];
+
+    if (type === 'character') {
+      (feedback as CharacterFeedbackResponse[]).forEach(charFeedback => {
+        const fb = charFeedback.feedback;
+        
+        // Add each type of character feedback as separate items
+        if (fb.actions) {
+          fb.actions.forEach(action => {
+            newFeedbackItems.push({
+              source: charFeedback.characterName,
+              type: 'action',
+              content: action,
+              incorporated: false
+            });
+          });
+        }
+        
+        if (fb.dialog) {
+          fb.dialog.forEach(dialog => {
+            newFeedbackItems.push({
+              source: charFeedback.characterName,
+              type: 'dialog',
+              content: dialog,
+              incorporated: false
+            });
+          });
+        }
+        
+        if (fb.physicalSensations) {
+          fb.physicalSensations.forEach(sensation => {
+            newFeedbackItems.push({
+              source: charFeedback.characterName,
+              type: 'sensation',
+              content: sensation,
+              incorporated: false
+            });
+          });
+        }
+        
+        if (fb.emotions) {
+          fb.emotions.forEach(emotion => {
+            newFeedbackItems.push({
+              source: charFeedback.characterName,
+              type: 'emotion',
+              content: emotion,
+              incorporated: false
+            });
+          });
+        }
+        
+        if (fb.internalMonologue) {
+          fb.internalMonologue.forEach(thought => {
+            newFeedbackItems.push({
+              source: charFeedback.characterName,
+              type: 'thought',
+              content: thought,
+              incorporated: false
+            });
+          });
+        }
+      });
+    } else if (type === 'rater') {
+      (feedback as RaterFeedbackResponse[]).forEach(raterFeedback => {
+        const fb = raterFeedback.feedback;
+        
+        // Add opinion as a suggestion
+        if (fb.opinion) {
+          newFeedbackItems.push({
+            source: raterFeedback.raterName,
+            type: 'suggestion',
+            content: fb.opinion,
+            incorporated: false
+          });
+        }
+        
+        // Add each suggestion
+        if (fb.suggestions) {
+          fb.suggestions.forEach(suggestion => {
+            newFeedbackItems.push({
+              source: raterFeedback.raterName,
+              type: 'suggestion',
+              content: suggestion.suggestion,
+              incorporated: false
+            });
+          });
+        }
+      });
+    }
+
+    // Remove existing feedback from the same sources to avoid duplicates
+    const existingSources = new Set(newFeedbackItems.map(item => item.source));
+    const filteredExistingFeedback = currentState.currentChapter.incorporatedFeedback.filter(
+      item => !existingSources.has(item.source)
+    );
+
+    // Update the chapter with new feedback
+    const updatedChapter = {
+      ...currentState.currentChapter,
+      incorporatedFeedback: [...filteredExistingFeedback, ...newFeedbackItems],
+      metadata: {
+        ...currentState.currentChapter.metadata,
+        lastModified: new Date()
+      }
+    };
+
+    this.updateState({ currentChapter: updatedChapter });
   }
 
   private updateState(partialState: Partial<ChapterEditingState>): void {
