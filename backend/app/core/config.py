@@ -197,7 +197,7 @@ class Settings(BaseSettings):
         description="Temperature for character details generation"
     )
     ENDPOINT_GENERATE_CHARACTER_DETAILS_MAX_TOKENS: int = Field(
-        default=1000,
+        default=2000,
         ge=100,
         le=5000,
         description="Maximum tokens for character details generation"
