@@ -169,7 +169,7 @@ class Settings(BaseSettings):
         description="Temperature for flesh out generation"
     )
     ENDPOINT_FLESH_OUT_MAX_TOKENS: int = Field(
-        default=600,
+        default=1500,
         ge=100,
         le=5000,
         description="Maximum tokens for flesh out generation"
