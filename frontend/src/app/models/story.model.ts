@@ -390,7 +390,8 @@ export interface BackendGenerateChapterRequest {
 
 export enum FleshOutType {
   WORLDBUILDING = 'worldbuilding',
-  CHAPTER = 'chapter'
+  CHAPTER = 'chapter',
+  PLOT_OUTLINE = 'plot_outline'
 }
 
 export interface FleshOutRequest {

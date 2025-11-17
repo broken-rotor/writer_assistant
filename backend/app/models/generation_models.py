@@ -172,6 +172,7 @@ class EditorReviewResponse(BaseModel):
 class FleshOutType(str, Enum):
     WORLDBUILDING = 'worldbuilding'
     CHAPTER = 'chapter'
+    PLOT_OUTLINE = 'plot_outline'
 
 
 # Flesh Out Request/Response (for plot points or worldbuilding)

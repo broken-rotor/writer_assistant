@@ -14,6 +14,7 @@ from app.services.context_builder import ContextBuilder
 from app.services.token_counter import TokenCounter
 from app.core.config import settings
 from datetime import datetime, UTC
+from typing import Dict
 import logging
 import json
 import asyncio
@@ -86,7 +87,40 @@ Aim to roughly double the length while maintaining quality and relevance. Focus 
 - Don't change the chapter's fundamental arc
 </WHAT_TO_AVOID>
 
-Aim to expand by 50-100% while preserving the original's core narrative and maintaining consistent quality."""
+Aim to expand by 50-100% while preserving the original's core narrative and maintaining consistent quality.""",
+
+        FleshOutType.PLOT_OUTLINE: """Expand and enrich the provided plot outline with additional structural depth and narrative detail.
+
+<EXPANSION_APPROACH>
+- Develop story beats with more specific plot points and turning moments
+- Add character development arcs and emotional journeys throughout the story
+- Include conflict escalation patterns and tension building moments
+- Expand on cause-and-effect relationships between plot events
+- Add thematic elements and symbolic moments that support the story's meaning
+- Include pacing notes and structural guidance for each section
+</EXPANSION_APPROACH>
+
+<WHAT_TO_ADD>
+- Specific story beats and plot turning points within each act/section
+- Character emotional states and development moments
+- Conflict escalation and resolution patterns
+- Subplots and how they weave into the main narrative
+- Thematic elements and their development throughout the story
+- Pacing guidance and structural notes
+- Stakes and consequences for character actions
+- Foreshadowing and setup/payoff moments
+</WHAT_TO_ADD>
+
+<WHAT_TO_AVOID>
+- Don't write actual scenes or detailed prose
+- Don't include specific dialogue or action descriptions
+- Don't add new major characters or completely new plot threads
+- Don't change the fundamental story structure or genre
+- Don't write chapter content - focus on plot structure only
+- Don't include scene-by-scene breakdowns - stay at the plot beat level
+</WHAT_TO_AVOID>
+
+Focus on expanding the structural and narrative elements while maintaining the outline format. Aim to roughly double the length by adding plot depth, character arcs, and thematic development without crossing into actual scene writing."""
     }
 
     async def generate_with_updates():
