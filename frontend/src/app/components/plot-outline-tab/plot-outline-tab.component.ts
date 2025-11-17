@@ -1,8 +1,8 @@
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
-import { Story, ChatMessage, Rater, PlotOutlineFeedback, Chapter } from '../../models/story.model';
+import { firstValueFrom, Subscription } from 'rxjs';
+import { Story, ChatMessage, Rater, PlotOutlineFeedback, Chapter, FleshOutType } from '../../models/story.model';
 import { GenerationService } from '../../services/generation.service';
 import { LoadingService } from '../../services/loading.service';
 import { ToastService } from '../../services/toast.service';
@@ -15,7 +15,7 @@ import { PlotOutlineService } from '../../services/plot-outline.service';
   templateUrl: './plot-outline-tab.component.html',
   styleUrl: './plot-outline-tab.component.scss'
 })
-export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
+export class PlotOutlineTabComponent implements OnInit, OnDestroy, AfterViewChecked {
   @Input() story!: Story;
   @Input() disabled = false;
   @Output() outlineUpdated = new EventEmitter<string>();
@@ -40,6 +40,9 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
   generatingFeedback = new Set<string>();
   feedbackError: string | null = null;
 
+  // Subscriptions for cleanup
+  private subscriptions: Subscription[] = [];
+
   // Dependency injection
   private generationService = inject(GenerationService);
   private loadingService = inject(LoadingService);
@@ -51,6 +54,11 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     if (!this.story?.plotOutline) {
       console.warn('Plot outline not initialized');
     }
+  }
+
+  ngOnDestroy(): void {
+    // Clean up subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   onOutlineChange(): void {
@@ -72,14 +80,47 @@ export class PlotOutlineTabComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  // Placeholder methods for future implementation
+  /**
+   * Handle AI Flesh Out functionality for plot outline
+   */
   aiExpandOutline(): void {
-    console.log('AI expand outline - to be implemented');
+    if (!this.story?.plotOutline?.content?.trim()) {
+      this.toastService.showWarning('Please enter a plot outline first');
+      return;
+    }
+
     this.isGeneratingAI = true;
-    // Simulate AI processing
-    setTimeout(() => {
-      this.isGeneratingAI = false;
-    }, 2000);
+    this.loadingService.show('Fleshing out plot outline...', 'flesh-plot-outline');
+
+    const subscription = this.generationService.fleshOut(
+      this.story,
+      this.story.plotOutline.content,
+      FleshOutType.PLOT_OUTLINE,
+      (update) => {
+        // Update loading message with progress
+        this.loadingService.show(`${update.message}`, 'flesh-plot-outline');
+      }
+    ).subscribe({
+      next: (response: any) => {
+        if (this.story?.plotOutline) {
+          this.story.plotOutline.content = response.fleshedOutText;
+          this.story.plotOutline.metadata.lastModified = new Date();
+          this.outlineUpdated.emit(this.story.plotOutline.content);
+          this.toastService.showSuccess('Plot outline fleshed out successfully! Check the updated content in the outline panel.');
+        }
+        this.isGeneratingAI = false;
+        this.loadingService.hide();
+      },
+      error: (err: any) => {
+        console.error('Error fleshing out plot outline:', err);
+        this.toastService.showError('Failed to flesh out plot outline. Please try again.');
+        this.isGeneratingAI = false;
+        this.loadingService.hide();
+      }
+    });
+
+    // Store subscription for cleanup if needed
+    this.subscriptions.push(subscription);
   }
 
   researchOutline(): void {
