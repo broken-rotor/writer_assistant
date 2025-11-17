@@ -227,10 +227,14 @@ describe('WorldbuildingTabComponent', () => {
       throwError(() => new Error('Token counting failed'))
     );
     
+    // Set the story property before triggering change detection
+    component.story = mockStory;
     fixture.detectChanges();
     
     // Component should not crash and should handle the error
     expect(component).toBeTruthy();
+    // Verify that the token counter data is set to null on error
+    expect(component.worldbuildingTokenCounterData).toBeNull();
   });
 
   it('should handle message sent and generate AI response', () => {

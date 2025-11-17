@@ -1,24 +1,47 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { PlotOutlineTabComponent } from './plot-outline-tab.component';
-import { Story } from '../../models/story.model';
+import { Story, FleshOutType } from '../../models/story.model';
 import { GenerationService } from '../../services/generation.service';
+import { ToastService } from '../../services/toast.service';
+import { LoadingService } from '../../services/loading.service';
 
 describe('PlotOutlineTabComponent', () => {
   let component: PlotOutlineTabComponent;
   let fixture: ComponentFixture<PlotOutlineTabComponent>;
   let mockStory: Story;
+  let mockGenerationService: jasmine.SpyObj<GenerationService>;
+  let mockLoadingService: jasmine.SpyObj<LoadingService>;
 
   beforeEach(async () => {
+    const generationSpy = jasmine.createSpyObj('GenerationService', ['fleshOut', 'generatePlotOutlineResponse', 'generateChapterOutlinesFromStoryOutline']);
+    const toastSpy = jasmine.createSpyObj('ToastService', ['showSuccess', 'showError', 'showWarning', 'showInfo']);
+    const loadingSpy = jasmine.createSpyObj('LoadingService', ['show', 'hide']);
+
     await TestBed.configureTestingModule({
-      imports: [PlotOutlineTabComponent, FormsModule, HttpClientTestingModule]
+      imports: [PlotOutlineTabComponent, FormsModule, HttpClientTestingModule],
+      providers: [
+        { provide: GenerationService, useValue: generationSpy },
+        { provide: ToastService, useValue: toastSpy },
+        { provide: LoadingService, useValue: loadingSpy }
+      ]
     })
     .compileComponents();
 
     fixture = TestBed.createComponent(PlotOutlineTabComponent);
     component = fixture.componentInstance;
+    mockGenerationService = TestBed.inject(GenerationService) as jasmine.SpyObj<GenerationService>;
+    mockLoadingService = TestBed.inject(LoadingService) as jasmine.SpyObj<LoadingService>;
+
+    // Setup default mock behavior
+    mockGenerationService.fleshOut.and.returnValue(of({ fleshedOutText: 'Expanded plot outline content' }));
+    mockGenerationService.generatePlotOutlineResponse.and.returnValue(of('AI response'));
+    mockGenerationService.generateChapterOutlinesFromStoryOutline.and.returnValue(of({
+      summary: 'Generated chapter outlines',
+      outline_items: []
+    }));
 
     // Create mock story with plot outline
     mockStory = {
@@ -229,12 +252,35 @@ describe('PlotOutlineTabComponent', () => {
   });
 
   it('should handle AI expand outline', () => {
-    spyOn(console, 'log');
+    component.story = mockStory;
+    
+    // Create a Subject that we can control
+    const fleshOutSubject = new Subject<any>();
+    mockGenerationService.fleshOut.and.returnValue(fleshOutSubject.asObservable());
+    
+    // Ensure the story has content
+    expect(component.story.plotOutline.content).toBe('Test plot outline content');
+    expect(component.story.plotOutline.content.trim()).toBeTruthy();
+    
+    // Ensure isGeneratingAI starts as false
+    expect(component.isGeneratingAI).toBe(false);
     
     component.aiExpandOutline();
     
-    expect(console.log).toHaveBeenCalledWith('AI expand outline - to be implemented');
+    expect(mockGenerationService.fleshOut).toHaveBeenCalledWith(
+      mockStory,
+      'Test plot outline content',
+      FleshOutType.PLOT_OUTLINE,
+      jasmine.any(Function) // Progress callback
+    );
+    expect(mockLoadingService.show).toHaveBeenCalledWith('Fleshing out plot outline...', 'flesh-plot-outline');
     expect(component.isGeneratingAI).toBe(true);
+    
+    // Complete the observable to test the completion behavior
+    fleshOutSubject.next({ fleshedOutText: 'Expanded plot outline content' });
+    fleshOutSubject.complete();
+    
+    expect(component.isGeneratingAI).toBe(false);
   });
 
   it('should handle research outline', () => {
@@ -269,8 +315,7 @@ describe('PlotOutlineTabComponent', () => {
   });
 
   it('should send chat message', async () => {
-    const generationService = TestBed.inject(GenerationService);
-    spyOn(generationService, 'generatePlotOutlineResponse').and.returnValue(of('AI response'));
+    mockGenerationService.generatePlotOutlineResponse.and.returnValue(of('AI response'));
 
     component.chatInput = 'Test message';
     const initialLength = component.story.plotOutline.chatHistory.length;
@@ -392,8 +437,7 @@ describe('PlotOutlineTabComponent', () => {
       ]
     };
 
-    const generationService = TestBed.inject(GenerationService);
-    spyOn(generationService, 'generateChapterOutlinesFromStoryOutline').and.returnValue(of(mockResponse));
+    mockGenerationService.generateChapterOutlinesFromStoryOutline.and.returnValue(of(mockResponse));
 
     component.story = mockStory;
     await component.generateChapterOutlines();
@@ -427,8 +471,7 @@ describe('PlotOutlineTabComponent', () => {
       ]
     };
 
-    const generationService = TestBed.inject(GenerationService);
-    spyOn(generationService, 'generateChapterOutlinesFromStoryOutline').and.returnValue(of(mockResponse));
+    mockGenerationService.generateChapterOutlinesFromStoryOutline.and.returnValue(of(mockResponse));
 
     component.story = mockStory;
     await component.generateChapterOutlines();
