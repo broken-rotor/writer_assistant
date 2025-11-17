@@ -9,7 +9,7 @@ storytelling system.
 import logging
 from typing import Dict, List, Optional, Any
 
-from app.services.llm_inference import get_llm
+from app.services.llm_inference import LLMInference
 
 
 logger = logging.getLogger(__name__)
