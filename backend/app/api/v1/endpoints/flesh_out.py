@@ -11,6 +11,7 @@ from app.models.generation_models import (
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
+from app.services.token_counter import TokenCounter
 from app.core.config import settings
 from datetime import datetime, UTC
 import logging
@@ -30,6 +31,8 @@ async def flesh_out(request: FleshOutRequest):
         raise HTTPException(
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
+    token_counter = TokenCounter(llm)
+
     agent_instructions: Dict[FleshOutType, str] = {
         FleshOutType.WORLDBUILDING: """Expand and enrich the provided worldbuilding text with additional depth and detail.
 
@@ -91,7 +94,7 @@ Aim to expand by 50-100% while preserving the original's core narrative and main
             # Phase 1: Context Processing
             yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing expansion context...', 'progress': 20})}\n\n"
 
-            context_builder = ContextBuilder(request.request_context)
+            context_builder = ContextBuilder(request.request_context, token_counter)
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story_summary()

@@ -10,6 +10,7 @@ from app.models.generation_models import (
 from app.models.request_context import RequestContext, CharacterDetails
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
+from app.services.token_counter import TokenCounter
 from app.api.v1.endpoints.shared_utils import get_character_details
 from app.core.config import settings
 import logging
@@ -28,6 +29,7 @@ async def regenerate_bio(request: RegenerateBioRequest):
         raise HTTPException(
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
+    token_counter = TokenCounter(llm)
 
     async def generate_with_updates():
         try:
@@ -54,7 +56,7 @@ Avoid: "Sarah is smart and calculating. She is afraid of losing control. She had
 Write a bio that makes the reader immediately understand and care about who this character is."""
             agent_instruction = "Based on the character details in CHARACTER_TO_GENERATE, create a concise and engaging bio. Please respond with just the bio text directly."
 
-            context_builder = ContextBuilder(request.request_context)
+            context_builder = ContextBuilder(request.request_context, token_counter)
             context_builder.add_system_prompt(system_prompt)
             context_builder.add_worldbuilding()
             context_builder.add_characters(tag='OTHER_CHARACTERS', exclude_characters={request.character_name})

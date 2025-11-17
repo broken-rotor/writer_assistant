@@ -32,10 +32,10 @@ class ContextItem:
 
 
 class ContextBuilder:
-    def __init__(self, request_context: RequestContext):
+    def __init__(self, request_context: RequestContext, tokenizer: TokenCounter):
         self._request_context: RequestContext = request_context
         self._elements: List[ContextItem] = []
-        self._tokenizer: TokenCounter = TokenCounter()
+        self._tokenizer: TokenCounter = tokenizer
 
     def build_messages(self) -> List[Dict[str, str]]:
         chat = []

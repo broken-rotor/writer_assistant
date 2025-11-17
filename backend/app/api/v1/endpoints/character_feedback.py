@@ -11,6 +11,7 @@ from app.models.generation_models import (
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
+from app.services.token_counter import TokenCounter
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response, get_character_details
 from app.core.config import settings
 import logging
@@ -29,6 +30,7 @@ async def character_feedback(request: CharacterFeedbackRequest):
         raise HTTPException(
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
+    token_counter = TokenCounter(llm)
 
     async def generate_with_updates():
         try:
@@ -46,7 +48,7 @@ When analyzing plot points or scenes:
 
 Your feedback should be genuine to who {character.name} is, not what you think the story needs."""
 
-            context_builder = ContextBuilder(request.request_context)
+            context_builder = ContextBuilder(request.request_context, token_counter)
             context_builder.add_long_term_elements(system_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story_summary()

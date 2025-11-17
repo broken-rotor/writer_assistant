@@ -8,6 +8,7 @@ from app.models.chat_models import LLMChatRequest, LLMChatResponse, Conversation
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
+from app.services.token_counter import TokenCounter
 from datetime import datetime, UTC
 import logging
 import json
@@ -88,6 +89,7 @@ async def llm_chat(request: LLMChatRequest):
         raise HTTPException(
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
+    token_counter = TokenCounter(llm)
 
     async def generate_with_updates():
         try:
@@ -100,7 +102,7 @@ async def llm_chat(request: LLMChatRequest):
                 request.request_context
             )
 
-            context_builder = ContextBuilder(request.request_context)
+            context_builder = ContextBuilder(request.request_context, token_counter)
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story_summary()

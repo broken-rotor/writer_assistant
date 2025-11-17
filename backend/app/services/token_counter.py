@@ -9,7 +9,8 @@ storytelling system.
 import logging
 from typing import Dict, List, Optional, Any
 
-from ..utils.llama_tokenizer import LlamaTokenizer
+from app.services.llm_inference import LLMInference
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,29 +23,20 @@ class TokenCounter:
     storytelling system, with support for different content types and counting strategies.
     """
 
-    def __init__(self, tokenizer: Optional[LlamaTokenizer] = None):
+    def __init__(self, tokenizer: LLMInference = None):
         """
         Initialize the TokenCounter.
 
         Args:
-            tokenizer: LlamaTokenizer instance. If None, will create or get singleton.
+            tokenizer: LLMInference to use as tokenizer
         """
-        if tokenizer is not None:
-            self.tokenizer = tokenizer
-        else:
-            self.tokenizer = LlamaTokenizer.get_instance()
+        self.tokenizer = tokenizer
 
     def count_tokens(self, content: str) -> int:
-        if not content:
-            return 0
-
-        if not self.tokenizer.is_ready():
-            raise ValueError("Tokenizer not available")
-
         return self.tokenizer.count_tokens(content)
 
     def count_tokens_batch(self, contents: List[str]) -> List[int]:
-        return [self.count_tokens(content) for content in contents]
+        return self.tokenizer.count_tokens_batch(contents)
 
     def validate_token_budget(self, contents: List[str], budget: int) -> Dict[str, Any]:
         """

@@ -31,67 +31,30 @@ def patch_settings():
 
 @pytest.fixture(autouse=True)
 def mock_tokenizer():
-    """Mock the LlamaTokenizer for all tests"""
-
-    class MockLlamaTokenizer:
-        """Mock tokenizer that uses simple character-based token estimation"""
-
-        def __init__(self):
-            self._ready = True
-
-        def encode(self, text: str) -> List[int]:
-            """Simple character-based encoding: ~4 chars per token"""
-            if not text:
-                return []
-            # Approximate 4 characters per token
-            token_count = max(1, len(text) // 4)
-            return list(range(token_count))
-
-        def decode(self, tokens: List[int]) -> str:
-            """Mock decode"""
-            return f"[{len(tokens)} tokens]"
-
-        def count_tokens(self, text: str) -> int:
-            """Count tokens using simple approximation"""
-            if not text:
-                return 0
-            # Approximate 4 characters per token
-            return max(1, len(text) // 4)
-
-        def count_tokens_batch(self, texts: List[str]) -> List[int]:
-            """Count tokens for multiple texts"""
-            return [self.count_tokens(text) for text in texts]
-
-        def truncate_to_tokens(self, text: str, max_tokens: int) -> str:
-            """Truncate text to max tokens"""
-            if not text:
-                return text
-            current_tokens = self.count_tokens(text)
-            if current_tokens <= max_tokens:
-                return text
-            # Approximate truncation
-            chars_to_keep = max_tokens * 4
-            return text[:chars_to_keep]
-
-        def is_ready(self) -> bool:
-            """Check if tokenizer is ready"""
-            return self._ready
-
-        @classmethod
-        def get_instance(cls):
-            """Get singleton instance"""
-            return cls()
-
-    # Patch LlamaTokenizer class
-    with patch('app.utils.llama_tokenizer.LlamaTokenizer', MockLlamaTokenizer):
-        with patch('app.services.token_counter.LlamaTokenizer', MockLlamaTokenizer):
-            yield MockLlamaTokenizer
+    """Mock tokenization methods on LLMInference for all tests"""
+    # No longer needed - tokenization is mocked via mock_llm fixture
+    yield
 
 
 @pytest.fixture(autouse=True)
 def mock_llm():
     """Mock the LLM for all tests"""
-    mock_llm_instance = MagicMock(spec=LLMInference)
+    mock_llm_instance = MagicMock()
+
+    # Mock tokenization methods
+    def mock_count_tokens(text: str) -> int:
+        """Count tokens using simple approximation"""
+        if not text:
+            return 0
+        # Approximate 4 characters per token
+        return max(1, len(text) // 4)
+
+    def mock_count_tokens_batch(texts: List[str]) -> List[int]:
+        """Count tokens for multiple texts"""
+        return [mock_count_tokens(text) for text in texts]
+
+    mock_llm_instance.count_tokens.side_effect = mock_count_tokens
+    mock_llm_instance.count_tokens_batch.side_effect = mock_count_tokens_batch
 
     # Mock generate method with intelligent responses
     def generate_side_effect(prompt, **kwargs):
