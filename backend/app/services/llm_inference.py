@@ -408,6 +408,88 @@ class LLMInference:
             logger.error(f"Error getting embedding: {str(e)}")
             raise RuntimeError(f"Embedding generation failed: {str(e)}")
 
+    def encode(self, text: str) -> List[int]:
+        """
+        Encode text to token IDs.
+
+        Args:
+            text: Text to encode
+
+        Returns:
+            List of token IDs
+        """
+        try:
+            # Use the model's tokenizer to encode text
+            tokens = self.model.tokenize(text.encode('utf-8'))
+            return tokens
+        except Exception as e:
+            logger.error(f"Error encoding text", e)
+            raise ValueError('Model not loaded')
+
+    def decode(self, tokens: List[int]) -> str:
+        """
+        Decode token IDs to text.
+
+        Args:
+            tokens: List of token IDs
+
+        Returns:
+            Decoded text
+        """
+        try:
+            # Use the model's tokenizer to decode tokens
+            text_bytes = self.model.detokenize(tokens)
+            return text_bytes.decode('utf-8', errors='ignore')
+        except Exception as e:
+            logger.error(f"Error decoding tokens: {e}")
+            raise ValueError('Model not loaded')
+
+    def count_tokens(self, text: str) -> int:
+        """
+        Count the number of tokens in the given text.
+
+        Args:
+            text: Text to count tokens for
+
+        Returns:
+            Number of tokens
+        """
+        return len(self.encode(text)) if text else 0
+
+    def count_tokens_batch(self, texts: List[str]) -> List[int]:
+        """
+        Count tokens for multiple texts efficiently.
+
+        Args:
+            texts: List of texts to count tokens for
+
+        Returns:
+            List of token counts corresponding to input texts
+        """
+        return [self.count_tokens(text) for text in texts]
+
+    def truncate_to_tokens(self, text: str, max_tokens: int) -> str:
+        """
+        Truncate text to fit within a maximum token count.
+
+        Args:
+            text: Text to truncate
+            max_tokens: Maximum number of tokens allowed
+
+        Returns:
+            Truncated text that fits within token limit
+        """
+        if not text:
+            return text
+
+        tokens = self.encode(text)
+        if len(tokens) <= max_tokens:
+            return text
+
+        # Truncate tokens and decode back to text
+        truncated_tokens = tokens[:max_tokens]
+        return self.decode(truncated_tokens)
+
     def __del__(self):
         """Cleanup when object is destroyed"""
         if hasattr(self, 'model') and self.model is not None:

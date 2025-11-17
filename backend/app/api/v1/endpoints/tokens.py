@@ -17,6 +17,7 @@ from app.models.token_models import (
     TokenValidationResponse,
     ErrorResponse
 )
+from app.services.llm_inference import get_llm
 from app.services.token_counter import TokenCounter
 
 logger = logging.getLogger(__name__)
