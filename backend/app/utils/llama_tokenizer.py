@@ -22,7 +22,7 @@ class LlamaTokenizer:
     @classmethod
     def get_instance(cls) -> 'LlamaTokenizer':
         if cls._instance is None:
-            cls._instance = cls(model_path, **kwargs)
+            cls._instance = cls()
         return cls._instance
 
     def _ensure_model_loaded(self) -> bool:
