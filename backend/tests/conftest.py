@@ -8,7 +8,7 @@ from typing import List
 
 from app.main import app
 from app.core.config import Settings
-from app.services.llm_inference import LLMInference
+from app.services.llm_inference import LLMInference, TokenTruncation
 from app.models.request_context import (
     RequestContext,
     CharacterDetails,
@@ -55,6 +55,30 @@ def mock_llm():
 
     mock_llm_instance.count_tokens.side_effect = mock_count_tokens
     mock_llm_instance.count_tokens_batch.side_effect = mock_count_tokens_batch
+
+    # Mock truncate_to_tokens method
+    def mock_truncate_to_tokens(text: str, max_tokens: int) -> TokenTruncation:
+        """Truncate text to max_tokens"""
+        if not text:
+            return TokenTruncation(tail="", tail_token_count=0)
+
+        # Simple word-based approximation
+        words = text.split()
+        token_count = len(words)
+
+        if token_count <= max_tokens:
+            return TokenTruncation(tail=text, tail_token_count=token_count)
+
+        # Truncate to max_tokens
+        tail_words = words[:max_tokens]
+        head_words = words[max_tokens:]
+        return TokenTruncation(
+            head=' '.join(head_words),
+            tail=' '.join(tail_words),
+            tail_token_count=max_tokens
+        )
+
+    mock_llm_instance.truncate_to_tokens.side_effect = mock_truncate_to_tokens
 
     # Mock generate method with intelligent responses
     def generate_side_effect(prompt, **kwargs):

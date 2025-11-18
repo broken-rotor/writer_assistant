@@ -15,6 +15,7 @@ from app.services.context_builder import (
     SummarizationStrategy,
     ContextItem
 )
+from app.services.llm_inference import LLMInference, TokenTruncation
 from app.models.request_context import (
     RequestContext,
     StoryConfiguration,
@@ -110,28 +111,46 @@ def full_request_context():
 
 
 @pytest.fixture
-def mock_token_counter():
-    """Create a mock TokenCounter."""
-    mock_counter = MagicMock()
-    # Return token count based on content length (simple approximation)
-    mock_counter.count_tokens.side_effect = lambda text: len(text.split())
-    return mock_counter
+def mock_llm_inference():
+    """Create a mock LLMInference."""
+    mock_llm = MagicMock(spec=LLMInference)
+
+    # Mock truncate_to_tokens to return TokenTruncation based on content length
+    def mock_truncate(text: str, max_tokens: int) -> TokenTruncation:
+        # Simple approximation: 1 word = 1 token
+        words = text.split() if text else []
+        token_count = len(words)
+
+        if token_count <= max_tokens:
+            return TokenTruncation(tail=text, tail_token_count=token_count)
+
+        # Truncate to max_tokens
+        tail_words = words[:max_tokens]
+        head_words = words[max_tokens:]
+        return TokenTruncation(
+            head=' '.join(head_words),
+            tail=' '.join(tail_words),
+            tail_token_count=max_tokens
+        )
+
+    mock_llm.truncate_to_tokens.side_effect = mock_truncate
+    return mock_llm
 
 
 class TestContextBuilderInitialization:
     """Test ContextBuilder initialization."""
 
-    def test_initialization_with_minimal_context(self, minimal_request_context, mock_token_counter):
+    def test_initialization_with_minimal_context(self, minimal_request_context, mock_llm_inference):
         """Test that ContextBuilder initializes correctly with minimal context."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         assert builder._request_context == minimal_request_context
         assert builder._elements == []
-        assert builder._tokenizer == mock_token_counter
+        assert builder._model == mock_llm_inference
 
-    def test_initialization_with_full_context(self, full_request_context, mock_token_counter):
+    def test_initialization_with_full_context(self, full_request_context, mock_llm_inference):
         """Test that ContextBuilder initializes correctly with full context."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
 
         assert builder._request_context == full_request_context
         assert builder._elements == []
@@ -140,9 +159,9 @@ class TestContextBuilderInitialization:
 class TestAddSystemPrompt:
     """Test add_system_prompt method."""
 
-    def test_add_system_prompt_without_prefix_suffix(self, minimal_request_context, mock_token_counter):
+    def test_add_system_prompt_without_prefix_suffix(self, minimal_request_context, mock_llm_inference):
         """Test adding system prompt without prefix/suffix."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
         test_prompt = "Write a compelling story."
 
         builder.add_system_prompt(test_prompt)
@@ -157,7 +176,7 @@ class TestAddSystemPrompt:
 
     def test_add_system_prompt_with_prefix_suffix(self, full_request_context):
         """Test adding system prompt with prefix and suffix."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
         test_prompt = "Write a compelling story."
 
         builder.add_system_prompt(test_prompt)
@@ -175,7 +194,7 @@ class TestAddWorldbuilding:
 
     def test_add_worldbuilding_with_content(self, full_request_context):
         """Test adding worldbuilding when content exists."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
 
         builder.add_worldbuilding()
 
@@ -189,7 +208,7 @@ class TestAddWorldbuilding:
 
     def test_add_worldbuilding_without_content(self, minimal_request_context):
         """Test adding worldbuilding when content doesn't exist."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         builder.add_worldbuilding()
 
@@ -201,7 +220,7 @@ class TestAddCharacters:
 
     def test_add_characters_with_visible_characters(self, full_request_context):
         """Test adding characters filters out hidden characters."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
 
         builder.add_characters()
 
@@ -218,7 +237,7 @@ class TestAddCharacters:
 
     def test_add_characters_without_characters(self, minimal_request_context):
         """Test adding characters when none exist."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         builder.add_characters()
 
@@ -226,7 +245,7 @@ class TestAddCharacters:
 
     def test_add_characters_format(self, full_request_context):
         """Test that character formatting includes all fields."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
 
         builder.add_characters()
 
@@ -249,7 +268,7 @@ class TestAddStoryOutline:
 
     def test_add_story_outline_with_summary_and_content(self, full_request_context):
         """Test adding story outline with both summary and content."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
 
         builder.add_story_outline()
 
@@ -272,7 +291,7 @@ class TestAddStoryOutline:
 
     def test_add_story_outline_without_outline(self, minimal_request_context):
         """Test adding story outline when none exists."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         builder.add_story_outline()
 
@@ -286,7 +305,7 @@ class TestAddCharacterStates:
 
     def test_add_character_states_with_states(self, full_request_context):
         """Test adding character states when they exist."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
 
         builder.add_character_states()
 
@@ -302,7 +321,7 @@ class TestAddCharacterStates:
 
     def test_add_character_states_without_states(self, minimal_request_context):
         """Test adding character states when none exist."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         builder.add_character_states()
 
@@ -314,7 +333,7 @@ class TestAddAgentInstruction:
 
     def test_add_agent_instruction(self, minimal_request_context):
         """Test adding agent instruction."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
         instruction = "Generate a compelling opening paragraph."
 
         builder.add_agent_instruction(instruction)
@@ -333,7 +352,7 @@ class TestAddChat:
 
     def test_add_chat_user_message(self, minimal_request_context):
         """Test adding user chat message."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
         message = "Tell me more about the character."
 
         builder.add_chat(ContextRole.USER, message)
@@ -347,7 +366,7 @@ class TestAddChat:
 
     def test_add_chat_assistant_message(self, minimal_request_context):
         """Test adding assistant chat message."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
         message = "The character is a hardboiled detective."
 
         builder.add_chat(ContextRole.ASSISTANT, message)
@@ -361,17 +380,17 @@ class TestAddChat:
 class TestBuildMessages:
     """Test build_messages method."""
 
-    def test_build_messages_empty(self, minimal_request_context, mock_token_counter):
+    def test_build_messages_empty(self, minimal_request_context, mock_llm_inference):
         """Test building chat with no elements."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         chat = builder.build_messages()
 
         assert chat == []
 
-    def test_build_messages_single_element(self, minimal_request_context, mock_token_counter):
+    def test_build_messages_single_element(self, minimal_request_context, mock_llm_inference):
         """Test building chat with single element."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
         builder.add_system_prompt("Write a story.")
 
         chat = builder.build_messages()
@@ -380,9 +399,9 @@ class TestBuildMessages:
         assert chat[0]['role'] == ContextRole.SYSTEM
         assert 'content' in chat[0]
 
-    def test_build_messages_multiple_elements(self, full_request_context, mock_token_counter):
+    def test_build_messages_multiple_elements(self, full_request_context, mock_llm_inference):
         """Test building chat with multiple elements."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
         builder.add_system_prompt("Write a story.")
         builder.add_worldbuilding()
         builder.add_characters()
@@ -394,9 +413,9 @@ class TestBuildMessages:
         assert chat[1]['role'] == ContextRole.USER
         assert chat[2]['role'] == ContextRole.USER
 
-    def test_build_messages_respects_token_budget(self, minimal_request_context, mock_token_counter):
+    def test_build_messages_respects_token_budget(self, minimal_request_context, mock_llm_inference):
         """Test that build_messages respects token budgets."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
         builder.add_system_prompt("System prompt.")
         builder.add_agent_instruction("Agent instruction.")
 
@@ -404,16 +423,16 @@ class TestBuildMessages:
 
         # Verify that chat was built
         assert len(chat) == 2
-        # Token counting should have been called for each element
-        assert mock_token_counter.count_tokens.call_count >= 2
+        # Token truncation should have been called for each element
+        assert mock_llm_inference.truncate_to_tokens.call_count >= 2
 
 
 class TestBuildPrompt:
     """Test build_prompt method."""
 
-    def test_build_prompt(self, minimal_request_context, mock_token_counter):
+    def test_build_prompt(self, minimal_request_context, mock_llm_inference):
         """Test building prompt string."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
         builder.add_system_prompt("System prompt.")
         builder.add_agent_instruction("User instruction.")
 
@@ -427,11 +446,11 @@ class TestBuildPrompt:
 
 
 class TestGetContent:
-    """Test _getContent method."""
+    """Test _get_content method."""
 
-    def test_get_content_with_tag(self, minimal_request_context, mock_token_counter):
-        """Test _getContent wraps tagged content correctly."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+    def test_get_content_with_tag(self, minimal_request_context, mock_llm_inference):
+        """Test _get_content wraps tagged content correctly."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         element = ContextItem(
             tag='TEST_TAG',
@@ -441,16 +460,16 @@ class TestGetContent:
             summarization_strategy=SummarizationStrategy.LITERAL
         )
 
-        content, token_count = builder._getContent(element, 1000)
+        content, token_count = builder._get_content(element, 1000)
 
         assert '<TEST_TAG>' in content
         assert 'Test content' in content
         assert '</TEST_TAG>' in content
         assert token_count > 0
 
-    def test_get_content_without_tag(self, minimal_request_context, mock_token_counter):
-        """Test _getContent returns content without tags when tag is None."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+    def test_get_content_without_tag(self, minimal_request_context, mock_llm_inference):
+        """Test _get_content returns content without tags when tag is None."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         element = ContextItem(
             tag=None,
@@ -460,15 +479,15 @@ class TestGetContent:
             summarization_strategy=SummarizationStrategy.LITERAL
         )
 
-        content, token_count = builder._getContent(element, 1000)
+        content, token_count = builder._get_content(element, 1000)
 
         assert content == "Test content"
         assert '<' not in content
         assert token_count > 0
 
-    def test_get_content_within_budget(self, minimal_request_context, mock_token_counter):
-        """Test _getContent when content fits within budget."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+    def test_get_content_within_budget(self, minimal_request_context, mock_llm_inference):
+        """Test _get_content when content fits within budget."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         element = ContextItem(
             tag=None,
@@ -478,15 +497,15 @@ class TestGetContent:
             summarization_strategy=SummarizationStrategy.LITERAL
         )
 
-        content, token_count = builder._getContent(element, 100)
+        content, token_count = builder._get_content(element, 100)
 
         assert content == "Short content"
         # Token count is based on word count (2 words)
         assert token_count == 2
 
-    def test_get_content_exceeds_budget_literal(self, minimal_request_context, mock_token_counter):
-        """Test _getContent raises error when budget exceeded with LITERAL strategy."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+    def test_get_content_exceeds_budget_literal(self, minimal_request_context, mock_llm_inference):
+        """Test _get_content raises error when budget exceeded with LITERAL strategy."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         element = ContextItem(
             tag='TEST',
@@ -497,15 +516,15 @@ class TestGetContent:
         )
 
         with pytest.raises(ValueError, match="Token budget exceeded"):
-            builder._getContent(element, 5)
+            builder._get_content(element, 5)
 
 
 class TestIntegration:
     """Integration tests for complete workflows."""
 
-    def test_full_context_build_workflow(self, full_request_context, mock_token_counter):
+    def test_full_context_build_workflow(self, full_request_context, mock_llm_inference):
         """Test building a complete context with all elements."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
 
         # Add all context elements
         builder.add_system_prompt("Write a noir detective story.")
@@ -526,9 +545,9 @@ class TestIntegration:
         assert isinstance(prompt, str)
         assert len(prompt) > 0
 
-    def test_conversation_workflow(self, minimal_request_context, mock_token_counter):
+    def test_conversation_workflow(self, minimal_request_context, mock_llm_inference):
         """Test building a conversation with multiple turns."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         # Build conversation
         builder.add_system_prompt("You are a helpful assistant.")
@@ -548,9 +567,9 @@ class TestIntegration:
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_empty_system_prompt(self, minimal_request_context, mock_token_counter):
+    def test_empty_system_prompt(self, minimal_request_context, mock_llm_inference):
         """Test adding empty system prompt."""
-        builder = ContextBuilder(minimal_request_context, mock_token_counter)
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
 
         builder.add_system_prompt("")
 
@@ -560,7 +579,7 @@ class TestEdgeCases:
 
     def test_multiple_worldbuilding_calls(self, full_request_context):
         """Test calling add_worldbuilding multiple times."""
-        builder = ContextBuilder(full_request_context, mock_token_counter)
+        builder = ContextBuilder(full_request_context, mock_llm_inference)
 
         builder.add_worldbuilding()
         builder.add_worldbuilding()
@@ -601,7 +620,7 @@ class TestEdgeCases:
             )
         )
 
-        builder = ContextBuilder(context, mock_token_counter)
+        builder = ContextBuilder(context, mock_llm_inference)
         builder.add_characters()
 
         # Should not add any elements

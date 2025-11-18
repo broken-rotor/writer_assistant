@@ -18,7 +18,6 @@ from app.models.streaming_models import (
 )
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
-from app.services.token_counter import TokenCounter
 from app.api.v1.endpoints.shared_utils import parse_json_response, parse_list_response
 from app.core.config import settings
 import logging
@@ -48,7 +47,6 @@ async def rater_feedback_stream(request: RaterFeedbackRequest):
         raise HTTPException(
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
-    token_counter = TokenCounter(llm)
 
     async def generate_with_updates():
         try:
@@ -74,7 +72,7 @@ Your feedback should be:
 
 Maintain a supportive but honest tone - your goal is to help the writer create the best story possible."""
 
-            context_builder = ContextBuilder(request.request_context, token_counter)
+            context_builder = ContextBuilder(request.request_context, llm)
             context_builder.add_long_term_elements(system_prompt)
             context_builder.add_character_states()
             context_builder.add_recent_story_summary()
