@@ -27,7 +27,6 @@ import { PlotOutlineTabComponent } from '../plot-outline-tab/plot-outline-tab.co
 import { FeedbackService } from '../../services/feedback.service';
 import { ContextBuilderService } from '../../services/context-builder.service';
 import { WorldbuildingTabComponent } from '../worldbuilding-tab/worldbuilding-tab.component';
-import { ChapterEditorComponent } from '../chapter-editor/chapter-editor.component';
 import { ChapterEditorTabComponent } from '../chapter-editor-tab/chapter-editor-tab.component';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -41,7 +40,7 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlineTabComponent, WorldbuildingTabComponent, ChapterEditorComponent, ChapterEditorTabComponent, MatIconModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlineTabComponent, WorldbuildingTabComponent, ChapterEditorTabComponent, MatIconModule],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
