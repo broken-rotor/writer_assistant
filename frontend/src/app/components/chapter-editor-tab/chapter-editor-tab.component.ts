@@ -168,7 +168,7 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   onGenerateChapter() {
     if (!this.story) return;
     this.chapterEditorService.generateChapterFromOutline(this.story).subscribe({
-      next: (chapterText) => {
+      next: (_chapterText) => {
         // Chapter content is already updated in the service
         console.log('Chapter generated successfully');
       },
