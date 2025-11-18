@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Set
 
 from app.models.request_context import RequestContext, CharacterDetails, CharacterState
-from app.services.token_counter import TokenCounter
+from app.services.llm_inference import LLMInference
 
 
 class ContextRole(str, Enum):
@@ -32,10 +32,10 @@ class ContextItem:
 
 
 class ContextBuilder:
-    def __init__(self, request_context: RequestContext, tokenizer: TokenCounter):
+    def __init__(self, request_context: RequestContext, model: LLMInference):
         self._request_context: RequestContext = request_context
         self._elements: List[ContextItem] = []
-        self._tokenizer: TokenCounter = tokenizer
+        self._model: LLMInference = model
 
     def build_messages(self) -> List[Dict[str, str]]:
         chat = []
@@ -43,7 +43,7 @@ class ContextBuilder:
         token_count = 0
         for e in self._elements:
             token_limit += e.token_budget
-            content, tokens = self._getContent(e, token_limit - token_count)
+            content, tokens = self._get_content(e, token_limit - token_count)
             chat.append({'role': e.role, 'content': content.strip()})
             token_count += tokens
         return chat
@@ -203,16 +203,24 @@ class ContextBuilder:
             token_budget=5000,
             summarization_strategy=SummarizationStrategy.ROLLING_WINDOW))
 
-    def _getContent(self, e: ContextItem, token_budget: int):
+    def _get_content(self, e: ContextItem, token_budget: int) -> (str, int):
         content = e.structured_content()
-        token_count = self._tokenizer.count_tokens(content)
-        if token_count <= token_budget:
-            return content, token_count
-        ## FIXME ##
+
+        content_truncation = self._model.truncate_to_tokens(content, token_budget)
+        if content_truncation.head is None:
+            return content_truncation.tail, content_truncation.tail_token_count
+
         if e.summarization_strategy == SummarizationStrategy.SUMMARIZED:
-            pass
+            return self._summarize(content)
         elif e.summarization_strategy == SummarizationStrategy.ROLLING_WINDOW:
-            pass
+            return content_truncation.tail, content_truncation.tail_token_count
         elif e.summarization_strategy == SummarizationStrategy.SUMMARY_AND_ROLLING_WINDOW:
-            pass
-        raise ValueError(f"Token budget exceeded {token_count} > {token_budget} for {e.tag} {e.role}")
+            content_truncation = self._model.truncate_to_tokens(content, int(token_budget * 0.60))
+            summary, summary_count = self._summarize(content_truncation.head)
+            return f"{summary}\n{content_truncation.tail}", summary_count + content_truncation.tail_token_count
+        else:
+            raise ValueError(f"Token budget exceeded {content_truncation.tail_token_count} > {token_budget} for {e.tag} {e.role}")
+
+    def _summarize(self, content: str) -> (str, int):
+        ## FIXME ##
+        return '', 0

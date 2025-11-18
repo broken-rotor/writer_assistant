@@ -11,7 +11,6 @@ from datetime import datetime, UTC
 
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
-from app.services.token_counter import TokenCounter
 from app.models.chapter_models import ChapterOutlineRequest, OutlineItem, ChapterOutlineResponse
 from app.api.v1.endpoints.shared_utils import parse_json_array_response
 
@@ -33,7 +32,6 @@ async def generate_chapter_outlines(request: ChapterOutlineRequest):
         raise HTTPException(
             status_code=503,
             detail="LLM not initialized. Start server with --model-path")
-    token_counter = TokenCounter(llm)
 
     logger.info("Starting chapter outline generation")
     
@@ -65,8 +63,8 @@ Your task is to analyze a story outline and create a detailed, well-paced chapte
 
 <CONTENT_REQUIREMENTS>
 1. **Titles:** Create engaging, evocative titles that hint at chapter content without spoiling
-2. **Descriptions:** Write 2-4 sentence summaries that capture the chapter's narrative arc
-3. **Key Plot Items:** Generate 3-5 specific, concrete story beats per chapter
+2. **Descriptions:** Write a short summary that capture the chapter's narrative arc
+3. **Key Plot Items:** Generate 4-7 specific, concrete story beats per chapter
    - Each should be an action, event, revelation, or turning point
    - Should flow in logical sequence
    - Should create cause-and-effect chains between chapters
@@ -77,7 +75,7 @@ Your task is to analyze a story outline and create a detailed, well-paced chapte
 IMPORTANT: Format your response as a JSON array where each chapter is an object with these exact fields:
 {
   "title": "Chapter title (without 'Chapter X:' prefix)",
-  "description": "Brief 2-4 sentence summary capturing the chapter's arc and purpose",
+  "description": "Brief summary capturing the chapter's arc and purpose",
   "key_plot_items": ["Specific plot item 1", "Specific plot item 2", "Specific plot item 3"],
   "involved_characters": ["character1", "character2", ...]
 }
@@ -114,7 +112,7 @@ Respond ONLY with the JSON array, no additional text before or after."""
 
 Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 
-        context_builder = ContextBuilder(request.request_context, token_counter)
+        context_builder = ContextBuilder(request.request_context, llm)
         context_builder.add_long_term_elements(system_prompt)
         context_builder.add_agent_instruction(agent_prompt)
         

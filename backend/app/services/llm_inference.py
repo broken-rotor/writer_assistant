@@ -4,6 +4,7 @@ Provides a simple interface for generating text with local models.
 """
 import logging
 from typing import Optional, Dict, Any, List, Type
+from dataclasses import dataclass
 from pathlib import Path
 from pydantic import BaseModel
 
@@ -16,6 +17,13 @@ except ImportError:
     LlamaRAMCache = None
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class TokenTruncation:
+    tail: str
+    tail_token_count: int
+    head: Optional[str] = None
 
 
 class LLMInferenceConfig:
@@ -468,7 +476,7 @@ class LLMInference:
         """
         return [self.count_tokens(text) for text in texts]
 
-    def truncate_to_tokens(self, text: str, max_tokens: int) -> str:
+    def truncate_to_tokens(self, text: str, max_tokens: int) -> TokenTruncation:
         """
         Truncate text to fit within a maximum token count.
 
@@ -479,16 +487,15 @@ class LLMInference:
         Returns:
             Truncated text that fits within token limit
         """
-        if not text:
-            return text
-
-        tokens = self.encode(text)
+        tokens = self.encode(text) if text else []
         if len(tokens) <= max_tokens:
-            return text
+            return TokenTruncation(tail=text, tail_token_count=len(tokens))
 
         # Truncate tokens and decode back to text
-        truncated_tokens = tokens[:max_tokens]
-        return self.decode(truncated_tokens)
+        return TokenTruncation(
+            head=self.decode(tokens[max_tokens:]),
+            tail=self.decode(tokens[:max_tokens]),
+            tail_token_count=max_tokens)
 
     def __del__(self):
         """Cleanup when object is destroyed"""
