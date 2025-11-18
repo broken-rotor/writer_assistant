@@ -1,31 +1,4 @@
 <div class="feedback-selector">
-  <!-- Feedback Action Buttons -->
-  <div class="feedback-actions">
-    <button mat-raised-button 
-            color="primary" 
-            (click)="onGetFeedback('character')"
-            [disabled]="isLoading || disabled">
-      <mat-icon>people</mat-icon>
-      <span *ngIf="!isLoading">Get Character Feedback</span>
-      <span *ngIf="isLoading">Getting Feedback...</span>
-    </button>
-    
-    <button mat-raised-button 
-            color="accent" 
-            (click)="onGetFeedback('rater')"
-            [disabled]="isLoading || disabled">
-      <mat-icon>star</mat-icon>
-      <span *ngIf="!isLoading">Get Rater Feedback</span>
-      <span *ngIf="isLoading">Getting Feedback...</span>
-    </button>
-    
-    <button mat-stroked-button 
-            (click)="onGetFeedback('all')"
-            [disabled]="isLoading || disabled">
-      <mat-icon>feedback</mat-icon>
-      Get All Feedback
-    </button>
-  </div>
 
   <!-- Always Show Feedback Interface Layout -->
   <div class="feedback-interface">
@@ -76,7 +49,16 @@
         </div>
 
         <div *ngIf="selectedEntityType && selectedEntityId" class="entity-feedback">
-          <h3>{{ getSelectedEntityName() }}'s Feedback</h3>
+          <div class="feedback-header">
+            <h3>{{ getSelectedEntityName() }}'s Feedback</h3>
+            <button mat-icon-button 
+                    (click)="onRefreshFeedback()"
+                    [disabled]="isLoading || disabled"
+                    matTooltip="Refresh feedback"
+                    class="refresh-button">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
           
           <!-- Character Feedback -->
           <div *ngIf="selectedEntityType === 'character'" class="character-feedback">

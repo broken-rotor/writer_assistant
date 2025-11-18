@@ -7,6 +7,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { 
   Story, 
   CharacterFeedbackResponse, 
@@ -38,7 +39,8 @@ export interface ChatContext {
     MatChipsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatCardModule
+    MatCardModule,
+    MatTooltipModule
   ],
   templateUrl: './feedback-selector.component.html',
   styleUrl: './feedback-selector.component.scss'
@@ -113,6 +115,9 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
   selectEntity(type: 'character' | 'rater', id: string) {
     this.selectedEntityType = type;
     this.selectedEntityId = id;
+    
+    // Auto-fetch feedback if none exists for the selected entity
+    this.autoFetchFeedbackIfNeeded();
   }
 
   getSelectedEntityName(): string {
@@ -232,5 +237,33 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
   canModifyChapter(): boolean {
     return !this.disabled && !this.isLoading && 
            (this.userGuidance.trim().length > 0 || this.getTotalSelectedCount() > 0);
+  }
+
+  private autoFetchFeedbackIfNeeded() {
+    if (!this.selectedEntityType || !this.selectedEntityId) return;
+    
+    const entityName = this.getSelectedEntityName();
+    if (!entityName) return;
+    
+    // Check if feedback already exists for this entity
+    let hasFeedback = false;
+    
+    if (this.selectedEntityType === 'character') {
+      hasFeedback = this.characterFeedback.some(f => f.characterName === entityName);
+    } else {
+      hasFeedback = this.raterFeedback.some(f => f.raterName === entityName);
+    }
+    
+    // If no feedback exists, auto-fetch it
+    if (!hasFeedback) {
+      this.getFeedback.emit({ type: this.selectedEntityType });
+    }
+  }
+
+  onRefreshFeedback() {
+    if (!this.selectedEntityType) return;
+    
+    // Emit request to refresh feedback for the selected entity type
+    this.getFeedback.emit({ type: this.selectedEntityType });
   }
 }

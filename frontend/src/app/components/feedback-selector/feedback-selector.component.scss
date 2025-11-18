@@ -143,13 +143,33 @@
         }
 
         .entity-feedback {
-          h3 {
-            margin: 0 0 20px 0;
-            color: #333;
-            font-size: 1.3em;
-            font-weight: 500;
+          .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
             border-bottom: 2px solid #e0e0e0;
             padding-bottom: 8px;
+
+            h3 {
+              margin: 0;
+              color: #333;
+              font-size: 1.3em;
+              font-weight: 500;
+            }
+
+            .refresh-button {
+              color: #666;
+              transition: color 0.2s ease;
+
+              &:hover:not(:disabled) {
+                color: #2196f3;
+              }
+
+              &:disabled {
+                opacity: 0.5;
+              }
+            }
           }
 
           .feedback-content {
@@ -277,6 +297,10 @@
               .chat-input {
                 width: 100%;
                 margin-bottom: 12px;
+                
+                textarea {
+                  min-height: 80px;
+                }
               }
 
               .chat-actions {
@@ -322,6 +346,10 @@
 
       .guidance-field {
         width: 100%;
+        
+        textarea {
+          min-height: 100px;
+        }
       }
     }
 
