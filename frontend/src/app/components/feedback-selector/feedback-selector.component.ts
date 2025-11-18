@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,8 +16,8 @@ import {
 } from '../../models/story.model';
 
 export interface FeedbackSelection {
-  characterFeedback: { [characterId: string]: string[] };
-  raterFeedback: { [raterId: string]: string[] };
+  characterFeedback: Record<string, string[]>;
+  raterFeedback: Record<string, string[]>;
 }
 
 export interface ChatContext {
@@ -43,13 +43,13 @@ export interface ChatContext {
   templateUrl: './feedback-selector.component.html',
   styleUrl: './feedback-selector.component.scss'
 })
-export class FeedbackSelectorComponent implements OnInit {
+export class FeedbackSelectorComponent implements OnInit, OnChanges {
   @Input() story: Story | null = null;
   @Input() characterFeedback: CharacterFeedbackResponse[] = [];
   @Input() raterFeedback: RaterFeedbackResponse[] = [];
-  @Input() isLoading: boolean = false;
-  @Input() disabled: boolean = false;
-  @Input() userGuidance: string = '';
+  @Input() isLoading = false;
+  @Input() disabled = false;
+  @Input() userGuidance = '';
   
   @Output() getFeedback = new EventEmitter<{ type: 'character' | 'rater' | 'all' }>();
   @Output() modifyChapter = new EventEmitter<{ 
@@ -71,8 +71,8 @@ export class FeedbackSelectorComponent implements OnInit {
     raterFeedback: {}
   };
   
-  chatContexts: { [key: string]: ChatContext } = {};
-  currentChatMessage: string = '';
+  chatContexts: Record<string, ChatContext> = {};
+  currentChatMessage = '';
 
   ngOnInit() {
     this.initializeFeedbackSelection();
@@ -101,11 +101,13 @@ export class FeedbackSelectorComponent implements OnInit {
   }
 
   getAvailableCharacters(): Character[] {
-    return this.story?.characters || [];
+    if (!this.story?.characters) return [];
+    return Array.from(this.story.characters.values());
   }
 
   getAvailableRaters(): Rater[] {
-    return this.story?.raters || [];
+    if (!this.story?.raters) return [];
+    return Array.from(this.story.raters.values());
   }
 
   selectEntity(type: 'character' | 'rater', id: string) {

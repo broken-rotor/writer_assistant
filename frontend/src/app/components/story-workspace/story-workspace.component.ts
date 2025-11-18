@@ -140,7 +140,7 @@ export class StoryWorkspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  selectTab(tab: 'general' | 'worldbuilding' | 'characters' | 'raters' | 'plot-outline' | 'story') {
+  selectTab(tab: 'general' | 'worldbuilding' | 'characters' | 'raters' | 'plot-outline' | 'story' | 'chapter-editor') {
     this.activeTab = tab;
     
     // Initialize plot outline if selecting plot-outline tab

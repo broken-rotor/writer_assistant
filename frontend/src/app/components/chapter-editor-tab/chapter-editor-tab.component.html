@@ -154,7 +154,7 @@
       title="FEEDBACK"
       icon="feedback"
       [isExpanded]="feedbackExpanded"
-      [showExpandedSummary]="!feedbackExpanded && (state?.characterFeedback.length || 0) + (state?.raterFeedback.length || 0) > 0"
+      [showExpandedSummary]="!feedbackExpanded && ((state?.characterFeedback?.length || 0) + (state?.raterFeedback?.length || 0)) > 0"
       [expandedSummary]="getFeedbackCollapsedSummary()"
       [disabled]="!chapterContent.trim()"
       (toggleExpanded)="onToggleFeedback($event)">

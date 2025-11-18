@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,9 +13,7 @@ import { FeedbackSelectorComponent, FeedbackSelection } from '../feedback-select
 import { ChapterEditorService, ChapterEditingState } from '../../services/chapter-editor.service';
 import { 
   Story, 
-  Chapter, 
-  CharacterFeedbackResponse, 
-  RaterFeedbackResponse 
+  Chapter
 } from '../../models/story.model';
 
 @Component({
@@ -38,7 +36,7 @@ import {
 export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   @Input() story: Story | null = null;
   @Input() chapter: Chapter | null = null;
-  @Input() disabled: boolean = false;
+  @Input() disabled = false;
 
   @Output() backToStory = new EventEmitter<void>();
   @Output() saveChapter = new EventEmitter<Chapter>();
@@ -60,7 +58,7 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   newPlotItem = '';
   userGuidance = '';
 
-  constructor(private chapterEditorService: ChapterEditorService) {}
+  private chapterEditorService = inject(ChapterEditorService);
 
   ngOnInit() {
     this.stateSubscription = this.chapterEditorService.state$.subscribe(state => {

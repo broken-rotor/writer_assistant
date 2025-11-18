@@ -2,7 +2,12 @@
   <div class="section-header" 
        [class.clickable]="isCollapsible && !disabled"
        [class.disabled]="disabled"
-       (click)="onToggle()">
+       [attr.tabindex]="isCollapsible && !disabled ? 0 : null"
+       [attr.role]="isCollapsible && !disabled ? 'button' : null"
+       [attr.aria-expanded]="isCollapsible && !disabled ? isExpanded : null"
+       (click)="onToggle()"
+       (keydown.enter)="onToggle()"
+       (keydown.space)="onToggle()">
     
     <div class="header-content">
       <div class="header-left">

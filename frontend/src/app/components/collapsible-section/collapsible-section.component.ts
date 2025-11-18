@@ -11,14 +11,14 @@ import { MatButtonModule } from '@angular/material/button';
   styleUrl: './collapsible-section.component.scss'
 })
 export class CollapsibleSectionComponent {
-  @Input() title: string = '';
-  @Input() subtitle: string = '';
-  @Input() icon: string = '';
-  @Input() isExpanded: boolean = true;
-  @Input() isCollapsible: boolean = true;
-  @Input() showExpandedSummary: boolean = false;
-  @Input() expandedSummary: string = '';
-  @Input() disabled: boolean = false;
+  @Input() title = '';
+  @Input() subtitle = '';
+  @Input() icon = '';
+  @Input() isExpanded = true;
+  @Input() isCollapsible = true;
+  @Input() showExpandedSummary = false;
+  @Input() expandedSummary = '';
+  @Input() disabled = false;
   
   @Output() toggleExpanded = new EventEmitter<boolean>();
 
