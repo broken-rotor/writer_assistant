@@ -59,6 +59,12 @@
     <button class="tab-button" [class.active]="activeTab === 'raters'" (click)="selectTab('raters')">Raters</button>
     <button class="tab-button" [class.active]="activeTab === 'plot-outline'" (click)="selectTab('plot-outline')">Story Outline</button>
     <button class="tab-button" [class.active]="activeTab === 'story'" (click)="selectTab('story')">Story</button>
+    <button *ngIf="isEditingChapter" 
+            class="tab-button chapter-editor-tab" 
+            [class.active]="activeTab === 'chapter-editor'" 
+            (click)="selectTab('chapter-editor')">
+      {{ chapterEditorTabTitle }}
+    </button>
   </nav>
 
   <!-- Tab Content -->
@@ -500,6 +506,18 @@
         <span *ngIf="researchLoading">⏳</span>
       </button>
     </div>
+  </div>
+
+  <!-- Chapter Editor Tab -->
+  <div *ngIf="activeTab === 'chapter-editor'" class="tab-pane chapter-editor-tab-pane">
+    <app-chapter-editor-tab
+      *ngIf="currentEditingChapter && story"
+      [story]="story"
+      [chapter]="currentEditingChapter"
+      (backToStory)="onBackFromChapterEditor()"
+      (saveChapter)="onSaveChapter($event)"
+      (chapterChange)="onChapterChange($event)">
+    </app-chapter-editor-tab>
   </div>
 
 </div>

@@ -1,0 +1,156 @@
+.collapsible-section {
+  margin-bottom: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+
+  &.expanded {
+    .section-header {
+      border-bottom: 1px solid #e0e0e0;
+    }
+  }
+
+  .section-header {
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &.clickable:hover {
+      background-color: #f5f5f5;
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+
+        .section-icon {
+          color: #666;
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+
+        .header-text {
+          .section-title {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 500;
+            color: #333;
+          }
+
+          .section-subtitle {
+            margin: 4px 0 0 0;
+            font-size: 0.9em;
+            color: #666;
+          }
+        }
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .collapsed-summary {
+          font-size: 0.9em;
+          color: #666;
+          max-width: 300px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .toggle-button {
+          color: #666;
+          
+          &:hover {
+            color: #333;
+          }
+        }
+      }
+    }
+  }
+
+  .section-content {
+    padding: 20px;
+    animation: expandContent 0.3s ease;
+  }
+}
+
+@keyframes expandContent {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .collapsible-section {
+    .section-header {
+      padding: 12px 16px;
+
+      .header-content {
+        .header-left {
+          gap: 8px;
+
+          .section-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+
+          .header-text {
+            .section-title {
+              font-size: 1.1em;
+            }
+          }
+        }
+
+        .header-right {
+          .collapsed-summary {
+            max-width: 200px;
+            font-size: 0.8em;
+          }
+        }
+      }
+    }
+
+    .section-content {
+      padding: 16px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .collapsible-section {
+    .section-header {
+      .header-content {
+        .header-right {
+          .collapsed-summary {
+            display: none; // Hide on very small screens
+          }
+        }
+      }
+    }
+  }
+}
