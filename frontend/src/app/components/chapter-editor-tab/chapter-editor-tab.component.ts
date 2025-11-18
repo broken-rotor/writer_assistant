@@ -188,20 +188,70 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   onGetFeedback(event: { type: 'character' | 'rater' | 'all' }) {
     if (!this.story || !this.state?.currentChapter) return;
 
-    // TODO: Implement feedback retrieval based on type
-    console.log('Get feedback:', event.type);
+    switch (event.type) {
+      case 'character':
+        this.getCharacterFeedback();
+        break;
+      case 'rater':
+        this.getRaterFeedback();
+        break;
+      case 'all':
+        this.getAllFeedback();
+        break;
+    }
+  }
+
+  private getCharacterFeedback() {
+    if (!this.story) return;
+
+    this.chapterEditorService.getCharacterFeedback(this.story).subscribe({
+      next: (feedback) => {
+        console.log('Character feedback received:', feedback);
+      },
+      error: (error) => {
+        console.error('Failed to get character feedback:', error);
+      }
+    });
+  }
+
+  private getRaterFeedback() {
+    if (!this.story) return;
+
+    this.chapterEditorService.getRaterFeedback(this.story).subscribe({
+      next: (feedback) => {
+        console.log('Rater feedback received:', feedback);
+      },
+      error: (error) => {
+        console.error('Failed to get rater feedback:', error);
+      }
+    });
+  }
+
+  private getAllFeedback() {
+    if (!this.story) return;
+
+    // Get both character and rater feedback
+    this.getCharacterFeedback();
+    this.getRaterFeedback();
   }
 
   onModifyChapter(event: { userGuidance: string, selectedFeedback: FeedbackSelection }) {
     if (!this.story || !this.state?.currentChapter) return;
 
-    // TODO: Implement chapter modification with selected feedback
-    console.log('Modify chapter with feedback:', event);
+    // Apply user guidance with selected feedback
+    this.chapterEditorService.applyUserGuidance(event.userGuidance, this.story).subscribe({
+      next: (modifiedContent) => {
+        console.log('Chapter modified successfully:', modifiedContent);
+      },
+      error: (error) => {
+        console.error('Failed to modify chapter:', error);
+      }
+    });
   }
 
   onClearFeedback() {
-    // TODO: Implement feedback clearing
-    console.log('Clear feedback - to be implemented');
+    this.chapterEditorService.clearFeedback();
+    console.log('Feedback cleared');
   }
 
   onChatMessage(event: { type: 'character' | 'rater', id: string, message: string }) {
@@ -211,7 +261,9 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
 
   onUserGuidanceChange(guidance: string) {
     this.userGuidance = guidance;
-    // TODO: Update service state
+    // Update the service state if needed
+    // Note: The service doesn't currently track userGuidance in state,
+    // but we keep it in the component for when it's needed
   }
 
   // Final review methods
