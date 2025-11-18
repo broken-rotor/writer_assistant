@@ -1,0 +1,36 @@
+<div class="collapsible-section" [class.expanded]="isExpanded" [class.collapsed]="!isExpanded">
+  <div class="section-header" 
+       [class.clickable]="isCollapsible && !disabled"
+       [class.disabled]="disabled"
+       (click)="onToggle()">
+    
+    <div class="header-content">
+      <div class="header-left">
+        <mat-icon *ngIf="icon" class="section-icon">{{ icon }}</mat-icon>
+        <div class="header-text">
+          <h3 class="section-title">{{ title }}</h3>
+          <p *ngIf="subtitle && isExpanded" class="section-subtitle">{{ subtitle }}</p>
+        </div>
+      </div>
+      
+      <div class="header-right">
+        <!-- Collapsed summary -->
+        <div *ngIf="!isExpanded && showExpandedSummary && expandedSummary" class="collapsed-summary">
+          {{ expandedSummary }}
+        </div>
+        
+        <!-- Expand/collapse button -->
+        <button *ngIf="isCollapsible && !disabled" 
+                mat-icon-button 
+                class="toggle-button"
+                [attr.aria-label]="isExpanded ? 'Collapse section' : 'Expand section'">
+          <mat-icon>{{ isExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-content" *ngIf="isExpanded">
+    <ng-content></ng-content>
+  </div>
+</div>

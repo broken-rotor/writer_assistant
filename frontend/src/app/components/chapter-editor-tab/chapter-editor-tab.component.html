@@ -1,0 +1,226 @@
+<div class="chapter-editor-tab">
+  <!-- Header -->
+  <div class="editor-header">
+    <div class="header-left">
+      <button mat-icon-button 
+              (click)="onBackToStory()" 
+              [disabled]="isAnyOperationInProgress()"
+              class="back-button"
+              title="Back to story">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="chapter-info">
+        <h2>Chapter {{ chapter?.number }}: {{ chapterTitle || 'Untitled' }}</h2>
+        <div class="chapter-meta">
+          <span class="word-count">{{ getWordCount() }} words</span>
+          <span *ngIf="state?.hasUnsavedChanges" class="save-status unsaved">• Unsaved changes</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button 
+              color="primary" 
+              (click)="onSaveChapter()"
+              [disabled]="!canSave() || isAnyOperationInProgress()"
+              class="save-button">
+        <mat-icon>save</mat-icon>
+        Save Chapter
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="editor-content">
+    
+    <!-- Basics Section -->
+    <app-collapsible-section
+      title="BASICS"
+      icon="edit_note"
+      [isExpanded]="basicsExpanded"
+      [showExpandedSummary]="!basicsExpanded"
+      [expandedSummary]="getBasicsCollapsedSummary()"
+      (toggleExpanded)="onToggleBasics($event)">
+      
+      <div class="basics-content">
+        <!-- Chapter Title -->
+        <mat-form-field appearance="outline" class="title-field">
+          <mat-label>Chapter Title</mat-label>
+          <input matInput 
+                 [(ngModel)]="chapterTitle"
+                 (ngModelChange)="onTitleChange()"
+                 [disabled]="disabled || isAnyOperationInProgress()"
+                 placeholder="Enter chapter title">
+        </mat-form-field>
+
+        <!-- Chapter Outline -->
+        <mat-form-field appearance="outline" class="outline-field">
+          <mat-label>Chapter Outline</mat-label>
+          <textarea matInput 
+                    [(ngModel)]="chapterOutline"
+                    (ngModelChange)="onOutlineChange()"
+                    [disabled]="disabled || isAnyOperationInProgress()"
+                    placeholder="Describe the main plot points, key events, and story beats for this chapter..."
+                    rows="4">
+          </textarea>
+          <mat-hint>This outline will guide AI generation and provide context for feedback</mat-hint>
+        </mat-form-field>
+
+        <!-- Key Plot Items -->
+        <div class="key-plot-items">
+          <h4>Key Plot Items:</h4>
+          <div class="plot-items-display">
+            <mat-chip-listbox class="plot-items-chips">
+              <mat-chip-option *ngFor="let item of keyPlotItems; let i = index"
+                               [removable]="!disabled && !isAnyOperationInProgress()"
+                               (removed)="onRemovePlotItem(i)">
+                {{ item }}
+                <mat-icon matChipRemove *ngIf="!disabled && !isAnyOperationInProgress()">cancel</mat-icon>
+              </mat-chip-option>
+            </mat-chip-listbox>
+            
+            <mat-form-field appearance="outline" class="add-plot-item-field">
+              <mat-label>Add plot item</mat-label>
+              <input matInput 
+                     [(ngModel)]="newPlotItem"
+                     [disabled]="disabled || isAnyOperationInProgress()"
+                     placeholder="Enter a key plot item..."
+                     (keydown.enter)="onAddPlotItem()">
+              <button matSuffix
+                      mat-icon-button
+                      (click)="onAddPlotItem()"
+                      [disabled]="disabled || isAnyOperationInProgress() || !newPlotItem.trim()">
+                <mat-icon>add</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="basics-actions">
+          <button mat-raised-button 
+                  color="accent"
+                  (click)="onChatAboutOutline()"
+                  [disabled]="disabled || isAnyOperationInProgress()">
+            <mat-icon>chat</mat-icon>
+            Chat about Outline & Plot
+          </button>
+          
+          <button mat-raised-button 
+                  color="primary"
+                  (click)="onGenerateChapter()"
+                  [disabled]="!canGenerate()">
+            <mat-icon>auto_stories</mat-icon>
+            <span *ngIf="!state?.isGenerating">Generate Chapter from Outline</span>
+            <span *ngIf="state?.isGenerating">Generating...</span>
+          </button>
+        </div>
+      </div>
+    </app-collapsible-section>
+
+    <!-- Chapter Content Section -->
+    <app-collapsible-section
+      title="CHAPTER CONTENT"
+      icon="article"
+      [isExpanded]="true"
+      [isCollapsible]="false">
+      
+      <div class="content-section">
+        <mat-form-field appearance="outline" class="content-field">
+          <mat-label>Chapter Content</mat-label>
+          <textarea matInput 
+                    [(ngModel)]="chapterContent"
+                    (ngModelChange)="onContentChange()"
+                    [disabled]="disabled || isAnyOperationInProgress()"
+                    placeholder="Write your chapter content here, or use the AI tools to generate it..."
+                    rows="25"
+                    class="chapter-textarea">
+          </textarea>
+        </mat-form-field>
+
+        <div class="content-actions">
+          <button mat-raised-button 
+                  color="accent"
+                  (click)="onChatAboutContent()"
+                  [disabled]="disabled || isAnyOperationInProgress() || !chapterContent.trim()">
+            <mat-icon>chat</mat-icon>
+            Chat about Content
+          </button>
+        </div>
+      </div>
+    </app-collapsible-section>
+
+    <!-- Feedback Section -->
+    <app-collapsible-section
+      title="FEEDBACK"
+      icon="feedback"
+      [isExpanded]="feedbackExpanded"
+      [showExpandedSummary]="!feedbackExpanded && (state?.characterFeedback.length || 0) + (state?.raterFeedback.length || 0) > 0"
+      [expandedSummary]="getFeedbackCollapsedSummary()"
+      [disabled]="!chapterContent.trim()"
+      (toggleExpanded)="onToggleFeedback($event)">
+      
+      <div class="feedback-content">
+        <app-feedback-selector
+          [story]="story"
+          [characterFeedback]="state?.characterFeedback || []"
+          [raterFeedback]="state?.raterFeedback || []"
+          [isLoading]="state?.isGettingFeedback || false"
+          [disabled]="disabled || isAnyOperationInProgress()"
+          [userGuidance]="userGuidance"
+          (getFeedback)="onGetFeedback($event)"
+          (modifyChapter)="onModifyChapter($event)"
+          (clearFeedback)="onClearFeedback()"
+          (chatMessage)="onChatMessage($event)"
+          (userGuidanceChange)="onUserGuidanceChange($event)">
+        </app-feedback-selector>
+      </div>
+    </app-collapsible-section>
+
+    <!-- Final Review Section -->
+    <app-collapsible-section
+      title="FINAL REVIEW"
+      icon="task_alt"
+      [isExpanded]="finalReviewExpanded"
+      [disabled]="!chapterContent.trim()"
+      (toggleExpanded)="onToggleFinalReview($event)">
+      
+      <div class="final-review-content">
+        <div class="review-actions">
+          <button mat-raised-button 
+                  color="primary"
+                  (click)="onRequestFinalReview()"
+                  [disabled]="disabled || isAnyOperationInProgress()">
+            <mat-icon>rate_review</mat-icon>
+            Request Final Editor Review
+          </button>
+          
+          <button mat-raised-button 
+                  color="accent"
+                  (click)="onMarkChapterComplete()"
+                  [disabled]="disabled || isAnyOperationInProgress()">
+            <mat-icon>check_circle</mat-icon>
+            Mark Chapter Complete
+          </button>
+        </div>
+
+        <!-- Placeholder for final review content -->
+        <div class="review-placeholder">
+          <mat-icon>info</mat-icon>
+          <p>Final editor review functionality will be implemented here.</p>
+        </div>
+      </div>
+    </app-collapsible-section>
+
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="isAnyOperationInProgress()" class="loading-overlay">
+    <div class="loading-content">
+      <mat-icon class="loading-spinner">refresh</mat-icon>
+      <p *ngIf="state?.isGenerating">Generating chapter content...</p>
+      <p *ngIf="state?.isGettingFeedback">Getting AI feedback...</p>
+      <p *ngIf="state?.isApplyingGuidance">Applying your guidance...</p>
+      <p *ngIf="state?.isChatting">Thinking...</p>
+    </div>
+  </div>
+</div>

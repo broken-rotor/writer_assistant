@@ -1,0 +1,363 @@
+.chapter-editor-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 10;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .back-button {
+        color: #666;
+        
+        &:hover {
+          color: #333;
+        }
+      }
+
+      .chapter-info {
+        h2 {
+          margin: 0;
+          font-size: 1.5em;
+          font-weight: 500;
+          color: #333;
+        }
+
+        .chapter-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-top: 4px;
+          font-size: 0.9em;
+          color: #666;
+
+          .word-count {
+            font-weight: 500;
+          }
+
+          .save-status.unsaved {
+            color: #ff9800;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+
+    .header-actions {
+      .save-button {
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  .editor-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    
+    .basics-content {
+      .title-field {
+        width: 100%;
+        margin-bottom: 16px;
+      }
+
+      .outline-field {
+        width: 100%;
+        margin-bottom: 16px;
+
+        textarea {
+          font-family: 'Roboto', sans-serif;
+          font-size: 14px;
+          line-height: 1.5;
+          resize: vertical;
+        }
+      }
+
+      .key-plot-items {
+        margin-bottom: 20px;
+
+        h4 {
+          margin: 0 0 12px 0;
+          color: #333;
+          font-size: 1em;
+          font-weight: 500;
+        }
+
+        .plot-items-display {
+          .plot-items-chips {
+            margin-bottom: 12px;
+            min-height: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            background: #ffffff;
+
+            mat-chip-option {
+              margin: 4px;
+            }
+          }
+
+          .add-plot-item-field {
+            width: 100%;
+          }
+        }
+      }
+
+      .basics-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+
+        button {
+          mat-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+
+    .content-section {
+      .content-field {
+        width: 100%;
+        margin-bottom: 16px;
+
+        .chapter-textarea {
+          min-height: 500px;
+          font-family: 'Roboto Mono', monospace;
+          font-size: 14px;
+          line-height: 1.6;
+          resize: vertical;
+        }
+      }
+
+      .content-actions {
+        display: flex;
+        gap: 12px;
+
+        button {
+          mat-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+
+    .feedback-content {
+      // Styles handled by feedback-selector component
+    }
+
+    .final-review-content {
+      .review-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+
+        button {
+          mat-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+
+      .review-placeholder {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 20px;
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        color: #666;
+
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+          color: #999;
+        }
+
+        p {
+          margin: 0;
+          font-style: italic;
+        }
+      }
+    }
+  }
+
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+    .loading-content {
+      background: white;
+      padding: 32px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+
+      .loading-spinner {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        color: #2196f3;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+        font-size: 1.1em;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// Responsive design
+@media (max-width: 1200px) {
+  .chapter-editor-tab {
+    .editor-content {
+      padding: 16px;
+
+      .content-section {
+        .content-field {
+          .chapter-textarea {
+            min-height: 400px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .chapter-editor-tab {
+    .editor-header {
+      padding: 12px 16px;
+
+      .header-left {
+        gap: 12px;
+
+        .chapter-info {
+          h2 {
+            font-size: 1.2em;
+          }
+
+          .chapter-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+          }
+        }
+      }
+    }
+
+    .editor-content {
+      padding: 12px;
+
+      .basics-content {
+        .basics-actions {
+          flex-direction: column;
+
+          button {
+            width: 100%;
+          }
+        }
+      }
+
+      .content-section {
+        .content-field {
+          .chapter-textarea {
+            min-height: 300px;
+          }
+        }
+
+        .content-actions {
+          flex-direction: column;
+
+          button {
+            width: 100%;
+          }
+        }
+      }
+
+      .final-review-content {
+        .review-actions {
+          flex-direction: column;
+
+          button {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .chapter-editor-tab {
+    .editor-header {
+      padding: 8px 12px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+
+      .header-left {
+        .chapter-info {
+          h2 {
+            font-size: 1.1em;
+          }
+        }
+      }
+
+      .header-actions {
+        align-self: stretch;
+        
+        .save-button {
+          width: 100%;
+        }
+      }
+    }
+
+    .editor-content {
+      padding: 8px;
+
+      .content-section {
+        .content-field {
+          .chapter-textarea {
+            min-height: 250px;
+            font-size: 13px;
+          }
+        }
+      }
+    }
+  }
+}

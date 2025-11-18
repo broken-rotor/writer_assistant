@@ -1,0 +1,298 @@
+<div class="feedback-selector">
+  <!-- Feedback Action Buttons -->
+  <div class="feedback-actions">
+    <button mat-raised-button 
+            color="primary" 
+            (click)="onGetFeedback('character')"
+            [disabled]="isLoading || disabled">
+      <mat-icon>people</mat-icon>
+      <span *ngIf="!isLoading">Get Character Feedback</span>
+      <span *ngIf="isLoading">Getting Feedback...</span>
+    </button>
+    
+    <button mat-raised-button 
+            color="accent" 
+            (click)="onGetFeedback('rater')"
+            [disabled]="isLoading || disabled">
+      <mat-icon>star</mat-icon>
+      <span *ngIf="!isLoading">Get Rater Feedback</span>
+      <span *ngIf="isLoading">Getting Feedback...</span>
+    </button>
+    
+    <button mat-stroked-button 
+            (click)="onGetFeedback('all')"
+            [disabled]="isLoading || disabled">
+      <mat-icon>feedback</mat-icon>
+      Get All Feedback
+    </button>
+  </div>
+
+  <!-- No Feedback State -->
+  <div *ngIf="!hasAnyFeedback() && !isLoading" class="no-feedback">
+    <mat-icon class="no-feedback-icon">feedback</mat-icon>
+    <p>No feedback yet. Click the buttons above to get AI feedback on your chapter.</p>
+  </div>
+
+  <!-- Feedback Selection Interface -->
+  <div *ngIf="hasAnyFeedback()" class="feedback-interface">
+    <div class="feedback-split">
+      <!-- Left Panel: Entity Selection -->
+      <div class="entity-selector">
+        <!-- Characters Section -->
+        <div *ngIf="getAvailableCharacters().length > 0" class="entity-group">
+          <h4>CHARACTERS</h4>
+          <div class="entity-list">
+            <button *ngFor="let character of getAvailableCharacters()" 
+                    class="entity-button"
+                    [class.selected]="selectedEntityType === 'character' && selectedEntityId === character.id"
+                    (click)="selectEntity('character', character.id)"
+                    [disabled]="disabled">
+              <mat-icon>person</mat-icon>
+              {{ character.name }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Raters Section -->
+        <div *ngIf="getAvailableRaters().length > 0" class="entity-group">
+          <h4>RATERS</h4>
+          <div class="entity-list">
+            <button *ngFor="let rater of getAvailableRaters()" 
+                    class="entity-button"
+                    [class.selected]="selectedEntityType === 'rater' && selectedEntityId === rater.id"
+                    (click)="selectEntity('rater', rater.id)"
+                    [disabled]="disabled">
+              <mat-icon>star</mat-icon>
+              {{ rater.name }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Feedback Display -->
+      <div class="feedback-display">
+        <div *ngIf="!selectedEntityType || !selectedEntityId" class="no-selection">
+          <mat-icon>arrow_back</mat-icon>
+          <p>Select a character or rater from the left to view their feedback</p>
+        </div>
+
+        <div *ngIf="selectedEntityType && selectedEntityId" class="entity-feedback">
+          <h3>{{ getSelectedEntityName() }}'s Feedback</h3>
+          
+          <!-- Character Feedback -->
+          <div *ngIf="selectedEntityType === 'character'" class="character-feedback">
+            <ng-container *ngFor="let feedback of characterFeedback">
+              <div *ngIf="feedback.characterName === getSelectedEntityName()" class="feedback-content">
+                
+                <!-- Actions -->
+                <div *ngIf="feedback.feedback.actions.length > 0" class="feedback-category">
+                  <h5><mat-icon>directions_run</mat-icon> Actions ({{ feedback.feedback.actions.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let action of feedback.feedback.actions" class="feedback-item">
+                      <p>{{ action }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button 
+                                [color]="isFeedbackSelected(action) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(action)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(action) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(action) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dialog -->
+                <div *ngIf="feedback.feedback.dialog.length > 0" class="feedback-category">
+                  <h5><mat-icon>chat</mat-icon> Dialog ({{ feedback.feedback.dialog.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let dialog of feedback.feedback.dialog" class="feedback-item">
+                      <p>{{ dialog }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button 
+                                [color]="isFeedbackSelected(dialog) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(dialog)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(dialog) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(dialog) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Emotions -->
+                <div *ngIf="feedback.feedback.emotions.length > 0" class="feedback-category">
+                  <h5><mat-icon>favorite</mat-icon> Emotions ({{ feedback.feedback.emotions.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let emotion of feedback.feedback.emotions" class="feedback-item">
+                      <p>{{ emotion }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button 
+                                [color]="isFeedbackSelected(emotion) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(emotion)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(emotion) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(emotion) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Physical Sensations -->
+                <div *ngIf="feedback.feedback.physicalSensations.length > 0" class="feedback-category">
+                  <h5><mat-icon>accessibility</mat-icon> Physical ({{ feedback.feedback.physicalSensations.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let sensation of feedback.feedback.physicalSensations" class="feedback-item">
+                      <p>{{ sensation }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button 
+                                [color]="isFeedbackSelected(sensation) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(sensation)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(sensation) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(sensation) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Internal Monologue -->
+                <div *ngIf="feedback.feedback.internalMonologue.length > 0" class="feedback-category">
+                  <h5><mat-icon>psychology</mat-icon> Internal Monologue ({{ feedback.feedback.internalMonologue.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let thought of feedback.feedback.internalMonologue" class="feedback-item">
+                      <p>{{ thought }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button 
+                                [color]="isFeedbackSelected(thought) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(thought)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(thought) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(thought) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Rater Feedback -->
+          <div *ngIf="selectedEntityType === 'rater'" class="rater-feedback">
+            <ng-container *ngFor="let feedback of raterFeedback">
+              <div *ngIf="feedback.raterName === getSelectedEntityName()" class="feedback-content">
+                
+                <!-- Overall Assessment -->
+                <div *ngIf="feedback.feedback.opinion" class="feedback-category">
+                  <h5><mat-icon>assessment</mat-icon> Overall Assessment</h5>
+                  <mat-card class="opinion-card">
+                    <mat-card-content>
+                      <p>{{ feedback.feedback.opinion }}</p>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+
+                <!-- Suggestions -->
+                <div *ngIf="feedback.feedback.suggestions.length > 0" class="feedback-category">
+                  <h5><mat-icon>lightbulb</mat-icon> Suggestions ({{ feedback.feedback.suggestions.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let suggestion of feedback.feedback.suggestions" class="feedback-item priority-item">
+                      <div class="suggestion-header">
+                        <mat-chip-option [selected]="true" 
+                                        [class]="'priority-' + suggestion.priority">
+                          <mat-icon>{{ suggestion.priority === 'high' ? 'priority_high' : suggestion.priority === 'medium' ? 'remove' : 'low_priority' }}</mat-icon>
+                          {{ suggestion.priority | titlecase }}
+                        </mat-chip-option>
+                      </div>
+                      <h6>{{ suggestion.issue }}</h6>
+                      <p>{{ suggestion.suggestion }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button 
+                                [color]="isFeedbackSelected(suggestion.suggestion) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(suggestion.suggestion)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(suggestion.suggestion) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(suggestion.suggestion) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Chat Section -->
+          <div class="chat-section">
+            <h5><mat-icon>chat</mat-icon> Chat with {{ getSelectedEntityName() }}</h5>
+            <mat-form-field appearance="outline" class="chat-input">
+              <mat-label>Ask about this feedback...</mat-label>
+              <textarea matInput 
+                        [(ngModel)]="currentChatMessage"
+                        [disabled]="disabled"
+                        placeholder="e.g., 'Can you elaborate on the environmental details?'"
+                        rows="3">
+              </textarea>
+            </mat-form-field>
+            <div class="chat-actions">
+              <button mat-raised-button 
+                      color="primary"
+                      (click)="onSendChatMessage()"
+                      [disabled]="!currentChatMessage.trim() || disabled">
+                <mat-icon>send</mat-icon>
+                Send
+              </button>
+              <button mat-button 
+                      (click)="currentChatMessage = ''"
+                      [disabled]="!currentChatMessage.trim() || disabled">
+                <mat-icon>clear</mat-icon>
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Guidance Section -->
+    <div class="user-guidance-section">
+      <h4><mat-icon>edit</mat-icon> User Guidance</h4>
+      <mat-form-field appearance="outline" class="guidance-field">
+        <mat-label>Modification Instructions</mat-label>
+        <textarea matInput 
+                  [(ngModel)]="userGuidance"
+                  (ngModelChange)="onUserGuidanceChange()"
+                  [disabled]="disabled"
+                  placeholder="e.g., 'Add more internal conflict for Sarah. Show her physical reactions to the confrontation...'"
+                  rows="4">
+        </textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="modify-actions">
+      <button mat-raised-button 
+              color="primary" 
+              (click)="onModifyChapter()"
+              [disabled]="!canModifyChapter()"
+              class="modify-button">
+        <mat-icon>auto_fix_high</mat-icon>
+        <span *ngIf="!isLoading">Modify Chapter with Selected Feedback ({{ getTotalSelectedCount() }} selected)</span>
+        <span *ngIf="isLoading">Modifying...</span>
+      </button>
+      
+      <button mat-stroked-button 
+              color="warn"
+              (click)="onClearFeedback()"
+              [disabled]="disabled">
+        <mat-icon>clear_all</mat-icon>
+        Clear All
+      </button>
+    </div>
+  </div>
+</div>

@@ -28,6 +28,7 @@ import { FeedbackService } from '../../services/feedback.service';
 import { ContextBuilderService } from '../../services/context-builder.service';
 import { WorldbuildingTabComponent } from '../worldbuilding-tab/worldbuilding-tab.component';
 import { ChapterEditorComponent } from '../chapter-editor/chapter-editor.component';
+import { ChapterEditorTabComponent } from '../chapter-editor-tab/chapter-editor-tab.component';
 import { MatIconModule } from '@angular/material/icon';
 
 interface ResearchChatMessage {
@@ -40,19 +41,20 @@ interface ResearchChatMessage {
 @Component({
   selector: 'app-story-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlineTabComponent, WorldbuildingTabComponent, ChapterEditorComponent, MatIconModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, NewlineToBrPipe, SystemPromptFieldComponent, ToastComponent, PlotOutlineTabComponent, WorldbuildingTabComponent, ChapterEditorComponent, ChapterEditorTabComponent, MatIconModule],
   templateUrl: './story-workspace.component.html',
   styleUrl: './story-workspace.component.scss'
 })
 export class StoryWorkspaceComponent implements OnInit, OnDestroy {
   story: Story | null = null;
-  activeTab: 'general' | 'worldbuilding' | 'characters' | 'raters' | 'plot-outline' | 'story' = 'general';
+  activeTab: 'general' | 'worldbuilding' | 'characters' | 'raters' | 'plot-outline' | 'story' | 'chapter-editor' = 'general';
   loading = true;
   error: string | null = null;
   
   // Chapter editing state
   isEditingChapter = false;
   currentEditingChapter: Chapter | null = null;
+  chapterEditorTabTitle = '';
 
   // Characters tab state
   selectedCharacterId: string | null = null;
@@ -1022,6 +1024,8 @@ Provide actionable insights and creative suggestions to enhance this plot point.
   editChapter(chapter: Chapter): void {
     this.currentEditingChapter = chapter;
     this.isEditingChapter = true;
+    this.chapterEditorTabTitle = `📝 Edit Chapter ${chapter.number}`;
+    this.activeTab = 'chapter-editor';
   }
 
   /**
@@ -1044,5 +1048,21 @@ Provide actionable insights and creative suggestions to enhance this plot point.
   onBackFromChapterEditor(): void {
     this.isEditingChapter = false;
     this.currentEditingChapter = null;
+    this.chapterEditorTabTitle = '';
+    this.activeTab = 'story'; // Return to story tab
+  }
+
+  /**
+   * Handle chapter changes from the new tab editor
+   */
+  onChapterChange(updatedChapter: Chapter): void {
+    if (!this.story) return;
+
+    // Find the chapter in the story's chapters array and update it
+    const chapterIndex = this.story.story.chapters.findIndex(ch => ch.id === updatedChapter.id);
+    if (chapterIndex !== -1) {
+      this.story.story.chapters[chapterIndex] = updatedChapter;
+      // Auto-save could be implemented here
+    }
   }
 }
