@@ -27,14 +27,8 @@
     </button>
   </div>
 
-  <!-- No Feedback State -->
-  <div *ngIf="!hasAnyFeedback() && !isLoading" class="no-feedback">
-    <mat-icon class="no-feedback-icon">feedback</mat-icon>
-    <p>No feedback yet. Click the buttons above to get AI feedback on your chapter.</p>
-  </div>
-
-  <!-- Feedback Selection Interface -->
-  <div *ngIf="hasAnyFeedback()" class="feedback-interface">
+  <!-- Always Show Feedback Interface Layout -->
+  <div class="feedback-interface">
     <div class="feedback-split">
       <!-- Left Panel: Entity Selection -->
       <div class="entity-selector">
@@ -71,7 +65,12 @@
 
       <!-- Right Panel: Feedback Display -->
       <div class="feedback-display">
-        <div *ngIf="!selectedEntityType || !selectedEntityId" class="no-selection">
+        <div *ngIf="!hasAnyFeedback() && !isLoading" class="no-selection">
+          <mat-icon class="no-feedback-icon">feedback</mat-icon>
+          <p>No feedback yet. Click the buttons above to get AI feedback on your chapter.</p>
+        </div>
+        
+        <div *ngIf="hasAnyFeedback() && (!selectedEntityType || !selectedEntityId)" class="no-selection">
           <mat-icon>arrow_back</mat-icon>
           <p>Select a character or rater from the left to view their feedback</p>
         </div>
@@ -258,41 +257,41 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- User Guidance Section -->
-    <div class="user-guidance-section">
-      <h4><mat-icon>edit</mat-icon> User Guidance</h4>
-      <mat-form-field appearance="outline" class="guidance-field">
-        <mat-label>Modification Instructions</mat-label>
-        <textarea matInput 
-                  [(ngModel)]="userGuidance"
-                  (ngModelChange)="onUserGuidanceChange()"
-                  [disabled]="disabled"
-                  placeholder="e.g., 'Add more internal conflict for Sarah. Show her physical reactions to the confrontation...'"
-                  rows="4">
-        </textarea>
-      </mat-form-field>
-    </div>
+  <!-- User Guidance Section - Always Visible -->
+  <div class="user-guidance-section">
+    <h4><mat-icon>edit</mat-icon> User Guidance</h4>
+    <mat-form-field appearance="outline" class="guidance-field">
+      <mat-label>Modification Instructions</mat-label>
+      <textarea matInput 
+                [(ngModel)]="userGuidance"
+                (ngModelChange)="onUserGuidanceChange()"
+                [disabled]="disabled"
+                placeholder="e.g., 'Add more internal conflict for Sarah. Show her physical reactions to the confrontation...'"
+                rows="4">
+      </textarea>
+    </mat-form-field>
+  </div>
 
-    <!-- Action Buttons -->
-    <div class="modify-actions">
-      <button mat-raised-button 
-              color="primary" 
-              (click)="onModifyChapter()"
-              [disabled]="!canModifyChapter()"
-              class="modify-button">
-        <mat-icon>auto_fix_high</mat-icon>
-        <span *ngIf="!isLoading">Modify Chapter with Selected Feedback ({{ getTotalSelectedCount() }} selected)</span>
-        <span *ngIf="isLoading">Modifying...</span>
-      </button>
-      
-      <button mat-stroked-button 
-              color="warn"
-              (click)="onClearFeedback()"
-              [disabled]="disabled">
-        <mat-icon>clear_all</mat-icon>
-        Clear All
-      </button>
-    </div>
+  <!-- Action Buttons - Always Visible -->
+  <div class="modify-actions">
+    <button mat-raised-button 
+            color="primary" 
+            (click)="onModifyChapter()"
+            [disabled]="!canModifyChapter()"
+            class="modify-button">
+      <mat-icon>auto_fix_high</mat-icon>
+      <span *ngIf="!isLoading">Modify Chapter with Selected Feedback ({{ getTotalSelectedCount() }} selected)</span>
+      <span *ngIf="isLoading">Modifying...</span>
+    </button>
+    
+    <button mat-stroked-button 
+            color="warn"
+            (click)="onClearFeedback()"
+            [disabled]="disabled">
+      <mat-icon>clear_all</mat-icon>
+      Clear All
+    </button>
   </div>
 </div>
