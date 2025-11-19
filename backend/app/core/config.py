@@ -205,7 +205,7 @@ class Settings(BaseSettings):
 
     # Modify Chapter Endpoint
     ENDPOINT_MODIFY_CHAPTER_TEMPERATURE: float = Field(
-        default=0.7,
+        default=0.8,
         ge=0.0,
         le=2.0,
         description="Temperature for chapter modification"

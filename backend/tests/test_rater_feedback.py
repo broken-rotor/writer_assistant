@@ -76,8 +76,13 @@ class TestRaterFeedbackEndpoint:
 
         assert len(suggestions) > 0
         for suggestion in suggestions:
-            assert isinstance(suggestion, str)
-            assert len(suggestion) > 0
+            assert isinstance(suggestion, dict)
+            assert "issue" in suggestion
+            assert "suggestion" in suggestion
+            assert "priority" in suggestion
+            assert isinstance(suggestion["issue"], str)
+            assert isinstance(suggestion["suggestion"], str)
+            assert suggestion["priority"] in ["high", "medium", "low"]
 
     def test_rater_feedback_opinion_not_empty(self, client, sample_rater_feedback_request):
         """Test rater opinion is not empty (streaming)"""
