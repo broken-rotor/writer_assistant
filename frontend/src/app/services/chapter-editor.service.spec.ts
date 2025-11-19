@@ -282,8 +282,15 @@ describe('ChapterEditorService', () => {
     
     service.initializeChapterEditing(mockChapter);
     
-    // Set up some feedback first
+    // Set up some feedback first, including incorporated feedback in the chapter
+    const chapterWithFeedback = {
+      ...mockChapter,
+      incorporatedFeedback: [
+        { source: 'TestChar', type: 'action' as const, content: 'Previous feedback', incorporated: false }
+      ]
+    };
     service['updateState']({
+      currentChapter: chapterWithFeedback,
       characterFeedback: [{ 
         characterName: 'TestChar', 
         feedback: { 
@@ -306,6 +313,7 @@ describe('ChapterEditorService', () => {
     expect(stateBeforeModification.characterFeedback.length).toBe(1);
     expect(stateBeforeModification.raterFeedback.length).toBe(1);
     expect(stateBeforeModification.userGuidance).toBe('Test guidance');
+    expect(stateBeforeModification.currentChapter?.incorporatedFeedback.length).toBe(1);
     
     // Apply user guidance (which should clear feedback after success)
     service.applyUserGuidance('Apply feedback', mockStory).subscribe(content => {
@@ -317,6 +325,7 @@ describe('ChapterEditorService', () => {
       expect(state.characterFeedback.length).toBe(0);
       expect(state.raterFeedback.length).toBe(0);
       expect(state.userGuidance).toBe('');
+      expect(state.currentChapter?.incorporatedFeedback.length).toBe(0);
       expect(state.currentChapter?.content).toBe('Modified content with feedback incorporated');
       expect(state.hasUnsavedChanges).toBeTrue();
     });

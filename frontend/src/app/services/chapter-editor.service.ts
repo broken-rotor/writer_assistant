@@ -456,11 +456,29 @@ export class ChapterEditorService {
    * Clear all feedback
    */
   clearFeedback(): void {
-    this.updateState({ 
+    const currentState = this.stateSubject.value;
+    
+    // Clear UI feedback arrays and user guidance
+    const stateUpdate: Partial<ChapterEditingState> = {
       characterFeedback: [],
       raterFeedback: [],
       userGuidance: ''
-    });
+    };
+
+    // Also clear incorporated feedback from the chapter itself
+    if (currentState.currentChapter) {
+      const updatedChapter = {
+        ...currentState.currentChapter,
+        incorporatedFeedback: [],
+        metadata: {
+          ...currentState.currentChapter.metadata,
+          lastModified: new Date()
+        }
+      };
+      stateUpdate.currentChapter = updatedChapter;
+    }
+
+    this.updateState(stateUpdate);
   }
 
   /**
