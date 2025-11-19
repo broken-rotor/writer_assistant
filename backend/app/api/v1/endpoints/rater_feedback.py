@@ -85,8 +85,16 @@ Maintain a supportive but honest tone - your goal is to help the writer create t
 Provide feedback in JSON format:
 {{
   "opinion": "Your overall opinion (2-3 sentences)",
-  "suggestions": ["4-6 specific suggestions for improvement"]
+  "suggestions": [
+    {{
+      "issue": "Brief description of the issue",
+      "suggestion": "Specific actionable suggestion for improvement",
+      "priority": "high/medium/low"
+    }}
+  ]
 }}
+
+Generate 4-6 suggestions, each with an issue, suggestion, and priority level.
 """)
 
             # Phase 2: Generating Suggestions

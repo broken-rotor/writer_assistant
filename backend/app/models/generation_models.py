@@ -114,9 +114,15 @@ class RaterFeedbackRequest(BaseModel):
                     "characters, outline, and chapters")
 
 
+class RaterSuggestion(BaseModel):
+    issue: str
+    suggestion: str
+    priority: str  # "high", "medium", "low"
+
+
 class RaterFeedback(BaseModel):
     opinion: str
-    suggestions: List[str]
+    suggestions: List[RaterSuggestion]
 
 
 class RaterFeedbackResponse(BaseModel):

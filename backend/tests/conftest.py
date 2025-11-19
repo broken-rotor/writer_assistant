@@ -106,10 +106,10 @@ What had seemed simple moments ago now revealed layers of complexity. The charac
             return json.dumps({
                 "opinion": "This plot point is engaging and moves the story forward effectively.",
                 "suggestions": [
-                    "Add more sensory details",
-                    "Heighten emotional stakes",
-                    "Connect to story arc",
-                    "Improve pacing"
+                    {"issue": "Limited sensory engagement", "suggestion": "Add more sensory details", "priority": "high"},
+                    {"issue": "Emotional intensity could be higher", "suggestion": "Heighten emotional stakes", "priority": "medium"},
+                    {"issue": "Standalone scene", "suggestion": "Connect to story arc", "priority": "medium"},
+                    {"issue": "Pacing feels uneven", "suggestion": "Improve pacing", "priority": "low"}
                 ]
             })
 
