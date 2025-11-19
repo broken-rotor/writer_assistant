@@ -18,6 +18,16 @@
               {{ character.name }}
             </button>
           </div>
+          <div class="entity-actions" *ngIf="selectedEntityType === 'character' && selectedEntityId">
+            <button mat-raised-button 
+                    color="primary"
+                    (click)="onGetFeedback('character')"
+                    [disabled]="disabled || isLoading"
+                    class="get-feedback-button">
+              <mat-icon>feedback</mat-icon>
+              Get {{ getSelectedEntityName() }} Feedback
+            </button>
+          </div>
         </div>
 
         <!-- Raters Section -->
@@ -31,6 +41,16 @@
                     [disabled]="disabled">
               <mat-icon>star</mat-icon>
               {{ rater.name }}
+            </button>
+          </div>
+          <div class="entity-actions" *ngIf="selectedEntityType === 'rater' && selectedEntityId">
+            <button mat-raised-button 
+                    color="primary"
+                    (click)="onGetFeedback('rater')"
+                    [disabled]="disabled || isLoading"
+                    class="get-feedback-button">
+              <mat-icon>feedback</mat-icon>
+              Get {{ getSelectedEntityName() }} Feedback
             </button>
           </div>
         </div>
@@ -154,6 +174,44 @@
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(thought) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(thought) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Goals -->
+                <div *ngIf="feedback.feedback.goals && feedback.feedback.goals.length > 0" class="feedback-category">
+                  <h5><mat-icon>flag</mat-icon> Goals ({{ feedback.feedback.goals.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let goal of feedback.feedback.goals" class="feedback-item">
+                      <p>{{ goal }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button 
+                                [color]="isFeedbackSelected(goal) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(goal)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(goal) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(goal) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Memories -->
+                <div *ngIf="feedback.feedback.memories && feedback.feedback.memories.length > 0" class="feedback-category">
+                  <h5><mat-icon>history</mat-icon> Memories ({{ feedback.feedback.memories.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let memory of feedback.feedback.memories" class="feedback-item">
+                      <p>{{ memory }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button 
+                                [color]="isFeedbackSelected(memory) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(memory)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(memory) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(memory) ? 'Selected' : 'Select' }}
                         </button>
                       </div>
                     </div>

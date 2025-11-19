@@ -292,6 +292,8 @@ export interface StructuredCharacterFeedbackResponse {
     physicalSensations: string[];
     emotions: string[];
     internalMonologue: string[];
+    goals: string[];
+    memories: string[];
   };
   metadata?: StructuredResponseMetadata;
 }

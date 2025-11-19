@@ -89,7 +89,9 @@ describe('ApiService', () => {
           dialog: ['I must be brave'],
           physicalSensations: ['Heart pounding'],
           emotions: ['Fear', 'Determination'],
-          internalMonologue: ['What dangers await?']
+          internalMonologue: ['What dangers await?'],
+          goals: ['Survive the encounter'],
+          memories: ['Remember the training']
         }
       };
 
