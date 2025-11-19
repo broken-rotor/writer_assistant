@@ -16,7 +16,9 @@ describe('FeedbackIntegrationComponent', () => {
         dialog: ['Include more dialogue'],
         physicalSensations: ['Describe the cold'],
         emotions: ['Show more fear'],
-        internalMonologue: ['Add inner thoughts']
+        internalMonologue: ['Add inner thoughts'],
+        goals: ['Survive the encounter'],
+        memories: ['Remember the training']
       }
     }
   ];

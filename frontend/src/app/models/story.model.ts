@@ -77,6 +77,8 @@ export interface CharacterFeedback {
   physicalSensations: string[];
   emotions: string[];
   internalMonologue: string[];
+  goals: string[];
+  memories: string[];
 }
 
 export interface RaterFeedback {
@@ -475,6 +477,8 @@ export interface CharacterFeedbackResponse {
     physicalSensations: string[];
     emotions: string[];
     internalMonologue: string[];
+    goals: string[];
+    memories: string[];
   };
 }
 

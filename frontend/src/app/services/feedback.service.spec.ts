@@ -95,7 +95,9 @@ describe('FeedbackService', () => {
       dialog: ['Say something inspiring'],
       physicalSensations: ['Feel the wind'],
       emotions: ['Show determination'],
-      internalMonologue: ['Think about the mission']
+      internalMonologue: ['Think about the mission'],
+      goals: ['Complete the mission'],
+      memories: ['Remember the training']
     }
   };
 

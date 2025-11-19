@@ -126,7 +126,9 @@ describe('GenerationService', () => {
           dialog: ['I must be brave'],
           physicalSensations: ['Heart pounding'],
           emotions: ['Fear'],
-          internalMonologue: ['What awaits?']
+          internalMonologue: ['What awaits?'],
+          goals: ['Survive the encounter'],
+          memories: ['Remember the training']
         }
       };
 

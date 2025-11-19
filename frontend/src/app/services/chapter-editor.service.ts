@@ -309,7 +309,15 @@ export class ChapterEditorService {
         // Convert StructuredCharacterFeedbackResponse to CharacterFeedbackResponse
         const characterFeedback = [{
           characterName: response.characterName || characterName,
-          feedback: response.feedback || 'No feedback provided'
+          feedback: response.feedback || {
+            actions: [],
+            dialog: [],
+            physicalSensations: [],
+            emotions: [],
+            internalMonologue: [],
+            goals: [],
+            memories: []
+          }
         }];
         
         // Save feedback to chapter's incorporatedFeedback
@@ -501,7 +509,9 @@ export class ChapterEditorService {
             dialog: [],
             physicalSensations: [],
             emotions: [],
-            internalMonologue: []
+            internalMonologue: [],
+            goals: [],
+            memories: []
           });
         }
         

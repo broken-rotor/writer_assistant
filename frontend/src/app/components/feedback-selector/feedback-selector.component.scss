@@ -61,6 +61,22 @@
             letter-spacing: 0.5px;
           }
 
+          .entity-actions {
+            margin-top: 12px;
+            
+            .get-feedback-button {
+              width: 100%;
+              font-size: 0.85em;
+              
+              mat-icon {
+                margin-right: 6px;
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+              }
+            }
+          }
+
           .entity-list {
             display: flex;
             flex-direction: column;
@@ -276,6 +292,7 @@
               margin-top: 24px;
               padding-top: 20px;
               border-top: 1px solid #e0e0e0;
+              width: 100%; // Ensure full width
 
               h5 {
                 display: flex;
@@ -300,6 +317,7 @@
                 
                 textarea {
                   min-height: 80px;
+                  width: 100%; // Ensure textarea takes full width
                 }
               }
 
@@ -326,6 +344,8 @@
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       background: white;
+      width: 100%; // Ensure full width
+      box-sizing: border-box; // Include padding in width calculation
 
       h4 {
         display: flex;
@@ -349,6 +369,8 @@
         
         textarea {
           min-height: 100px;
+          width: 100%; // Ensure textarea takes full width
+          box-sizing: border-box; // Include padding in width calculation
         }
       }
     }
