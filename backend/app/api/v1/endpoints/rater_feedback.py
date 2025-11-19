@@ -127,7 +127,7 @@ Provide feedback in JSON format:
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in streaming rater_feedback", e)
+            logger.exception("Error in streaming rater_feedback")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

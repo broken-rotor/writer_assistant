@@ -128,7 +128,8 @@ describe('GenerationService', () => {
           emotions: ['Fear'],
           internalMonologue: ['What awaits?'],
           goals: ['Survive the encounter'],
-          memories: ['Remember the training']
+          memories: ['Remember the training'],
+          subtext: ['Hidden determination beneath the fear']
         }
       };
 
@@ -198,7 +199,8 @@ describe('GenerationService', () => {
           emotions: ['Fear', 'Determination'],
           internalMonologue: ['What dangers await?'],
           goals: ['Survive the encounter'],
-          memories: ['Remember the training']
+          memories: ['Remember the training'],
+          subtext: ['Hidden determination beneath the fear']
         }
       };
 

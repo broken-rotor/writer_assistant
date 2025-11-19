@@ -162,7 +162,7 @@ Focus on expanding the structural and narrative elements while maintaining the o
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in flesh_out:", e)
+            logger.exception("Error in flesh_out")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

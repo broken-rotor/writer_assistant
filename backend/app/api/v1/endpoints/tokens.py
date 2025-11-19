@@ -120,13 +120,13 @@ async def count_tokens(request: TokenCountRequest) -> TokenCountResponse:
         )
 
     except ValueError as e:
-        logger.error(f"Validation error in token counting", e)
+        logger.exception(f"Validation error in token counting")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"success": False, "error": str(e)}
         )
     except Exception as e:
-        logger.error(f"Unexpected error in token counting", e)
+        logger.exception(f"Unexpected error in token counting")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"success": False, "error": "Internal server error"}
@@ -211,13 +211,13 @@ async def validate_token_budget(request: TokenValidationRequest) -> TokenValidat
         )
 
     except ValueError as e:
-        logger.error(f"Validation error in budget validation", e)
+        logger.exception("Validation error in budget validation")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"success": False, "error": str(e)}
         )
     except Exception as e:
-        logger.error(f"Unexpected error in budget validation", e)
+        logger.exception("Unexpected error in budget validation")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"success": False, "error": "Internal server error"}

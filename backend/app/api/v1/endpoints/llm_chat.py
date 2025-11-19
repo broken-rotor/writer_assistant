@@ -136,7 +136,7 @@ async def llm_chat(request: LLMChatRequest):
             yield f"data: {json.dumps({'type': 'result', 'data': result.dict(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in llm_chat", e)
+            logger.exception("Error in llm_chat")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

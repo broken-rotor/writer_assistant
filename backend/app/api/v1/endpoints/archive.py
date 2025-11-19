@@ -143,7 +143,7 @@ async def search_archive(request: SearchRequest):
         # Handle disabled archive
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"Archive search failed: {e}")
+        logger.exception("Archive search failed")
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
@@ -184,7 +184,7 @@ async def list_files():
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to list files: {e}")
+        logger.exception("Failed to list files")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to list files: {str(e)}")
@@ -226,7 +226,7 @@ async def get_file_content(
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to get file content: {e}")
+        logger.exception("Failed to get file content")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve file: {str(e)}")
@@ -263,7 +263,7 @@ async def get_archive_stats():
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to get archive stats: {e}")
+        logger.exception("Failed to get archive stats")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get stats: {str(e)}")
@@ -381,7 +381,7 @@ async def get_rag_status():
         )
 
     except Exception as e:
-        logger.error(f"Failed to check RAG status: {e}")
+        logger.exception("Failed to check RAG status")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to check RAG status: {str(e)}")
@@ -451,7 +451,7 @@ async def rag_query(request: RAGQueryRequest):
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"RAG query failed: {e}")
+        logger.exception("RAG query failed")
         raise HTTPException(
             status_code=500,
             detail=f"RAG query failed: {str(e)}")
@@ -596,7 +596,7 @@ async def rag_query_stream(request: RAGQueryRequest):
             error_event = StreamingErrorEvent(message=str(e))
             yield f"data: {error_event.model_dump_json()}\n\n"
         except Exception as e:
-            logger.error(f"RAG query failed: {e}")
+            logger.exception("RAG query failed")
             error_event = StreamingErrorEvent(
                 message=f"RAG query failed: {str(e)}")
             yield f"data: {error_event.model_dump_json()}\n\n"
@@ -728,7 +728,7 @@ async def rag_chat(request: RAGChatRequest):
             error_event = StreamingErrorEvent(message=str(e))
             yield f"data: {error_event.model_dump_json()}\n\n"
         except Exception as e:
-            logger.error(f"RAG chat failed: {e}")
+            logger.exception("RAG chat failed")
             error_event = StreamingErrorEvent(
                 message=f"RAG chat failed: {str(e)}")
             yield f"data: {error_event.model_dump_json()}\n\n"

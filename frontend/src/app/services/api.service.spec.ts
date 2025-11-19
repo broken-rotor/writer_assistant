@@ -98,7 +98,8 @@ describe('ApiService', () => {
           emotions: ['Fear', 'Determination'],
           internalMonologue: ['What dangers await?'],
           goals: ['Survive the encounter'],
-          memories: ['Remember the training']
+          memories: ['Remember the training'],
+          subtext: ['Hidden determination beneath the fear']
         }
       };
 
@@ -170,7 +171,8 @@ describe('ApiService', () => {
           emotions: ['Fear', 'Determination'],
           internalMonologue: ['What dangers await?'],
           goals: ['Survive the encounter'],
-          memories: ['Remember the training']
+          memories: ['Remember the training'],
+          subtext: ['Hidden determination beneath the fear']
         }
       };
 

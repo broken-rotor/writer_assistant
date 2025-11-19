@@ -79,6 +79,7 @@ export interface CharacterFeedback {
   internalMonologue: string[];
   goals: string[];
   memories: string[];
+  subtext: string[];
 }
 
 export interface RaterFeedback {
@@ -479,6 +480,7 @@ export interface CharacterFeedbackResponse {
     internalMonologue: string[];
     goals: string[];
     memories: string[];
+    subtext: string[];
   };
 }
 

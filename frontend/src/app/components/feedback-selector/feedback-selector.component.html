@@ -186,12 +186,31 @@
                     <div *ngFor="let memory of feedback.feedback.memories" class="feedback-item">
                       <p>{{ memory }}</p>
                       <div class="feedback-actions">
-                        <button mat-button 
+                        <button mat-button
                                 [color]="isFeedbackSelected(memory) ? 'primary' : ''"
                                 (click)="toggleFeedbackSelection(memory)"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(memory) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(memory) ? 'Selected' : 'Select' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Subtext -->
+                <div *ngIf="feedback.feedback.subtext && feedback.feedback.subtext.length > 0" class="feedback-category">
+                  <h5><mat-icon>visibility_off</mat-icon> Subtext ({{ feedback.feedback.subtext.length }})</h5>
+                  <div class="feedback-items">
+                    <div *ngFor="let item of feedback.feedback.subtext" class="feedback-item">
+                      <p>{{ item }}</p>
+                      <div class="feedback-actions">
+                        <button mat-button
+                                [color]="isFeedbackSelected(item) ? 'primary' : ''"
+                                (click)="toggleFeedbackSelection(item)"
+                                [disabled]="disabled">
+                          <mat-icon>{{ isFeedbackSelected(item) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                          {{ isFeedbackSelected(item) ? 'Selected' : 'Select' }}
                         </button>
                       </div>
                     </div>
