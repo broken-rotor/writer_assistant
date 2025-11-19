@@ -422,6 +422,9 @@ export class ChapterEditorService {
           hasUnsavedChanges: true
         });
 
+        // Clear feedback after successful chapter modification since it's now incorporated
+        this.clearFeedback();
+
         return response.modifiedChapter;
       }),
       catchError(error => {
@@ -453,10 +456,29 @@ export class ChapterEditorService {
    * Clear all feedback
    */
   clearFeedback(): void {
-    this.updateState({ 
+    const currentState = this.stateSubject.value;
+    
+    // Clear UI feedback arrays and user guidance
+    const stateUpdate: Partial<ChapterEditingState> = {
       characterFeedback: [],
-      raterFeedback: []
-    });
+      raterFeedback: [],
+      userGuidance: ''
+    };
+
+    // Also clear incorporated feedback from the chapter itself
+    if (currentState.currentChapter) {
+      const updatedChapter = {
+        ...currentState.currentChapter,
+        incorporatedFeedback: [],
+        metadata: {
+          ...currentState.currentChapter.metadata,
+          lastModified: new Date()
+        }
+      };
+      stateUpdate.currentChapter = updatedChapter;
+    }
+
+    this.updateState(stateUpdate);
   }
 
   /**

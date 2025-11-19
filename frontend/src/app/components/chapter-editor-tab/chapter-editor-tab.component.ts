@@ -252,9 +252,8 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
 
   onUserGuidanceChange(guidance: string) {
     this.userGuidance = guidance;
-    // Update the service state if needed
-    // Note: The service doesn't currently track userGuidance in state,
-    // but we keep it in the component for when it's needed
+    // The service tracks userGuidance in state, but we don't need to update it here
+    // since it gets updated when applyUserGuidance is called
   }
 
   // Final review methods
