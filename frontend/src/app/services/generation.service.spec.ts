@@ -159,7 +159,79 @@ describe('GenerationService', () => {
             character_name: 'Test Character',
             plotPoint: 'Enter dungeon',
             request_context: jasmine.any(Object)
-          })
+          }),
+          undefined // onProgress parameter
+        );
+        done();
+      });
+    });
+
+    it('should pass onProgress callback to API service', (done) => {
+      const mockStory = createMockStory();
+      const mockCharacter: Character = {
+        id: 'char-1',
+        name: 'Test Character',
+        basicBio: 'A hero',
+        physicalAppearance: '',
+        personality: '',
+        motivations: '',
+        relationships: '',
+        age: 25,
+        sex: 'Male',
+        gender: 'Male',
+        sexualPreference: '',
+        usualClothing: '',
+        fears: '',
+        isHidden: false,
+        metadata: {
+          creationSource: 'user' as const,
+          lastModified: new Date()
+        }
+      };
+
+      const mockResponse: StructuredCharacterFeedbackResponse = {
+        characterName: 'Test Character',
+        feedback: {
+          actions: ['Draw sword'],
+          dialog: ['I must be brave'],
+          physicalSensations: ['Heart pounding'],
+          emotions: ['Fear', 'Determination'],
+          internalMonologue: ['What dangers await?'],
+          goals: ['Survive the encounter'],
+          memories: ['Remember the training']
+        }
+      };
+
+      // Mock context builder responses
+      contextBuilderSpy.buildSystemPromptsContext.and.returnValue({
+        success: true,
+        data: { mainPrefix: 'prefix', mainSuffix: 'suffix', assistantPrompt: 'prompt' }
+      });
+      contextBuilderSpy.buildWorldbuildingContext.and.returnValue({
+        success: true,
+        data: { content: 'A fantasy world', isValid: true, wordCount: 3, lastUpdated: new Date() }
+      });
+      contextBuilderSpy.buildStorySummaryContext.and.returnValue({
+        success: true,
+        data: { summary: 'A story about heroes', isValid: true, wordCount: 4, lastUpdated: new Date() }
+      });
+      contextBuilderSpy.buildChaptersContext.and.returnValue({
+        success: true,
+        data: { chapters: [], totalChapters: 0, totalWordCount: 0, lastUpdated: new Date() }
+      });
+
+      const onProgress = jasmine.createSpy('onProgress');
+      apiServiceSpy.requestCharacterFeedback.and.returnValue(of(mockResponse));
+
+      service.requestCharacterFeedback(mockStory, mockCharacter, 'Enter dungeon', onProgress).subscribe(response => {
+        expect(response).toEqual(mockResponse);
+        expect(apiServiceSpy.requestCharacterFeedback).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            character_name: 'Test Character',
+            plotPoint: 'Enter dungeon',
+            request_context: jasmine.any(Object)
+          }),
+          onProgress
         );
         done();
       });

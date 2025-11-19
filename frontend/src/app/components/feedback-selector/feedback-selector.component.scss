@@ -287,49 +287,49 @@
                 }
               }
             }
+          }
 
-            .chat-section {
-              margin-top: 24px;
-              padding-top: 20px;
-              border-top: 1px solid #e0e0e0;
-              width: 100%; // Ensure full width
+          .chat-section {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            width: 100%; // Ensure full width
 
-              h5 {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin: 0 0 16px 0;
-                color: #333;
-                font-size: 1em;
-                font-weight: 500;
+            h5 {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin: 0 0 16px 0;
+              color: #333;
+              font-size: 1em;
+              font-weight: 500;
 
+              mat-icon {
+                color: #2196f3;
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+              }
+            }
+
+            .chat-input {
+              width: 100%;
+              margin-bottom: 12px;
+              
+              textarea {
+                min-height: 80px;
+                width: 100%; // Ensure textarea takes full width
+              }
+            }
+
+            .chat-actions {
+              display: flex;
+              gap: 8px;
+              justify-content: flex-end;
+
+              button {
                 mat-icon {
-                  color: #2196f3;
-                  font-size: 20px;
-                  width: 20px;
-                  height: 20px;
-                }
-              }
-
-              .chat-input {
-                width: 100%;
-                margin-bottom: 12px;
-                
-                textarea {
-                  min-height: 80px;
-                  width: 100%; // Ensure textarea takes full width
-                }
-              }
-
-              .chat-actions {
-                display: flex;
-                gap: 8px;
-                justify-content: flex-end;
-
-                button {
-                  mat-icon {
-                    margin-right: 4px;
-                  }
+                  margin-right: 4px;
                 }
               }
             }
@@ -337,63 +337,63 @@
         }
       }
     }
+  }
 
-    .user-guidance-section {
-      margin-bottom: 20px;
-      padding: 20px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      background: white;
-      width: 100%; // Ensure full width
-      box-sizing: border-box; // Include padding in width calculation
+  .user-guidance-section {
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    width: 100%; // Ensure full width
+    box-sizing: border-box; // Include padding in width calculation
 
-      h4 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 0 0 16px 0;
-        color: #333;
-        font-size: 1.1em;
-        font-weight: 500;
+    h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 1.1em;
+      font-weight: 500;
 
-        mat-icon {
-          color: #666;
-          font-size: 20px;
-          width: 20px;
-          height: 20px;
-        }
-      }
-
-      .guidance-field {
-        width: 100%;
-        
-        textarea {
-          min-height: 100px;
-          width: 100%; // Ensure textarea takes full width
-          box-sizing: border-box; // Include padding in width calculation
-        }
+      mat-icon {
+        color: #666;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
     }
 
-    .modify-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: space-between;
-      align-items: center;
-
-      .modify-button {
-        flex: 1;
-        max-width: 500px;
-
-        mat-icon {
-          margin-right: 8px;
-        }
+    .guidance-field {
+      width: 100%;
+      
+      textarea {
+        min-height: 100px;
+        width: 100%; // Ensure textarea takes full width
+        box-sizing: border-box; // Include padding in width calculation
       }
+    }
+  }
 
-      button {
-        mat-icon {
-          margin-right: 8px;
-        }
+  .modify-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+
+    .modify-button {
+      flex: 1;
+      max-width: 500px;
+
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+
+    button {
+      mat-icon {
+        margin-right: 8px;
       }
     }
   }

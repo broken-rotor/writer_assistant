@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { of, Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import { SSEStreamingService } from './sse-streaming.service';
 import {
   StructuredCharacterFeedbackResponse,
   StructuredRaterFeedbackRequest,
@@ -18,12 +19,18 @@ import { TokenStrategiesResponse } from '../models/token-limits.model';
 describe('ApiService', () => {
   let service: ApiService;
   let httpMock: HttpTestingController;
+  let sseStreamingServiceSpy: jasmine.SpyObj<SSEStreamingService>;
   const baseUrl = 'http://localhost:8000/api/v1';
 
   beforeEach(() => {
+    sseStreamingServiceSpy = jasmine.createSpyObj('SSEStreamingService', ['createSSEObservable']);
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [ApiService]
+      providers: [
+        ApiService,
+        { provide: SSEStreamingService, useValue: sseStreamingServiceSpy }
+      ]
     });
     service = TestBed.inject(ApiService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -38,7 +45,7 @@ describe('ApiService', () => {
   });
 
   describe('requestCharacterFeedback', () => {
-    it('should send POST request to character-feedback endpoint', () => {
+    it('should use SSE streaming for character-feedback endpoint', () => {
       // Create a minimal mock story for the transformer
       const mockStory = {
         id: 'test-story',
@@ -95,14 +102,93 @@ describe('ApiService', () => {
         }
       };
 
+      sseStreamingServiceSpy.createSSEObservable.and.returnValue(of(mockResponse));
+
       service.requestCharacterFeedback(request).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/character-feedback`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(request);
-      req.flush(mockResponse);
+      expect(sseStreamingServiceSpy.createSSEObservable).toHaveBeenCalledWith(
+        `${baseUrl}/character-feedback`,
+        request,
+        jasmine.objectContaining({
+          onProgress: undefined,
+          onError: jasmine.any(Function)
+        })
+      );
+    });
+
+    it('should pass onProgress callback to SSE service', () => {
+      const mockStory = {
+        id: 'test-story',
+        general: {
+          title: 'Test Story',
+          systemPrompts: {
+            mainPrefix: 'Test prefix',
+            mainSuffix: 'Test suffix',
+            assistantPrompt: '',
+            editorPrompt: ''
+          },
+          worldbuilding: 'A fantasy world'
+        },
+        characters: new Map(),
+        raters: new Map(),
+        story: {
+          summary: 'A story',
+          chapters: []
+        },
+        plotOutline: {
+          content: '',
+          status: 'draft' as const,
+          chatHistory: [],
+          raterFeedback: new Map(),
+          metadata: {
+            created: new Date(),
+            lastModified: new Date(),
+            version: 1
+          }
+        },
+        metadata: {
+          version: '1.0',
+          created: new Date(),
+          lastModified: new Date()
+        }
+      };
+
+      const request: CharacterFeedbackRequest = {
+        character_name: 'Test Character',
+        plotPoint: 'The hero enters the dungeon',
+        request_context: transformToRequestContext(mockStory)
+      };
+
+      const mockResponse: StructuredCharacterFeedbackResponse = {
+        characterName: 'Test Character',
+        feedback: {
+          actions: ['Draw sword'],
+          dialog: ['I must be brave'],
+          physicalSensations: ['Heart pounding'],
+          emotions: ['Fear', 'Determination'],
+          internalMonologue: ['What dangers await?'],
+          goals: ['Survive the encounter'],
+          memories: ['Remember the training']
+        }
+      };
+
+      const onProgress = jasmine.createSpy('onProgress');
+      sseStreamingServiceSpy.createSSEObservable.and.returnValue(of(mockResponse));
+
+      service.requestCharacterFeedback(request, onProgress).subscribe(response => {
+        expect(response).toEqual(mockResponse);
+      });
+
+      expect(sseStreamingServiceSpy.createSSEObservable).toHaveBeenCalledWith(
+        `${baseUrl}/character-feedback`,
+        request,
+        jasmine.objectContaining({
+          onProgress: onProgress,
+          onError: jasmine.any(Function)
+        })
+      );
     });
   });
 
@@ -276,21 +362,19 @@ describe('ApiService', () => {
         changesSummary: 'Made the chapter more exciting'
       };
 
-      // Mock the SSE streaming service
-      const mockSSEObservable = jasmine.createSpy('createSSEObservable').and.returnValue(
+      // Configure the SSE streaming service spy
+      sseStreamingServiceSpy.createSSEObservable.and.returnValue(
         new Observable(observer => {
           observer.next(mockResponse);
           observer.complete();
         })
       );
-      
-      spyOn(service['sseStreamingService'], 'createSSEObservable').and.callFake(mockSSEObservable);
 
       service.modifyChapter(request).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      expect(mockSSEObservable).toHaveBeenCalledWith(
+      expect(sseStreamingServiceSpy.createSSEObservable).toHaveBeenCalledWith(
         `${baseUrl}/modify-chapter`,
         request,
         jasmine.objectContaining({
@@ -344,20 +428,18 @@ describe('ApiService', () => {
       };
 
       const progressCallback = jasmine.createSpy('onProgress');
-      
-      // Mock the SSE streaming service
-      const mockSSEObservable = jasmine.createSpy('createSSEObservable').and.returnValue(
+
+      // Configure the SSE streaming service spy
+      sseStreamingServiceSpy.createSSEObservable.and.returnValue(
         new Observable(observer => {
           observer.next({});
           observer.complete();
         })
       );
-      
-      spyOn(service['sseStreamingService'], 'createSSEObservable').and.callFake(mockSSEObservable);
 
       service.modifyChapter(request, progressCallback).subscribe();
 
-      expect(mockSSEObservable).toHaveBeenCalledWith(
+      expect(sseStreamingServiceSpy.createSSEObservable).toHaveBeenCalledWith(
         `${baseUrl}/modify-chapter`,
         request,
         jasmine.objectContaining({
