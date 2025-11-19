@@ -18,16 +18,6 @@
               {{ character.name }}
             </button>
           </div>
-          <div class="entity-actions" *ngIf="selectedEntityType === 'character' && selectedEntityId">
-            <button mat-raised-button 
-                    color="primary"
-                    (click)="onGetFeedback('character')"
-                    [disabled]="disabled || isLoading"
-                    class="get-feedback-button">
-              <mat-icon>feedback</mat-icon>
-              Get {{ getSelectedEntityName() }} Feedback
-            </button>
-          </div>
         </div>
 
         <!-- Raters Section -->
@@ -41,16 +31,6 @@
                     [disabled]="disabled">
               <mat-icon>star</mat-icon>
               {{ rater.name }}
-            </button>
-          </div>
-          <div class="entity-actions" *ngIf="selectedEntityType === 'rater' && selectedEntityId">
-            <button mat-raised-button 
-                    color="primary"
-                    (click)="onGetFeedback('rater')"
-                    [disabled]="disabled || isLoading"
-                    class="get-feedback-button">
-              <mat-icon>feedback</mat-icon>
-              Get {{ getSelectedEntityName() }} Feedback
             </button>
           </div>
         </div>

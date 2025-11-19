@@ -255,9 +255,21 @@ export class ApiService {
   // NEW STRUCTURED REQUEST METHODS (WRI-72)
   // ============================================================================
 
-  // Character Feedback - Updated to use RequestContext API
-  requestCharacterFeedback(request: CharacterFeedbackRequest): Observable<StructuredCharacterFeedbackResponse> {
-    return this.http.post<StructuredCharacterFeedbackResponse>(`${this.baseUrl}/character-feedback`, request);
+  // Character Feedback - Updated to use RequestContext API with SSE streaming
+  requestCharacterFeedback(
+    request: CharacterFeedbackRequest,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void
+  ): Observable<StructuredCharacterFeedbackResponse> {
+    return this.sseStreamingService.createSSEObservable<StructuredCharacterFeedbackResponse>(
+      `${this.baseUrl}/character-feedback`,
+      request,
+      {
+        onProgress: onProgress,
+        onError: (error) => {
+          console.error('Character feedback streaming error:', error);
+        }
+      }
+    );
   }
 
   // Rater Feedback (now uses streaming internally)

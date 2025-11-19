@@ -693,12 +693,13 @@ ${story.plotOutline.content}`;
   // ============================================================================
 
   /**
-   * Request character feedback using RequestContext API
+   * Request character feedback using RequestContext API with SSE streaming
    */
   requestCharacterFeedback(
     story: Story,
     character: Character,
     plotPoint: string,
+    onProgress?: (update: { phase: string; message: string; progress: number }) => void,
     options: { validate?: boolean; optimize?: boolean } = {}
   ): Observable<StructuredCharacterFeedbackResponse> {
     try {
@@ -724,7 +725,7 @@ ${story.plotOutline.content}`;
         console.log('Optimization option noted but not implemented for RequestContext format');
       }
 
-      return this.apiService.requestCharacterFeedback(request);
+      return this.apiService.requestCharacterFeedback(request, onProgress);
     } catch (error) {
       throw new Error(`Failed to request character feedback: ${error}`);
     }
