@@ -126,7 +126,7 @@ Note: Focus on constructive improvements, not just criticism. Each suggestion sh
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in editor_review", e)
+            logger.exception("Error in editor_review")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

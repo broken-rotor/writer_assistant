@@ -236,7 +236,7 @@ class LLMInference:
             return generated_text
 
         except Exception as e:
-            logger.error(f"Error during generation: {str(e)}")
+            logger.exception("Error during generation")
             raise RuntimeError(f"Generation failed: {str(e)}")
 
     def chat_completion(
@@ -313,7 +313,7 @@ class LLMInference:
             return generated_text
 
         except Exception as e:
-            logger.error(f"Error during chat completion: {str(e)}")
+            logger.exception("Error during chat completion")
             raise RuntimeError(f"Chat completion failed: {str(e)}")
 
     def chat_completion_stream(
@@ -393,7 +393,7 @@ class LLMInference:
                 logger.info(f"[LLM Output (streaming)]\n{complete_output}")
 
         except Exception as e:
-            logger.error(f"Error during streaming chat completion: {str(e)}")
+            logger.exception("Error during streaming chat completion")
             raise RuntimeError(f"Streaming chat completion failed: {str(e)}")
 
     def get_embedding(self, text: str) -> List[float]:
@@ -413,7 +413,7 @@ class LLMInference:
             embedding = self.model.embed(text)
             return embedding
         except Exception as e:
-            logger.error(f"Error getting embedding: {str(e)}")
+            logger.exception("Error getting embedding")
             raise RuntimeError(f"Embedding generation failed: {str(e)}")
 
     def encode(self, text: str) -> List[int]:
@@ -431,7 +431,7 @@ class LLMInference:
             tokens = self.model.tokenize(text.encode('utf-8'))
             return tokens
         except Exception as e:
-            logger.error(f"Error encoding text", e)
+            logger.exception("Error encoding text")
             raise ValueError('Model not loaded')
 
     def decode(self, tokens: List[int]) -> str:
@@ -449,7 +449,7 @@ class LLMInference:
             text_bytes = self.model.detokenize(tokens)
             return text_bytes.decode('utf-8', errors='ignore')
         except Exception as e:
-            logger.error(f"Error decoding tokens: {e}")
+            logger.exception("Error decoding tokens")
             raise ValueError('Model not loaded')
 
     def count_tokens(self, text: str) -> int:

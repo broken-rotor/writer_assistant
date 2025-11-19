@@ -294,6 +294,7 @@ export interface StructuredCharacterFeedbackResponse {
     internalMonologue: string[];
     goals: string[];
     memories: string[];
+    subtext: string[];
   };
   metadata?: StructuredResponseMetadata;
 }

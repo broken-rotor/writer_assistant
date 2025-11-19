@@ -141,7 +141,7 @@ class Settings(BaseSettings):
         description="Temperature for character feedback generation"
     )
     ENDPOINT_CHARACTER_FEEDBACK_MAX_TOKENS: int = Field(
-        default=800,
+        default=2000,
         ge=100,
         le=5000,
         description="Maximum tokens for character feedback generation"

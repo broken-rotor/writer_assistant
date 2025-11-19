@@ -108,7 +108,7 @@ Write the complete chapter now, developing the required plot elements in a narra
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in generate_chapter", e)
+            logger.exception("Error in generate_chapter")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

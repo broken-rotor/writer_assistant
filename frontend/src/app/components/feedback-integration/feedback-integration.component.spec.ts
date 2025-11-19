@@ -18,7 +18,8 @@ describe('FeedbackIntegrationComponent', () => {
         emotions: ['Show more fear'],
         internalMonologue: ['Add inner thoughts'],
         goals: ['Survive the encounter'],
-        memories: ['Remember the training']
+        memories: ['Remember the training'],
+        subtext: ['Hidden tension beneath the words']
       }
     }
   ];

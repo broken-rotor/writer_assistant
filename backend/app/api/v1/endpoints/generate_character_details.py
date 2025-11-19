@@ -130,7 +130,7 @@ Respond ONLY in JSON format with these exact fields (and no extra escaping):
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error("Error in generate_character_details", e)
+            logger.exception("Error in generate_character_details")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

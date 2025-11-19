@@ -94,7 +94,7 @@ Revise Chapter {chapter.number} based on the provided feedback and modification 
    - Maintain vivid, engaging prose throughout
 </REVISION_GUIDELINES>
 
-Rewrite the complete chapter incorporating these revisions while preserving its strengths.
+Rewrite the complete chapter incorporating these revisions while preserving its strengths. Don't include the chapter title or number header.
 """
             context_builder.add_agent_instruction(agent_instruction)
 
@@ -124,7 +124,7 @@ Rewrite the complete chapter incorporating these revisions while preserving its 
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in modify_chapter", e)
+            logger.exception("Error in modify_chapter")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

@@ -39,7 +39,7 @@ async def load_llm_async():
         logger.info("LLM initialized successfully")
         llm_loading = False
     except Exception as e:
-        logger.error(f"Failed to initialize LLM: {e}")
+        logger.exception(f"Failed to initialize LLM: {e}")
         llm_load_error = str(e)
         llm_loading = False
 

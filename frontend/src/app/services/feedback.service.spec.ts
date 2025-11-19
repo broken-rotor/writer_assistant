@@ -97,7 +97,8 @@ describe('FeedbackService', () => {
       emotions: ['Show determination'],
       internalMonologue: ['Think about the mission'],
       goals: ['Complete the mission'],
-      memories: ['Remember the training']
+      memories: ['Remember the training'],
+      subtext: ['Unspoken resolve beneath the words']
     }
   };
 

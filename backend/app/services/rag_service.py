@@ -147,7 +147,7 @@ class RAGService:
             )
 
         except Exception as e:
-            logger.error(f"RAG query failed: {e}")
+            logger.exception("RAG query failed")
             raise RuntimeError(f"Failed to process RAG query: {str(e)}")
 
     def chat(
@@ -356,7 +356,7 @@ class RAGService:
             )
 
         except Exception as e:
-            logger.error(f"RAG chat failed: {e}")
+            logger.exception("RAG chat failed")
             raise RuntimeError(f"Failed to process RAG chat: {str(e)}")
 
     def build_context(self, search_results: List[ArchiveSearchResult]) -> str:

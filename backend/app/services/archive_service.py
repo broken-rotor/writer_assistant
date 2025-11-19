@@ -95,7 +95,7 @@ class ArchiveService:
                 )
                 logger.info(f"Connected to ChromaDB at {self.db_path}")
             except Exception as e:
-                logger.error(f"Failed to initialize ChromaDB client: {e}")
+                logger.exception("Failed to initialize ChromaDB client")
                 raise
 
         if self._embedding_function is None:
@@ -106,7 +106,7 @@ class ArchiveService:
                     model_name="all-mpnet-base-v2"
                 )
             except Exception as e:
-                logger.error(f"Failed to initialize embedding function: {e}")
+                logger.exception("Failed to initialize embedding function")
                 raise
 
         if self._collection is None:
@@ -118,7 +118,7 @@ class ArchiveService:
                 logger.info(f"Loaded collection: {self.collection_name}")
                 logger.info(f"Using embedding model: all-mpnet-base-v2 (768 dimensions)")
             except Exception as e:
-                logger.error(f"Failed to load collection '{self.collection_name}': {e}")
+                logger.exception(f"Failed to load collection '{self.collection_name}'")
                 raise
 
     def search(
@@ -178,7 +178,7 @@ class ArchiveService:
             return search_results
 
         except Exception as e:
-            logger.error(f"Search failed: {e}")
+            logger.exception("Search failed")
             raise
 
     def get_file_list(self) -> List[Dict[str, Any]]:
@@ -216,7 +216,7 @@ class ArchiveService:
             return file_list
 
         except Exception as e:
-            logger.error(f"Failed to get file list: {e}")
+            logger.exception("Failed to get file list")
             raise
 
     def find_file_by_name(self, file_name: str) -> Optional[str]:
@@ -252,7 +252,7 @@ class ArchiveService:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to find file by name: {e}")
+            logger.exception("Failed to find file by name")
             raise
 
     def get_file_content(self, file_path: str) -> Optional[str]:
@@ -299,7 +299,7 @@ class ArchiveService:
             return content
 
         except Exception as e:
-            logger.error(f"Failed to get file content: {e}")
+            logger.exception("Failed to get file content")
             raise
 
     def get_stats(self) -> Dict[str, Any]:
@@ -323,7 +323,7 @@ class ArchiveService:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get stats: {e}")
+            logger.exception("Failed to get stats")
             raise
 
 

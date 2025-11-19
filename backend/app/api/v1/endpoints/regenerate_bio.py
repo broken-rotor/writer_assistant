@@ -83,7 +83,7 @@ Write a bio that makes the reader immediately understand and care about who this
             yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in regenerate_bio: {str(e)}")
+            logger.exception("Error in regenerate_bio")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

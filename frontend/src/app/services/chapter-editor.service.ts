@@ -511,7 +511,8 @@ export class ChapterEditorService {
             emotions: [],
             internalMonologue: [],
             goals: [],
-            memories: []
+            memories: [],
+            subtext: []
           });
         }
         

@@ -92,6 +92,10 @@ class CharacterFeedback(BaseModel):
         default_factory=list,
         description="Important memories affecting current behavior"
     )
+    subtext: List[str] = Field(
+        default_factory=list,
+        description="What the character is communicating nonverbally or hiding beneath their words"
+    )
 
 
 class CharacterFeedbackResponse(BaseModel):

@@ -63,7 +63,7 @@ Your task is to analyze a story outline and create a detailed, well-paced chapte
 
 <CONTENT_REQUIREMENTS>
 1. **Titles:** Create engaging, evocative titles that hint at chapter content without spoiling
-2. **Descriptions:** Write a short summary that capture the chapter's narrative arc
+2. **Descriptions:** Write a detailed summary that capture the chapter's narrative arc
 3. **Key Plot Items:** Generate 4-7 specific, concrete story beats per chapter
    - Each should be an action, event, revelation, or turning point
    - Should flow in logical sequence
@@ -75,8 +75,8 @@ Your task is to analyze a story outline and create a detailed, well-paced chapte
 IMPORTANT: Format your response as a JSON array where each chapter is an object with these exact fields:
 {
   "title": "Chapter title (without 'Chapter X:' prefix)",
-  "description": "Brief summary capturing the chapter's arc and purpose",
-  "key_plot_items": ["Specific plot item 1", "Specific plot item 2", "Specific plot item 3"],
+  "description": "Detailed summary capturing the chapter's arc and purpose",
+  "key_plot_items": ["Specific plot item 1", "Specific plot item 2", "Specific plot item 3 (up to 7)"],
   "involved_characters": ["character1", "character2", ...]
 }
 
@@ -110,7 +110,7 @@ Example format:
 Respond ONLY with the JSON array, no additional text before or after."""
         agent_prompt = f"""Please analyze the STORY_OUTLINE and create a detailed chapter breakdown:
 
-Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
+Create a chapter-by-chapter outline that breaks down this story into well-structured chapters. Include all the elements in the plot outline to the story in the relevant chapter. Each chapter should advance the plot and contribute to the overall narrative arc. Consider the characters listed above and identify which characters are involved in each chapter."""
 
         context_builder = ContextBuilder(request.request_context, llm)
         context_builder.add_long_term_elements(system_prompt)
@@ -119,7 +119,7 @@ Create a chapter-by-chapter outline that breaks down this story into well-struct
         # Generate the chapter outline
         response = llm.chat_completion(
             messages=context_builder.build_messages(),
-            max_tokens=2000,
+            max_tokens=4000,
             temperature=0.7
         )
         
@@ -139,7 +139,7 @@ Create a chapter-by-chapter outline that breaks down this story into well-struct
         )
         
     except Exception as e:
-        logger.error(f"Error generating chapter outline: {str(e)}")
+        logger.exception("Error generating chapter outline")
         raise HTTPException(status_code=500, detail=f"Failed to generate chapter outline: {str(e)}")
 
 def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
@@ -184,6 +184,6 @@ def _parse_chapter_outline_response(response: str) -> List[OutlineItem]:
             logger.info(f"Successfully parsed {len(outline_items)} chapters from JSON response")
             return outline_items
     
-    logger.error("Failed to parse JSON response. Falling back to text parsing.")
+    logger.error("Failed to parse JSON response.")
     
     return None
