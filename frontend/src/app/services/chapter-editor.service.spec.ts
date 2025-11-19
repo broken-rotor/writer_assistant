@@ -271,4 +271,95 @@ describe('ChapterEditorService', () => {
       expect(state.chatHistory.length).toBe(0);
     });
   });
+
+  it('should clear feedback after successful chapter modification', () => {
+    const mockResponse = {
+      modifiedChapter: 'Modified content with feedback incorporated',
+      wordCount: 5,
+      changesSummary: 'Applied feedback'
+    };
+    mockGenerationService.modifyChapter.and.returnValue(of(mockResponse));
+    
+    service.initializeChapterEditing(mockChapter);
+    
+    // Set up some feedback first
+    service['updateState']({
+      characterFeedback: [{ 
+        characterName: 'TestChar', 
+        feedback: { 
+          actions: ['Test action'],
+          dialog: [],
+          physicalSensations: [],
+          emotions: [],
+          internalMonologue: [],
+          goals: [],
+          memories: [],
+          subtext: []
+        } 
+      }],
+      raterFeedback: [{ raterName: 'TestRater', feedback: { opinion: 'Test opinion', suggestions: [] } }],
+      userGuidance: 'Test guidance'
+    });
+    
+    // Verify feedback is present before modification
+    const stateBeforeModification = service['stateSubject'].value;
+    expect(stateBeforeModification.characterFeedback.length).toBe(1);
+    expect(stateBeforeModification.raterFeedback.length).toBe(1);
+    expect(stateBeforeModification.userGuidance).toBe('Test guidance');
+    
+    // Apply user guidance (which should clear feedback after success)
+    service.applyUserGuidance('Apply feedback', mockStory).subscribe(content => {
+      expect(content).toBe('Modified content with feedback incorporated');
+    });
+    
+    // Verify feedback is cleared after successful modification
+    service.state$.subscribe(state => {
+      expect(state.characterFeedback.length).toBe(0);
+      expect(state.raterFeedback.length).toBe(0);
+      expect(state.userGuidance).toBe('');
+      expect(state.currentChapter?.content).toBe('Modified content with feedback incorporated');
+      expect(state.hasUnsavedChanges).toBeTrue();
+    });
+  });
+
+  it('should not clear feedback if chapter modification fails', () => {
+    const errorMessage = 'Modification failed';
+    mockGenerationService.modifyChapter.and.returnValue(throwError(() => new Error(errorMessage)));
+    
+    service.initializeChapterEditing(mockChapter);
+    
+    // Set up some feedback first
+    service['updateState']({
+      characterFeedback: [{ 
+        characterName: 'TestChar', 
+        feedback: { 
+          actions: ['Test action'],
+          dialog: [],
+          physicalSensations: [],
+          emotions: [],
+          internalMonologue: [],
+          goals: [],
+          memories: [],
+          subtext: []
+        } 
+      }],
+      raterFeedback: [{ raterName: 'TestRater', feedback: { opinion: 'Test opinion', suggestions: [] } }],
+      userGuidance: 'Test guidance'
+    });
+    
+    // Apply user guidance (which should fail)
+    service.applyUserGuidance('Apply feedback', mockStory).subscribe({
+      next: () => fail('Should have failed'),
+      error: (error) => {
+        expect(error.message).toBe(errorMessage);
+      }
+    });
+    
+    // Verify feedback is NOT cleared after failed modification
+    service.state$.subscribe(state => {
+      expect(state.characterFeedback.length).toBe(1);
+      expect(state.raterFeedback.length).toBe(1);
+      expect(state.userGuidance).toBe('Apply feedback'); // Updated to the new guidance value
+    });
+  });
 });

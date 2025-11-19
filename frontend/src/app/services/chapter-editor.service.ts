@@ -422,6 +422,9 @@ export class ChapterEditorService {
           hasUnsavedChanges: true
         });
 
+        // Clear feedback after successful chapter modification since it's now incorporated
+        this.clearFeedback();
+
         return response.modifiedChapter;
       }),
       catchError(error => {
@@ -455,7 +458,8 @@ export class ChapterEditorService {
   clearFeedback(): void {
     this.updateState({ 
       characterFeedback: [],
-      raterFeedback: []
+      raterFeedback: [],
+      userGuidance: ''
     });
   }
 
