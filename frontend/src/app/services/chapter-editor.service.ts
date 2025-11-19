@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, throwError, forkJoin } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, throwError } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import { 
   Chapter, 
@@ -283,46 +283,43 @@ export class ChapterEditorService {
   }
 
   /**
-   * Get character feedback for current chapter
+   * Get character feedback for current chapter from a specific character
    */
-  getCharacterFeedback(story: Story): Observable<CharacterFeedbackResponse[]> {
+  getCharacterFeedback(story: Story, characterId: string, characterName: string): Observable<CharacterFeedbackResponse[]> {
     const currentState = this.stateSubject.value;
     if (!currentState.currentChapter?.content) {
       return throwError(() => new Error('No chapter content to get feedback on'));
     }
 
-    this.updateState({ isGettingFeedback: true });
-
-    const requests = Array.from(story.characters.values())
-      .filter(char => !char.isHidden)
-      .map(character => {
-        return this.generationService.requestCharacterFeedback(
-          story,
-          character,
-          currentState.currentChapter!.content
-        );
-      });
-
-    if (requests.length === 0) {
-      this.updateState({ isGettingFeedback: false });
-      return new Observable(observer => {
-        observer.next([]);
-        observer.complete();
-      });
+    // Find the selected character
+    const selectedCharacter = Array.from(story.characters.values()).find(char => char.id === characterId);
+    if (!selectedCharacter) {
+      return throwError(() => new Error(`Character with ID ${characterId} not found`));
     }
 
-    return forkJoin(requests).pipe(
-      map(responses => {
+    this.updateState({ isGettingFeedback: true });
+
+    // Request feedback from only the selected character
+    return this.generationService.requestCharacterFeedback(
+      story,
+      selectedCharacter,
+      currentState.currentChapter!.content
+    ).pipe(
+      map(response => {
         // Convert StructuredCharacterFeedbackResponse to CharacterFeedbackResponse
-        const characterFeedback = responses.map(response => ({
-          characterName: response.characterName || 'Unknown',
+        const characterFeedback = [{
+          characterName: response.characterName || characterName,
           feedback: response.feedback || 'No feedback provided'
-        }));
+        }];
         
         // Save feedback to chapter's incorporatedFeedback
         this.saveFeedbackToChapter(characterFeedback, 'character');
         
-        this.updateState({ characterFeedback });
+        // Update state with new feedback (merge with existing feedback from other characters)
+        const existingFeedback = currentState.characterFeedback.filter(f => f.characterName !== characterName);
+        const updatedFeedback = [...existingFeedback, ...characterFeedback];
+        this.updateState({ characterFeedback: updatedFeedback });
+        
         return characterFeedback;
       }),
       catchError(error => {
@@ -336,46 +333,43 @@ export class ChapterEditorService {
   }
 
   /**
-   * Get rater feedback for current chapter
+   * Get rater feedback for current chapter from a specific rater
    */
-  getRaterFeedback(story: Story): Observable<RaterFeedbackResponse[]> {
+  getRaterFeedback(story: Story, raterId: string, raterName: string): Observable<RaterFeedbackResponse[]> {
     const currentState = this.stateSubject.value;
     if (!currentState.currentChapter?.content) {
       return throwError(() => new Error('No chapter content to get feedback on'));
     }
 
-    this.updateState({ isGettingFeedback: true });
-
-    const requests = Array.from(story.raters.values())
-      .filter(rater => rater.enabled)
-      .map(rater => {
-        return this.generationService.requestRaterFeedback(
-          story,
-          rater,
-          currentState.currentChapter!.content
-        );
-      });
-
-    if (requests.length === 0) {
-      this.updateState({ isGettingFeedback: false });
-      return new Observable(observer => {
-        observer.next([]);
-        observer.complete();
-      });
+    // Find the selected rater
+    const selectedRater = Array.from(story.raters.values()).find(rater => rater.id === raterId);
+    if (!selectedRater) {
+      return throwError(() => new Error(`Rater with ID ${raterId} not found`));
     }
 
-    return forkJoin(requests).pipe(
-      map(responses => {
+    this.updateState({ isGettingFeedback: true });
+
+    // Request feedback from only the selected rater
+    return this.generationService.requestRaterFeedback(
+      story,
+      selectedRater,
+      currentState.currentChapter!.content
+    ).pipe(
+      map(response => {
         // Convert StructuredRaterFeedbackResponse to RaterFeedbackResponse
-        const raterFeedback = responses.map(response => ({
-          raterName: response.raterName || 'Unknown',
+        const raterFeedback = [{
+          raterName: response.raterName || raterName,
           feedback: response.feedback || 'No feedback provided'
-        }));
+        }];
         
         // Save feedback to chapter's incorporatedFeedback
         this.saveFeedbackToChapter(raterFeedback, 'rater');
         
-        this.updateState({ raterFeedback });
+        // Update state with new feedback (merge with existing feedback from other raters)
+        const existingFeedback = currentState.raterFeedback.filter(f => f.raterName !== raterName);
+        const updatedFeedback = [...existingFeedback, ...raterFeedback];
+        this.updateState({ raterFeedback: updatedFeedback });
+        
         return raterFeedback;
       }),
       catchError(error => {

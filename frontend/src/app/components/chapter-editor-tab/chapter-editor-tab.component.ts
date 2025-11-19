@@ -185,26 +185,23 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   }
 
   // Feedback methods
-  onGetFeedback(event: { type: 'character' | 'rater' | 'all' }) {
+  onGetFeedback(event: { type: 'character' | 'rater', entityId: string, entityName: string }) {
     if (!this.story || !this.state?.currentChapter) return;
 
     switch (event.type) {
       case 'character':
-        this.getCharacterFeedback();
+        this.getCharacterFeedback(event.entityId, event.entityName);
         break;
       case 'rater':
-        this.getRaterFeedback();
-        break;
-      case 'all':
-        this.getAllFeedback();
+        this.getRaterFeedback(event.entityId, event.entityName);
         break;
     }
   }
 
-  private getCharacterFeedback() {
+  private getCharacterFeedback(characterId: string, characterName: string) {
     if (!this.story) return;
 
-    this.chapterEditorService.getCharacterFeedback(this.story).subscribe({
+    this.chapterEditorService.getCharacterFeedback(this.story, characterId, characterName).subscribe({
       next: (feedback) => {
         console.log('Character feedback received:', feedback);
       },
@@ -214,10 +211,10 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
     });
   }
 
-  private getRaterFeedback() {
+  private getRaterFeedback(raterId: string, raterName: string) {
     if (!this.story) return;
 
-    this.chapterEditorService.getRaterFeedback(this.story).subscribe({
+    this.chapterEditorService.getRaterFeedback(this.story, raterId, raterName).subscribe({
       next: (feedback) => {
         console.log('Rater feedback received:', feedback);
       },
@@ -227,13 +224,7 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
     });
   }
 
-  private getAllFeedback() {
-    if (!this.story) return;
 
-    // Get both character and rater feedback
-    this.getCharacterFeedback();
-    this.getRaterFeedback();
-  }
 
   onModifyChapter(event: { userGuidance: string, selectedFeedback: FeedbackSelection }) {
     if (!this.story || !this.state?.currentChapter) return;

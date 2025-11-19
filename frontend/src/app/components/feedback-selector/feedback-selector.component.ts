@@ -53,7 +53,7 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
   @Input() disabled = false;
   @Input() userGuidance = '';
   
-  @Output() getFeedback = new EventEmitter<{ type: 'character' | 'rater' | 'all' }>();
+  @Output() getFeedback = new EventEmitter<{ type: 'character' | 'rater', entityId: string, entityName: string }>();
   @Output() modifyChapter = new EventEmitter<{ 
     userGuidance: string, 
     selectedFeedback: FeedbackSelection 
@@ -198,8 +198,17 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
     return count;
   }
 
-  onGetFeedback(type: 'character' | 'rater' | 'all') {
-    this.getFeedback.emit({ type });
+  onGetFeedback(type: 'character' | 'rater') {
+    if (!this.selectedEntityId) return;
+    
+    const entityName = this.getSelectedEntityName();
+    if (!entityName) return;
+    
+    this.getFeedback.emit({ 
+      type, 
+      entityId: this.selectedEntityId,
+      entityName 
+    });
   }
 
   onModifyChapter() {
@@ -256,14 +265,14 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
     
     // If no feedback exists, auto-fetch it
     if (!hasFeedback) {
-      this.getFeedback.emit({ type: this.selectedEntityType });
+      this.onGetFeedback(this.selectedEntityType);
     }
   }
 
   onRefreshFeedback() {
     if (!this.selectedEntityType) return;
     
-    // Emit request to refresh feedback for the selected entity type
-    this.getFeedback.emit({ type: this.selectedEntityType });
+    // Emit request to refresh feedback for the selected entity
+    this.onGetFeedback(this.selectedEntityType);
   }
 }
