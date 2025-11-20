@@ -31,7 +31,7 @@ async def modify_chapter(request: ModifyChapterRequest):
         return f"**Key Plot Items:**\n{key_plot_items}" if key_plot_items else ""
 
     def get_incorporated_feedback(items: List[BaseModel], format: str) -> str:
-        return '\n'.join([format.format(*i) for i in items])
+        return '\n'.join([format.format(**i.model_dump()) for i in items])
 
     llm = get_llm()
     if not llm:
