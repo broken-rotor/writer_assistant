@@ -155,16 +155,10 @@ class TestUpdatedLegacyModels:
             ModifyChapterRequest(
                 request_context=request_context,
                 # chapter_number missing - should cause validation error
-                userRequest="Make it more exciting"
+                user_feedback="Make it more exciting"
             )
 
-        # Test that missing userRequest causes validation error
-        with pytest.raises(ValidationError):
-            ModifyChapterRequest(
-                request_context=request_context,
-                chapter_number=1
-                # userRequest missing - should cause validation error
-            )
+        # user_feedback is optional, so no validation error test needed for it
 
     def test_flesh_out_request_validation_errors(self):
         """Test FleshOutRequest validation requirements."""

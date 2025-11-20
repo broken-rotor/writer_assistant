@@ -12,6 +12,8 @@ from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
 from app.core.config import settings
 from datetime import datetime, UTC
+from typing import List
+from pydantic import BaseModel
 import logging
 import json
 
@@ -28,11 +30,8 @@ async def modify_chapter(request: ModifyChapterRequest):
         key_plot_items = [f"  - {i}\n" for i in chapter.key_plot_items]
         return f"**Key Plot Items:**\n{key_plot_items}" if key_plot_items else ""
 
-    def get_incorporated_feedback(chapter: ChapterDetails) -> str:
-        feedback_items = '\n'.join([f"- {i.source}: {i.content}"
-                                    for i in chapter.incorporated_feedback
-                                    if i.incorporated])
-        return f"<INCORPORATED FEEDBACK>\n{feedback_items}\n</INCORPORATED FEEDBACK>\n" if feedback_items else ""
+    def get_incorporated_feedback(items: List[BaseModel], format: str) -> str:
+        return '\n'.join([format.format(*i) for i in items])
 
     llm = get_llm()
     if not llm:
@@ -67,9 +66,10 @@ Revise Chapter {chapter.number} based on the provided feedback and modification 
 </ORIGINAL_CHAPTER>
 
 <MODIFICATION_INSTRUCTIONS>
-{f"**Primary User Request:** {request.userRequest}" if request.userRequest else ""}
-
-{get_incorporated_feedback(chapter)}
+{f"**Primary User Request:** {request.user_feedback}" if request.user_feedback else ""}
+{get_incorporated_feedback(request.character_feedback, 'Character {character_name} {type} Feedback: {content}')}
+{get_incorporated_feedback(request.rater_feedback, 'Rater {rater_name} Feedback: {content}')}
+{get_incorporated_feedback(request.editor_feedback, 'Editor Feedback: {content}')}
 </MODIFICATION_INSTRUCTIONS>
 
 <REVISION_GUIDELINES>
