@@ -183,7 +183,7 @@ class Settings(BaseSettings):
         description="Temperature for chapter generation"
     )
     ENDPOINT_GENERATE_CHAPTER_MAX_TOKENS: int = Field(
-        default=2000,
+        default=4500,
         ge=500,
         le=10000,
         description="Maximum tokens for chapter generation"
@@ -211,7 +211,7 @@ class Settings(BaseSettings):
         description="Temperature for chapter modification"
     )
     ENDPOINT_MODIFY_CHAPTER_MAX_TOKENS: int = Field(
-        default=2500,
+        default=4500,
         ge=500,
         le=10000,
         description="Maximum tokens for chapter modification"

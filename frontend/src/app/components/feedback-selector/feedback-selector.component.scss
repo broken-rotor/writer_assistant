@@ -244,18 +244,18 @@
 
                       mat-chip-option {
                         &.priority-high {
-                          background: #ffebee;
-                          color: #c62828;
+                          background: #c62828;
+                          color: #ffebee;
                         }
 
                         &.priority-medium {
-                          background: #fff3e0;
-                          color: #ef6c00;
+                          background: #ef6c00;
+                          color: #fff3e0;
                         }
 
                         &.priority-low {
-                          background: #e8f5e8;
-                          color: #2e7d32;
+                          background: #2e7d32;
+                          color: #e8f5e8;
                         }
                       }
                     }
