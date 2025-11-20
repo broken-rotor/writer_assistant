@@ -232,7 +232,7 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
     // Apply user guidance with selected feedback
     this.chapterEditorService.applyUserGuidance(event.userGuidance, this.story, event.selectedFeedback).subscribe({
       next: (modifiedContent) => {
-        console.log('Chapter modified successfully:', modifiedContent);
+        console.log('Chapter modified successfully');
       },
       error: (error) => {
         console.error('Failed to modify chapter:', error);
