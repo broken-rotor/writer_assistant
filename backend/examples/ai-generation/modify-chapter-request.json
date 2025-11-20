@@ -9,7 +9,42 @@
     },
     "body": {
       "chapter_number": 1,
-      "userRequest": "Add more tension to the scene where Aria faces the crystal guardian. Include more internal conflict and make the guardian's test more challenging.",
+      "user_feedback": "Add more tension to the scene where Aria faces the crystal guardian. Include more internal conflict and make the guardian's test more challenging.",
+      "character_feedback": [
+        {
+          "character_name": "Aria Moonwhisper",
+          "type": "emotion",
+          "content": "Fear mixed with determination - her heart races but she forces herself to stay calm"
+        },
+        {
+          "character_name": "Aria Moonwhisper",
+          "type": "internalMonologue",
+          "content": "This is what I've been training for. I can't let Theron down. I can't let everyone down."
+        },
+        {
+          "character_name": "Aria Moonwhisper",
+          "type": "physicalSensation",
+          "content": "Her hands tremble as magical energy builds within her, warm and electric"
+        }
+      ],
+      "rater_feedback": [
+        {
+          "rater_name": "Character Consistency Rater",
+          "content": "Aria's reaction to the guardian could better reflect her established self-doubt and protective instincts. Consider having her think of her friends to strengthen her resolve."
+        },
+        {
+          "rater_name": "Narrative Flow Rater",
+          "content": "The pacing through the trial feels rushed. Consider expanding the middle section where Aria struggles with the visions to build more tension."
+        }
+      ],
+      "editor_feedback": [
+        {
+          "content": "The guardian's dialogue could be more ominous and mysterious. Consider adding more sensory details about the crystal chamber atmosphere."
+        },
+        {
+          "content": "Aria's internal conflict needs more development. Show her wrestling with specific doubts before she makes her final choice."
+        }
+      ],
       "request_context": {
         "configuration": {
           "system_prompts": {
@@ -20,15 +55,7 @@
           }
         },
         "worldbuilding": {
-          "content": "The Crystal Caverns test visitors through increasingly difficult trials that probe their deepest fears and motivations.",
-          "key_elements": [
-            {
-              "type": "location",
-              "name": "Crystal Caverns",
-              "description": "Ancient trial grounds with mystical guardians that test worthiness",
-              "importance": "high"
-            }
-          ]
+          "content": "The Crystal Caverns test visitors through increasingly difficult trials that probe their deepest fears and motivations."
         },
         "characters": [
           {
@@ -37,19 +64,7 @@
             "basic_bio": "A 19-year-old novice mage central to an ancient prophecy",
             "personality": "Determined but struggles with self-doubt. Protective and compassionate.",
             "fears": "Losing control of her magic, failing those who depend on her",
-            "current_state": {
-              "emotion": "anxious but determined",
-              "location": "Crystal Caverns trial chamber",
-              "health": "good",
-              "magical_energy": "building"
-            },
-            "goals": [
-              "Prove herself worthy to the guardian",
-              "Overcome her self-doubt",
-              "Claim the crystal shard"
-            ],
             "is_hidden": false,
-            "creation_source": "user",
             "last_modified": "2024-01-15T14:22:30Z"
           }
         ],
@@ -68,8 +83,7 @@
                 "Aria confronts her deepest fears and insecurities",
                 "She must make a crucial choice that reveals her true character"
               ],
-              "involved_characters": ["Aria Moonwhisper"],
-              "status": "draft"
+              "involved_characters": ["Aria Moonwhisper"]
             }
           ]
         },
@@ -87,7 +101,6 @@
               "She successfully completes the trial",
               "The guardian awards her the crystal shard"
             ],
-            "word_count": 187,
             "created": "2024-01-15T18:00:00Z",
             "last_modified": "2024-01-15T18:30:00Z"
           }
@@ -96,12 +109,7 @@
           "story_id": "story_crystal_prophecy_001",
           "story_title": "The Crystal Prophecy",
           "total_characters": 1,
-          "total_chapters": 2,
-          "processing_hints": {
-            "priority_characters": ["Aria Moonwhisper"],
-            "current_arc": "trials_phase",
-            "narrative_focus": "tension and character development"
-          }
+          "total_chapters": 2
         }
       },
       "context_processing_config": {
@@ -171,7 +179,11 @@
   },
   "notes": [
     "This endpoint uses Server-Sent Events (SSE) for streaming responses",
-    "userRequest describes the specific modifications to make",
+    "user_feedback describes the specific modifications to make",
+    "character_feedback is an array of CharacterFeedbackItem objects with character_name, type, and content fields",
+    "character_feedback type can be: 'action', 'dialog', 'physicalSensation', 'emotion', 'internalMonologue', 'goals', 'memories', or 'subtext'",
+    "rater_feedback is an array of RaterFeedbackItem objects with rater_name and content fields",
+    "editor_feedback is an array of EditorFeedback objects with content field",
     "The current chapter content should be included in request_context.chapters",
     "context_processing_config should focus on the current chapter",
     "Response includes both the modified text and details about changes made",

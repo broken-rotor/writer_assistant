@@ -28,15 +28,7 @@
           "system_prompt": "Check for consistency in magical systems, geography, politics, and cultural elements within the world of Eldoria.",
           "enabled": true
         }
-      ],
-      "generation_preferences": {
-        "tone": "epic fantasy",
-        "perspective": "third person limited",
-        "target_audience": "young adult",
-        "content_rating": "PG-13",
-        "chapter_length": "2000-3000 words",
-        "dialogue_style": "natural with period-appropriate fantasy elements"
-      }
+      ]
     },
     "worldbuilding": {
       "content": "Eldoria is a magical realm where floating cities drift among the clouds, powered by ancient crystal technology. The world is divided into several regions: the Central Kingdoms with their floating capital of Aethermoor, the Crystal Caverns beneath Mount Aethermoor, the Shadow Realm (a dark dimension), and the Outer Territories where wild magic still runs free.\n\nThe magic system is based on crystal resonance - mages attune themselves to different types of crystals to channel various forms of magic. The Academy of Mystic Arts trains young mages in proper crystal usage and magical theory. However, an ancient prophecy speaks of crystal shards that could either save or destroy the realm, leading to conflict between those who would use them for good versus evil.\n\nThe Shadow Council, led by Lord Vex, seeks to corrupt the crystal shards for their own dark purposes, while the Academy and its allies work to prevent this catastrophe.",
@@ -55,38 +47,6 @@
           "timestamp": "2024-01-15T10:31:15Z",
           "author": "worldbuilding_agent"
         }
-      ],
-      "key_elements": [
-        {
-          "type": "location",
-          "name": "Aethermoor",
-          "description": "The floating capital city, home to the Academy of Mystic Arts and the ruling Council of Mages",
-          "importance": "high"
-        },
-        {
-          "type": "location",
-          "name": "Crystal Caverns",
-          "description": "Ancient underground caverns beneath Mount Aethermoor, filled with naturally occurring magical crystals",
-          "importance": "high"
-        },
-        {
-          "type": "magic_system",
-          "name": "Crystal Resonance Magic",
-          "description": "Magic system based on attuning to different types of crystals to channel various magical effects",
-          "importance": "high"
-        },
-        {
-          "type": "culture",
-          "name": "Academy Traditions",
-          "description": "Formal magical education system with ranks, ceremonies, and strict codes of conduct",
-          "importance": "medium"
-        },
-        {
-          "type": "politics",
-          "name": "Council of Mages",
-          "description": "Governing body of Aethermoor, composed of senior mages from different magical disciplines",
-          "importance": "medium"
-        }
       ]
     },
     "characters": [
@@ -104,29 +64,7 @@
         "motivations": "To master her magical abilities, protect her friends, and fulfill the prophecy without losing herself to the crystal's power",
         "fears": "Losing control of her magic, failing those who depend on her, becoming corrupted by the crystal shards' power",
         "relationships": "Close friendship with Kira Swiftblade, mentor relationship with Theron Blackstone, growing romantic tension with fellow student Marcus Brightforge",
-        "current_state": {
-          "emotion": "determined but anxious",
-          "location": "Academy dormitory",
-          "health": "good",
-          "magical_energy": "recovering from recent training"
-        },
-        "recent_actions": [
-          "Completed advanced crystal attunement training",
-          "Discovered the first clue about the prophecy's location",
-          "Had an argument with Theron about the dangers ahead"
-        ],
-        "goals": [
-          "Find the remaining crystal shards before the Shadow Council",
-          "Master the advanced levitation spells",
-          "Convince the Council to take the Shadow Council threat seriously"
-        ],
-        "memories": [
-          "The night her magic first manifested during a thunderstorm",
-          "Her parents' death in a Shadow Council attack on her village",
-          "The moment she first touched a crystal and felt its power"
-        ],
         "is_hidden": false,
-        "creation_source": "user",
         "last_modified": "2024-01-15T14:22:30Z"
       },
       {
@@ -143,29 +81,7 @@
         "motivations": "To guide Aria safely through her destiny, atone for his past mistakes, prevent the Shadow Council from succeeding",
         "fears": "That his past will endanger Aria, that he won't be strong enough to protect her when it matters most",
         "relationships": "Mentor to Aria, former colleague of Lord Vex (complicated history), respected by Academy faculty despite his mysterious past",
-        "current_state": {
-          "emotion": "conflicted and worried",
-          "location": "Academy library",
-          "health": "good but showing signs of magical exhaustion",
-          "magical_energy": "stable but conserving power"
-        },
-        "recent_actions": [
-          "Researched ancient texts about the crystal prophecy",
-          "Had a tense conversation with Academy Chancellor about Aria's training",
-          "Received a threatening message from his past"
-        ],
-        "goals": [
-          "Prepare Aria for the challenges ahead without overwhelming her",
-          "Uncover the Shadow Council's current plans",
-          "Find a way to break his old magical bonds to Lord Vex"
-        ],
-        "memories": [
-          "The day he first met Lord Vex as a young, idealistic mage",
-          "The moment he realized the Shadow Council's true nature and fled",
-          "Finding Aria as a child after her village was destroyed"
-        ],
         "is_hidden": false,
-        "creation_source": "user",
         "last_modified": "2024-01-15T14:25:45Z"
       },
       {
@@ -182,35 +98,12 @@
         "motivations": "To protect Aria and help her succeed, prove that non-mages can be valuable allies, find adventure and purpose",
         "fears": "Being helpless against magical threats, losing Aria to the prophecy's demands, being left behind as Aria grows more powerful",
         "relationships": "Best friend and protector of Aria, friendly rivalry with Academy guards, romantic interest in traveling merchant Elena Goldweaver",
-        "current_state": {
-          "emotion": "alert and ready for action",
-          "location": "Academy training grounds",
-          "health": "excellent",
-          "magical_energy": "none (non-magical)"
-        },
-        "recent_actions": [
-          "Scouted the perimeter for Shadow Council agents",
-          "Practiced new combat techniques with the Academy guards",
-          "Gathered intelligence from contacts in the city below"
-        ],
-        "goals": [
-          "Master the new stealth techniques she's been learning",
-          "Find better equipment for the journey ahead",
-          "Convince Aria to let her come on the dangerous mission"
-        ],
-        "memories": [
-          "The day she met Aria and decided to become her protector",
-          "Her first successful infiltration mission",
-          "The night she almost lost Aria to a Shadow Council ambush"
-        ],
         "is_hidden": false,
-        "creation_source": "user",
         "last_modified": "2024-01-15T14:28:12Z"
       }
     ],
     "story_outline": {
       "summary": "Aria Moonwhisper, a young mage, discovers she is central to an ancient prophecy about crystal shards that could save or destroy the magical realm of Eldoria. She must gather allies, master her growing powers, and race against the Shadow Council to find the shards before they can be used for evil.",
-      "status": "under_review",
       "content": "The story follows Aria's journey from uncertain novice to confident hero as she uncovers the truth about the crystal prophecy and her own destiny.\n\nAct I: Discovery - Aria learns about the prophecy and begins her training\nAct II: Trials - She faces challenges that test her abilities and resolve\nAct III: Confrontation - Final battle with the Shadow Council for the fate of Eldoria",
       "outline_items": [
         {
@@ -226,9 +119,7 @@
           ],
           "order": 1,
           "parent_id": null,
-          "involved_characters": ["Aria Moonwhisper", "Theron Blackstone"],
-          "status": "approved",
-          "word_count_estimate": 2500
+          "involved_characters": ["Aria Moonwhisper", "Theron Blackstone"]
         },
         {
           "id": "outline_002",
@@ -243,9 +134,7 @@
           ],
           "order": 2,
           "parent_id": null,
-          "involved_characters": ["Aria Moonwhisper", "Theron Blackstone", "Kira Swiftblade"],
-          "status": "draft",
-          "word_count_estimate": 3000
+          "involved_characters": ["Aria Moonwhisper", "Theron Blackstone", "Kira Swiftblade"]
         },
         {
           "id": "outline_003",
@@ -260,19 +149,7 @@
           ],
           "order": 3,
           "parent_id": null,
-          "involved_characters": ["Aria Moonwhisper", "Theron Blackstone", "Kira Swiftblade", "Lord Vex"],
-          "status": "draft",
-          "word_count_estimate": 2800
-        }
-      ],
-      "rater_feedback": [
-        {
-          "rater_id": "narrative_flow",
-          "rater_name": "Narrative Flow Rater",
-          "feedback": "The pacing builds well from discovery to action. Consider adding more character development moments between the major plot points to give readers time to connect with Aria's emotional journey.",
-          "status": "complete",
-          "timestamp": "2024-01-15T16:45:00Z",
-          "user_response": "revision_requested"
+          "involved_characters": ["Aria Moonwhisper", "Theron Blackstone", "Kira Swiftblade", "Lord Vex"]
         }
       ],
       "chat_history": [
@@ -306,72 +183,6 @@
           "The location of the first crystal shard is revealed",
           "Aria accepts her destiny despite her fears"
         ],
-        "incorporated_feedback": [
-          {
-            "id": "feedback_001",
-            "source": "character_consistency",
-            "type": "suggestion",
-            "content": "Show more of Aria's internal conflict about accepting her destiny",
-            "incorporated": true,
-            "priority": "high",
-            "status": "incorporated"
-          }
-        ],
-        "character_feedback": [
-          {
-            "character_name": "Aria Moonwhisper",
-            "actions": [
-              "Touch the hidden wall and discover the secret passage",
-              "Read the prophecy with growing realization",
-              "Question Theron about his knowledge of her destiny"
-            ],
-            "dialog": [
-              "This shouldn't be possible",
-              "You knew about this prophecy, about me?",
-              "But what if I'm not strong enough? What if I fail?"
-            ],
-            "physical_sensations": [
-              "Hands trembling as she reads the prophecy",
-              "Heart racing when she sees the map",
-              "Weight of destiny settling on her shoulders"
-            ],
-            "emotions": [
-              "Wonder and fear at discovering the hidden chamber",
-              "Overwhelming realization of her role in the prophecy",
-              "Determination mixed with self-doubt"
-            ],
-            "internal_monologue": [
-              "The description was unmistakable – it was her",
-              "She was no longer just a student at the Academy",
-              "The prophecy had found her at last"
-            ]
-          }
-        ],
-        "rater_feedback": [
-          {
-            "rater_name": "Narrative Flow Rater",
-            "opinion": "Strong opening chapter that establishes the central conflict and Aria's role effectively. The pacing builds well from discovery to acceptance.",
-            "suggestions": [
-              "Consider adding more sensory details about the hidden chamber",
-              "The dialogue between Aria and Theron could be expanded to show more of their relationship dynamic"
-            ]
-          }
-        ],
-        "editor_suggestions": [
-          {
-            "issue": "The transition from Aria finding the chamber to reading the prophecy feels slightly rushed",
-            "suggestion": "Add a paragraph describing her hesitation and the magical pull she feels toward the tome",
-            "priority": "medium",
-            "selected": false
-          },
-          {
-            "issue": "Theron's knowledge reveal could have more emotional impact",
-            "suggestion": "Show more of his internal struggle about keeping secrets from Aria all these years",
-            "priority": "high",
-            "selected": true
-          }
-        ],
-        "word_count": 1247,
         "created": "2024-01-15T12:00:00Z",
         "last_modified": "2024-01-15T16:30:00Z"
       }
@@ -382,18 +193,7 @@
       "version": "1.2.0",
       "created_at": "2024-01-15T10:00:00Z",
       "total_characters": 3,
-      "total_chapters": 1,
-      "total_word_count": 1247,
-      "context_size_estimate": 8500,
-      "processing_hints": {
-        "priority_characters": ["Aria Moonwhisper", "Theron Blackstone"],
-        "current_arc": "discovery_phase",
-        "tone_emphasis": "epic fantasy with coming-of-age elements",
-        "pacing_preference": "measured build-up with emotional beats",
-        "content_warnings": ["mild violence", "magical themes"],
-        "target_chapter_length": 2500,
-        "narrative_focus": "character development and world building"
-      }
+      "total_chapters": 1
     }
   }
 }
