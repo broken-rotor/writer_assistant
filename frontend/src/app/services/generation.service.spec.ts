@@ -522,12 +522,20 @@ describe('GenerationService', () => {
 
       apiServiceSpy.modifyChapter.and.returnValue(of(mockResponse));
 
-      service.modifyChapter(mockStory, 'Original text', 'Make it exciting').subscribe(response => {
+      const mockFeedbackSelection = {
+        characterFeedback: {},
+        raterFeedback: {}
+      };
+
+      service.modifyChapter(mockStory, 'Original text', 'Make it exciting', mockFeedbackSelection, [], []).subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.modifyChapter).toHaveBeenCalledWith(
           jasmine.objectContaining({
             chapter_number: 1,
-            userRequest: 'Make it exciting',
+            user_feedback: 'Make it exciting',
+            character_feedback: [],
+            rater_feedback: [],
+            editor_feedback: [],
             request_context: jasmine.any(Object)
           }),
           undefined

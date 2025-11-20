@@ -335,9 +335,27 @@ export interface GenerateChapterRequest {
   incorporatedFeedback: FeedbackItem[];
 }
 
+export interface CharacterFeedbackItem {
+  character_name: string;
+  type: 'action' | 'dialog' | 'physicalSensation' | 'emotion' | 'internalMonologue' | 'goals' | 'memories' | 'subtext';
+  content: string;
+}
+
+export interface RaterFeedbackItem {
+  rater_name: string;
+  content: string;
+}
+
+export interface EditorFeedbackItem {
+  content: string;
+}
+
 export interface ModifyChapterRequest {
   chapter_number: number;
-  userRequest: string;
+  user_feedback?: string;
+  character_feedback: CharacterFeedbackItem[];
+  rater_feedback: RaterFeedbackItem[];
+  editor_feedback: EditorFeedbackItem[];
   request_context: any; // RequestContext from context-transformer
 }
 

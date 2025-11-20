@@ -8,6 +8,8 @@ import { RequestConverterService } from './request-converter.service';
 import { RequestOptimizerService } from './request-optimizer.service';
 import { PlotOutlineContextService } from './plot-outline-context.service';
 import { transformToRequestContext } from '../utils/context-transformer';
+import { transformFeedbackSelection } from '../utils/feedback-transformer';
+import { FeedbackSelection } from '../components/feedback-selector/feedback-selector.component';
 import {
   Story,
   Character,
@@ -30,7 +32,9 @@ import {
   ChapterOutlineGenerationResponse,
   CharacterContext,
   // Backend request interfaces
-  BackendGenerateChapterRequest
+  BackendGenerateChapterRequest,
+  CharacterFeedbackResponse,
+  RaterFeedbackResponse
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackResponse,
@@ -80,15 +84,29 @@ export class GenerationService {
   modifyChapter(
     story: Story,
     currentChapterText: string,
-    userRequest: string,
+    userFeedback: string,
+    feedbackSelection: FeedbackSelection,
+    characterFeedbackResponses: CharacterFeedbackResponse[] = [],
+    raterFeedbackResponses: RaterFeedbackResponse[] = [],
     onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     // Determine chapter number by finding the chapter that matches the current text
     const chapterNumber = this.findChapterNumberByContent(story, currentChapterText);
     
+    // Transform feedback selection to backend format
+    const transformedFeedback = transformFeedbackSelection(
+      feedbackSelection, 
+      story, 
+      characterFeedbackResponses, 
+      raterFeedbackResponses
+    );
+    
     const request: ModifyChapterRequest = {
       chapter_number: chapterNumber,
-      userRequest: userRequest,
+      user_feedback: userFeedback || undefined,
+      character_feedback: transformedFeedback.character_feedback,
+      rater_feedback: transformedFeedback.rater_feedback,
+      editor_feedback: transformedFeedback.editor_feedback,
       request_context: transformToRequestContext(story)
     };
 
@@ -298,7 +316,10 @@ export class GenerationService {
     
     const request: ModifyChapterRequest = {
       chapter_number: chapterNumber,
-      userRequest: `${prompt}\n\nCurrent chapter content:\n${currentChapterContent}`,
+      user_feedback: `${prompt}\n\nCurrent chapter content:\n${currentChapterContent}`,
+      character_feedback: [],
+      rater_feedback: [],
+      editor_feedback: [],
       request_context: transformToRequestContext(story)
     };
 
@@ -332,7 +353,10 @@ export class GenerationService {
     
     const request: ModifyChapterRequest = {
       chapter_number: chapterNumber,
-      userRequest: incorporationPrompt,
+      user_feedback: incorporationPrompt,
+      character_feedback: [],
+      rater_feedback: [],
+      editor_feedback: [],
       request_context: transformToRequestContext(story)
     };
 
@@ -384,7 +408,10 @@ export class GenerationService {
       // Build request using structured context
       const request: ModifyChapterRequest = {
         chapter_number: chapterNumber,
-        userRequest: incorporationPrompt,
+        user_feedback: incorporationPrompt,
+        character_feedback: [],
+        rater_feedback: [],
+        editor_feedback: [],
         request_context: transformToRequestContext(story)
       };
 
@@ -406,7 +433,10 @@ export class GenerationService {
     
     const request: ModifyChapterRequest = {
       chapter_number: chapterNumber,
-      userRequest: `Create a variation of this chapter with the following changes: ${variationPrompt}\n\nBase chapter:\n${baseChapterContent}`,
+      user_feedback: `Create a variation of this chapter with the following changes: ${variationPrompt}\n\nBase chapter:\n${baseChapterContent}`,
+      character_feedback: [],
+      rater_feedback: [],
+      editor_feedback: [],
       request_context: transformToRequestContext(story)
     };
 
@@ -426,7 +456,10 @@ export class GenerationService {
     
     const request: ModifyChapterRequest = {
       chapter_number: chapterNumber,
-      userRequest: `Please refine this specific section of the chapter: "${sectionToRefine}"\n\nRefinement instructions: ${refinementInstructions}\n\nFull chapter context:\n${fullChapterContent}`,
+      user_feedback: `Please refine this specific section of the chapter: "${sectionToRefine}"\n\nRefinement instructions: ${refinementInstructions}\n\nFull chapter context:\n${fullChapterContent}`,
+      character_feedback: [],
+      rater_feedback: [],
+      editor_feedback: [],
       request_context: transformToRequestContext(story)
     };
 

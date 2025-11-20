@@ -12,6 +12,7 @@ import {
   FeedbackItem,
   Story
 } from '../models/story.model';
+import { FeedbackSelection } from '../components/feedback-selector/feedback-selector.component';
 import { GenerationService } from './generation.service';
 import { ApiService } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
@@ -393,7 +394,7 @@ export class ChapterEditorService {
   /**
    * Apply user guidance to modify chapter
    */
-  applyUserGuidance(guidance: string, story: Story): Observable<string> {
+  applyUserGuidance(guidance: string, story: Story, feedbackSelection?: FeedbackSelection): Observable<string> {
     const currentState = this.stateSubject.value;
     if (!currentState.currentChapter?.content) {
       return throwError(() => new Error('No chapter content to modify'));
@@ -401,10 +402,19 @@ export class ChapterEditorService {
 
     this.updateState({ isApplyingGuidance: true, userGuidance: guidance });
 
+    // Use empty feedback selection if none provided
+    const defaultFeedbackSelection: FeedbackSelection = {
+      characterFeedback: {},
+      raterFeedback: {}
+    };
+
     return this.generationService.modifyChapter(
       story,
       currentState.currentChapter.content,
-      guidance
+      guidance,
+      feedbackSelection || defaultFeedbackSelection,
+      currentState.characterFeedback,
+      currentState.raterFeedback
     ).pipe(
       map((response: ModifyChapterResponse) => {
         const updatedChapter = {

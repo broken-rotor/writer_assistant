@@ -316,7 +316,10 @@ describe('ApiService', () => {
     it('should create an observable for SSE streaming chapter modification', () => {
       const request = {
         chapter_number: 1,
-        userRequest: 'Make it more exciting',
+        user_feedback: 'Make it more exciting',
+        character_feedback: [],
+        rater_feedback: [],
+        editor_feedback: [],
         request_context: {
           configuration: {
             system_prompts: {
@@ -388,7 +391,10 @@ describe('ApiService', () => {
     it('should handle progress updates when provided', () => {
       const request = {
         chapter_number: 1,
-        userRequest: 'Make it more exciting',
+        user_feedback: 'Make it more exciting',
+        character_feedback: [],
+        rater_feedback: [],
+        editor_feedback: [],
         request_context: {
           configuration: {
             system_prompts: {
