@@ -145,11 +145,44 @@ class GenerateChapterResponse(BaseModel):
     metadata: Dict[str, Any]
 
 
+class CharacterFeedbackItem(BaseModel):
+    """Character-specific feedback for story content."""
+    character_name: str = Field(description="Name of the character providing feedback")
+    type: Literal["action", "dialog", "physicalSensation", "emotion", "internalMonologue", "goals", "memories", "subtext"] = Field(
+        description="Type of feedback"
+    )
+    content: str = Field(description="Feedback content")
+
+
+class RaterFeedbackItem(BaseModel):
+    """Rater-specific feedback on story content."""
+    rater_name: str = Field(description="Name of the rater providing feedback")
+    content: str = Field(description="Feedback content")
+
+
+class EditorFeedback(BaseModel):
+    """Editor review feedback for content improvement."""
+    content: str = Field(description="Feedback content")
+
+
 # Chapter Modification Request/Response
 class ModifyChapterRequest(BaseModel):
     chapter_number: int = Field(description="Chapter number to modify")
 
-    userRequest: str = Field(description="User's modification request")
+    user_feedback: Optional[str] = Field(default=None, description="User's feedback to be integrated")
+
+    character_feedback: List[CharacterFeedbackItem] = Field(
+        default_factory=list,
+        description="Character-specific feedback to be integrated"
+    )
+    rater_feedback: List[RaterFeedbackItem] = Field(
+        default_factory=list,
+        description="Rater feedback to be integrated"
+    )
+    editor_feedback: List[EditorFeedback] = Field(
+        default_factory=list,
+        description="Editor feedback to be integrated"
+    )
 
     request_context: RequestContext = Field(
         description="Complete request context with story configuration, worldbuilding, "

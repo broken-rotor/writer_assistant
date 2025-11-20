@@ -442,7 +442,10 @@ def sample_modify_chapter_request():
     return {
         "request_context": request_context.model_dump(mode='json'),
         "chapter_number": 1,
-        "userRequest": "Add more atmospheric details about the weather and setting"
+        "user_feedback": "Add more atmospheric details about the weather and setting",
+        "character_feedback": [],
+        "rater_feedback": [],
+        "editor_feedback": []
     }
 
 
@@ -594,17 +597,11 @@ def sample_request_context():
         SystemPrompts,
         RaterConfig,
         WorldbuildingInfo,
-        WorldElement,
         ChatMessage,
         CharacterDetails,
         StoryOutline,
         OutlineItem,
-        OutlineFeedback,
         ChapterDetails,
-        FeedbackItem,
-        CharacterFeedbackItem,
-        RaterFeedbackItem,
-        EditorSuggestion,
         RequestContextMetadata
     )
     from datetime import datetime
@@ -624,12 +621,7 @@ def sample_request_context():
                     system_prompt="Evaluate story quality and coherence",
                     enabled=True
                 )
-            ],
-            generation_preferences={
-                "genre": "noir",
-                "style": "atmospheric",
-                "focus": "character_development"
-            }
+            ]
         ),
         worldbuilding=WorldbuildingInfo(
             content="A noir detective story set in 1940s Los Angeles. The city is shrouded in perpetual fog and moral ambiguity.",
@@ -645,20 +637,6 @@ def sample_request_context():
                     type="assistant",
                     content="Perfect! 1940s Los Angeles provides a rich noir backdrop with its post-war atmosphere.",
                     timestamp=datetime.now()
-                )
-            ],
-            key_elements=[
-                WorldElement(
-                    type="location",
-                    name="1940s Los Angeles",
-                    description="Post-war city with fog, neon lights, and moral ambiguity",
-                    importance="high"
-                ),
-                WorldElement(
-                    type="culture",
-                    name="Noir Atmosphere",
-                    description="Dark, cynical worldview with complex moral situations",
-                    importance="high"
                 )
             ]
         ),
@@ -676,15 +654,6 @@ def sample_request_context():
                 motivations="Seeking justice and truth in a corrupt world",
                 fears="Losing another partner, becoming too cynical",
                 relationships="Works alone after losing previous partner",
-                current_state={
-                    "emotion": "focused",
-                    "location": "crime_scene",
-                    "mental_state": "analytical",
-                    "physical_state": "alert"
-                },
-                recent_actions=["Arrived at scene", "Examining evidence", "Taking notes"],
-                goals=["Solve the murder case", "Find justice", "Protect the innocent"],
-                memories=["Previous partner's death", "Similar cases", "Training"],
                 last_modified=datetime.now()
             )
         ],
@@ -699,17 +668,7 @@ def sample_request_context():
                     description="Detective Sarah Chen arrives at the murder scene",
                     key_plot_items=["Arrival at scene", "Initial investigation", "Discovery of key evidence"],
                     order=1,
-                    involved_characters=["Detective Sarah Chen"],
-                            word_count_estimate=2000
-                )
-            ],
-            rater_feedback=[
-                OutlineFeedback(
-                    rater_id="rater_001",
-                    rater_name="Story Quality Rater",
-                    feedback="Strong opening with good atmospheric setup",
-                    status="complete",
-                    timestamp=datetime.now()
+                    involved_characters=["Detective Sarah Chen"]
                 )
             ]
         ),
@@ -721,42 +680,6 @@ def sample_request_context():
                 content="The rain fell in sheets across the empty street as Detective Sarah Chen pulled up to the crime scene. The neon signs reflected in the puddles, casting an eerie glow over the scene.",
                 plot_point="Detective arrives at the crime scene on a rainy night",
                 key_plot_items=["Arrival at scene", "Initial investigation", "Atmospheric setup"],
-                incorporated_feedback=[
-                    FeedbackItem(
-                        id="feedback_001",
-                        source="Story Quality Rater",
-                        type="suggestion",
-                        content="Add more sensory details to enhance atmosphere",
-                        incorporated=True,
-                        priority="medium",
-                        status="incorporated"
-                    )
-                ],
-                character_feedback=[
-                    CharacterFeedbackItem(
-                        character_name="Detective Sarah Chen",
-                        actions=["Step out of car", "Survey the scene", "Take notes"],
-                        dialog=["What do we have here?", "Secure the perimeter"],
-                        physical_sensations=["Cold rain on face", "Tension in shoulders"],
-                        emotions=["Focused determination", "Slight apprehension"],
-                        internal_monologue=["Another case, another chance for justice"]
-                    )
-                ],
-                rater_feedback=[
-                    RaterFeedbackItem(
-                        rater_name="Story Quality Rater",
-                        opinion="Strong atmospheric opening with good character establishment",
-                        suggestions=["Consider adding more background details", "Develop the crime scene description"]
-                    )
-                ],
-                editor_suggestions=[
-                    EditorSuggestion(
-                        issue="Pacing could be improved",
-                        suggestion="Add a brief pause before entering the scene",
-                        priority="medium",
-                        selected=False
-                    )
-                ],
                 created=datetime.now(),
                 last_modified=datetime.now()
             )
@@ -767,13 +690,7 @@ def sample_request_context():
             version="1.0",
             created_at=datetime.now(),
             total_characters=1,
-            total_chapters=1,
-            processing_hints={
-                "genre": "noir",
-                "style": "atmospheric",
-                "focus": "character_development",
-                "optimization_level": "light"
-            }
+            total_chapters=1
         )
     )
 

@@ -179,77 +179,9 @@ class StoryOutline(BaseModel):
         default_factory=list,
         description="Structured outline items"
     )
-    rater_feedback: List[OutlineFeedback] = Field(
-        default_factory=list,
-        description="Feedback from rater agents on the outline"
-    )
     chat_history: List[ChatMessage] = Field(
         default_factory=list,
         description="Outline development conversation history"
-    )
-
-
-class FeedbackItem(BaseModel):
-    """General feedback item from various sources."""
-    id: str = Field(description="Unique feedback identifier")
-    source: str = Field(description="Source of feedback (character or rater name)")
-    type: Literal["action", "dialog", "sensation", "emotion", "thought", "suggestion"] = Field(
-        description="Type of feedback"
-    )
-    content: str = Field(description="Feedback content")
-    incorporated: bool = Field(description="Whether feedback has been incorporated")
-    priority: Literal["high", "medium", "low"] = Field(
-        description="Priority level for incorporating feedback"
-    )
-    status: Literal["pending", "incorporated", "dismissed"] = Field(
-        description="Current status of the feedback"
-    )
-
-
-class CharacterFeedbackItem(BaseModel):
-    """Character-specific feedback for story content."""
-    character_name: str = Field(description="Name of the character providing feedback")
-    actions: List[str] = Field(
-        default_factory=list,
-        description="Suggested actions for the character"
-    )
-    dialog: List[str] = Field(
-        default_factory=list,
-        description="Suggested dialog for the character"
-    )
-    physical_sensations: List[str] = Field(
-        default_factory=list,
-        description="Suggested physical sensations"
-    )
-    emotions: List[str] = Field(
-        default_factory=list,
-        description="Suggested emotional responses"
-    )
-    internal_monologue: List[str] = Field(
-        default_factory=list,
-        description="Suggested internal thoughts"
-    )
-
-
-class RaterFeedbackItem(BaseModel):
-    """Rater-specific feedback on story content."""
-    rater_name: str = Field(description="Name of the rater providing feedback")
-    opinion: str = Field(description="Overall opinion from the rater")
-    suggestions: List[str] = Field(
-        default_factory=list,
-        description="Specific suggestions for improvement"
-    )
-
-
-class EditorSuggestion(BaseModel):
-    """Editor review suggestion for content improvement."""
-    issue: str = Field(description="Identified issue")
-    suggestion: str = Field(description="Suggested improvement")
-    priority: Literal["high", "medium", "low"] = Field(
-        description="Priority level of the suggestion"
-    )
-    selected: bool = Field(
-        description="Whether user has selected this suggestion"
     )
 
 
@@ -268,24 +200,6 @@ class ChapterDetails(BaseModel):
     key_plot_items: List[str] = Field(
         default_factory=list,
         description="Specific story beats within the chapter"
-    )
-    
-    # Feedback integration
-    incorporated_feedback: List[FeedbackItem] = Field(
-        default_factory=list,
-        description="General feedback items that have been incorporated"
-    )
-    character_feedback: List[CharacterFeedbackItem] = Field(
-        default_factory=list,
-        description="Character-specific feedback for this chapter"
-    )
-    rater_feedback: List[RaterFeedbackItem] = Field(
-        default_factory=list,
-        description="Rater feedback for this chapter"
-    )
-    editor_suggestions: List[EditorSuggestion] = Field(
-        default_factory=list,
-        description="Editor suggestions for this chapter"
     )
     
     # Metadata

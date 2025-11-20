@@ -64,7 +64,7 @@ class TestModifyChapterEndpoint:
 
     def test_modify_chapter_with_user_request(self, client, sample_modify_chapter_request):
         """Test that chapter is modified according to user request"""
-        user_request = sample_modify_chapter_request["userRequest"]
+        user_request = sample_modify_chapter_request["user_feedback"]
         response = client.post("/api/v1/modify-chapter", json=sample_modify_chapter_request)
         data = extract_final_result_from_streaming_response(response)
         modified_chapter = data["modifiedChapter"]
@@ -75,7 +75,7 @@ class TestModifyChapterEndpoint:
     def test_modify_chapter_with_long_user_request(self, client, sample_modify_chapter_request):
         """Test modify chapter with long user request"""
         long_request = "Please modify this chapter by " + "adding more detail " * 50
-        sample_modify_chapter_request["userRequest"] = long_request
+        sample_modify_chapter_request["user_feedback"] = long_request
         response = client.post("/api/v1/modify-chapter", json=sample_modify_chapter_request)
         data = extract_final_result_from_streaming_response(response)
         assert "modifiedChapter" in data
