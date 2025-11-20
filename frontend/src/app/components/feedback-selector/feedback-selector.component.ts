@@ -16,9 +16,20 @@ import {
   Rater
 } from '../../models/story.model';
 
+export interface CharacterFeedbackSelection {
+  characterName: string;
+  type: 'action' | 'dialog' | 'physicalSensation' | 'emotion' | 'internalMonologue' | 'goals' | 'memories' | 'subtext';
+  content: string;
+}
+
+export interface RaterFeedbackSelection {
+  raterName: string;
+  content: string;
+}
+
 export interface FeedbackSelection {
-  characterFeedback: Record<string, string[]>;
-  raterFeedback: Record<string, string[]>;
+  characterFeedback: CharacterFeedbackSelection[];
+  raterFeedback: RaterFeedbackSelection[];
 }
 
 export interface ChatContext {
@@ -69,8 +80,8 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
   selectedEntityType: 'character' | 'rater' | null = null;
   selectedEntityId: string | null = null;
   selectedFeedback: FeedbackSelection = {
-    characterFeedback: {},
-    raterFeedback: {}
+    characterFeedback: [],
+    raterFeedback: []
   };
   
   chatContexts: Record<string, ChatContext> = {};
@@ -87,19 +98,9 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
   private initializeFeedbackSelection() {
     // Initialize feedback selection state
     this.selectedFeedback = {
-      characterFeedback: {},
-      raterFeedback: {}
+      characterFeedback: [],
+      raterFeedback: []
     };
-
-    // Initialize character feedback selection
-    this.characterFeedback.forEach(feedback => {
-      this.selectedFeedback.characterFeedback[feedback.characterName] = [];
-    });
-
-    // Initialize rater feedback selection
-    this.raterFeedback.forEach(feedback => {
-      this.selectedFeedback.raterFeedback[feedback.raterName] = [];
-    });
   }
 
   getAvailableCharacters(): Character[] {
@@ -142,33 +143,44 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
     }
   }
 
-  toggleFeedbackSelection(feedbackText: string) {
+  toggleFeedbackSelection(feedbackText: string, feedbackType?: string) {
     if (!this.selectedEntityType || !this.selectedEntityId) return;
     
     const entityName = this.getSelectedEntityName();
     
-    if (this.selectedEntityType === 'character') {
-      const selections = this.selectedFeedback.characterFeedback[entityName] || [];
-      const index = selections.indexOf(feedbackText);
+    if (this.selectedEntityType === 'character' && feedbackType) {
+      // Find existing selection
+      const existingIndex = this.selectedFeedback.characterFeedback.findIndex(
+        item => item.characterName === entityName && item.content === feedbackText && item.type === feedbackType
+      );
       
-      if (index > -1) {
-        selections.splice(index, 1);
+      if (existingIndex > -1) {
+        // Remove existing selection
+        this.selectedFeedback.characterFeedback.splice(existingIndex, 1);
       } else {
-        selections.push(feedbackText);
+        // Add new selection
+        this.selectedFeedback.characterFeedback.push({
+          characterName: entityName,
+          type: feedbackType as any,
+          content: feedbackText
+        });
       }
+    } else if (this.selectedEntityType === 'rater') {
+      // Find existing selection
+      const existingIndex = this.selectedFeedback.raterFeedback.findIndex(
+        item => item.raterName === entityName && item.content === feedbackText
+      );
       
-      this.selectedFeedback.characterFeedback[entityName] = selections;
-    } else {
-      const selections = this.selectedFeedback.raterFeedback[entityName] || [];
-      const index = selections.indexOf(feedbackText);
-      
-      if (index > -1) {
-        selections.splice(index, 1);
+      if (existingIndex > -1) {
+        // Remove existing selection
+        this.selectedFeedback.raterFeedback.splice(existingIndex, 1);
       } else {
-        selections.push(feedbackText);
+        // Add new selection
+        this.selectedFeedback.raterFeedback.push({
+          raterName: entityName,
+          content: feedbackText
+        });
       }
-      
-      this.selectedFeedback.raterFeedback[entityName] = selections;
     }
   }
 
@@ -178,24 +190,18 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
     const entityName = this.getSelectedEntityName();
     
     if (this.selectedEntityType === 'character') {
-      return (this.selectedFeedback.characterFeedback[entityName] || []).includes(feedbackText);
+      return this.selectedFeedback.characterFeedback.some(
+        item => item.characterName === entityName && item.content === feedbackText
+      );
     } else {
-      return (this.selectedFeedback.raterFeedback[entityName] || []).includes(feedbackText);
+      return this.selectedFeedback.raterFeedback.some(
+        item => item.raterName === entityName && item.content === feedbackText
+      );
     }
   }
 
   getTotalSelectedCount(): number {
-    let count = 0;
-    
-    Object.values(this.selectedFeedback.characterFeedback).forEach(selections => {
-      count += selections.length;
-    });
-    
-    Object.values(this.selectedFeedback.raterFeedback).forEach(selections => {
-      count += selections.length;
-    });
-    
-    return count;
+    return this.selectedFeedback.characterFeedback.length + this.selectedFeedback.raterFeedback.length;
   }
 
   onGetFeedback(type: 'character' | 'rater') {

@@ -74,7 +74,7 @@
                       <div class="feedback-actions">
                         <button mat-button 
                                 [color]="isFeedbackSelected(action) ? 'primary' : ''"
-                                (click)="toggleFeedbackSelection(action)"
+                                (click)="toggleFeedbackSelection(action, 'action')"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(action) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(action) ? 'Selected' : 'Select' }}
@@ -93,7 +93,7 @@
                       <div class="feedback-actions">
                         <button mat-button 
                                 [color]="isFeedbackSelected(dialog) ? 'primary' : ''"
-                                (click)="toggleFeedbackSelection(dialog)"
+                                (click)="toggleFeedbackSelection(dialog, 'dialog')"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(dialog) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(dialog) ? 'Selected' : 'Select' }}
@@ -112,7 +112,7 @@
                       <div class="feedback-actions">
                         <button mat-button 
                                 [color]="isFeedbackSelected(emotion) ? 'primary' : ''"
-                                (click)="toggleFeedbackSelection(emotion)"
+                                (click)="toggleFeedbackSelection(emotion, 'emotion')"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(emotion) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(emotion) ? 'Selected' : 'Select' }}
@@ -131,7 +131,7 @@
                       <div class="feedback-actions">
                         <button mat-button 
                                 [color]="isFeedbackSelected(sensation) ? 'primary' : ''"
-                                (click)="toggleFeedbackSelection(sensation)"
+                                (click)="toggleFeedbackSelection(sensation, 'physicalSensation')"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(sensation) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(sensation) ? 'Selected' : 'Select' }}
@@ -150,7 +150,7 @@
                       <div class="feedback-actions">
                         <button mat-button 
                                 [color]="isFeedbackSelected(thought) ? 'primary' : ''"
-                                (click)="toggleFeedbackSelection(thought)"
+                                (click)="toggleFeedbackSelection(thought, 'internalMonologue')"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(thought) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(thought) ? 'Selected' : 'Select' }}
@@ -169,7 +169,7 @@
                       <div class="feedback-actions">
                         <button mat-button 
                                 [color]="isFeedbackSelected(goal) ? 'primary' : ''"
-                                (click)="toggleFeedbackSelection(goal)"
+                                (click)="toggleFeedbackSelection(goal, 'goals')"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(goal) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(goal) ? 'Selected' : 'Select' }}
@@ -188,7 +188,7 @@
                       <div class="feedback-actions">
                         <button mat-button
                                 [color]="isFeedbackSelected(memory) ? 'primary' : ''"
-                                (click)="toggleFeedbackSelection(memory)"
+                                (click)="toggleFeedbackSelection(memory, 'memories')"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(memory) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(memory) ? 'Selected' : 'Select' }}
@@ -207,7 +207,7 @@
                       <div class="feedback-actions">
                         <button mat-button
                                 [color]="isFeedbackSelected(item) ? 'primary' : ''"
-                                (click)="toggleFeedbackSelection(item)"
+                                (click)="toggleFeedbackSelection(item, 'subtext')"
                                 [disabled]="disabled">
                           <mat-icon>{{ isFeedbackSelected(item) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                           {{ isFeedbackSelected(item) ? 'Selected' : 'Select' }}
