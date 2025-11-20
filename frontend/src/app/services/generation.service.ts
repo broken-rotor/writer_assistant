@@ -32,9 +32,7 @@ import {
   ChapterOutlineGenerationResponse,
   CharacterContext,
   // Backend request interfaces
-  BackendGenerateChapterRequest,
-  CharacterFeedbackResponse,
-  RaterFeedbackResponse
+  BackendGenerateChapterRequest
 } from '../models/story.model';
 import {
   StructuredCharacterFeedbackResponse,
@@ -86,20 +84,13 @@ export class GenerationService {
     currentChapterText: string,
     userFeedback: string,
     feedbackSelection: FeedbackSelection,
-    characterFeedbackResponses: CharacterFeedbackResponse[] = [],
-    raterFeedbackResponses: RaterFeedbackResponse[] = [],
     onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     // Determine chapter number by finding the chapter that matches the current text
     const chapterNumber = this.findChapterNumberByContent(story, currentChapterText);
     
     // Transform feedback selection to backend format
-    const transformedFeedback = transformFeedbackSelection(
-      feedbackSelection, 
-      story, 
-      characterFeedbackResponses, 
-      raterFeedbackResponses
-    );
+    const transformedFeedback = transformFeedbackSelection(feedbackSelection);
     
     const request: ModifyChapterRequest = {
       chapter_number: chapterNumber,

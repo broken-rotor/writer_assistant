@@ -404,17 +404,15 @@ export class ChapterEditorService {
 
     // Use empty feedback selection if none provided
     const defaultFeedbackSelection: FeedbackSelection = {
-      characterFeedback: {},
-      raterFeedback: {}
+      characterFeedback: [],
+      raterFeedback: []
     };
 
     return this.generationService.modifyChapter(
       story,
       currentState.currentChapter.content,
       guidance,
-      feedbackSelection || defaultFeedbackSelection,
-      currentState.characterFeedback,
-      currentState.raterFeedback
+      feedbackSelection || defaultFeedbackSelection
     ).pipe(
       map((response: ModifyChapterResponse) => {
         const updatedChapter = {

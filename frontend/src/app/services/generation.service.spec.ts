@@ -523,11 +523,11 @@ describe('GenerationService', () => {
       apiServiceSpy.modifyChapter.and.returnValue(of(mockResponse));
 
       const mockFeedbackSelection = {
-        characterFeedback: {},
-        raterFeedback: {}
+        characterFeedback: [],
+        raterFeedback: []
       };
 
-      service.modifyChapter(mockStory, 'Original text', 'Make it exciting', mockFeedbackSelection, [], []).subscribe(response => {
+      service.modifyChapter(mockStory, 'Original text', 'Make it exciting', mockFeedbackSelection).subscribe(response => {
         expect(response).toEqual(mockResponse);
         expect(apiServiceSpy.modifyChapter).toHaveBeenCalledWith(
           jasmine.objectContaining({
