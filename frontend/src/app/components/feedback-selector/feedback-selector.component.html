@@ -326,6 +326,14 @@
     </button>
     
     <button mat-stroked-button 
+            color="accent"
+            (click)="onClearQueuedFeedback()"
+            [disabled]="disabled || getTotalSelectedCount() === 0">
+      <mat-icon>deselect</mat-icon>
+      Clear Queued Feedback
+    </button>
+    
+    <button mat-stroked-button 
             color="warn"
             (click)="onClearFeedback()"
             [disabled]="disabled">

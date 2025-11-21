@@ -64,12 +64,13 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
   @Input() disabled = false;
   @Input() userGuidance = '';
   
-  @Output() getFeedback = new EventEmitter<{ type: 'character' | 'rater', entityId: string, entityName: string }>();
+  @Output() getFeedback = new EventEmitter<{ type: 'character' | 'rater', entityId: string, entityName: string, forceRefresh?: boolean }>();
   @Output() modifyChapter = new EventEmitter<{ 
     userGuidance: string, 
     selectedFeedback: FeedbackSelection 
   }>();
   @Output() clearFeedback = new EventEmitter<void>();
+  @Output() clearQueuedFeedback = new EventEmitter<void>();
   @Output() chatMessage = new EventEmitter<{
     type: 'character' | 'rater',
     id: string,
@@ -229,6 +230,11 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
     this.initializeFeedbackSelection();
   }
 
+  onClearQueuedFeedback() {
+    this.clearQueuedFeedback.emit();
+    this.initializeFeedbackSelection();
+  }
+
   onSendChatMessage() {
     if (!this.currentChatMessage.trim() || !this.selectedEntityType || !this.selectedEntityId) return;
     
@@ -276,9 +282,17 @@ export class FeedbackSelectorComponent implements OnInit, OnChanges {
   }
 
   onRefreshFeedback() {
-    if (!this.selectedEntityType) return;
+    if (!this.selectedEntityType || !this.selectedEntityId) return;
     
-    // Emit request to refresh feedback for the selected entity
-    this.onGetFeedback(this.selectedEntityType);
+    const entityName = this.getSelectedEntityName();
+    if (!entityName) return;
+    
+    // Emit request to refresh feedback for the selected entity with force refresh
+    this.getFeedback.emit({ 
+      type: this.selectedEntityType, 
+      entityId: this.selectedEntityId,
+      entityName,
+      forceRefresh: true
+    });
   }
 }
