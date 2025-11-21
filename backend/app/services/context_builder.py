@@ -165,8 +165,7 @@ class ContextBuilder:
                     summarization_strategy=SummarizationStrategy.SUMMARIZED))
 
     def add_recent_story(self, include_up_to: Optional[int] = None):
-        ## FIXME ##
-        content = ''
+        content = self._get_chapters(include_up_to)
         if content:
             self._elements.append(ContextItem(
                 tag='RECENT_STORY',
@@ -175,9 +174,8 @@ class ContextBuilder:
                 token_budget=15000,
                 summarization_strategy=SummarizationStrategy.SUMMARY_AND_ROLLING_WINDOW))
 
-    def add_recent_story_summary(self):
-        ## FIXME ##
-        content = ''
+    def add_recent_story_summary(self, include_up_to: Optional[int] = None):
+        content = self._get_chapters(include_up_to)
         if content:
             self._elements.append(ContextItem(
                 tag='RECENT_STORY_SUMMARY',
@@ -223,4 +221,13 @@ class ContextBuilder:
 
     def _summarize(self, content: str) -> (str, int):
         ## FIXME ##
-        return '', 0
+        return content, 0
+
+    def _get_chapters(self, include_up_to: Optional[int]):
+        content = ""
+        for c in sorted(self._request_context.chapters, key=lambda c: c.number):
+            if include_up_to is not None and c.number >= include_up_to:
+                break
+            if c.title and c.content:
+                content += f"Chapter {c.number}: {c.title}\n{c.content}\n\n"
+        return content
