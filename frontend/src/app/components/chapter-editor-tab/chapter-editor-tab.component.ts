@@ -185,23 +185,23 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   }
 
   // Feedback methods
-  onGetFeedback(event: { type: 'character' | 'rater', entityId: string, entityName: string }) {
+  onGetFeedback(event: { type: 'character' | 'rater', entityId: string, entityName: string, forceRefresh?: boolean }) {
     if (!this.story || !this.state?.currentChapter) return;
 
     switch (event.type) {
       case 'character':
-        this.getCharacterFeedback(event.entityId, event.entityName);
+        this.getCharacterFeedback(event.entityId, event.entityName, event.forceRefresh);
         break;
       case 'rater':
-        this.getRaterFeedback(event.entityId, event.entityName);
+        this.getRaterFeedback(event.entityId, event.entityName, event.forceRefresh);
         break;
     }
   }
 
-  private getCharacterFeedback(characterId: string, characterName: string) {
+  private getCharacterFeedback(characterId: string, characterName: string, forceRefresh?: boolean) {
     if (!this.story) return;
 
-    this.chapterEditorService.getCharacterFeedback(this.story, characterId, characterName).subscribe({
+    this.chapterEditorService.getCharacterFeedback(this.story, characterId, characterName, forceRefresh).subscribe({
       next: (feedback) => {
         console.log('Character feedback received:', feedback);
       },
@@ -211,10 +211,10 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
     });
   }
 
-  private getRaterFeedback(raterId: string, raterName: string) {
+  private getRaterFeedback(raterId: string, raterName: string, forceRefresh?: boolean) {
     if (!this.story) return;
 
-    this.chapterEditorService.getRaterFeedback(this.story, raterId, raterName).subscribe({
+    this.chapterEditorService.getRaterFeedback(this.story, raterId, raterName, forceRefresh).subscribe({
       next: (feedback) => {
         console.log('Rater feedback received:', feedback);
       },
@@ -243,6 +243,11 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   onClearFeedback() {
     this.chapterEditorService.clearFeedback();
     console.log('Feedback cleared');
+  }
+
+  onClearQueuedFeedback() {
+    this.chapterEditorService.clearQueuedFeedback();
+    console.log('Queued feedback cleared');
   }
 
   onChatMessage(event: { type: 'character' | 'rater', id: string, message: string }) {

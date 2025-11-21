@@ -17,6 +17,12 @@ import { GenerationService } from './generation.service';
 import { ApiService } from './api.service';
 import { ContextBuilderService } from './context-builder.service';
 
+export interface FeedbackCacheEntry {
+  data: CharacterFeedbackResponse | RaterFeedbackResponse;
+  timestamp: Date;
+  chapterContentHash: string; // Hash of chapter content when feedback was fetched
+}
+
 export interface ChapterEditingState {
   currentChapter: Chapter | null;
   isGenerating: boolean;
@@ -28,6 +34,8 @@ export interface ChapterEditingState {
   raterFeedback: RaterFeedbackResponse[];
   userGuidance: string;
   hasUnsavedChanges: boolean;
+  feedbackCache: Map<string, FeedbackCacheEntry>; // Key: entityType:entityName
+  queuedFeedbackSelections: FeedbackSelection;
 }
 
 @Injectable({
@@ -44,7 +52,12 @@ export class ChapterEditorService {
     characterFeedback: [],
     raterFeedback: [],
     userGuidance: '',
-    hasUnsavedChanges: false
+    hasUnsavedChanges: false,
+    feedbackCache: new Map<string, FeedbackCacheEntry>(),
+    queuedFeedbackSelections: {
+      characterFeedback: [],
+      raterFeedback: []
+    }
   });
 
   public state$ = this.stateSubject.asObservable();
@@ -68,7 +81,97 @@ export class ChapterEditorService {
       characterFeedback: existingFeedback.characterFeedback,
       raterFeedback: existingFeedback.raterFeedback,
       userGuidance: '',
-      hasUnsavedChanges: false
+      hasUnsavedChanges: false,
+      feedbackCache: new Map<string, FeedbackCacheEntry>(),
+      queuedFeedbackSelections: {
+        characterFeedback: [],
+        raterFeedback: []
+      }
+    });
+  }
+
+  /**
+   * Generate a hash for chapter content to track cache validity
+   */
+  private generateContentHash(content: string): string {
+    // Simple hash function for content comparison
+    let hash = 0;
+    if (content.length === 0) return hash.toString();
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString();
+  }
+
+  /**
+   * Get cache key for feedback
+   */
+  private getCacheKey(entityType: 'character' | 'rater', entityName: string): string {
+    return `${entityType}:${entityName}`;
+  }
+
+  /**
+   * Check if cached feedback is still valid
+   */
+  private isCacheValid(cacheEntry: FeedbackCacheEntry, currentContentHash: string): boolean {
+    return cacheEntry.chapterContentHash === currentContentHash;
+  }
+
+  /**
+   * Get cached feedback if available and valid
+   */
+  getCachedFeedback(entityType: 'character' | 'rater', entityName: string): { data: CharacterFeedbackResponse | RaterFeedbackResponse, isFromCache: boolean } | null {
+    const currentState = this.stateSubject.value;
+    if (!currentState.currentChapter?.content) return null;
+
+    const cacheKey = this.getCacheKey(entityType, entityName);
+    const cacheEntry = currentState.feedbackCache.get(cacheKey);
+    
+    if (!cacheEntry) return null;
+
+    const currentContentHash = this.generateContentHash(currentState.currentChapter.content);
+    if (!this.isCacheValid(cacheEntry, currentContentHash)) {
+      // Remove invalid cache entry
+      const updatedCache = new Map(currentState.feedbackCache);
+      updatedCache.delete(cacheKey);
+      this.updateState({ feedbackCache: updatedCache });
+      return null;
+    }
+
+    return { data: cacheEntry.data, isFromCache: true };
+  }
+
+  /**
+   * Cache feedback data
+   */
+  private cacheFeedback(entityType: 'character' | 'rater', entityName: string, data: CharacterFeedbackResponse | RaterFeedbackResponse): void {
+    const currentState = this.stateSubject.value;
+    if (!currentState.currentChapter?.content) return;
+
+    const cacheKey = this.getCacheKey(entityType, entityName);
+    const contentHash = this.generateContentHash(currentState.currentChapter.content);
+    
+    const cacheEntry: FeedbackCacheEntry = {
+      data,
+      timestamp: new Date(),
+      chapterContentHash: contentHash
+    };
+
+    const updatedCache = new Map(currentState.feedbackCache);
+    updatedCache.set(cacheKey, cacheEntry);
+    this.updateState({ feedbackCache: updatedCache });
+  }
+
+  /**
+   * Invalidate all cached feedback (called when chapter content changes)
+   */
+  private invalidateFeedbackCache(): void {
+    this.updateState({ 
+      feedbackCache: new Map<string, FeedbackCacheEntry>(),
+      characterFeedback: [],
+      raterFeedback: []
     });
   }
 
@@ -78,6 +181,8 @@ export class ChapterEditorService {
   updateChapterContent(content: string): void {
     const currentState = this.stateSubject.value;
     if (currentState.currentChapter) {
+      const contentChanged = currentState.currentChapter.content !== content;
+      
       const updatedChapter = {
         ...currentState.currentChapter,
         content,
@@ -92,6 +197,11 @@ export class ChapterEditorService {
         currentChapter: updatedChapter,
         hasUnsavedChanges: true
       });
+
+      // Invalidate feedback cache if content changed significantly
+      if (contentChanged) {
+        this.invalidateFeedbackCache();
+      }
     }
   }
 
@@ -215,6 +325,9 @@ export class ChapterEditorService {
           hasUnsavedChanges: true
         });
 
+        // Invalidate feedback cache since new content was generated
+        this.invalidateFeedbackCache();
+
         return response.chapterText;
       }),
       catchError(error => {
@@ -286,10 +399,28 @@ export class ChapterEditorService {
   /**
    * Get character feedback for current chapter from a specific character
    */
-  getCharacterFeedback(story: Story, characterId: string, characterName: string): Observable<CharacterFeedbackResponse[]> {
+  getCharacterFeedback(story: Story, characterId: string, characterName: string, forceRefresh = false): Observable<CharacterFeedbackResponse[]> {
     const currentState = this.stateSubject.value;
     if (!currentState.currentChapter?.content) {
       return throwError(() => new Error('No chapter content to get feedback on'));
+    }
+
+    // Check cache first unless force refresh is requested
+    if (!forceRefresh) {
+      const cachedResult = this.getCachedFeedback('character', characterName);
+      if (cachedResult) {
+        const cachedFeedback = cachedResult.data as CharacterFeedbackResponse;
+        
+        // Update state with cached feedback
+        const existingFeedback = currentState.characterFeedback.filter(f => f.characterName !== characterName);
+        const updatedFeedback = [...existingFeedback, cachedFeedback];
+        this.updateState({ characterFeedback: updatedFeedback });
+        
+        return new Observable(observer => {
+          observer.next([cachedFeedback]);
+          observer.complete();
+        });
+      }
     }
 
     // Find the selected character
@@ -321,6 +452,9 @@ export class ChapterEditorService {
           }
         }];
         
+        // Cache the response
+        this.cacheFeedback('character', characterName, characterFeedback[0]);
+        
         // Save feedback to chapter's incorporatedFeedback
         this.saveFeedbackToChapter(characterFeedback, 'character');
         
@@ -344,10 +478,28 @@ export class ChapterEditorService {
   /**
    * Get rater feedback for current chapter from a specific rater
    */
-  getRaterFeedback(story: Story, raterId: string, raterName: string): Observable<RaterFeedbackResponse[]> {
+  getRaterFeedback(story: Story, raterId: string, raterName: string, forceRefresh = false): Observable<RaterFeedbackResponse[]> {
     const currentState = this.stateSubject.value;
     if (!currentState.currentChapter?.content) {
       return throwError(() => new Error('No chapter content to get feedback on'));
+    }
+
+    // Check cache first unless force refresh is requested
+    if (!forceRefresh) {
+      const cachedResult = this.getCachedFeedback('rater', raterName);
+      if (cachedResult) {
+        const cachedFeedback = cachedResult.data as RaterFeedbackResponse;
+        
+        // Update state with cached feedback
+        const existingFeedback = currentState.raterFeedback.filter(f => f.raterName !== raterName);
+        const updatedFeedback = [...existingFeedback, cachedFeedback];
+        this.updateState({ raterFeedback: updatedFeedback });
+        
+        return new Observable(observer => {
+          observer.next([cachedFeedback]);
+          observer.complete();
+        });
+      }
     }
 
     // Find the selected rater
@@ -370,6 +522,9 @@ export class ChapterEditorService {
           raterName: response.raterName || raterName,
           feedback: response.feedback || 'No feedback provided'
         }];
+        
+        // Cache the response
+        this.cacheFeedback('rater', raterName, raterFeedback[0]);
         
         // Save feedback to chapter's incorporatedFeedback
         this.saveFeedbackToChapter(raterFeedback, 'rater');
@@ -430,7 +585,10 @@ export class ChapterEditorService {
           hasUnsavedChanges: true
         });
 
-        // Clear feedback after successful chapter modification since it's now incorporated
+        // Invalidate feedback cache after successful chapter modification since content changed
+        this.invalidateFeedbackCache();
+        
+        // Clear all feedback since it's been applied to the chapter
         this.clearFeedback();
 
         return response.modifiedChapter;
@@ -466,11 +624,16 @@ export class ChapterEditorService {
   clearFeedback(): void {
     const currentState = this.stateSubject.value;
     
-    // Clear UI feedback arrays and user guidance
+    // Clear UI feedback arrays, user guidance, cache, and queued selections
     const stateUpdate: Partial<ChapterEditingState> = {
       characterFeedback: [],
       raterFeedback: [],
-      userGuidance: ''
+      userGuidance: '',
+      feedbackCache: new Map<string, FeedbackCacheEntry>(),
+      queuedFeedbackSelections: {
+        characterFeedback: [],
+        raterFeedback: []
+      }
     };
 
     // Also clear incorporated feedback from the chapter itself
@@ -487,6 +650,52 @@ export class ChapterEditorService {
     }
 
     this.updateState(stateUpdate);
+  }
+
+  /**
+   * Clear only queued feedback selections while preserving user guidance and cached feedback
+   */
+  clearQueuedFeedback(): void {
+    this.updateState({
+      queuedFeedbackSelections: {
+        characterFeedback: [],
+        raterFeedback: []
+      }
+    });
+  }
+
+  /**
+   * Update queued feedback selections
+   */
+  updateQueuedFeedbackSelections(selections: FeedbackSelection): void {
+    this.updateState({
+      queuedFeedbackSelections: selections
+    });
+  }
+
+  /**
+   * Get cache status for an entity
+   */
+  getCacheStatus(entityType: 'character' | 'rater', entityName: string): { isCached: boolean, timestamp?: Date } {
+    const currentState = this.stateSubject.value;
+    const cacheKey = this.getCacheKey(entityType, entityName);
+    const cacheEntry = currentState.feedbackCache.get(cacheKey);
+    
+    if (!cacheEntry) {
+      return { isCached: false };
+    }
+
+    if (!currentState.currentChapter?.content) {
+      return { isCached: false };
+    }
+
+    const currentContentHash = this.generateContentHash(currentState.currentChapter.content);
+    const isValid = this.isCacheValid(cacheEntry, currentContentHash);
+    
+    return {
+      isCached: isValid,
+      timestamp: isValid ? cacheEntry.timestamp : undefined
+    };
   }
 
   /**
@@ -517,7 +726,12 @@ export class ChapterEditorService {
       characterFeedback: [],
       raterFeedback: [],
       userGuidance: '',
-      hasUnsavedChanges: false
+      hasUnsavedChanges: false,
+      feedbackCache: new Map<string, FeedbackCacheEntry>(),
+      queuedFeedbackSelections: {
+        characterFeedback: [],
+        raterFeedback: []
+      }
     });
   }
 
