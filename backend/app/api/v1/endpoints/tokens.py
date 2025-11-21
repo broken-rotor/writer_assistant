@@ -15,10 +15,12 @@ from app.models.token_models import (
     TokenCountResultItem,
     TokenValidationRequest,
     TokenValidationResponse,
+    TokenLimitsResponse,
     ErrorResponse
 )
 from app.services.llm_inference import get_llm
 from app.services.token_counter import TokenCounter
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +220,69 @@ async def validate_token_budget(request: TokenValidationRequest) -> TokenValidat
         )
     except Exception as e:
         logger.exception("Unexpected error in budget validation")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"success": False, "error": "Internal server error"}
+        )
+
+
+@router.get(
+    "/limits",
+    response_model=TokenLimitsResponse,
+    responses={
+        500: {"model": ErrorResponse, "description": "Internal Server Error"}
+    },
+    summary="Get token limits for different fields",
+    description="""
+    Retrieve the configured token limits for different content fields.
+
+    This endpoint returns the token allocation limits for various parts of the context:
+    - System prompt components (prefix and suffix)
+    - Writing assistant and editor prompts
+    - Worldbuilding content
+    - Plot outline content
+
+    These limits are configured via environment variables and define how much
+    token budget is allocated to each component of the context.
+
+    **Example Response:**
+    ```json
+    {
+        "system_prompt_prefix": 1000,
+        "system_prompt_suffix": 1000,
+        "writing_assistant_prompt": 500,
+        "writing_editor_prompt": 500,
+        "worldbuilding": 5000,
+        "plot_outline": 5000
+    }
+    ```
+    """,
+    tags=["tokens"]
+)
+async def get_token_limits() -> TokenLimitsResponse:
+    """
+    Get token limits for different content fields.
+
+    Returns:
+        TokenLimitsResponse with configured token limits
+
+    Raises:
+        HTTPException: For processing failures
+    """
+    try:
+        logger.info("Retrieving token limits configuration")
+
+        return TokenLimitsResponse(
+            system_prompt_prefix=500,
+            system_prompt_suffix=500,
+            writing_assistant_prompt=2000,
+            writing_editor_prompt=2000,
+            worldbuilding=2000,
+            plot_outline=2000
+        )
+
+    except Exception as e:
+        logger.exception("Unexpected error retrieving token limits")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"success": False, "error": "Internal server error"}

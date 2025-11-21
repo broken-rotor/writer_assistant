@@ -2,13 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, BehaviorSubject, of, timer, throwError } from 'rxjs';
 import { map, catchError, retryWhen, mergeMap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { TokenLimits, RecommendedLimits, TokenStrategiesResponse } from '../models/token-limits.model';
-import { 
-  FALLBACK_FIELD_LIMITS, 
-  RETRY_CONFIG, 
-  ERROR_MESSAGES, 
-  ErrorType, 
-  ErrorSeverity, 
+import { TokenLimitsResponse } from '../models/token-limits.model';
+import {
+  RETRY_CONFIG,
+  ERROR_MESSAGES,
+  ErrorType,
+  ErrorSeverity,
   RecoveryAction,
   ErrorContext,
   calculateBackoffDelay,
@@ -39,7 +38,7 @@ export interface FieldTokenLimit {
  */
 export interface TokenLimitsState {
   /** Token limits data (null if not loaded) */
-  limits: TokenLimits | null;
+  limits: TokenLimitsResponse | null;
   /** Whether limits are currently being loaded */
   isLoading: boolean;
   /** Error message if loading failed */
@@ -67,9 +66,9 @@ export interface TokenLimitsState {
 })
 export class TokenLimitsService {
   private readonly baseUrl = 'http://localhost:8000/api/v1/tokens';
-  
+
   // Cache for token limits with TTL
-  private tokenLimits$ = new BehaviorSubject<TokenLimits | null>(null);
+  private tokenLimits$ = new BehaviorSubject<TokenLimitsResponse | null>(null);
   private isLoading$ = new BehaviorSubject<boolean>(false);
   private error$ = new BehaviorSubject<string | null>(null);
   private errorContext$ = new BehaviorSubject<ErrorContext | null>(null);
@@ -78,9 +77,16 @@ export class TokenLimitsService {
   private isRetrying$ = new BehaviorSubject<boolean>(false);
   private cacheTimestamp: number | null = null;
   private readonly cacheTTL: number = 5 * 60 * 1000; // 5 minutes in milliseconds
-  
-  // Use fallback limits from constants
-  private readonly defaultLimits: RecommendedLimits = FALLBACK_FIELD_LIMITS;
+
+  // Default fallback limits when API is unavailable
+  private readonly defaultLimits: TokenLimitsResponse = {
+    system_prompt_prefix: 1000,
+    system_prompt_suffix: 1000,
+    writing_assistant_prompt: 0,
+    writing_editor_prompt: 0,
+    worldbuilding: 5000,
+    plot_outline: 5000
+  };
 
   private http = inject(HttpClient);
 
@@ -114,9 +120,9 @@ export class TokenLimitsService {
     this.ensureFreshCache();
     return this.tokenLimits$.pipe(
       map(limits => {
-        const recommendedLimits = limits?.recommended_limits || this.defaultLimits;
-        const limit = this.mapFieldTypeToLimit(fieldType, recommendedLimits);
-        
+        const limitsToUse = limits || this.defaultLimits;
+        const limit = this.mapFieldTypeToLimit(fieldType, limitsToUse);
+
         return {
           fieldType,
           limit,
@@ -134,11 +140,11 @@ export class TokenLimitsService {
     this.ensureFreshCache();
     return this.tokenLimits$.pipe(
       map(limits => {
-        const recommendedLimits = limits?.recommended_limits || this.defaultLimits;
+        const limitsToUse = limits || this.defaultLimits;
         const fieldTypes: SystemPromptFieldType[] = ['mainPrefix', 'mainSuffix', 'assistantPrompt', 'editorPrompt', 'raterSystemPrompt'];
-        
+
         return fieldTypes.map(fieldType => {
-          const limit = this.mapFieldTypeToLimit(fieldType, recommendedLimits);
+          const limit = this.mapFieldTypeToLimit(fieldType, limitsToUse);
           return {
             fieldType,
             limit,
@@ -153,7 +159,7 @@ export class TokenLimitsService {
   /**
    * Get the current token limits (may be null if not loaded)
    */
-  getCurrentLimits(): TokenLimits | null {
+  getCurrentLimits(): TokenLimitsResponse | null {
     return this.tokenLimits$.value;
   }
 
@@ -167,10 +173,10 @@ export class TokenLimitsService {
   /**
    * Refresh token limits from the backend
    */
-  refreshLimits(): Observable<TokenLimits> {
+  refreshLimits(): Observable<TokenLimitsResponse> {
     this.loadTokenLimits();
     return this.tokenLimits$.pipe(
-      map(limits => limits || this.createDefaultTokenLimits())
+      map(limits => limits || this.defaultLimits)
     );
   }
 
@@ -186,11 +192,11 @@ export class TokenLimitsService {
   /**
    * Manually retry loading token limits
    */
-  retryLoadLimits(): Observable<TokenLimits> {
+  retryLoadLimits(): Observable<TokenLimitsResponse> {
     this.resetErrorState();
     this.loadTokenLimits();
     return this.tokenLimits$.pipe(
-      map(limits => limits || this.createDefaultTokenLimits())
+      map(limits => limits || this.defaultLimits)
     );
   }
 
@@ -222,35 +228,34 @@ export class TokenLimitsService {
     this.isLoading$.next(true);
     this.error$.next(null);
     this.errorContext$.next(null);
-    
-    this.http.get<TokenStrategiesResponse>(`${this.baseUrl}/strategies`)
+
+    this.http.get<TokenLimitsResponse>(`${this.baseUrl}/limits`)
       .pipe(
-        retryWhen(errors => 
+        retryWhen(errors =>
           errors.pipe(
             mergeMap((error, index) => {
               const attempt = index + 1;
               this.retryAttempts$.next(attempt);
-              
+
               if (attempt > RETRY_CONFIG.maxRetries) {
                 return throwError(error);
               }
-              
+
               this.isRetrying$.next(true);
               const delay = calculateBackoffDelay(attempt);
               console.log(`Retrying token limits request (attempt ${attempt}/${RETRY_CONFIG.maxRetries}) after ${delay}ms`);
-              
+
               return timer(delay);
             })
           )
         ),
-        map(response => response.token_limits),
         catchError(error => {
           console.warn('Failed to load token limits from backend after retries, using fallback:', error);
-          
+
           const errorContext = this.createErrorContextFromHttpError(error);
           this.handleLoadError(errorContext);
-          
-          return of(this.createDefaultTokenLimits());
+
+          return of(this.defaultLimits);
         })
       )
       .subscribe({
@@ -268,7 +273,7 @@ export class TokenLimitsService {
             'TokenLimitsService.loadTokenLimits'
           );
           this.handleLoadError(errorContext);
-          this.tokenLimits$.next(this.createDefaultTokenLimits());
+          this.tokenLimits$.next(this.defaultLimits);
         }
       });
   }
@@ -293,9 +298,9 @@ export class TokenLimitsService {
   }
 
   /**
-   * Map field type to the corresponding limit in RecommendedLimits
+   * Map field type to the corresponding limit in TokenLimitsResponse
    */
-  private mapFieldTypeToLimit(fieldType: SystemPromptFieldType, limits: RecommendedLimits): number {
+  private mapFieldTypeToLimit(fieldType: SystemPromptFieldType, limits: TokenLimitsResponse): number {
     switch (fieldType) {
       case 'mainPrefix':
         return limits.system_prompt_prefix;
@@ -313,31 +318,9 @@ export class TokenLimitsService {
   }
 
   /**
-   * Create default token limits when backend is unavailable
-   */
-  private createDefaultTokenLimits(): TokenLimits {
-    return {
-      llm_context_window: 8192,
-      llm_max_generation: 2048,
-      context_management: {
-        max_context_tokens: 6144,
-        buffer_tokens: 512,
-        layer_limits: {
-          system_instructions: 1024,
-          immediate_instructions: 512,
-          recent_story: 2048,
-          character_scene_data: 1536,
-          plot_world_summary: 1024
-        }
-      },
-      recommended_limits: this.defaultLimits
-    };
-  }
-
-  /**
    * Handle successful token limits load
    */
-  private handleLoadSuccess(limits: TokenLimits): void {
+  private handleLoadSuccess(limits: TokenLimitsResponse): void {
     this.tokenLimits$.next(limits);
     this.cacheTimestamp = Date.now();
     this.isLoading$.next(false);

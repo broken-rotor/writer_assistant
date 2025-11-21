@@ -1,53 +1,19 @@
 import { TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TokenLimitsService, SystemPromptFieldType } from './token-limits.service';
-import { TokenStrategiesResponse } from '../models/token-limits.model';
+import { TokenLimitsResponse } from '../models/token-limits.model';
 
 describe('TokenLimitsService', () => {
   let service: TokenLimitsService;
   let httpMock: HttpTestingController;
 
-  const mockTokenStrategiesResponse: TokenStrategiesResponse = {
-    success: true,
-    strategies: {
-      exact: {
-        description: 'Exact token counting',
-        overhead: 1.0,
-        use_case: 'Precise counting'
-      }
-    },
-    content_types: {
-      system_prompt: {
-        description: 'System prompt content',
-        multiplier: 1.0
-      }
-    },
-    token_limits: {
-      llm_context_window: 8192,
-      llm_max_generation: 2048,
-      context_management: {
-        max_context_tokens: 6144,
-        buffer_tokens: 512,
-        layer_limits: {
-          system_instructions: 1024,
-          immediate_instructions: 512,
-          recent_story: 2048,
-          character_scene_data: 1536,
-          plot_world_summary: 1024
-        }
-      },
-      recommended_limits: {
-        system_prompt_prefix: 600,
-        system_prompt_suffix: 400,
-        writing_assistant_prompt: 1200,
-        writing_editor_prompt: 800
-      }
-    },
-    default_strategy: 'exact',
-    batch_limits: {
-      max_texts_per_request: 10,
-      max_text_size_bytes: 1048576
-    }
+  const mockTokenLimitsResponse: TokenLimitsResponse = {
+    system_prompt_prefix: 600,
+    system_prompt_suffix: 400,
+    writing_assistant_prompt: 1200,
+    writing_editor_prompt: 800,
+    worldbuilding: 5000,
+    plot_outline: 5000
   };
 
   beforeEach(() => {
@@ -66,20 +32,20 @@ describe('TokenLimitsService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
     // Flush the initial HTTP request made in the constructor
-    const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-    req.flush(mockTokenStrategiesResponse);
+    const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+    req.flush(mockTokenLimitsResponse);
   });
 
   it('should load token limits on initialization', () => {
-    const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+    const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
     expect(req.request.method).toBe('GET');
-    req.flush(mockTokenStrategiesResponse);
+    req.flush(mockTokenLimitsResponse);
   });
 
   describe('getFieldLimit', () => {
     it('should return correct limits for mainPrefix field', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       service.getFieldLimit('mainPrefix').subscribe(result => {
         expect(result.fieldType).toBe('mainPrefix');
@@ -91,8 +57,8 @@ describe('TokenLimitsService', () => {
     });
 
     it('should return correct limits for mainSuffix field', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       service.getFieldLimit('mainSuffix').subscribe(result => {
         expect(result.fieldType).toBe('mainSuffix');
@@ -104,8 +70,8 @@ describe('TokenLimitsService', () => {
     });
 
     it('should return correct limits for assistantPrompt field', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       service.getFieldLimit('assistantPrompt').subscribe(result => {
         expect(result.fieldType).toBe('assistantPrompt');
@@ -117,8 +83,8 @@ describe('TokenLimitsService', () => {
     });
 
     it('should return correct limits for editorPrompt field', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       service.getFieldLimit('editorPrompt').subscribe(result => {
         expect(result.fieldType).toBe('editorPrompt');
@@ -130,7 +96,7 @@ describe('TokenLimitsService', () => {
     });
 
     it('should use default limits when backend fails', fakeAsync(() => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
 
       let result: any;
       service.getFieldLimit('mainPrefix').subscribe(r => {
@@ -142,33 +108,33 @@ describe('TokenLimitsService', () => {
 
       // Handle retry 1 (after ~1s delay)
       tick(1500);
-      let retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      let retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 2 (after ~2s delay)
       tick(2500);
-      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 3 (after ~4s delay)
       tick(5000);
-      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Wait for error handling to complete
       flush();
 
       expect(result.fieldType).toBe('mainPrefix');
-      expect(result.limit).toBe(500); // Default fallback
-      expect(result.warningThreshold).toBe(400);
-      expect(result.criticalThreshold).toBe(450);
+      expect(result.limit).toBe(1000); // Default fallback
+      expect(result.warningThreshold).toBe(800);
+      expect(result.criticalThreshold).toBe(900);
     }));
   });
 
   describe('getAllFieldLimits', () => {
     it('should return limits for all field types', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       service.getAllFieldLimits().subscribe(results => {
         expect(results.length).toBe(5);
@@ -192,18 +158,18 @@ describe('TokenLimitsService', () => {
     it('should return null initially', () => {
       expect(service.getCurrentLimits()).toBeNull();
       // Flush the initial HTTP request made in the constructor
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
     });
 
     it('should return loaded limits after successful load', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       setTimeout(() => {
         const limits = service.getCurrentLimits();
         expect(limits).toBeTruthy();
-        expect(limits?.recommended_limits.system_prompt_prefix).toBe(600);
+        expect(limits?.system_prompt_prefix).toBe(600);
         done();
       }, 0);
     });
@@ -223,16 +189,16 @@ describe('TokenLimitsService', () => {
         }
       });
 
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
     });
   });
 
   describe('refreshLimits', () => {
     it('should reload limits from backend', (done) => {
       // Initial load
-      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      initialReq.flush(mockTokenStrategiesResponse);
+      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      initialReq.flush(mockTokenLimitsResponse);
 
       let emissionCount = 0;
       // Refresh
@@ -241,19 +207,19 @@ describe('TokenLimitsService', () => {
         // Skip the first emission (current cached value)
         if (emissionCount > 1) {
           expect(limits).toBeTruthy();
-          expect(limits.recommended_limits.system_prompt_prefix).toBe(600);
+          expect(limits.system_prompt_prefix).toBe(600);
           done();
         }
       });
 
-      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      refreshReq.flush(mockTokenStrategiesResponse);
+      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      refreshReq.flush(mockTokenLimitsResponse);
     });
 
     it('should return default limits when refresh fails', fakeAsync(() => {
       // Initial load
-      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      initialReq.flush(mockTokenStrategiesResponse);
+      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      initialReq.flush(mockTokenLimitsResponse);
       tick();
 
       let finalLimits: any;
@@ -262,37 +228,37 @@ describe('TokenLimitsService', () => {
         finalLimits = limits;
       });
 
-      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       refreshReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 1
       tick(1500);
-      let retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      let retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 2
       tick(2500);
-      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 3
       tick(5000);
-      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       flush();
 
       expect(finalLimits).toBeTruthy();
       // Service should use fallback defaults when refresh fails
-      expect(finalLimits.recommended_limits.system_prompt_prefix).toBe(500);
+      expect(finalLimits.system_prompt_prefix).toBe(1000);
     }));
   });
 
   describe('clearCache', () => {
     it('should clear cached token limits', (done) => {
       // Initial load
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       // Verify limits are loaded
       setTimeout(() => {
@@ -310,8 +276,8 @@ describe('TokenLimitsService', () => {
 
   describe('getTokenLimits', () => {
     it('should return token limits state with loading and error information', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       service.getTokenLimits().subscribe(state => {
         expect(state.limits).toBeTruthy();
@@ -323,7 +289,7 @@ describe('TokenLimitsService', () => {
     });
 
     it('should return error state when backend fails', fakeAsync(() => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
 
       let state: any;
       service.getTokenLimits().subscribe(s => {
@@ -335,17 +301,17 @@ describe('TokenLimitsService', () => {
 
       // Handle retry 1
       tick(1500);
-      let retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      let retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 2
       tick(2500);
-      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 3
       tick(5000);
-      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Wait for error handling to complete
@@ -370,8 +336,8 @@ describe('TokenLimitsService', () => {
 
     it('should not reload data within TTL period', (done) => {
       // Initial load
-      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      initialReq.flush(mockTokenStrategiesResponse);
+      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      initialReq.flush(mockTokenLimitsResponse);
 
       // Advance time by 2 minutes (less than 5 minute TTL)
       jasmine.clock().tick(2 * 60 * 1000);
@@ -379,15 +345,15 @@ describe('TokenLimitsService', () => {
       // Request data again - should not trigger new HTTP request
       service.getFieldLimit('mainPrefix').subscribe(result => {
         expect(result.limit).toBe(600);
-        httpMock.expectNone('http://localhost:8000/api/v1/tokens/strategies');
+        httpMock.expectNone('http://localhost:8000/api/v1/tokens/limits');
         done();
       });
     });
 
     it('should reload data after TTL expires', (done) => {
       // Initial load
-      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      initialReq.flush(mockTokenStrategiesResponse);
+      const initialReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      initialReq.flush(mockTokenLimitsResponse);
 
       // Advance time by 6 minutes (more than 5 minute TTL)
       jasmine.clock().tick(6 * 60 * 1000);
@@ -401,29 +367,29 @@ describe('TokenLimitsService', () => {
           done();
         }
       });
-      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      refreshReq.flush(mockTokenStrategiesResponse);
+      const refreshReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      refreshReq.flush(mockTokenLimitsResponse);
     });
   });
 
   describe('error handling', () => {
     it('should handle HTTP errors gracefully', fakeAsync(() => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       req.error(new ErrorEvent('Network error'));
 
       // Handle retry 1
       tick(1500);
-      let retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      let retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 2
       tick(2500);
-      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       // Handle retry 3
       tick(5000);
-      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      retryReq = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       retryReq.error(new ErrorEvent('Network error'));
 
       flush();
@@ -433,7 +399,7 @@ describe('TokenLimitsService', () => {
     }));
 
     it('should handle malformed response gracefully', () => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       req.flush({ invalid: 'response' });
 
       // Should not throw and should use defaults
@@ -443,8 +409,8 @@ describe('TokenLimitsService', () => {
 
   describe('field type mapping', () => {
     it('should map all field types correctly', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       const fieldTypes: SystemPromptFieldType[] = ['mainPrefix', 'mainSuffix', 'assistantPrompt', 'editorPrompt', 'raterSystemPrompt'];
       const expectedLimits = [600, 400, 1200, 800, 1200]; // raterSystemPrompt uses same limit as assistantPrompt
@@ -462,8 +428,8 @@ describe('TokenLimitsService', () => {
     });
 
     it('should return default limit for unknown field type', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       // Cast to bypass TypeScript checking for testing
       service.getFieldLimit('unknownField' as SystemPromptFieldType).subscribe(result => {
@@ -475,8 +441,8 @@ describe('TokenLimitsService', () => {
 
   describe('threshold calculations', () => {
     it('should calculate thresholds correctly for various limits', (done) => {
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
-      req.flush(mockTokenStrategiesResponse);
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
+      req.flush(mockTokenLimitsResponse);
 
       service.getFieldLimit('assistantPrompt').subscribe(result => {
         expect(result.limit).toBe(1200);
@@ -487,20 +453,16 @@ describe('TokenLimitsService', () => {
     });
 
     it('should handle edge case of very small limits', (done) => {
-      const smallLimitsResponse = {
-        ...mockTokenStrategiesResponse,
-        token_limits: {
-          ...mockTokenStrategiesResponse.token_limits,
-          recommended_limits: {
-            system_prompt_prefix: 5,
-            system_prompt_suffix: 3,
-            writing_assistant_prompt: 1,
-            writing_editor_prompt: 2
-          }
-        }
+      const smallLimitsResponse: TokenLimitsResponse = {
+        system_prompt_prefix: 5,
+        system_prompt_suffix: 3,
+        writing_assistant_prompt: 1,
+        writing_editor_prompt: 2,
+        worldbuilding: 10,
+        plot_outline: 10
       };
 
-      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/strategies');
+      const req = httpMock.expectOne('http://localhost:8000/api/v1/tokens/limits');
       req.flush(smallLimitsResponse);
 
       service.getFieldLimit('mainPrefix').subscribe(result => {

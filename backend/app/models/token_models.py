@@ -86,3 +86,14 @@ class ErrorResponse(BaseModel):
 
     success: bool = Field(False, description="Always false for error responses")
     error: str = Field(..., description="Error message")
+
+class TokenLimitsRequest(BaseModel):
+    pass
+
+class TokenLimitsResponse(BaseModel):
+  system_prompt_prefix: int = Field(description="System prompt prefix limit")
+  system_prompt_suffix: int = Field(description="System prompt suffix limit")
+  writing_assistant_prompt: int = Field(description="Writing assistant prompt limit")
+  writing_editor_prompt: int = Field(description="Writing editor prompt limit")
+  worldbuilding: int = Field(description="Worldbuilding token limit")
+  plot_outline: int = Field(description="Plot outline token limit")

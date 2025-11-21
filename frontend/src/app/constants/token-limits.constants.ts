@@ -2,17 +2,19 @@
  * Constants for token limits error handling and fallback behavior
  */
 
-import { RecommendedLimits } from '../models/token-limits.model';
+import { TokenLimitsResponse } from '../models/token-limits.model';
 
 /**
  * Fallback field limits used when token limits API is unavailable
  * These are conservative defaults that ensure the app remains functional
  */
-export const FALLBACK_FIELD_LIMITS: RecommendedLimits = {
+export const FALLBACK_FIELD_LIMITS: TokenLimitsResponse = {
   system_prompt_prefix: 500,
   system_prompt_suffix: 500,
   writing_assistant_prompt: 1000,
-  writing_editor_prompt: 1000
+  writing_editor_prompt: 1000,
+  worldbuilding: 5000,
+  plot_outline: 5000
 };
 
 /**
