@@ -133,7 +133,24 @@ def mock_llm_inference():
             tail_token_count=max_tokens
         )
 
+    # Mock generate to return a summary
+    def mock_generate(prompt: str, **kwargs) -> str:
+        # Extract content from the prompt and return a shortened version
+        if "Content to summarize:" in prompt:
+            content = prompt.split("Content to summarize:")[1].split("Summary:")[0].strip()
+            words = content.split()
+            # Return first 20% of words as summary
+            summary_length = max(1, len(words) // 5)
+            return ' '.join(words[:summary_length])
+        return "Summary of content"
+
+    # Mock count_tokens to return token count based on word count
+    def mock_count_tokens(text: str) -> int:
+        return len(text.split()) if text else 0
+
     mock_llm.truncate_to_tokens.side_effect = mock_truncate
+    mock_llm.generate.side_effect = mock_generate
+    mock_llm.count_tokens.side_effect = mock_count_tokens
     return mock_llm
 
 
@@ -562,6 +579,82 @@ class TestIntegration:
         assert chat[1]['role'] == ContextRole.USER
         assert chat[2]['role'] == ContextRole.ASSISTANT
         assert chat[3]['role'] == ContextRole.USER
+
+
+class TestSummarize:
+    """Test _summarize method."""
+
+    def test_summarize_with_content(self, minimal_request_context, mock_llm_inference):
+        """Test summarizing content using LLM."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
+        content = "This is a long piece of content that needs to be summarized to reduce token usage and fit within budget constraints."
+
+        summary, token_count = builder._summarize(content, 1024)
+
+        # Summary should be shorter than original
+        assert len(summary.split()) < len(content.split())
+        # Token count should match the summary
+        assert token_count == len(summary.split())
+        # LLM generate should have been called
+        mock_llm_inference.generate.assert_called_once()
+        # Generate should be called with lower temperature for consistency
+        call_kwargs = mock_llm_inference.generate.call_args[1]
+        assert call_kwargs['temperature'] == 0.3
+
+    def test_summarize_empty_content(self, minimal_request_context, mock_llm_inference):
+        """Test summarizing empty content."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
+
+        summary, token_count = builder._summarize("", 1024)
+
+        assert summary == ""
+        assert token_count == 0
+        # LLM should not be called for empty content
+        mock_llm_inference.generate.assert_not_called()
+
+    def test_summarize_whitespace_only(self, minimal_request_context, mock_llm_inference):
+        """Test summarizing whitespace-only content."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
+
+        summary, token_count = builder._summarize("   \n  \t  ", 1024)
+
+        assert summary == ""
+        assert token_count == 0
+        # LLM should not be called for whitespace-only content
+        mock_llm_inference.generate.assert_not_called()
+
+    def test_summarize_with_llm_failure(self, minimal_request_context, mock_llm_inference):
+        """Test that summarize raises ValueError when LLM fails."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
+        content = "Content to summarize"
+
+        # Make generate raise an exception
+        mock_llm_inference.generate.side_effect = RuntimeError("LLM error")
+
+        # Should raise ValueError when summarization fails
+        with pytest.raises(ValueError, match="Text summarization failed"):
+            builder._summarize(content, 1024)
+
+    def test_get_content_uses_summarize(self, minimal_request_context, mock_llm_inference):
+        """Test that _get_content calls _summarize for SUMMARIZED strategy when over budget."""
+        builder = ContextBuilder(minimal_request_context, mock_llm_inference)
+
+        # Create content that exceeds budget
+        long_content = " ".join(["word"] * 100)  # 100 words
+        element = ContextItem(
+            tag='TEST',
+            role=ContextRole.USER,
+            content=long_content,
+            token_budget=10,  # Only 10 tokens allowed
+            summarization_strategy=SummarizationStrategy.SUMMARIZED
+        )
+
+        content, token_count = builder._get_content(element, 10)
+
+        # Generate should have been called to summarize
+        mock_llm_inference.generate.assert_called_once()
+        # The result should be a summary
+        assert len(content.split()) < len(long_content.split())
 
 
 class TestEdgeCases:

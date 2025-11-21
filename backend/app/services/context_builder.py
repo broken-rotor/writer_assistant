@@ -1,9 +1,12 @@
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Set
 
 from app.models.request_context import RequestContext, CharacterDetails, CharacterState
 from app.services.llm_inference import LLMInference
+
+logger = logging.getLogger(__name__)
 
 
 class ContextRole(str, Enum):
@@ -209,19 +212,53 @@ class ContextBuilder:
             return content_truncation.tail, content_truncation.tail_token_count
 
         if e.summarization_strategy == SummarizationStrategy.SUMMARIZED:
-            return self._summarize(content)
+            return self._summarize(content, token_budget)
         elif e.summarization_strategy == SummarizationStrategy.ROLLING_WINDOW:
             return content_truncation.tail, content_truncation.tail_token_count
         elif e.summarization_strategy == SummarizationStrategy.SUMMARY_AND_ROLLING_WINDOW:
             content_truncation = self._model.truncate_to_tokens(content, int(token_budget * 0.60))
-            summary, summary_count = self._summarize(content_truncation.head)
+            summary, summary_count = self._summarize(content_truncation.head, int(token_budget * 0.40))
             return f"{summary}\n{content_truncation.tail}", summary_count + content_truncation.tail_token_count
         else:
             raise ValueError(f"Token budget exceeded {content_truncation.tail_token_count} > {token_budget} for {e.tag} {e.role}")
 
-    def _summarize(self, content: str) -> (str, int):
-        ## FIXME ##
-        return content, 0
+    def _summarize(self, content: str, token_budget: int) -> (str, int):
+        """
+        Summarize content using the LLM to reduce token count.
+
+        Args:
+            content: The content to summarize
+
+        Returns:
+            Tuple of (summarized_content, token_count)
+        """
+        if not content or not content.strip():
+            return "", 0
+
+        # Create a prompt for the LLM to summarize the content
+        summarization_prompt = f"""Please provide a concise summary of the following content. Focus on the key information and main points while significantly reducing the length.
+
+Content to summarize:
+{content}
+
+Summary:"""
+
+        try:
+            # Use lower temperature for more consistent, factual summarization
+            summary = self._model.generate(
+                prompt=summarization_prompt,
+                temperature=0.3,
+                max_tokens=token_budget
+            )
+
+            # Count tokens in the summary
+            token_count = self._model.count_tokens(summary)
+
+            return summary, token_count
+
+        except Exception as e:
+            logger.exception("Summarization failed")
+            raise ValueError("Text summarization failed")
 
     def _get_chapters(self, include_up_to: Optional[int]):
         content = ""
@@ -229,5 +266,5 @@ class ContextBuilder:
             if include_up_to is not None and c.number >= include_up_to:
                 break
             if c.title and c.content:
-                content += f"Chapter {c.number}: {c.title}\n{c.content}\n\n"
+                content += f"**Chapter {c.number}: {c.title}**\n{c.content}\n\n"
         return content
