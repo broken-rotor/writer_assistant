@@ -588,8 +588,8 @@ export class ChapterEditorService {
         // Invalidate feedback cache after successful chapter modification since content changed
         this.invalidateFeedbackCache();
         
-        // Clear queued feedback selections since they've been applied
-        this.clearQueuedFeedback();
+        // Clear all feedback since it's been applied to the chapter
+        this.clearFeedback();
 
         return response.modifiedChapter;
       }),
