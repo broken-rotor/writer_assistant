@@ -1,12 +1,12 @@
 /**
- * TypeScript interfaces for token limits and strategies API integration.
- * 
- * These interfaces mirror the backend response from /tokens/strategies endpoint
+ * TypeScript interfaces for token limits API integration.
+ *
+ * These interfaces mirror the backend response from /tokens/limits endpoint
  * to provide type safety and IntelliSense support for token limit management.
  */
 
 /**
- * Token limits configuration
+ * Token limits configuration from /tokens/limits endpoint
  */
 export interface TokenLimitsResponse {
   /** System prompt prefix limit */
@@ -17,11 +17,8 @@ export interface TokenLimitsResponse {
   writing_assistant_prompt: number;
   /** Writing editor prompt limit */
   writing_editor_prompt: number;
-  /** Plot and world summary layer token limit */
-  plot_world_summary: number;
-
-  /** LLM context window size */
-  llm_context_window: number;
-  /** LLM maximum generation tokens */
-  llm_max_generation: number;
+  /** Worldbuilding content limit */
+  worldbuilding: number;
+  /** Plot outline content limit */
+  plot_outline: number;
 }

@@ -14,7 +14,7 @@ import {
 import { CharacterFeedbackRequest } from './api.service';
 import { transformToRequestContext } from '../utils/context-transformer';
 import { BackendGenerateChapterRequest, FleshOutType } from '../models/story.model';
-import { TokenStrategiesResponse } from '../models/token-limits.model';
+import { TokenLimitsResponse } from '../models/token-limits.model';
 
 describe('ApiService', () => {
   let service: ApiService;
@@ -665,83 +665,40 @@ describe('ApiService', () => {
     });
   });
 
-  describe('getTokenStrategies', () => {
-    it('should send GET request to tokens/strategies endpoint', () => {
-      const mockResponse: TokenStrategiesResponse = {
-        success: true,
-        strategies: {
-          exact: {
-            description: 'Precise token count using tokenizer',
-            overhead: 1.0,
-            use_case: 'When you need exact token counts'
-          },
-          conservative: {
-            description: 'Higher overhead for safety',
-            overhead: 1.25,
-            use_case: 'When you want to ensure you don\'t exceed limits'
-          }
-        },
-        content_types: {
-          narrative: {
-            description: 'Story narrative content',
-            multiplier: 1.0
-          },
-          system_prompt: {
-            description: 'System instructions and prompts',
-            multiplier: 1.15
-          }
-        },
-        token_limits: {
-          llm_context_window: 4096,
-          llm_max_generation: 2048,
-          context_management: {
-            max_context_tokens: 3500,
-            buffer_tokens: 500,
-            layer_limits: {
-              system_instructions: 2000,
-              immediate_instructions: 500,
-              recent_story: 800,
-              character_scene_data: 600,
-              plot_world_summary: 600
-            }
-          },
-          recommended_limits: {
-            system_prompt_prefix: 500,
-            system_prompt_suffix: 500,
-            writing_assistant_prompt: 1000,
-            writing_editor_prompt: 1000
-          }
-        },
-        default_strategy: 'exact',
-        batch_limits: {
-          max_texts_per_request: 50,
-          max_text_size_bytes: 100000
-        }
+  describe('getTokenLimits', () => {
+    it('should send GET request to tokens/limits endpoint', () => {
+      const mockResponse: TokenLimitsResponse = {
+        system_prompt_prefix: 1000,
+        system_prompt_suffix: 1000,
+        writing_assistant_prompt: 0,
+        writing_editor_prompt: 0,
+        worldbuilding: 5000,
+        plot_outline: 5000
       };
 
-      service.getTokenStrategies().subscribe(response => {
+      service.getTokenLimits().subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/tokens/strategies`);
+      const req = httpMock.expectOne(`${baseUrl}/tokens/limits`);
       expect(req.request.method).toBe('GET');
       req.flush(mockResponse);
     });
 
-    it('should handle error response from tokens/strategies endpoint', () => {
+    it('should handle error response from tokens/limits endpoint', () => {
       const errorResponse = {
         success: false,
         error: 'Internal server error'
       };
 
-      service.getTokenStrategies().subscribe({
+      service.getTokenLimits().subscribe({
         next: () => fail('Expected error, but got success'),
-        error: (error) => {
+        error: (error: any) => {
           expect(error.status).toBe(500);
         }
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/tokens/strategies`);
+      const req = httpMock.expectOne(`${baseUrl}/tokens/limits`);
       expect(req.request.method).toBe('GET');
       req.flush(errorResponse, { status: 500, statusText: 'Internal Server Error' });
     });

@@ -31,7 +31,7 @@ import {
   StructuredGenerateChapterResponse,
   StructuredEditorReviewResponse
 } from '../models/structured-request.model';
-import { TokenStrategiesResponse } from '../models/token-limits.model';
+import { TokenLimitsResponse } from '../models/token-limits.model';
 import { RequestContext } from '../utils/context-transformer';
 
 // New RequestContext-based request interfaces
@@ -118,9 +118,9 @@ export class ApiService {
     );
   }
 
-  // Token Strategies
-  getTokenStrategies(): Observable<TokenStrategiesResponse> {
-    return this.http.get<TokenStrategiesResponse>(`${this.baseUrl}/tokens/strategies`);
+  // Token Limits
+  getTokenLimits(): Observable<TokenLimitsResponse> {
+    return this.http.get<TokenLimitsResponse>(`${this.baseUrl}/tokens/limits`);
   }
 
   // ============================================================================
