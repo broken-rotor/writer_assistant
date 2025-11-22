@@ -8,6 +8,11 @@ from app.models.generation_models import (
     EditorReviewResponse,
     EditorSuggestion
 )
+from app.models.streaming_models import (
+    StreamingStatusEvent,
+    StreamingResultEvent,
+    StreamingErrorEvent
+)
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
@@ -38,7 +43,12 @@ async def editor_review(request: EditorReviewRequest):
             chapter = request.request_context.chapters[request.chapter_number-1]
 
             # Phase 1: Context Processing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing chapter and story context...', 'progress': 20})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='context_processing',
+                message='Processing chapter and story context...',
+                progress=20
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             context_builder = ContextBuilder(request.request_context, llm)
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.editor_prompt)
@@ -83,7 +93,12 @@ Note: Focus on constructive improvements, not just criticism. Each suggestion sh
             context_builder.add_agent_instruction(agent_instruction)
 
             # Phase 2: Generating Suggestions
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 40})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='generating_suggestions',
+                message='Generating improvement suggestions...',
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Generate editor review using streaming LLM
             response_text = ""
@@ -99,7 +114,12 @@ Note: Focus on constructive improvements, not just criticism. Each suggestion sh
                 # token})}\n\n"
 
             # Phase 3: Parsing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Processing editor suggestions...', 'progress': 90})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='parsing',
+                message='Processing editor suggestions...',
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             parsed = parse_json_response(response_text)
             if not parsed:
@@ -123,11 +143,13 @@ Note: Focus on constructive improvements, not just criticism. Each suggestion sh
                 suggestions=suggestions
             )
 
-            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
+            result_event = StreamingResultEvent(data=result.model_dump())
+            yield f"data: {result_event.model_dump_json()}\n\n"
 
         except Exception as e:
             logger.exception("Error in editor_review")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),

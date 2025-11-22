@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch
 from app.main import app
 from app.models.generation_models import RaterFeedbackRequest
-from app.models.streaming_models import StreamingPhase
 
 
 @pytest.fixture

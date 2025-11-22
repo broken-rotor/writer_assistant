@@ -8,6 +8,11 @@ from app.models.generation_models import (
     CharacterFeedbackResponse,
     CharacterFeedback
 )
+from app.models.streaming_models import (
+    StreamingStatusEvent,
+    StreamingResultEvent,
+    StreamingErrorEvent
+)
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
@@ -33,7 +38,12 @@ async def character_feedback(request: CharacterFeedbackRequest):
     async def generate_with_updates():
         try:
             # Phase 1: Context Processing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context and plot point...', 'progress': 25})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='context_processing',
+                message='Processing character context and plot point...',
+                progress=25
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             character = get_character_details(request.request_context, request.character_name)
             system_prompt = f"""You are {character.name}, inhabiting this character fully. You must provide deep, authentic psychological and emotional feedback from this character's perspective.
@@ -89,7 +99,12 @@ Respond in JSON format with rich, specific details:
 Make every element specific to {character.name}'s unique psychology—avoid generic reactions anyone might have.""")
 
             # Phase 2: Generation
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': f'Generating {character.name} feedback...', 'progress': 40})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='generating',
+                message=f'Generating {character.name} feedback...',
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Generate character feedback using LLM
             response_text = llm.chat_completion(
@@ -100,7 +115,12 @@ Make every element specific to {character.name}'s unique psychology—avoid gene
             )
 
             # Phase 3: Parsing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Parsing character feedback response...', 'progress': 90})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='parsing',
+                message='Parsing character feedback response...',
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             parsed = parse_json_response(response_text)
             if parsed and all(
@@ -121,11 +141,13 @@ Make every element specific to {character.name}'s unique psychology—avoid gene
                 feedback=feedback
             )
 
-            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
+            result_event = StreamingResultEvent(data=result.model_dump())
+            yield f"data: {result_event.model_dump_json()}\n\n"
 
         except Exception as e:
             logger.exception(f"Error in character_feedback")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),

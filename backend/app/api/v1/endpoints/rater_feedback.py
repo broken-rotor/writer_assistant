@@ -12,9 +12,7 @@ from app.models.request_context import RequestContext
 from app.models.streaming_models import (
     StreamingStatusEvent,
     StreamingResultEvent,
-    StreamingErrorEvent,
-    StreamingPhase,
-    STREAMING_PHASES
+    StreamingErrorEvent
 )
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
@@ -53,7 +51,12 @@ async def rater_feedback_stream(request: RaterFeedbackRequest):
             raterPrompt = get_rater_prompt()
 
             # Phase 1: Context Processing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing chapter and story context...', 'progress': 20})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='context_processing',
+                message='Processing chapter and story context...',
+                progress=20
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             system_prompt = """You are an expert story evaluator with deep knowledge of narrative craft, character development, and storytelling techniques.
 
@@ -98,7 +101,12 @@ Generate 4-6 suggestions, each with an issue, suggestion, and priority level.
 """)
 
             # Phase 2: Generating Suggestions
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating_suggestions', 'message': 'Generating improvement suggestions...', 'progress': 40})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='generating_suggestions',
+                message='Generating improvement suggestions...',
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Generate editor review using streaming LLM
             response_text = ""
@@ -114,7 +122,12 @@ Generate 4-6 suggestions, each with an issue, suggestion, and priority level.
                 # token})}\n\n"
 
             # Phase 3: Parsing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Processing editor suggestions...', 'progress': 90})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='parsing',
+                message='Processing editor suggestions...',
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Parse the response
             parsed = parse_json_response(response_text)
@@ -132,11 +145,13 @@ Generate 4-6 suggestions, each with an issue, suggestion, and priority level.
             )
 
             # Phase 5: Complete
-            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
+            result_event = StreamingResultEvent(data=result.model_dump())
+            yield f"data: {result_event.model_dump_json()}\n\n"
 
         except Exception as e:
             logger.exception("Error in streaming rater_feedback")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),

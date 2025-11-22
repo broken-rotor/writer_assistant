@@ -8,6 +8,11 @@ from app.models.generation_models import (
     GenerateCharacterDetailsResponse,
     CharacterInfo
 )
+from app.models.streaming_models import (
+    StreamingStatusEvent,
+    StreamingResultEvent,
+    StreamingErrorEvent
+)
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
 from app.api.v1.endpoints.shared_utils import parse_json_response, get_character_details
@@ -36,7 +41,12 @@ async def generate_character_details(request: GenerateCharacterDetailsRequest):
             character_details = get_character_details(request.request_context, request.character_name)
 
             # Phase 1: Context Processing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character context...', 'progress': 20})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='context_processing',
+                message='Processing character context...',
+                progress=20
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             context_builder = ContextBuilder(request.request_context, llm)
             context_builder.add_system_prompt(request.request_context.configuration.system_prompts.assistant_prompt)
@@ -90,7 +100,12 @@ Respond ONLY in JSON format with these exact fields (and no extra escaping):
             context_builder.add_agent_instruction(agent_instruction)
 
             # Phase 2: Generating
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating detailed character information...', 'progress': 40})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='generating',
+                message='Generating detailed character information...',
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Collect generated text from streaming
             response_text = ""
@@ -102,7 +117,12 @@ Respond ONLY in JSON format with these exact fields (and no extra escaping):
                 response_text += token
 
             # Phase 3: Parsing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'parsing', 'message': 'Processing character details...', 'progress': 90})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='parsing',
+                message='Processing character details...',
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             parsed = parse_json_response(response_text)
             if parsed and 'name' in parsed:
@@ -127,11 +147,13 @@ Respond ONLY in JSON format with these exact fields (and no extra escaping):
                 logger.error("Failed to parse character JSON")
                 raise ValueError('Error parsing JSON output from LLM')
 
-            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
+            result_event = StreamingResultEvent(data=result.model_dump())
+            yield f"data: {result_event.model_dump_json()}\n\n"
 
         except Exception as e:
             logger.exception("Error in generate_character_details")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),

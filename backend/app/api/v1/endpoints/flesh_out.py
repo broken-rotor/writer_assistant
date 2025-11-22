@@ -8,6 +8,11 @@ from app.models.generation_models import (
     FleshOutResponse,
     FleshOutType
 )
+from app.models.streaming_models import (
+    StreamingStatusEvent,
+    StreamingResultEvent,
+    StreamingErrorEvent
+)
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
@@ -124,7 +129,12 @@ Focus on expanding the structural and narrative elements while maintaining the o
     async def generate_with_updates():
         try:
             # Phase 1: Context Processing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing expansion context...', 'progress': 20})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='context_processing',
+                message='Processing expansion context...',
+                progress=20
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             context_builder = ContextBuilder(request.request_context, llm)
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
@@ -133,7 +143,12 @@ Focus on expanding the structural and narrative elements while maintaining the o
             context_builder.add_agent_instruction(f"{agent_instructions[request.request_type]}. Text to expand: {request.text_to_flesh_out}")
 
             # Phase 2: Expanding
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'expanding', 'message': 'Generating expanded content...', 'progress': 40})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='expanding',
+                message='Generating expanded content...',
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Collect generated text from streaming
             response_text = ""
@@ -148,7 +163,12 @@ Focus on expanding the structural and narrative elements while maintaining the o
                 # token})}\n\n"
 
             # Phase 3: Finalizing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'finalizing', 'message': 'Finalizing expanded text...', 'progress': 90})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='finalizing',
+                message='Finalizing expanded text...',
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Final result
             result = FleshOutResponse(
@@ -159,11 +179,13 @@ Focus on expanding the structural and narrative elements while maintaining the o
                     "originalLength": len(request.text_to_flesh_out),
                     "expandedLength": len(response_text.strip())})
 
-            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
+            result_event = StreamingResultEvent(data=result.model_dump())
+            yield f"data: {result_event.model_dump_json()}\n\n"
 
         except Exception as e:
             logger.exception("Error in flesh_out")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),
