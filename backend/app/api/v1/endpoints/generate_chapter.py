@@ -7,6 +7,11 @@ from app.models.generation_models import (
     GenerateChapterRequest,
     GenerateChapterResponse
 )
+from app.models.streaming_models import (
+    StreamingStatusEvent,
+    StreamingResultEvent,
+    StreamingErrorEvent
+)
 from app.models.request_context import RequestContext, ChapterDetails
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
@@ -42,7 +47,12 @@ async def generate_chapter(request: GenerateChapterRequest):
             chapter = request.request_context.chapters[request.chapter_number-1]
 
             # Phase 1: Context Processing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing structured context and preparing prompts...', 'progress': 20})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='context_processing',
+                message='Processing structured context and preparing prompts...',
+                progress=20
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             context_builder = ContextBuilder(request.request_context, llm)
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
@@ -79,7 +89,12 @@ Write the complete chapter now, developing the required plot elements in a narra
             context_builder.add_agent_instruction(agent_instruction)
 
             # Phase 2: Generation
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating chapter content...', 'progress': 40})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='generating',
+                message='Generating chapter content...',
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Collect generated text from streaming
             response_text = ""
@@ -94,7 +109,12 @@ Write the complete chapter now, developing the required plot elements in a narra
                 # token})}\n\n"
 
             # Phase 3: Finalizing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'finalizing', 'message': 'Processing generated content...', 'progress': 90})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='finalizing',
+                message='Processing generated content...',
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             word_count = len(response_text.split())
 
@@ -105,11 +125,13 @@ Write the complete chapter now, developing the required plot elements in a narra
                 metadata={
                     "generatedAt": datetime.now(UTC).isoformat()})
 
-            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
+            result_event = StreamingResultEvent(data=result.model_dump())
+            yield f"data: {result_event.model_dump_json()}\n\n"
 
         except Exception as e:
             logger.exception("Error in generate_chapter")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),

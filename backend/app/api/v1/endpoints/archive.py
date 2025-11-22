@@ -16,9 +16,7 @@ from app.services.rag_service import get_rag_service, ChatMessage
 from app.models.streaming_models import (
     StreamingStatusEvent,
     StreamingResultEvent,
-    StreamingErrorEvent,
-    StreamingPhase,
-    STREAMING_PHASES
+    StreamingErrorEvent
 )
 from app.core.config import settings
 
@@ -470,9 +468,9 @@ async def rag_query_stream(request: RAGQueryRequest):
         try:
             # Phase 1: Initializing
             status_event = StreamingStatusEvent(
-                phase=StreamingPhase.INITIALIZING,
-                message=STREAMING_PHASES[StreamingPhase.INITIALIZING]["message"],
-                progress=STREAMING_PHASES[StreamingPhase.INITIALIZING]["progress"]
+                phase="initializing",
+                message="Initializing RAG query...",
+                progress=15
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
 
@@ -496,9 +494,9 @@ async def rag_query_stream(request: RAGQueryRequest):
 
             # Phase 2: Retrieving
             status_event = StreamingStatusEvent(
-                phase=StreamingPhase.RETRIEVING,
-                message=STREAMING_PHASES[StreamingPhase.RETRIEVING]["message"],
-                progress=STREAMING_PHASES[StreamingPhase.RETRIEVING]["progress"]
+                phase="retrieving",
+                message="Searching for relevant context...",
+                progress=40
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
 
@@ -532,9 +530,9 @@ async def rag_query_stream(request: RAGQueryRequest):
 
             # Phase 3: Generating
             status_event = StreamingStatusEvent(
-                phase=StreamingPhase.GENERATING,
-                message=STREAMING_PHASES[StreamingPhase.GENERATING]["message"],
-                progress=STREAMING_PHASES[StreamingPhase.GENERATING]["progress"]
+                phase="generating",
+                message="Generating answer from context...",
+                progress=70
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
 
@@ -557,9 +555,9 @@ async def rag_query_stream(request: RAGQueryRequest):
 
             # Phase 4: Formatting
             status_event = StreamingStatusEvent(
-                phase=StreamingPhase.FORMATTING,
-                message=STREAMING_PHASES[StreamingPhase.FORMATTING]["message"],
-                progress=STREAMING_PHASES[StreamingPhase.FORMATTING]["progress"]
+                phase="formatting",
+                message="Formatting response and sources...",
+                progress=90
             )
             yield f"data: {status_event.model_dump_json()}\n\n"
 
@@ -626,7 +624,7 @@ async def rag_chat(request: RAGChatRequest):
         try:
             # Phase 1: Initializing
             status_event = StreamingStatusEvent(
-                phase=StreamingPhase.INITIALIZING,
+                phase="initializing",
                 message="Initializing RAG chat session...",
                 progress=15
             )
@@ -658,7 +656,7 @@ async def rag_chat(request: RAGChatRequest):
 
             # Phase 2: Retrieving
             status_event = StreamingStatusEvent(
-                phase=StreamingPhase.RETRIEVING,
+                phase="retrieving",
                 message="Searching for relevant context from conversation...",
                 progress=40
             )
@@ -671,7 +669,7 @@ async def rag_chat(request: RAGChatRequest):
 
             # Phase 3: Generating
             status_event = StreamingStatusEvent(
-                phase=StreamingPhase.GENERATING,
+                phase="generating",
                 message="Generating contextual response...",
                 progress=70
             )
@@ -689,7 +687,7 @@ async def rag_chat(request: RAGChatRequest):
 
             # Phase 4: Formatting
             status_event = StreamingStatusEvent(
-                phase=StreamingPhase.FORMATTING,
+                phase="formatting",
                 message="Formatting chat response and sources...",
                 progress=90
             )

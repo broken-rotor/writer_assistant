@@ -7,6 +7,11 @@ from app.models.generation_models import (
     RegenerateBioRequest,
     RegenerateBioResponse
 )
+from app.models.streaming_models import (
+    StreamingStatusEvent,
+    StreamingResultEvent,
+    StreamingErrorEvent
+)
 from app.models.request_context import RequestContext, CharacterDetails
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
@@ -34,7 +39,12 @@ async def regenerate_bio(request: RegenerateBioRequest):
             character_details = get_character_details(request.request_context, request.character_name)
 
             # Phase 1: Context Processing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_processing', 'message': 'Processing character details...', 'progress': 20})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='context_processing',
+                message='Processing character details...',
+                progress=20
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             system_prompt = """You are a skilled writer assistant specializing in character development. Your task is to distill detailed character information into a concise, compelling bio that captures a character's essence.
 
@@ -62,7 +72,12 @@ Write a bio that makes the reader immediately understand and care about who this
             context_builder.add_agent_instruction(agent_instruction)
 
             # Phase 2: Generating
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': 'Generating bio summary...', 'progress': 40})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='generating',
+                message='Generating bio summary...',
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Collect generated text from streaming
             response_text = ""
@@ -73,18 +88,25 @@ Write a bio that makes the reader immediately understand and care about who this
                 response_text += token
             
             # Phase 3: Processing
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'processing', 'message': 'Processing bio summary...', 'progress': 90})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='processing',
+                message='Processing bio summary...',
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
             
             # Use the LLM response directly without any validation or fallback
             result = RegenerateBioResponse(
                 basicBio=response_text.strip()
             )
-            
-            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump(), 'status': 'complete'})}\n\n"
+
+            result_event = StreamingResultEvent(data=result.model_dump())
+            yield f"data: {result_event.model_dump_json()}\n\n"
 
         except Exception as e:
             logger.exception("Error in regenerate_bio")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),

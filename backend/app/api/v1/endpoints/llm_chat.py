@@ -5,6 +5,11 @@ Separate from RAG chat functionality.
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from app.models.chat_models import LLMChatRequest, LLMChatResponse, ConversationMessage
+from app.models.streaming_models import (
+    StreamingStatusEvent,
+    StreamingResultEvent,
+    StreamingErrorEvent
+)
 from app.models.request_context import RequestContext
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
@@ -92,7 +97,12 @@ async def llm_chat(request: LLMChatRequest):
     async def generate_with_updates():
         try:
             # Phase 1: Context Building
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'context_building', 'message': f'Building {request.agent_type} agent context...', 'progress': 20})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='context_building',
+                message=f'Building {request.agent_type} agent context...',
+                progress=20
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Build system prompt based on agent type and context
             system_prompt = _build_agent_system_prompt(
@@ -110,7 +120,12 @@ async def llm_chat(request: LLMChatRequest):
                 context_builder.add_chat(msg.role, msg.content)
 
             # Phase 2: Generation
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'generating', 'message': f'{request.agent_type.title()} agent is thinking...', 'progress': 40})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='generating',
+                message=f'{request.agent_type.title()} agent is thinking...',
+                progress=40
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Get LLM response
             response_text = llm.chat_completion(
@@ -120,7 +135,12 @@ async def llm_chat(request: LLMChatRequest):
             )
 
             # Phase 3: Formatting
-            yield f"data: {json.dumps({'type': 'status', 'phase': 'formatting', 'message': 'Formatting response...', 'progress': 90})}\n\n"
+            status_event = StreamingStatusEvent(
+                phase='formatting',
+                message='Formatting response...',
+                progress=90
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
 
             # Create response message
             response_message = ConversationMessage(
@@ -133,11 +153,13 @@ async def llm_chat(request: LLMChatRequest):
             result = LLMChatResponse(
                 message=response_message)
 
-            yield f"data: {json.dumps({'type': 'result', 'data': result.dict(), 'status': 'complete'})}\n\n"
+            result_event = StreamingResultEvent(data=result.dict())
+            yield f"data: {result_event.model_dump_json()}\n\n"
 
         except Exception as e:
             logger.exception("Error in llm_chat")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            error_event = StreamingErrorEvent(message=str(e))
+            yield f"data: {error_event.model_dump_json()}\n\n"
 
     return StreamingResponse(
         generate_with_updates(),
