@@ -188,13 +188,3 @@
     </div>
   </div>
 </div>
-
-<!-- Screen reader only content for additional context -->
-<div class="sr-only" aria-live="polite" aria-atomic="true">
-  <span *ngIf="state.status === Status.OVER_LIMIT">
-    Warning: Token limit exceeded
-  </span>
-  <span *ngIf="state.status === Status.WARNING">
-    Warning: Approaching token limit
-  </span>
-</div>
