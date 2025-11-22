@@ -1,13 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, throwError, EMPTY } from 'rxjs';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import {
-  debounceTime,
-  distinctUntilChanged,
-  mergeMap,
   catchError,
   retryWhen,
-  tap,
   map,
   finalize,
   delay,
@@ -58,14 +54,6 @@ export class TokenCountingService {
     pendingRequests: 0
   });
   
-  // Subject for debounced single text counting
-  private readonly debouncedCountSubject$ = new Subject<{
-    text: string;
-    contentType?: ContentType;
-    strategy?: CountingStrategy;
-    observer: any;
-  }>();
-  
   // Batch processing queue
   private readonly batchQueue: {
     item: TokenCountRequestItem;
@@ -79,7 +67,6 @@ export class TokenCountingService {
 
   constructor() {
     this.config = { ...DEFAULT_TOKEN_COUNTING_CONFIG };
-    this.setupDebouncedCounting();
   }
 
   /**
@@ -90,21 +77,19 @@ export class TokenCountingService {
   }
 
   /**
-   * Count tokens for a single text with debouncing
+   * Count tokens for a single text with debouncing.
+   *
+   * Note: This method no longer implements service-level debouncing as it caused
+   * issues with multiple concurrent requests from different components. Debouncing
+   * should be handled at the component level (e.g., via valueChange$.pipe(debounceTime())).
    */
   countTokensDebounced(
     text: string,
     contentType?: ContentType,
     strategy: CountingStrategy = CountingStrategy.EXACT
   ): Observable<TokenCountResultItem> {
-    return new Observable(observer => {
-      this.debouncedCountSubject$.next({
-        text,
-        contentType,
-        strategy,
-        observer
-      });
-    });
+    // Directly call countTokens - debouncing happens at component level
+    return this.countTokens(text, contentType, strategy);
   }
 
   /**
@@ -259,42 +244,12 @@ export class TokenCountingService {
   }
 
   /**
-   * Setup debounced counting stream
-   */
-  private setupDebouncedCounting(): void {
-    this.debouncedCountSubject$.pipe(
-      debounceTime(this.config.debounceMs),
-      distinctUntilChanged((prev, curr) => 
-        prev.text === curr.text && 
-        prev.contentType === curr.contentType && 
-        prev.strategy === curr.strategy
-      ),
-      mergeMap(({ text, contentType, strategy, observer }) => {
-        return this.countTokens(text, contentType, strategy).pipe(
-          tap(result => {
-            observer.next(result);
-            observer.complete();
-          }),
-          catchError(error => {
-            observer.error(error);
-            return EMPTY;
-          })
-        );
-      })
-    ).subscribe();
-  }
-
-  /**
    * Make HTTP request to token counting API
    */
   private makeTokenCountRequest(request: TokenCountRequest): Observable<TokenCountResponse> {
-    console.log('🚀 TokenCountingService: Starting token count request', request);
     this.updateLoadingState(true);
 
     return this.http.post<TokenCountResponse>(`${this.baseUrl}/count`, request).pipe(
-      tap(response => {
-        console.log('✅ TokenCountingService: Received successful response', response);
-      }),
       retryWhen(errors =>
         errors.pipe(
           scan((retryCount, error) => {
@@ -302,18 +257,16 @@ export class TokenCountingService {
             if (retryCount > this.config.maxRetries) {
               throw error;
             }
-            console.log('🔄 TokenCountingService: Retrying after error', error);
             return retryCount;
           }, 0),
           delay(this.config.retryDelayMs)
         )
       ),
       catchError(error => {
-        console.error('❌ TokenCountingService: Request failed', error);
+        console.error('TokenCountingService: Request failed', error);
         return this.handleError(error);
       }),
       finalize(() => {
-        console.log('🏁 TokenCountingService: Request completed, updating loading state to false');
         this.updateLoadingState(false);
       })
     );
@@ -443,8 +396,8 @@ export class TokenCountingService {
    */
   private updateLoadingState(isLoading: boolean, operation?: string): void {
     const currentState = this.loadingState$.value;
-    const pendingRequests = isLoading 
-      ? currentState.pendingRequests + 1 
+    const pendingRequests = isLoading
+      ? currentState.pendingRequests + 1
       : Math.max(0, currentState.pendingRequests - 1);
 
     const newState = {
@@ -452,13 +405,6 @@ export class TokenCountingService {
       pendingRequests,
       operation
     };
-
-    console.log('📊 TokenCountingService: Updating loading state', {
-      isLoading,
-      operation,
-      currentState,
-      newState
-    });
 
     this.loadingState$.next(newState);
   }

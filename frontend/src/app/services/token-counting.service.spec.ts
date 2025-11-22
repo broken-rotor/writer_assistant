@@ -5,8 +5,7 @@ import {
   TokenCountResponse,
   ContentType,
   CountingStrategy,
-  TokenCountError,
-  DEFAULT_TOKEN_COUNTING_CONFIG
+  TokenCountError
 } from '../models/token.model';
 
 describe('TokenCountingService', () => {
@@ -282,39 +281,31 @@ describe('TokenCountingService', () => {
   });
 
   describe('countTokensDebounced', () => {
-    it('should debounce rapid successive calls', (done) => {
-      const text = 'Debounced text';
-      let callCount = 0;
+    it('should delegate to countTokens (debouncing happens at component level)', (done) => {
+      const text = 'Test text';
 
-      // Make multiple rapid calls
-      for (let i = 0; i < 5; i++) {
-        service.countTokensDebounced(text).subscribe(() => {
-          callCount++;
-          if (callCount === 1) {
-            // Only one call should succeed due to debouncing
-            expect(callCount).toBe(1);
-            done();
-          }
-        });
-      }
+      // countTokensDebounced now just calls countTokens directly
+      // Debouncing should be handled at the component level (e.g., valueChange$.pipe(debounceTime()))
+      service.countTokensDebounced(text).subscribe(result => {
+        expect(result.token_count).toBe(2);
+        expect(result.text).toBe(text);
+        done();
+      });
 
-      // Fast forward time to trigger debounce
-      setTimeout(() => {
-        const req = httpMock.expectOne(`${baseUrl}/count`);
-        const response: TokenCountResponse = {
-          success: true,
-          results: [{
-            text: text,
-            token_count: 2,
-            content_type: ContentType.UNKNOWN,
-            strategy: CountingStrategy.EXACT,
-            overhead_applied: 1.0,
-            metadata: {}
-          }],
-          summary: { total_tokens: 2 }
-        };
-        req.flush(response);
-      }, DEFAULT_TOKEN_COUNTING_CONFIG.debounceMs + 10);
+      const req = httpMock.expectOne(`${baseUrl}/count`);
+      const response: TokenCountResponse = {
+        success: true,
+        results: [{
+          text: text,
+          token_count: 2,
+          content_type: ContentType.UNKNOWN,
+          strategy: CountingStrategy.EXACT,
+          overhead_applied: 1.0,
+          metadata: {}
+        }],
+        summary: { total_tokens: 2 }
+      };
+      req.flush(response);
     });
   });
 
