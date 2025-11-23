@@ -47,6 +47,13 @@ async def agentic_modify_chapter(request: ModifyChapterRequest):
 
             # === STEP 1: Build base context (all the long-term story elements) ===
             # This context is prepared once and copied for each iteration
+            status_event = StreamingStatusEvent(
+                phase='context_processing',
+                message='Processing modification context...',
+                progress=10
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+
             base_context = ContextBuilder(request.request_context, llm)
             base_context.add_long_term_elements(
                 request.request_context.configuration.system_prompts.assistant_prompt
@@ -67,20 +74,25 @@ async def agentic_modify_chapter(request: ModifyChapterRequest):
                 generation_temperature=settings.ENDPOINT_MODIFY_CHAPTER_TEMPERATURE,
                 generation_max_tokens=settings.ENDPOINT_MODIFY_CHAPTER_MAX_TOKENS,
                 evaluation_temperature=0.3,
-                evaluation_max_tokens=800,
-                stream_partial_content=False
+                evaluation_max_tokens=800
             )
 
             logger.info(f"Starting agentic modification of chapter {request.chapter_number} with config: {config}")
 
             # === STEP 5: Run agentic generation ===
-            agent = AgenticTextGenerator(llm)
+            status_event = StreamingStatusEvent(
+                phase='modifying',
+                message='Rewriting chapter with requested changes...',
+                progress=25
+            )
+            yield f"data: {status_event.model_dump_json()}\n\n"
+
+            agent = AgenticTextGenerator(llm, config=config)
 
             async for event in agent.generate(
                 base_context_builder=base_context,
                 initial_generation_prompt=initial_prompt,
-                evaluation_criteria=evaluation_criteria,
-                config=config
+                evaluation_criteria=evaluation_criteria
             ):
                 # Relay events directly to FastAPI SSE stream
                 yield f"data: {event.model_dump_json()}\n\n"
