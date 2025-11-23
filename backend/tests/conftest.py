@@ -82,8 +82,20 @@ def mock_llm():
 
     # Mock generate method with intelligent responses
     def generate_side_effect(prompt, **kwargs):
+        # Agentic evaluation - check first as it's very specific
+        if "EVALUATION_CRITERIA" in prompt and "GENERATED_CONTENT" in prompt:
+            return "PASSED: YES\nFEEDBACK: The content meets all specified criteria and is well-written."
+
+        # Agentic generation - revise chapter based on feedback
+        elif "REVISION_INSTRUCTIONS" in prompt and "FEEDBACK_TO_INCORPORATE" in prompt:
+            return """Detective Chen's heart raced as she examined the crime scene with renewed intensity. The tension in the air was palpable - this case had just become far more complex than she'd anticipated.
+
+She moved carefully through the evidence, each clue building on the last. The rain outside matched the storm brewing in her mind as connections started forming.
+
+"This changes everything," she muttered, her voice betraying the anxiety beneath her professional facade. The pieces were finally coming together, revealing a truth far more sinister than anyone could have imagined."""
+
         # Flesh out (check early to avoid false matches with other patterns)
-        if "text to expand:" in prompt.lower():
+        elif "text to expand:" in prompt.lower():
             text_to_expand = prompt.split("Text to expand:")[-1].strip() if "Text to expand:" in prompt else "the situation"
             return f"""{text_to_expand}
 
@@ -230,7 +242,8 @@ She knelt beside the evidence, her trained eye catching what others had missed. 
                             with patch('app.api.v1.endpoints.flesh_out.get_llm', return_value=mock_llm_instance):
                                 with patch('app.api.v1.endpoints.generate_character_details.get_llm', return_value=mock_llm_instance):
                                     with patch('app.api.v1.endpoints.generate_chapter_outlines.get_llm', return_value=mock_llm_instance):
-                                        yield mock_llm_instance
+                                        with patch('app.api.v1.endpoints.agentic_modify_chapter.get_llm', return_value=mock_llm_instance):
+                                            yield mock_llm_instance
 
 
 @pytest.fixture
