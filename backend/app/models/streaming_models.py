@@ -11,7 +11,6 @@ class StreamingEventType(str, Enum):
     STATUS = "status"
     RESULT = "result"
     ERROR = "error"
-    PARTIAL = "partial"
 
 
 class StreamingStatusEvent(BaseModel):

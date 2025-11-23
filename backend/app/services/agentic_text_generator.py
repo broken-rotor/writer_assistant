@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import AsyncIterator, Dict, Optional
 
-from app.models.agentic_models import AgenticConfig, StreamingPartialResultEvent
+from app.models.agentic_models import AgenticConfig
 from app.models.streaming_models import (
     StreamingStatusEvent,
     StreamingResultEvent,
@@ -139,8 +139,7 @@ class AgenticTextGenerator:
             config: Agentic behavior configuration (uses defaults if None)
 
         Yields:
-            SSE events (StreamingStatusEvent, StreamingPartialResultEvent,
-                       StreamingResultEvent, StreamingErrorEvent)
+            SSE events (StreamingStatusEvent, StreamingResultEvent, StreamingErrorEvent)
         """
         config = config or AgenticConfig()
 
@@ -189,12 +188,16 @@ class AgenticTextGenerator:
                 logger.info(f"Evaluation result for iteration {iteration}: {'PASSED' if passed else 'FAILED'}")
 
                 # Yield partial result with evaluation
-                yield StreamingPartialResultEvent(
-                    iteration=iteration,
-                    content=content,
-                    evaluation_feedback=feedback,
-                    passed_evaluation=passed,
-                    progress=self._calculate_progress(iteration, config.max_iterations, 'evaluate')
+                yield StreamingStatusEvent(
+                    phase="evaluated",
+                    message=f"Iteration {iteration}/{config.max_iterations}: Evaluated content as passed={passed}",
+                    progress=self._calculate_progress(iteration, config.max_iterations, 'evaluate'),
+                    data={
+                        "content": content,
+                        "iteration": iteration,
+                        "evaluation_feedback": feedback,
+                        "passed_evaluation": passed
+                    }    
                 )
 
                 if passed:

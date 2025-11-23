@@ -10,17 +10,6 @@ from pydantic import BaseModel, Field
 from app.models.streaming_models import StreamingEventType
 
 
-class StreamingPartialResultEvent(BaseModel):
-    """Partial result from an agentic iteration."""
-    type: StreamingEventType = Field(default=StreamingEventType.PARTIAL)
-    iteration: int = Field(description="Current iteration number")
-    content: str = Field(description="Content generated in this iteration")
-    evaluation_feedback: str = Field(description="Feedback from evaluation")
-    passed_evaluation: bool = Field(description="Whether this iteration passed evaluation")
-    phase: str = Field(default="partial_result", description="Processing phase identifier")
-    progress: int = Field(default=50, ge=0, le=100, description="Overall progress percentage")
-
-
 class AgenticConfig(BaseModel):
     """Configuration for agentic text generation."""
     max_iterations: int = Field(
