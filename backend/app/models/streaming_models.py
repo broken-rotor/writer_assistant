@@ -19,6 +19,7 @@ class StreamingStatusEvent(BaseModel):
     phase: str = Field(description="Current processing phase")
     message: str = Field(description="Human-readable status message")
     progress: int = Field(description="Progress percentage (0-100)", ge=0, le=100)
+    data: Optional[Dict[str, Any]] = Field(default=None, description="Partial response data")
 
 
 class StreamingResultEvent(BaseModel):
