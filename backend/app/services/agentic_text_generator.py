@@ -96,7 +96,7 @@ class AgenticTextGenerator:
         self.config = config or AgenticConfig()
         self.tools: Dict[str, AgenticTool] = {
             'llm_generate': LLMGenerationTool(
-                llm
+                llm,
                 temperature=self.config.generation_temperature,
                 max_tokens=self.config.generation_max_tokens
             )
