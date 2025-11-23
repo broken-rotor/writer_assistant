@@ -48,12 +48,10 @@ class AgenticTool(ABC):
 class LLMGenerationTool(AgenticTool):
     """Tool for LLM text generation."""
 
-    def __init__(self, llm: LLMInference, temperature: float = 0.8, max_tokens: int = 2000):
+    def __init__(self, llm: LLMInference):
         self.llm = llm
-        self.temperature = temperature
-        self.max_tokens = max_tokens
 
-    async def execute(self, context_builder: ContextBuilder) -> str:
+    async def execute(self, context_builder: ContextBuilder, temperature: float = 0.8, max_tokens: int = 2000) -> str:
         """
         Generate text using the LLM.
 
@@ -67,7 +65,7 @@ class LLMGenerationTool(AgenticTool):
 
         content = ""
         for tokens in self.llm.chat_completion_stream(
-            messages, temperature=self.temperature, max_tokens=self.max_tokens
+            messages, temperature=temperature, max_tokens=max_tokens
         ):
             content += tokens
         return content
@@ -94,11 +92,7 @@ class AgenticTextGenerator:
         self.llm = llm
         self.config = config or AgenticConfig()
         self.tools: Dict[str, AgenticTool] = {
-            'llm_generate': LLMGenerationTool(
-                llm,
-                temperature=self.config.generation_temperature,
-                max_tokens=self.config.generation_max_tokens
-            )
+            'llm_generate': LLMGenerationTool(llm)
         }
 
     def add_tool(self, name: str, tool: AgenticTool):
@@ -115,6 +109,7 @@ class AgenticTextGenerator:
     async def generate(
         self,
         base_context_builder: ContextBuilder,
+        content: str,
         initial_generation_prompt: str,
         evaluation_criteria: str
     ) -> AsyncIterator:
@@ -146,9 +141,13 @@ class AgenticTextGenerator:
                 # Copy base context and add current generation prompt
                 generation_context = base_context_builder.copy()
                 generation_context.add_agent_instruction(current_prompt)
+                generation_context.add_agent_instruction(f"**Current Content to Rewrite**\n{content}\n**New content**\n")
 
                 # Generate using LLM tool
-                content = await self.tools['llm_generate'].execute(generation_context)
+                content = await self.tools['llm_generate'].execute(
+                    generation_context,
+                    temperature=self.config.generation_temperature,
+                    max_tokens=self.config.generation_max_tokens)
 
                 logger.info(f"Generated {len(content)} characters in iteration {iteration}")
 
@@ -202,12 +201,7 @@ class AgenticTextGenerator:
                         progress=self._calculate_progress(iteration, 'refine')
                     )
 
-                    current_prompt = self._refine_prompt(
-                        initial_generation_prompt,
-                        content,
-                        feedback,
-                        iteration
-                    )
+                    current_prompt = self._refine_prompt(initial_generation_prompt, feedback)
 
             except Exception as e:
                 logger.exception(f"Error in iteration {iteration}")
@@ -269,8 +263,7 @@ FEEDBACK: [Detailed explanation of what works well and what needs improvement. I
         response = await self.tools['llm_generate'].execute(
             eval_context,
             temperature=self.config.evaluation_temperature,
-            max_tokens=self.config.evaluation_max_tokens,
-            stream=False
+            max_tokens=self.config.evaluation_max_tokens
         )
 
         # Parse evaluation response
@@ -282,13 +275,7 @@ FEEDBACK: [Detailed explanation of what works well and what needs improvement. I
 
         return passed, feedback
 
-    def _refine_prompt(
-        self,
-        original_prompt: str,
-        previous_content: str,
-        evaluation_feedback: str,
-        iteration: int
-    ) -> str:
+    def _refine_prompt(self, original_prompt: str, evaluation_feedback: str) -> str:
         """
         Refine the generation prompt based on evaluation feedback.
 
@@ -297,9 +284,7 @@ FEEDBACK: [Detailed explanation of what works well and what needs improvement. I
 
         Args:
             original_prompt: Original generation instructions
-            previous_content: Content from previous iteration
             evaluation_feedback: Feedback from evaluation
-            iteration: Current iteration number
 
         Returns:
             Refined prompt for next iteration
@@ -307,7 +292,7 @@ FEEDBACK: [Detailed explanation of what works well and what needs improvement. I
         return f"""{original_prompt}
 
 <ITERATION_REFINEMENT>
-Your previous attempt (iteration {iteration}) did not fully meet the evaluation criteria.
+Your previous attempt did not fully meet the evaluation criteria.
 
 Evaluation Feedback:
 {evaluation_feedback}

@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from app.models.generation_models import ModifyChapterRequest
 from app.models.agentic_models import AgenticConfig
+from app.models.streaming_models import StreamingStatusEvent, StreamingErrorEvent
 from app.services.llm_inference import get_llm
 from app.services.context_builder import ContextBuilder
 from app.services.agentic_text_generator import AgenticTextGenerator
@@ -91,6 +92,7 @@ async def agentic_modify_chapter(request: ModifyChapterRequest):
 
             async for event in agent.generate(
                 base_context_builder=base_context,
+                content=chapter.content,
                 initial_generation_prompt=initial_prompt,
                 evaluation_criteria=evaluation_criteria
             ):
@@ -160,14 +162,11 @@ def _build_generation_prompt(request: ModifyChapterRequest, chapter) -> str:
     # Build complete prompt
     prompt = f"""Revise Chapter {chapter.number} to incorporate ALL the provided feedback while maintaining narrative quality and consistency.
 
-<ORIGINAL_CHAPTER>
+<ORIGINAL_CHAPTER_OUTLINE>
 **Title:** {chapter.title}
 {f"**Plot Point:** {chapter.plot_point}" if chapter.plot_point else ""}
 {key_plot_items_section(chapter)}
-
-**Current Content:**
-{chapter.content}
-</ORIGINAL_CHAPTER>
+</ORIGINAL_CHAPTER_OUTLINE>
 
 <FEEDBACK_TO_INCORPORATE>
 {all_feedback}

@@ -56,7 +56,7 @@ export class ApiService {
     onProgress?: (phase: string, message: string, progress: number) => void
   ): Observable<ModifyChapterResponse> {
     return this.sseStreamingService.createSSEObservable<ModifyChapterResponse>(
-      `${this.baseUrl}/modify-chapter`,
+      `${this.baseUrl}/agentic-modify-chapter`,
       request,
       {
         onProgress: onProgress ? (update) => onProgress(update.phase, update.message, update.progress) : undefined,
