@@ -1,24 +1,11 @@
 """
 Models for agentic text generation system.
 
-This module defines configuration and event models for the agentic text generator,
+This module defines configuration models for the agentic text generator,
 which performs iterative generate-evaluate-refine cycles.
 """
 
-from typing import Optional
 from pydantic import BaseModel, Field
-from app.models.streaming_models import StreamingEventType
-
-
-class StreamingPartialResultEvent(BaseModel):
-    """Partial result from an agentic iteration."""
-    type: StreamingEventType = Field(default=StreamingEventType.PARTIAL)
-    iteration: int = Field(description="Current iteration number")
-    content: str = Field(description="Content generated in this iteration")
-    evaluation_feedback: str = Field(description="Feedback from evaluation")
-    passed_evaluation: bool = Field(description="Whether this iteration passed evaluation")
-    phase: str = Field(default="partial_result", description="Processing phase identifier")
-    progress: int = Field(default=50, ge=0, le=100, description="Overall progress percentage")
 
 
 class AgenticConfig(BaseModel):
@@ -52,8 +39,4 @@ class AgenticConfig(BaseModel):
         ge=100,
         le=2000,
         description="Max tokens for evaluation feedback"
-    )
-    stream_partial_content: bool = Field(
-        default=False,
-        description="Stream tokens during generation (vs. batch)"
     )

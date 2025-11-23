@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import AsyncIterator, Dict, Optional
 
-from app.models.agentic_models import AgenticConfig, StreamingPartialResultEvent
+from app.models.agentic_models import AgenticConfig
 from app.models.streaming_models import (
     StreamingStatusEvent,
     StreamingResultEvent,
@@ -49,41 +49,29 @@ class AgenticTool(ABC):
 class LLMGenerationTool(AgenticTool):
     """Tool for LLM text generation."""
 
-    def __init__(self, llm: LLMInference):
+    def __init__(self, llm: LLMInference, temperature: float = 0.8, max_tokens: int = 2000):
         self.llm = llm
+        self.temperature = temperature
+        self.max_tokens = max_tokens
 
-    async def execute(
-        self,
-        context_builder: ContextBuilder,
-        temperature: float = 0.8,
-        max_tokens: int = 2000,
-        stream: bool = False
-    ) -> str:
+    async def execute(self, context_builder: ContextBuilder) -> str:
         """
         Generate text using the LLM.
 
         Args:
             context_builder: ContextBuilder with prompts and context
-            temperature: Sampling temperature
-            max_tokens: Maximum tokens to generate
-            stream: Whether to stream token-by-token
 
         Returns:
             Generated text
         """
         messages = context_builder.build_messages()
 
-        if stream:
-            content = ""
-            for token in self.llm.chat_completion_stream(
-                messages, temperature=temperature, max_tokens=max_tokens
-            ):
-                content += token
-            return content
-        else:
-            return self.llm.chat_completion(
-                messages, temperature=temperature, max_tokens=max_tokens
-            )
+        content = ""
+        for tokens in self.llm.chat_completion_stream(
+            messages, temperature=self.temperature, max_tokens=self.max_tokens
+        ):
+            content += tokens
+        return content
 
 
 class AgenticTextGenerator:
@@ -97,7 +85,7 @@ class AgenticTextGenerator:
     Future expansion: Add more tools (web search, RAG, calculators, etc.)
     """
 
-    def __init__(self, llm: LLMInference):
+    def __init__(self, llm: LLMInference, config: Optional[AgenticConfig] = None):
         """
         Initialize the agentic text generator.
 
@@ -105,8 +93,13 @@ class AgenticTextGenerator:
             llm: LLMInference instance for text generation
         """
         self.llm = llm
+        self.config = config or AgenticConfig()
         self.tools: Dict[str, AgenticTool] = {
-            'llm_generate': LLMGenerationTool(llm)
+            'llm_generate': LLMGenerationTool(
+                llm
+                temperature=self.config.generation_temperature,
+                max_tokens=self.config.generation_max_tokens
+            )
         }
 
     def add_tool(self, name: str, tool: AgenticTool):
@@ -124,8 +117,7 @@ class AgenticTextGenerator:
         self,
         base_context_builder: ContextBuilder,
         initial_generation_prompt: str,
-        evaluation_criteria: str,
-        config: Optional[AgenticConfig] = None
+        evaluation_criteria: str
     ) -> AsyncIterator:
         """
         Agentic text generation with evaluation loop.
@@ -136,25 +128,21 @@ class AgenticTextGenerator:
                                   The agent will COPY this and add iteration-specific instructions.
             initial_generation_prompt: Initial instruction for generation
             evaluation_criteria: Criteria for evaluating success
-            config: Agentic behavior configuration (uses defaults if None)
 
         Yields:
-            SSE events (StreamingStatusEvent, StreamingPartialResultEvent,
-                       StreamingResultEvent, StreamingErrorEvent)
+            SSE events (StreamingStatusEvent, StreamingResultEvent, StreamingErrorEvent)
         """
-        config = config or AgenticConfig()
-
         current_prompt = initial_generation_prompt
         previous_content = None
         last_feedback = ""
 
-        for iteration in range(1, config.max_iterations + 1):
+        for iteration in range(1, self.config.max_iterations + 1):
             try:
                 # === GENERATION PHASE ===
                 yield StreamingStatusEvent(
                     phase='generating',
-                    message=f'Iteration {iteration}/{config.max_iterations}: Generating content...',
-                    progress=self._calculate_progress(iteration, config.max_iterations, 'generate')
+                    message=f'Iteration {iteration}/{self.config.max_iterations}: Generating content...',
+                    progress=self._calculate_progress(iteration, 'generate')
                 )
 
                 # Copy base context and add current generation prompt
@@ -162,39 +150,37 @@ class AgenticTextGenerator:
                 generation_context.add_agent_instruction(current_prompt)
 
                 # Generate using LLM tool
-                content = await self.tools['llm_generate'].execute(
-                    generation_context,
-                    temperature=config.generation_temperature,
-                    max_tokens=config.generation_max_tokens,
-                    stream=config.stream_partial_content
-                )
+                content = await self.tools['llm_generate'].execute(generation_context)
 
                 logger.info(f"Generated {len(content)} characters in iteration {iteration}")
 
                 # === EVALUATION PHASE ===
                 yield StreamingStatusEvent(
                     phase='evaluating',
-                    message=f'Iteration {iteration}/{config.max_iterations}: Evaluating against criteria...',
-                    progress=self._calculate_progress(iteration, config.max_iterations, 'evaluate')
+                    message=f'Iteration {iteration}/{self.config.max_iterations}: Evaluating against criteria...',
+                    progress=self._calculate_progress(iteration, 'evaluate')
                 )
 
                 passed, feedback = await self._evaluate_content(
                     base_context_builder,
                     content,
-                    evaluation_criteria,
-                    config
+                    evaluation_criteria
                 )
 
                 last_feedback = feedback
                 logger.info(f"Evaluation result for iteration {iteration}: {'PASSED' if passed else 'FAILED'}")
 
                 # Yield partial result with evaluation
-                yield StreamingPartialResultEvent(
-                    iteration=iteration,
-                    content=content,
-                    evaluation_feedback=feedback,
-                    passed_evaluation=passed,
-                    progress=self._calculate_progress(iteration, config.max_iterations, 'evaluate')
+                yield StreamingStatusEvent(
+                    phase="evaluated",
+                    message=f"Iteration {iteration}/{self.config.max_iterations}: Evaluated content as passed={passed}",
+                    progress=self._calculate_progress(iteration, 'evaluate'),
+                    data={
+                        "content": content,
+                        "iteration": iteration,
+                        "evaluation_feedback": feedback,
+                        "passed_evaluation": passed
+                    }    
                 )
 
                 if passed:
@@ -211,11 +197,11 @@ class AgenticTextGenerator:
                     return
 
                 # === REFINEMENT PHASE ===
-                if iteration < config.max_iterations:
+                if iteration < self.config.max_iterations:
                     yield StreamingStatusEvent(
                         phase='refining',
-                        message=f'Iteration {iteration}/{config.max_iterations}: Preparing refinement based on feedback...',
-                        progress=self._calculate_progress(iteration, config.max_iterations, 'refine')
+                        message=f'Iteration {iteration}/{self.config.max_iterations}: Preparing refinement based on feedback...',
+                        progress=self._calculate_progress(iteration, 'refine')
                     )
 
                     current_prompt = self._refine_prompt(
@@ -235,9 +221,9 @@ class AgenticTextGenerator:
                 return
 
         # Max iterations reached without passing evaluation
-        logger.warning(f"Max iterations ({config.max_iterations}) reached without passing evaluation")
+        logger.warning(f"Max iterations ({self.config.max_iterations}) reached without passing evaluation")
         yield StreamingErrorEvent(
-            message=f'Max iterations ({config.max_iterations}) reached. Last feedback: {last_feedback}',
+            message=f'Max iterations ({self.config.max_iterations}) reached. Last feedback: {last_feedback}',
             error_code='MAX_ITERATIONS_EXCEEDED',
             data={'last_content': content, 'last_feedback': last_feedback}
         )
@@ -246,8 +232,7 @@ class AgenticTextGenerator:
         self,
         base_context_builder: ContextBuilder,
         content: str,
-        evaluation_criteria: str,
-        config: AgenticConfig
+        evaluation_criteria: str
     ) -> tuple[bool, str]:
         """
         Evaluate generated content against criteria using a separate LLM call.
@@ -256,7 +241,6 @@ class AgenticTextGenerator:
             base_context_builder: Base context (though we build minimal eval context)
             content: Generated content to evaluate
             evaluation_criteria: Criteria for success
-            config: Configuration with evaluation parameters
 
         Returns:
             Tuple of (passed: bool, feedback: str)
@@ -287,8 +271,8 @@ FEEDBACK: [Detailed explanation of what works well and what needs improvement. I
         # Use LLM tool for evaluation
         response = await self.tools['llm_generate'].execute(
             eval_context,
-            temperature=config.evaluation_temperature,
-            max_tokens=config.evaluation_max_tokens,
+            temperature=self.config.evaluation_temperature,
+            max_tokens=self.config.evaluation_max_tokens,
             stream=False
         )
 
@@ -356,7 +340,7 @@ Focus on the areas identified in the feedback while maintaining overall quality.
         new_builder._elements = deepcopy(context_builder._elements)
         return new_builder
 
-    def _calculate_progress(self, iteration: int, max_iterations: int, phase: str) -> int:
+    def _calculate_progress(self, iteration: int, phase: str) -> int:
         """
         Calculate progress percentage based on iteration and phase.
 
@@ -372,10 +356,10 @@ Focus on the areas identified in the feedback while maintaining overall quality.
         phase_weights = {'generate': 0.3, 'evaluate': 0.7, 'refine': 0.9}
 
         # Base progress from completed iterations
-        base_progress = ((iteration - 1) / max_iterations) * 100
+        base_progress = ((iteration - 1) / self.config.max_iterations) * 100
 
         # Add progress within current iteration
-        phase_progress = (phase_weights.get(phase, 0.5) / max_iterations) * 100
+        phase_progress = (phase_weights.get(phase, 0.5) / self.config.max_iterations) * 100
 
         # Cap at 95% to leave room for finalization
         return min(95, int(base_progress + phase_progress))
