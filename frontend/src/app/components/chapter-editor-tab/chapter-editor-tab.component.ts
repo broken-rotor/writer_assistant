@@ -171,6 +171,8 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
       next: (_chapterText) => {
         // Chapter content is already updated in the service
         console.log('Chapter generated successfully');
+        // Emit the updated chapter to parent so it can update its copy
+        this.emitChapterChange();
       },
       error: (error) => {
         console.error('Failed to generate chapter:', error);
@@ -233,6 +235,8 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
     this.chapterEditorService.applyUserGuidance(event.userGuidance, this.story, event.selectedFeedback).subscribe({
       next: (_modifiedContent) => {
         console.log('Chapter modified successfully');
+        // Emit the updated chapter to parent so it can update its copy
+        this.emitChapterChange();
       },
       error: (error) => {
         console.error('Failed to modify chapter:', error);

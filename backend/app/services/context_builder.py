@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Set
@@ -39,6 +40,15 @@ class ContextBuilder:
         self._request_context: RequestContext = request_context
         self._elements: List[ContextItem] = []
         self._model: LLMInference = model
+
+    def copy(self) -> 'ContextBuilder':
+        new_builder = ContextBuilder(
+            self._request_context,
+            self._model
+        )
+        # Deep copy the elements list
+        new_builder._elements = deepcopy(self._elements)
+        return new_builder
 
     def build_messages(self) -> List[Dict[str, str]]:
         chat = []

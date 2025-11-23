@@ -380,7 +380,7 @@ describe('ApiService', () => {
       });
 
       expect(sseStreamingServiceSpy.createSSEObservable).toHaveBeenCalledWith(
-        `${baseUrl}/modify-chapter`,
+        `${baseUrl}/agentic-modify-chapter`,
         request,
         jasmine.objectContaining({
           onError: jasmine.any(Function)
@@ -448,7 +448,7 @@ describe('ApiService', () => {
       service.modifyChapter(request, progressCallback).subscribe();
 
       expect(sseStreamingServiceSpy.createSSEObservable).toHaveBeenCalledWith(
-        `${baseUrl}/modify-chapter`,
+        `${baseUrl}/agentic-modify-chapter`,
         request,
         jasmine.objectContaining({
           onProgress: jasmine.any(Function),

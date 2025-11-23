@@ -34,3 +34,4 @@ class StreamingErrorEvent(BaseModel):
     type: StreamingEventType = Field(default=StreamingEventType.ERROR)
     message: str = Field(description="Error message")
     error_code: Optional[str] = Field(default=None, description="Optional error code")
+    data: Optional[Dict[str, Any]] = Field(default=None, description="Optional error context data")

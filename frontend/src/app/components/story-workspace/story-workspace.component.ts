@@ -1038,6 +1038,9 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     if (chapterIndex !== -1) {
       this.story.story.chapters[chapterIndex] = updatedChapter;
       this.storyService.saveStory(this.story);
+
+      // Show success feedback
+      this.toastService.show('Chapter saved successfully', 'success');
     }
   }
 
@@ -1061,7 +1064,8 @@ Provide actionable insights and creative suggestions to enhance this plot point.
     const chapterIndex = this.story.story.chapters.findIndex(ch => ch.id === updatedChapter.id);
     if (chapterIndex !== -1) {
       this.story.story.chapters[chapterIndex] = updatedChapter;
-      // Auto-save could be implemented here
+      // Auto-save to persist changes
+      this.storyService.saveStory(this.story);
     }
   }
 }
