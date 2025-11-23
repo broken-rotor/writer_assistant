@@ -13,7 +13,6 @@ The system is designed to be extensible with additional tools (RAG, web search, 
 import logging
 import re
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from typing import AsyncIterator, Dict, Optional
 
 from app.models.agentic_models import AgenticConfig
@@ -133,7 +132,6 @@ class AgenticTextGenerator:
             SSE events (StreamingStatusEvent, StreamingResultEvent, StreamingErrorEvent)
         """
         current_prompt = initial_generation_prompt
-        previous_content = None
         last_feedback = ""
 
         for iteration in range(1, self.config.max_iterations + 1):
@@ -146,7 +144,7 @@ class AgenticTextGenerator:
                 )
 
                 # Copy base context and add current generation prompt
-                generation_context = self._copy_context_builder(base_context_builder)
+                generation_context = base_context_builder.copy()
                 generation_context.add_agent_instruction(current_prompt)
 
                 # Generate using LLM tool
@@ -210,7 +208,6 @@ class AgenticTextGenerator:
                         feedback,
                         iteration
                     )
-                    previous_content = content
 
             except Exception as e:
                 logger.exception(f"Error in iteration {iteration}")
@@ -247,7 +244,7 @@ class AgenticTextGenerator:
         """
         # Build minimal evaluation context
         # We use a fresh copy but could also build completely new context
-        eval_context = self._copy_context_builder(base_context_builder)
+        eval_context = base_context_builder.copy()
 
         eval_prompt = f"""You are an evaluation agent. Your job is to critically assess whether the generated content meets ALL specified criteria.
 
@@ -318,27 +315,6 @@ Evaluation Feedback:
 Please generate a NEW version that addresses these specific concerns while still meeting all the original requirements above.
 Focus on the areas identified in the feedback while maintaining overall quality.
 </ITERATION_REFINEMENT>"""
-
-    def _copy_context_builder(self, context_builder: ContextBuilder) -> ContextBuilder:
-        """
-        Create a deep copy of the context builder for this iteration.
-
-        This ensures each iteration starts fresh without polluting the base context.
-
-        Args:
-            context_builder: Original context builder
-
-        Returns:
-            Deep copy of the context builder
-        """
-        # Create new instance with same request_context and model
-        new_builder = ContextBuilder(
-            context_builder._request_context,
-            context_builder._model
-        )
-        # Deep copy the elements list
-        new_builder._elements = deepcopy(context_builder._elements)
-        return new_builder
 
     def _calculate_progress(self, iteration: int, phase: str) -> int:
         """
