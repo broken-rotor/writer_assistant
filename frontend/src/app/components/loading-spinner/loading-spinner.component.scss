@@ -20,7 +20,7 @@
 .loading-content {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   background: white;
   padding: 1rem 1.5rem;
@@ -28,7 +28,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-left: 4px solid #3498db;
   min-width: 280px;
-  max-width: 400px;
+  max-width: 600px;
+  
+  // Agentic mode gets larger width
+  &:has(.agentic-loading) {
+    max-width: 800px;
+    min-width: 600px;
+  }
 }
 
 .loading-text {
@@ -131,4 +137,126 @@
   font-weight: 600;
   min-width: 35px;
   text-align: right;
+}
+
+// Agentic Loading Styles
+.agentic-loading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.basic-loading {
+  flex: 1;
+  min-width: 0;
+}
+
+.loading-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.agentic-title,
+.basic-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.iteration-info {
+  color: #7f8c8d;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.section-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #34495e;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #ecf0f1;
+  padding-bottom: 0.25rem;
+}
+
+// Content Section Styles
+.content-section {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.content-area {
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.content-text {
+  margin: 0;
+  padding: 1rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #2c3e50;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: transparent;
+  border: none;
+}
+
+// Feedback Section Styles
+.feedback-section {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.feedback-content {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 1rem;
+}
+
+.feedback-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #2c3e50;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+// Custom scrollbar for content area
+.content-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content-area::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.content-area::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.content-area::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }

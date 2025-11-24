@@ -84,7 +84,7 @@ export class GenerationService {
     currentChapterText: string,
     userFeedback: string,
     feedbackSelection: FeedbackSelection,
-    onProgress?: (phase: string, message: string, progress: number) => void
+    onProgress?: (phase: string, message: string, progress: number, data?: any) => void
   ): Observable<ModifyChapterResponse> {
     // Determine chapter number by finding the chapter that matches the current text
     const chapterNumber = this.findChapterNumberByContent(story, currentChapterText);

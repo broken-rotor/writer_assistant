@@ -549,7 +549,12 @@ export class ChapterEditorService {
   /**
    * Apply user guidance to modify chapter
    */
-  applyUserGuidance(guidance: string, story: Story, feedbackSelection?: FeedbackSelection): Observable<string> {
+  applyUserGuidance(
+    guidance: string, 
+    story: Story, 
+    feedbackSelection?: FeedbackSelection,
+    onProgress?: (phase: string, message: string, progress: number, data?: any) => void
+  ): Observable<string> {
     const currentState = this.stateSubject.value;
     if (!currentState.currentChapter?.content) {
       return throwError(() => new Error('No chapter content to modify'));
@@ -567,7 +572,8 @@ export class ChapterEditorService {
       story,
       currentState.currentChapter.content,
       guidance,
-      feedbackSelection || defaultFeedbackSelection
+      feedbackSelection || defaultFeedbackSelection,
+      onProgress
     ).pipe(
       map((response: ModifyChapterResponse) => {
         const updatedChapter = {

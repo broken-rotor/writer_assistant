@@ -5,6 +5,7 @@ export interface SSEProgressUpdate {
   phase: string;
   message: string;
   progress: number;
+  data?: any;
 }
 
 export interface SSEStreamingOptions {
@@ -95,7 +96,8 @@ export class SSEStreamingService {
                     options.onProgress({
                       phase: data.phase,
                       message: data.message,
-                      progress: data.progress
+                      progress: data.progress,
+                      data: data.data
                     });
                   }
                 } catch (e) {
