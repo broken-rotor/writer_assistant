@@ -60,7 +60,7 @@ async def agentic_modify_chapter(request: ModifyChapterRequest):
                 request.request_context.configuration.system_prompts.assistant_prompt
             )
             base_context.add_character_states()
-            base_context.add_recent_story_summary()
+            base_context.add_recent_story_summary(include_up_to=chapter.number)
             # Note: We DON'T add the agent instruction yet - the agent will do that
 
             # === STEP 2: Define initial generation prompt ===
