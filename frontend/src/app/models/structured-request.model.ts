@@ -327,9 +327,10 @@ export interface StructuredGenerateChapterResponse {
  * Enhanced chapter modification response
  */
 export interface StructuredModifyChapterResponse {
-  modifiedChapter: string;
-  wordCount: number;
-  changesSummary: string;
+  content: string;
+  iterations_used: number;
+  evaluation_feedback: string;
+  status: string;
   metadata?: StructuredResponseMetadata;
 }
 

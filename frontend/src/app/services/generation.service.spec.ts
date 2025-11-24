@@ -514,10 +514,10 @@ describe('GenerationService', () => {
       }];
       
       const mockResponse = {
-        modifiedChapter: 'Modified chapter text',
-        modifiedChapterText: 'Modified chapter text',
-        wordCount: 30,
-        changesSummary: 'Made it exciting'
+        content: 'Modified chapter text',
+        iterations_used: 1,
+        evaluation_feedback: 'Made it exciting',
+        status: 'success'
       };
 
       apiServiceSpy.modifyChapter.and.returnValue(of(mockResponse));

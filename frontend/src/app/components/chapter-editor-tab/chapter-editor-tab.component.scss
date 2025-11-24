@@ -198,47 +198,6 @@
       }
     }
   }
-
-  .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-
-    .loading-content {
-      background: white;
-      padding: 32px;
-      border-radius: 8px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-
-      .loading-spinner {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
-        color: #2196f3;
-        animation: spin 1s linear infinite;
-        margin-bottom: 16px;
-      }
-
-      p {
-        margin: 0;
-        color: #666;
-        font-size: 1.1em;
-      }
-    }
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 // Responsive design

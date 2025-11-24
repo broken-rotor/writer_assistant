@@ -519,10 +519,10 @@ export interface GenerateChapterResponse {
 }
 
 export interface ModifyChapterResponse {
-  modifiedChapter: string;
-  modifiedChapterText?: string; // For backward compatibility
-  wordCount: number;
-  changesSummary: string;
+  content: string;
+  iterations_used: number;
+  evaluation_feedback: string;
+  status: string;
 }
 
 export interface EditorReviewResponse {
