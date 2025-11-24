@@ -61,7 +61,7 @@ async def modify_chapter(request: ModifyChapterRequest):
             context_builder = ContextBuilder(request.request_context, llm)
             context_builder.add_long_term_elements(request.request_context.configuration.system_prompts.assistant_prompt)
             context_builder.add_character_states()
-            context_builder.add_recent_story_summary()
+            context_builder.add_recent_story_summary(include_up_to=chapter.number)
             agent_instruction = f"""
 Revise Chapter {chapter.number} based on the provided feedback and modification requests.
 
