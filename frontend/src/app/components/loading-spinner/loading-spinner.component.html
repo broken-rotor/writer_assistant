@@ -1,18 +1,69 @@
 <div class="loading-indicator" *ngIf="loadingState.isLoading">
   <div class="loading-content">
     <div class="spinner"></div>
-    <div class="loading-text">
-      <p class="loading-phase" *ngIf="loadingState.phase">{{ loadingState.phase }}</p>
-      <p class="loading-message" *ngIf="loadingState.message">{{ loadingState.message }}</p>
-      <p class="loading-message default" *ngIf="!loadingState.message && !loadingState.phase">Processing...</p>
-      
-      <!-- Progress bar -->
-      <div class="progress-container" *ngIf="loadingState.progress !== undefined">
-        <div class="progress-bar">
-          <div class="progress-fill" [style.width.%]="loadingState.progress"></div>
+    
+    <!-- Rich Agentic Mode -->
+    <div class="agentic-loading" *ngIf="loadingState.data; else basicLoading">
+      <div class="loading-header">
+        <h3 class="agentic-title">🤖 Agentic Chapter Modification</h3>
+        
+        <div class="status-info">
+          <p class="loading-phase" *ngIf="loadingState.phase">
+            {{ loadingState.phase }}
+            <span *ngIf="loadingState.data.iteration" class="iteration-info">
+              (Iteration {{ loadingState.data.iteration }}/3)
+            </span>
+          </p>
+          <p class="loading-message" *ngIf="loadingState.message">{{ loadingState.message }}</p>
+          
+          <!-- Progress bar -->
+          <div class="progress-container" *ngIf="loadingState.progress !== undefined">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="loadingState.progress"></div>
+            </div>
+            <span class="progress-text">{{ loadingState.progress }}%</span>
+          </div>
         </div>
-        <span class="progress-text">{{ loadingState.progress }}%</span>
+      </div>
+      
+      <!-- Content Section -->
+      <div class="content-section" *ngIf="loadingState.data.content">
+        <h4 class="section-title">📝 Current Content</h4>
+        <div class="content-area">
+          <pre class="content-text">{{ loadingState.data.content }}</pre>
+        </div>
+      </div>
+      
+      <!-- Evaluation Feedback Section -->
+      <div class="feedback-section" *ngIf="loadingState.data.evaluation_feedback">
+        <h4 class="section-title">🔍 Evaluation Feedback</h4>
+        <div class="feedback-content">
+          <p class="feedback-text">{{ loadingState.data.evaluation_feedback }}</p>
+        </div>
       </div>
     </div>
+    
+    <!-- Basic Loading Mode -->
+    <ng-template #basicLoading>
+      <div class="basic-loading">
+        <div class="loading-header">
+          <h3 class="basic-title">🔄 Processing Request</h3>
+        </div>
+        
+        <div class="loading-text">
+          <p class="loading-phase" *ngIf="loadingState.phase">{{ loadingState.phase }}</p>
+          <p class="loading-message" *ngIf="loadingState.message">{{ loadingState.message }}</p>
+          <p class="loading-message default" *ngIf="!loadingState.message && !loadingState.phase">Processing...</p>
+          
+          <!-- Progress bar -->
+          <div class="progress-container" *ngIf="loadingState.progress !== undefined">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="loadingState.progress"></div>
+            </div>
+            <span class="progress-text">{{ loadingState.progress }}%</span>
+          </div>
+        </div>
+      </div>
+    </ng-template>
   </div>
 </div>

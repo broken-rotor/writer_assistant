@@ -6,11 +6,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
-import { Subscription } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 
 import { CollapsibleSectionComponent } from '../collapsible-section/collapsible-section.component';
 import { FeedbackSelectorComponent, FeedbackSelection } from '../feedback-selector/feedback-selector.component';
 import { ChapterEditorService, ChapterEditingState } from '../../services/chapter-editor.service';
+import { LoadingService, AgenticData } from '../../services/loading.service';
 import { 
   Story, 
   Chapter
@@ -59,6 +60,7 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   userGuidance = '';
 
   private chapterEditorService = inject(ChapterEditorService);
+  private loadingService = inject(LoadingService);
 
   ngOnInit() {
     this.stateSubscription = this.chapterEditorService.state$.subscribe(state => {
@@ -231,8 +233,29 @@ export class ChapterEditorTabComponent implements OnInit, OnDestroy {
   onModifyChapter(event: { userGuidance: string, selectedFeedback: FeedbackSelection }) {
     if (!this.story || !this.state?.currentChapter) return;
 
+    // Show loading with initial message
+    this.loadingService.show('Starting chapter modification...', 'modify-chapter', 0, 'Initializing');
+
     // Apply user guidance with selected feedback
-    this.chapterEditorService.applyUserGuidance(event.userGuidance, this.story, event.selectedFeedback).subscribe({
+    this.chapterEditorService.applyUserGuidance(
+      event.userGuidance, 
+      this.story, 
+      event.selectedFeedback,
+      (phase: string, message: string, progress: number, data?: any) => {
+        // Convert data to AgenticData format if available
+        const agenticData: AgenticData | undefined = data ? {
+          content: data.content,
+          iteration: data.iteration,
+          evaluation_feedback: data.evaluation_feedback,
+          passed_evaluation: data.passed_evaluation
+        } : undefined;
+
+        // Update loading with progress and agentic data
+        this.loadingService.updateProgress(progress, message, phase, agenticData);
+      }
+    ).pipe(
+      finalize(() => this.loadingService.hide())
+    ).subscribe({
       next: (_modifiedContent) => {
         console.log('Chapter modified successfully');
         // Emit the updated chapter to parent so it can update its copy
