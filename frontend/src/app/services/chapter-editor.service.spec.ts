@@ -195,16 +195,17 @@ describe('ChapterEditorService', () => {
   });
 
   it('should apply user guidance', () => {
-    const mockResponse = { 
-      modifiedChapter: 'Modified content',
-      wordCount: 2,
-      changesSummary: 'Applied guidance'
+    const mockResponse = {
+      content: 'Modified content',
+      iterations_used: 1,
+      evaluation_feedback: 'Applied guidance',
+      status: 'success'
     };
     // No context builder call needed - modifyChapter handles it internally
     mockGenerationService.modifyChapter.and.returnValue(of(mockResponse));
-    
+
     service.initializeChapterEditing(mockChapter);
-    
+
     service.applyUserGuidance('Make it better', mockStory).subscribe(content => {
       expect(content).toBe('Modified content');
     });
@@ -274,9 +275,10 @@ describe('ChapterEditorService', () => {
 
   it('should clear feedback after successful chapter modification', () => {
     const mockResponse = {
-      modifiedChapter: 'Modified content with feedback incorporated',
-      wordCount: 5,
-      changesSummary: 'Applied feedback'
+      content: 'Modified content with feedback incorporated',
+      iterations_used: 1,
+      evaluation_feedback: 'Applied feedback',
+      status: 'success'
     };
     mockGenerationService.modifyChapter.and.returnValue(of(mockResponse));
     

@@ -361,10 +361,10 @@ describe('ApiService', () => {
       };
 
       const mockResponse = {
-        modifiedChapter: 'The hero burst into the dark dungeon...',
-        modifiedChapterText: 'The hero burst into the dark dungeon...',
-        wordCount: 50,
-        changesSummary: 'Made the chapter more exciting'
+        content: 'The hero burst into the dark dungeon...',
+        iterations_used: 1,
+        evaluation_feedback: 'Made the chapter more exciting',
+        status: 'success'
       };
 
       // Configure the SSE streaming service spy

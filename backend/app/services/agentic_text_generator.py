@@ -155,7 +155,10 @@ class AgenticTextGenerator:
                 yield StreamingStatusEvent(
                     phase='evaluating',
                     message=f'Iteration {iteration}/{self.config.max_iterations}: Evaluating against criteria...',
-                    progress=self._calculate_progress(iteration, 'evaluate')
+                    progress=self._calculate_progress(iteration, 'evaluate'),
+                    data={
+                        "content": content
+                    }
                 )
 
                 passed, feedback = await self._evaluate_content(

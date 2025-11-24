@@ -213,15 +213,4 @@
     </app-collapsible-section>
 
   </div>
-
-  <!-- Loading Overlay -->
-  <div *ngIf="isAnyOperationInProgress()" class="loading-overlay">
-    <div class="loading-content">
-      <mat-icon class="loading-spinner">refresh</mat-icon>
-      <p *ngIf="state?.isGenerating">Generating chapter content...</p>
-      <p *ngIf="state?.isGettingFeedback">Getting AI feedback...</p>
-      <p *ngIf="state?.isApplyingGuidance">Applying your guidance...</p>
-      <p *ngIf="state?.isChatting">Thinking...</p>
-    </div>
-  </div>
 </div>

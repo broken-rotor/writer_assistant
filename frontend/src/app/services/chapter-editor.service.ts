@@ -578,11 +578,11 @@ export class ChapterEditorService {
       map((response: ModifyChapterResponse) => {
         const updatedChapter = {
           ...currentState.currentChapter!,
-          content: response.modifiedChapter,
+          content: response.content,
           metadata: {
             ...currentState.currentChapter!.metadata,
             lastModified: new Date(),
-            wordCount: this.countWords(response.modifiedChapter)
+            wordCount: this.countWords(response.content)
           }
         };
 
@@ -593,11 +593,11 @@ export class ChapterEditorService {
 
         // Invalidate feedback cache after successful chapter modification since content changed
         this.invalidateFeedbackCache();
-        
+
         // Clear all feedback since it's been applied to the chapter
         this.clearFeedback();
 
-        return response.modifiedChapter;
+        return response.content;
       }),
       catchError(error => {
         this.errorSubject.next('Failed to apply guidance: ' + error.message);
@@ -942,7 +942,10 @@ export class ChapterEditorService {
     this.stateSubject.next({ ...currentState, ...partialState });
   }
 
-  private countWords(text: string): number {
+  private countWords(text: string | undefined | null): number {
+    if (!text) {
+      return 0;
+    }
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   }
 }
