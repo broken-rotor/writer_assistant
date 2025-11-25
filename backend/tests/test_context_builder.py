@@ -360,7 +360,7 @@ class TestAddAgentInstruction:
         assert element.role == ContextRole.USER
         assert element.content == instruction
         assert element.tag is None
-        assert element.token_budget == 2000
+        assert element.token_budget == 8000
         assert element.summarization_strategy == SummarizationStrategy.LITERAL
 
 
