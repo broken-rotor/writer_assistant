@@ -202,7 +202,7 @@ class ContextBuilder:
             tag=None,
             role=ContextRole.USER,
             content=prompt,
-            token_budget=2000,
+            token_budget=8000,
             summarization_strategy=SummarizationStrategy.LITERAL))
 
     def add_chat(self, role: ContextRole, content: str):
